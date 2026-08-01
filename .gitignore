@@ -1,0 +1,29 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Secrets / local config
+.env
+config/lti_config.json
+keys/*.pem
+keys/*.key
+keys/*.json
+!keys/.gitkeep
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Moodle docker volumes (if bind-mounted later)
+moodle/data/
+
+# Local uvicorn logs
+uvicorn*.log
+*.err.log
+

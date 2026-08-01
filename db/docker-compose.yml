@@ -1,0 +1,21 @@
+# EdVidura shared Postgres (multi-tenant spike)
+services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: edvidura
+      POSTGRES_PASSWORD: edvidura
+      POSTGRES_DB: edvidura
+    volumes:
+      - edvidura_pg:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edvidura -d edvidura"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  edvidura_pg:
