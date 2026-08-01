@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EdVidura — My Understanding (please review)</title>
+<style>
+  :root{
+    --ink:#1a2233; --muted:#5b6474; --faint:#8a93a5;
+    --bg:#f6f7f9; --card:#ffffff; --line:#e3e6ec;
+    --accent:#1d4ed8; --accent-soft:#e8eefc;
+    --ok:#15803d; --ok-soft:#e9f7ee;
+    --warn:#b45309; --warn-soft:#fdf3e3;
+    --bad:#b91c1c; --bad-soft:#fdecec;
+    --info:#0e7490; --info-soft:#e6f6fa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;font-size:15px}
+  .wrap{max-width:800px;margin:0 auto;padding:28px 18px 60px}
+  h1{font-size:24px;margin:0 0 6px;letter-spacing:-0.02em}
+  h2{font-size:18px;margin:32px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  h3{font-size:15px;margin:18px 0 6px}
+  p{margin:8px 0}
+  .sub{color:var(--muted);font-size:13px;margin:0}
+  .cap{color:var(--faint);font-size:12px;margin-top:4px}
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:0 0 18px}
+  .hero-note{margin:12px 0 0;color:var(--muted);font-size:14px;line-height:1.5}
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:5;border-bottom:1px solid var(--line)}
+  .tab{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;color:var(--muted)}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  section.panel{display:none}
+  section.panel.active{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0}
+  .card h4{margin:0 0 6px;font-size:14px}
+  .grid{display:grid;gap:12px}
+  .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+  @media(max-width:700px){.g2,.g3,.g5{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.g2,.g3,.g5{grid-template-columns:1fr}}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 10px;text-align:center}
+  .stat .v{font-size:18px;font-weight:700}
+  .stat .l{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .v.warn{color:var(--warn)} .v.bad{color:var(--bad)}
+  .badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:600}
+  .b-ok{background:var(--ok-soft);color:var(--ok)}
+  .b-warn{background:var(--warn-soft);color:var(--warn)}
+  .b-bad{background:var(--bad-soft);color:var(--bad)}
+  .b-info{background:var(--info-soft);color:var(--info)}
+  .callout{border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0;font-size:14px}
+  .callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+  .callout.ok{border-color:var(--ok);background:var(--ok-soft)}
+  .callout.bad{border-color:var(--bad);background:var(--bad-soft)}
+  .callout.info{border-color:var(--info);background:var(--info-soft)}
+  .callout b{display:block;margin-bottom:4px}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px;margin:10px 0}
+  th{background:#eef1f6;text-align:left;padding:8px 10px}
+  td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+  tr.t-ok td:first-child{box-shadow:inset 3px 0 0 var(--ok)}
+  tr.t-warn td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+  tr.t-bad td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+  tr.t-info td:first-child{box-shadow:inset 3px 0 0 var(--info)}
+  .bar{display:flex;align-items:center;gap:10px;margin:6px 0}
+  .bar .lbl{width:200px;font-size:12.5px;color:var(--muted);text-align:right;flex-shrink:0}
+  .bar .trk{flex:1;background:#edeff4;border-radius:5px;height:16px}
+  .bar .fil{height:100%;border-radius:5px;background:var(--accent)}
+  .bar .fil.bad{background:var(--bad)}
+  .bar .num{font-size:12px;color:var(--muted);width:28px}
+  .layer{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--card);margin:8px 0}
+  .layer.hot{border-color:var(--accent)}
+  .layer .t{font-weight:600;font-size:13.5px;margin-bottom:6px}
+  .layer.hot .t{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid var(--line);background:#f2f4f8;border-radius:6px;padding:3px 9px;font-size:11.5px;color:var(--muted)}
+  ul,ol{margin:6px 0;padding-left:20px}
+  li{margin:5px 0;font-size:14px}
+  .numstep{display:flex;gap:12px;margin:10px 0;align-items:flex-start}
+  .numstep .n{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0}
+  .q .label{font-size:12px;color:var(--faint);margin-bottom:4px}
+  .q p{margin:0;font-size:14px}
+  .box{border:2px dashed var(--info);background:var(--info-soft);border-radius:12px;padding:16px 18px;margin:20px 0}
+  .box h2{border:none;margin:0 0 8px;padding:0;font-size:18px}
+  .glossary dt{font-weight:600;margin-top:8px}
+  .glossary dd{margin:2px 0 0 0;color:var(--muted);font-size:13.5px}
+  @media print{
+    .tabs{display:none}
+    section.panel{display:block !important;page-break-after:always}
+    body{background:#fff}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <h1>EdVidura — What I’ve understood so far</h1>
+  <div class="sub">31 Jul 2026 · written for review</div>
+  <p class="hero-note">This is my current understanding. Please skim the tabs and give me your inputs on what is wrong, missing, or already decided.</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-t="ov">What is it?</button>
+  <button class="tab" data-t="ar">How it works</button>
+  <button class="tab" data-t="te">Customer separation</button>
+  <button class="tab" data-t="ri">Problems &amp; risks</button>
+  <button class="tab" data-t="ro">What to do next</button>
+  <button class="tab" data-t="ask">Your inputs</button>
+</div>
+
+<!-- ================= WHAT IS IT ================= -->
+<section class="panel active" id="ov">
+  <h2>1. What EdVidura is (as I understand it)</h2>
+  <p>EdVidura is a learning platform that opens <b>inside the customer’s existing LMS</b> (for now: Moodle). Students don’t leave Moodle to use our tools.</p>
+  <p>Inside Moodle, EdVidura can provide quizzes, AI help, digital manuals, skill checks, reports, and later XR. Every learning action should go through one common activity path so progress and grades stay trackable.</p>
+  <p>It is meant for two kinds of customers:</p>
+  <ul>
+    <li><b>Normal cloud customers</b> — many organisations share one EdVidura system.</li>
+    <li><b>Defence / high-security customers (later)</b> — they may get a private offline copy (“enclave”).</li>
+  </ul>
+  <p>We are <b>not rebuilding Moodle</b>. Moodle keeps the courses and the official gradebook. EdVidura adds the smart tools on top.</p>
+  <p>The big plan talks about many modules (around 38 + programme deliverables). An independent review said the <i>direction</i> is good, but readiness is still early.</p>
+
+  <div class="grid g5">
+    <div class="stat"><div class="v warn">CAUTION</div><div class="l">Review rating (as I read it)</div></div>
+    <div class="stat"><div class="v warn">~22%</div><div class="l">How ready things look</div></div>
+    <div class="stat"><div class="v bad">11</div><div class="l">Must-fix blockers</div></div>
+    <div class="stat"><div class="v bad">9 / 36</div><div class="l">Areas with no design yet</div></div>
+    <div class="stat"><div class="v warn">2,703</div><div class="l">Open questions in bank</div></div>
+  </div>
+
+  <h3>Readiness picture (from the review)</h3>
+  <div class="bar"><div class="lbl">Nothing designed yet</div><div class="trk"><div class="fil bad" style="width:31%"></div></div><div class="num">9</div></div>
+  <div class="bar"><div class="lbl">Only ideas / intent</div><div class="trk"><div class="fil" style="width:69%"></div></div><div class="num">20</div></div>
+  <div class="bar"><div class="lbl">Some partial design</div><div class="trk"><div class="fil" style="width:24%"></div></div><div class="num">7</div></div>
+  <div class="cap">My takeaway: many things are promised, but not yet designed — especially offline readiness, security approval, federation, local AI hardware, languages.</div>
+
+  <h3>What I think we should keep from the plan</h3>
+  <table>
+    <tr><th>Good idea</th><th>Why (in my words)</th></tr>
+    <tr><td>Use open standards / open-source blocks</td><td>Login, LMS link (LTI), activity logs, Postgres — known building blocks</td></tr>
+    <tr><td>One door for learning events</td><td>Easier to trust and audit if everything goes one official path</td></tr>
+    <tr><td>Modules talk through APIs, not each other’s DB</td><td>Safer to change later</td></tr>
+    <tr><td>Don’t rebuild Moodle</td><td>Customer already has an LMS; we add tools</td></tr>
+    <tr><td>Clear modules with clear jobs</td><td>Better for long-term growth</td></tr>
+  </table>
+
+  <h3>Two outside facts I noted</h3>
+  <div class="grid g2">
+    <div class="card">
+      <h4>Learning standards are still evolving <span class="badge b-warn">watch</span></h4>
+      <p style="font-size:13.5px">The older TLA stewardship changed hands. Big adoption may be around 2029–2030. So we can use the ideas, but should not bet the whole product on unfinished standards.</p>
+    </div>
+    <div class="card">
+      <h4>India privacy law has dates <span class="badge b-bad">deadline</span></h4>
+      <p style="font-size:13.5px">DPDP rules notified Nov 2025; fuller obligations from <b>13 May 2027</b>. Consent / breach workflows should be designed during the build, not later.</p>
+    </div>
+  </div>
+
+  <h3>How Moodle and EdVidura connect (my understanding)</h3>
+  <div class="numstep"><div class="n">1</div><div>Teacher adds EdVidura as an external tool in Moodle.</div></div>
+  <div class="numstep"><div class="n">2</div><div>Student clicks → Moodle sends them to EdVidura with a secure login (LTI 1.3).</div></div>
+  <div class="numstep"><div class="n">3</div><div>EdVidura knows who the student is, which course, and which organisation (tenant).</div></div>
+  <div class="numstep"><div class="n">4</div><div>Later, after a quiz, EdVidura can send the grade back to Moodle.</div></div>
+  <p>For release 1 I understood: <b>Moodle only</b>, launch in a <b>new window</b>.</p>
+
+  <h3>Mini glossary (as I use the words)</h3>
+  <div class="card glossary">
+    <dl>
+      <dt>LMS</dt><dd>Learning Management System — e.g. Moodle, where courses live.</dd>
+      <dt>LTI</dt><dd>Standard way an external tool opens safely inside an LMS.</dd>
+      <dt>Tenant</dt><dd>One customer organisation (school / company / command).</dd>
+      <dt>Enclave</dt><dd>Private offline copy for high-security customers.</dd>
+      <dt>xAPI / LRS</dt><dd>Common format and store for “what the learner did”.</dd>
+      <dt>RLS</dt><dd>Database rules that hide other customers’ rows.</dd>
+      <dt>Contract</dt><dd>Short signed decision so the team stops re-debating the same point.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="panel" id="ar">
+  <h2>2. How it should work (my understanding)</h2>
+  <p>I understood the system as roughly <b>five layers</b>. Users only see the top. Middle layers handle safety, customer separation, and audit.</p>
+
+  <div class="layer"><div class="t">1. What users see (opened inside Moodle via LTI)</div>
+    <div class="chips"><span class="chip">Quizzes</span><span class="chip">eBooks / manuals</span><span class="chip">AI chat helpers</span><span class="chip">XR training</span><span class="chip">Dashboards</span><span class="chip">Admin screens</span></div></div>
+  <div class="layer hot"><div class="t">2. Front door + written agreements (contracts)</div>
+    <div class="chips"><span class="chip">API gateway</span><span class="chip">Published API &amp; event formats with tests</span><span class="chip">Trusted LTI library (not hand-built)</span></div></div>
+  <div class="layer hot"><div class="t">3. Shared services every module needs</div>
+    <div class="chips"><span class="chip">Customer lookup</span><span class="chip">Audit log</span><span class="chip">Local AI engines</span><span class="chip">Content version tracking</span><span class="chip">Grade &amp; record checks</span></div></div>
+  <div class="layer"><div class="t">4. Learning activity spine</div>
+    <div class="chips"><span class="chip">Reliable event queue (start in Postgres)</span><span class="chip">Standard event format</span><span class="chip">Activity store (LRS)</span><span class="chip">Offline sync later</span></div></div>
+  <div class="layer"><div class="t">5. Core learner-record services</div>
+    <div class="chips"><span class="chip">Learner records</span><span class="chip">Course catalogue</span><span class="chip">Skills / competency list</span><span class="chip">Learner profile</span></div></div>
+
+  <div class="callout info"><b>Most important technical rule (as I understood)</b>
+  Every learning event should use the same standard format: who, when, which customer, which activity, and a unique ID so duplicates don’t corrupt records.</div>
+
+  <h3>Six design fixes the review wants (my paraphrase)</h3>
+  <table>
+    <tr><th>#</th><th>Change</th><th>In plain words</th></tr>
+    <tr><td>1</td><td>Split the middle layer</td><td>Separate front door, event path, and published contracts</td></tr>
+    <tr><td>2</td><td>Shared platform services</td><td>Don’t rebuild tenant checks / audit / AI hosting in every module</td></tr>
+    <tr><td>3</td><td>Core learner services first</td><td>Freeze skills / catalogue / record schemas before building on top</td></tr>
+    <tr><td>4</td><td>Reliable events</td><td>Outbox + unique IDs so events are not silently lost</td></tr>
+    <tr><td>5</td><td>Clear customer model</td><td>Cloud = shared DB + row rules; defence = private instance</td></tr>
+    <tr><td>6</td><td>Federation as a real product</td><td>Sharing across commands needs signed rules, not a vague promise</td></tr>
+  </table>
+
+  <h3>Deployment shape (my understanding)</h3>
+  <p>Group services into a few deployable packages. The defence copy should be <b>the same software bundle</b> as cloud — installed offline — so we don’t accidentally build two different products.</p>
+
+  <h3>Why “contracts” matter</h3>
+  <p>Before building everything, we write short decision documents so the team doesn’t keep re-debating the same things. Examples we already captured:</p>
+  <table>
+    <tr><th>Topic</th><th>What I understood we decided</th></tr>
+    <tr><td>Customer separation</td><td>Shared DB + RLS for cloud; private instance later for defence</td></tr>
+    <tr><td>LMS</td><td>Moodle first</td></tr>
+    <tr><td>Launch</td><td>LTI 1.3, PyLTI1p3, new window</td></tr>
+    <tr><td>Grades</td><td>Moodle gradebook is official; we pass grades back</td></tr>
+    <tr><td>Events</td><td>Start with Postgres outbox; don’t add Kafka/NATS yet</td></tr>
+    <tr><td>Scope</td><td>Thin slices first; AI / XR / federation later</td></tr>
+  </table>
+</section>
+
+<!-- ================= TENANCY ================= -->
+<section class="panel" id="te">
+  <h2>3. Customer separation (my understanding)</h2>
+  <p>A <b>tenant</b> = one customer organisation. Getting this wrong means School A could see School B’s data. This decision should be locked before tables multiply.</p>
+
+  <div class="card">
+    <h4>Option A — One shared database + row rules (RLS) <span class="badge b-ok">CHOSEN for cloud</span></h4>
+    <p style="font-size:13.5px">All customers share the same tables. The database filters rows by customer ID.</p>
+    <ul>
+      <li><b>Good:</b> cheapest; adding a customer is basically a row; one migration updates everyone</li>
+      <li><b>Watch outs:</b> every table needs the rule; cache/files/queues must include customer ID; need tests that prove A cannot see B</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Option B — Separate schema per customer <span class="badge b-bad">REJECTED</span></h4>
+    <ul>
+      <li>Clearer folders, but messy past a few hundred customers; more ops pain than A, less isolation than D</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Option C — Separate database per customer <span class="badge b-warn">NOT PLANNED</span></h4>
+    <ul>
+      <li>Strong separation, but cost grows with every customer. For defence, a full private instance is usually what they want</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Option D — Full private copy (enclave) <span class="badge b-ok">CHOSEN for defence (later)</span></h4>
+    <ul>
+      <li><b>Good:</b> strongest isolation; can run offline</li>
+      <li><b>Bad:</b> every update ships to each site; needs local AI hardware sized and funded</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Hybrid A + D <span class="badge b-info">TARGET</span></h4>
+    <ul>
+      <li>One codebase, two ways to deploy. Every feature should eventually work for both.</li>
+    </ul>
+  </div>
+
+  <h3>Quick comparison</h3>
+  <table>
+    <tr><th>Model</th><th>How separate?</th><th>Ops cost</th><th>Our choice</th></tr>
+    <tr class="t-ok"><td>Shared DB + row rules</td><td>DB filters rows</td><td>Lowest</td><td>Cloud SaaS</td></tr>
+    <tr class="t-bad"><td>Schema per customer</td><td>Folders in one DB</td><td>Grows</td><td>Rejected</td></tr>
+    <tr class="t-warn"><td>DB per customer</td><td>Separate databases</td><td>High</td><td>Not planned</td></tr>
+    <tr class="t-ok"><td>Private instance</td><td>Whole stack offline</td><td>Highest per site</td><td>Defence later</td></tr>
+    <tr class="t-info"><td>Hybrid A + D</td><td>Depends on customer</td><td>Two playbooks</td><td>End goal</td></tr>
+  </table>
+
+  <div class="callout warn"><b>What makes shared-DB separation actually safe (checklist I noted)</b>
+  App DB user must not be a superuser · force row rules · set current customer ID on every request · put row rules on every customer table from day one · put customer ID in cache keys, queues, indexes, file paths · run automated “A must not see B” tests.</div>
+
+  <div class="callout info"><b>One non-negotiable rule (as I understood)</b>
+  Customer identity comes only from a verified LMS registration (issuer + client id + deployment) or a trusted login token. Never from a typed URL, email domain, or course name. Unknown registrations are rejected.</div>
+</section>
+
+<!-- ================= RISKS ================= -->
+<section class="panel" id="ri">
+  <h2>4. Problems and risks (as I understood them)</h2>
+  <p>“Must-fix” means: don’t pretend the product is ready until this is handled.</p>
+
+  <div class="grid g5" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+    <div class="stat"><div class="v bad">11</div><div class="l">Must-fix blockers</div></div>
+    <div class="stat"><div class="v bad">163</div><div class="l">Hard questions, no default</div></div>
+    <div class="stat"><div class="v warn">139</div><div class="l">Decisions with no owner</div></div>
+    <div class="stat"><div class="v warn">13 May 2027</div><div class="l">India privacy full date</div></div>
+  </div>
+
+  <table>
+    <tr><th>Level</th><th>Risk</th><th>Why it matters</th><th>What to do</th></tr>
+    <tr class="t-bad"><td>Must-fix</td><td>Customer separation only described, not proven</td><td>Data could leak via DB / cache / queues / files</td><td>Row rules + customer IDs everywhere + isolation tests</td></tr>
+    <tr class="t-bad"><td>Must-fix</td><td>Single activity door can lose events</td><td>Exam-day bursts or offline reconnect can drop records</td><td>Reliable queue + unique IDs + replay</td></tr>
+    <tr class="t-bad"><td>Must-fix</td><td>Official learner records have no clear lifecycle</td><td>Appeals and audits fail without evidence rules</td><td>Write evidence-chain rules; append-only audit</td></tr>
+    <tr class="t-bad"><td>Must-fix</td><td>Skill features planned before skills list exists</td><td>Dependents need a frozen competency registry</td><td>Freeze skills schema early</td></tr>
+    <tr class="t-bad"><td>Must-fix</td><td>Offline AI promised but hardware not sized</td><td>Air-gapped sites can’t rely on cloud AI</td><td>GPU sizing spike; order early</td></tr>
+    <tr class="t-bad"><td>Must-fix</td><td>Outdated manuals can still be cited by AI</td><td>No clear “superseded” flow</td><td>Content version tracking + supersession test</td></tr>
+    <tr class="t-bad"><td>Must-fix</td><td>Cross-command sharing is a slogan</td><td>Matching / conflict / revocation undefined</td><td>Design signed transfer rules</td></tr>
+    <tr class="t-bad"><td>Must-fix</td><td>Security approval path has no owner</td><td>Authority for India market unclear</td><td>Name authority; collect evidence from CI</td></tr>
+    <tr class="t-bad"><td>Must-fix</td><td>Privacy law clock is running</td><td>May 2027 sits inside the build window</td><td>Consent / notice / breach workflows now</td></tr>
+    <tr class="t-warn"><td>High</td><td>Standards bet is early</td><td>Some specs unfinished</td><td>Pin versions; don’t over-couple</td></tr>
+    <tr class="t-warn"><td>High</td><td>Custom LTI code at the front door</td><td>Risky for every customer login</td><td>Use maintained LTI library</td></tr>
+    <tr class="t-warn"><td>High</td><td>Scope vs team size</td><td>Many modules, many unanswered questions</td><td>Thin slices; assign owners</td></tr>
+  </table>
+
+  <h3>The 11 must-fix blockers (short list)</h3>
+  <div class="grid g2">
+    <div class="card"><ul>
+      <li>Customer separation not proven</li>
+      <li>Grade source of truth unclear</li>
+      <li>No plan for duplicate / lost events</li>
+      <li>No audit trail for official records</li>
+      <li>Skills registry missing while dependents scheduled</li>
+      <li>Offline promised while AI may still need internet</li>
+    </ul></div>
+    <div class="card"><ul>
+      <li>Local AI hardware unsized / unfunded</li>
+      <li>Cross-site learner matching undefined</li>
+      <li>No security-approval authority or plan</li>
+      <li>Second lab planned before first design proven</li>
+      <li>No published, testable interfaces yet</li>
+    </ul></div>
+  </div>
+
+  <div class="callout bad"><b>My takeaway</b>
+  Most of these are not “we need more code”. They are “somebody must decide and sign”. Without signed decisions, the overall rating cannot improve much.
+  </div>
+</section>
+
+<!-- ================= ROADMAP ================= -->
+<section class="panel" id="ro">
+  <h2>5. What to do next (my understanding)</h2>
+  <p>Don’t build everything at once. Build <b>thin vertical slices</b> (one complete learner journey), and aim for both cloud and offline readiness over time so defence doesn’t get postponed forever.</p>
+
+  <h3>Where we are today</h3>
+  <p>We already have a small starter (“hello”) app that:</p>
+  <ul>
+    <li>Connects to Moodle with LTI 1.3</li>
+    <li>Resolves which tenant the launch belongs to</li>
+    <li>Uses Postgres with tenant isolation (RLS) for launch events</li>
+  </ul>
+  <p>That proves the front door works. It is <b>not</b> the full product yet.</p>
+
+  <h3>Stages I understood</h3>
+  <table>
+    <tr><th>Stage</th><th>What we build</th><th>Done when…</th></tr>
+    <tr class="t-ok"><td><b>0 — Foundations</b></td><td>Sign key decisions; freeze event format, skills schema, catalogue, evidence rules, customer lookup</td><td>Contracts published with checks</td></tr>
+    <tr class="t-ok"><td><b>1 — First thin product</b></td><td>Moodle → quiz → event → grade back → teacher view; prove isolation; start GPU sizing</td><td>Isolation / chaos tests pass</td></tr>
+    <tr><td><b>2 — Content &amp; skills</b></td><td>One manual end-to-end; one skills framework with official record + evidence</td><td>Record governance proven</td></tr>
+    <tr><td><b>3 — AI &amp; field</b></td><td>Local-GPU chatbot on manuals; one XR title with offline sync</td><td>Offline AI / currency blockers cleared</td></tr>
+    <tr><td><b>4 — Controlled pilot</b></td><td>One real customer; evidence flowing from CI</td><td>Stable for ~60 days</td></tr>
+    <tr><td><b>5 — Production</b></td><td>Second site as copy of proven design; live sharing</td><td>Acceptance from evidence</td></tr>
+  </table>
+
+  <h3>Key decisions (DEC-001…012) — as I understood them</h3>
+  <table>
+    <tr><th>ID</th><th>Topic</th><th>Recommended answer</th><th>When</th></tr>
+    <tr><td>DEC-001</td><td>How events move</td><td>Postgres outbox first</td><td>Before first thin product</td></tr>
+    <tr class="t-warn"><td>DEC-002</td><td>Local AI hosting</td><td>Local AI service; cloud AI not a hard dependency for defence</td><td>Order GPUs early</td></tr>
+    <tr><td>DEC-003</td><td>How sites share data</td><td>Site → command → enterprise</td><td>Before freezing record schemas</td></tr>
+    <tr><td>DEC-004</td><td>Skills registry</td><td>OSS behind our contract, or thin Postgres fallback</td><td>Foundations</td></tr>
+    <tr><td>DEC-005</td><td>Manual / eBook pipeline</td><td>Digitize once; rebuild when source changes</td><td>Before content slice</td></tr>
+    <tr class="t-ok"><td>DEC-006</td><td>Customer separation</td><td>Shared DB + RLS (cloud); private instance (defence)</td><td>Before first data tables</td></tr>
+    <tr><td>DEC-007</td><td>Build vs buy vs OSS</td><td>OSS-first for core records</td><td>Foundations</td></tr>
+    <tr class="t-bad"><td>DEC-008</td><td>Security approval authority</td><td>Engage real India-market authority</td><td>Day one</td></tr>
+    <tr><td>DEC-009</td><td>Module splits</td><td>Keep most; split only where flagged</td><td>Before skills slice</td></tr>
+    <tr><td>DEC-010</td><td>Languages</td><td>Clear tiers + quality gates</td><td>Before language claims</td></tr>
+    <tr class="t-bad"><td>DEC-011</td><td>Scope vs capacity</td><td>Thin slices; delay big hardware until early slices pass</td><td>Foundations budget</td></tr>
+    <tr><td>DEC-012</td><td>Which LMS first</td><td>Moodle first</td><td>First thin product</td></tr>
+  </table>
+
+  <h3>What I think engineering should do next</h3>
+  <ol>
+    <li><b>Tenant onboarding API / UI</b> — register a new customer + Moodle connection without editing DB by hand.</li>
+    <li><b>First thin product slice</b> — Moodle launch → one quiz → one activity event → grade back → simple teacher view.</li>
+    <li><b>Keep AI, XR, federation, full offline defence for later</b> — after the first slice is solid.</li>
+  </ol>
+
+  <h3>First 90 days (simple version)</h3>
+  <div class="grid g3">
+    <div class="card"><h4>Days 1–30</h4><ul>
+      <li>Leaders confirm / sign key decisions</li>
+      <li>Name security authority</li>
+      <li>Freeze event format v1 with tests</li>
+      <li>Draft skills + catalogue schemas</li>
+      <li>GPU sizing spike if funded</li>
+    </ul></div>
+    <div class="card"><h4>Days 31–60</h4><ul>
+      <li>Start first thin product</li>
+      <li>Maintained LTI library</li>
+      <li>Customer lookup + RLS proof with negative tests</li>
+      <li>Known-good / known-bad content fixtures</li>
+    </ul></div>
+    <div class="card"><h4>Days 61–90</h4><ul>
+      <li>Pass isolation / chaos tests</li>
+      <li>Skills registry v1 if in scope</li>
+      <li>First security-control mapping</li>
+      <li>Target: clear several must-fix blockers</li>
+    </ul></div>
+  </div>
+
+  <div class="callout ok"><b>My one-line summary</b>
+  Sign the key decisions, freeze a few core formats, then build one thin journey (Moodle → quiz → event → grade → report) that keeps customers strictly separated — and grow from there.
+  </div>
+</section>
+
+<!-- ================= ASK ================= -->
+<section class="panel" id="ask">
+  <div class="box">
+    <h2>Please give your inputs</h2>
+    <p>I’ve written the above based on my current understanding (including the earlier research topics). Please reply with corrections or answers:</p>
+
+    <div class="q">
+      <div class="label">Q1 — Product</div>
+      <p>Is my understanding correct that EdVidura opens inside Moodle and we do not rebuild Moodle?</p>
+    </div>
+    <div class="q">
+      <div class="label">Q2 — Tenancy</div>
+      <p>Is the tenancy choice confirmed — shared DB + RLS for cloud, private instance later for defence? Should we reject schema-per-tenant?</p>
+    </div>
+    <div class="q">
+      <div class="label">Q3 — LMS / launch</div>
+      <p>For release 1: Moodle only + new-window launch + maintained LTI library — confirmed?</p>
+    </div>
+    <div class="q">
+      <div class="label">Q4 — Grades</div>
+      <p>Is Moodle the official gradebook, and EdVidura only passes grades back?</p>
+    </div>
+    <div class="q">
+      <div class="label">Q5 — Architecture layers</div>
+      <p>Is the 5-layer picture (UI → gateway/contracts → shared services → events/LRS → learner records) roughly right for how we should think?</p>
+    </div>
+    <div class="q">
+      <div class="label">Q6 — Risks / blockers</div>
+      <p>Which of the must-fix blockers should we treat as real for our team right now, and which can wait?</p>
+    </div>
+    <div class="q">
+      <div class="label">Q7 — Next engineering priority</div>
+      <p>Is the next priority correct: (1) tenant onboarding, then (2) quiz → event → grade slice?</p>
+    </div>
+    <div class="q">
+      <div class="label">Q8 — Out of scope for now</div>
+      <p>What should we <b>not</b> touch yet (AI, XR, Keycloak, federation, enclave, etc.)?</p>
+    </div>
+    <div class="q">
+      <div class="label">Q9 — Decisions still open</div>
+      <p>Which DEC items still need a named owner / leadership sign-off (especially security authority, GPU, languages)?</p>
+    </div>
+    <div class="q">
+      <div class="label">Q10 — Anything missed</div>
+      <p>Anything important I misunderstood or left out?</p>
+    </div>
+
+    <p style="margin-top:14px;font-size:14px">Short WhatsApp replies are fine — e.g. “Q1 yes / Q2 yes / Q7 change to …”.</p>
+  </div>
+
+  <div class="card">
+    <span class="badge b-warn">status: draft understanding</span>
+    <p style="margin:8px 0 0;font-size:13.5px;color:var(--muted)">This is not a final architecture document. It’s my working understanding for alignment. Once you confirm or correct it, we can treat the answered points as locked and continue building.</p>
+  </div>
+</section>
+
+</div>
+<script>
+  const tabs=document.querySelectorAll(".tab"), panels=document.querySelectorAll(".panel");
+  tabs.forEach(t=>t.addEventListener("click",()=>{
+    tabs.forEach(x=>x.classList.remove("active"));
+    panels.forEach(p=>p.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById(t.dataset.t).classList.add("active");
+    window.scrollTo({top:0});
+  }));
+</script>
+</body>
+</html>
