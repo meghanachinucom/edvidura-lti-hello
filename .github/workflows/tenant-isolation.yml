@@ -1,0 +1,55 @@
+name: Tenant isolation
+
+on:
+  push:
+    branches: [main, master, "feature/**"]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  isolation:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: edvidura
+          POSTGRES_PASSWORD: edvidura
+          POSTGRES_DB: edvidura
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U edvidura -d edvidura"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://edvidura_app:edvidura_app@127.0.0.1:5432/edvidura
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Apply schema (RLS + edvidura_app role)
+        env:
+          PGPASSWORD: edvidura
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/init.sql
+
+      - name: Run isolation tests
+        env:
+          REQUIRE_DB: "1"
+          DATABASE_URL: postgresql://edvidura_app:edvidura_app@127.0.0.1:5432/edvidura
+        run: pytest -q tests/test_tenant_isolation.py

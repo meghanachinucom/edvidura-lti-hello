@@ -12,7 +12,11 @@ from app.settings import get_settings
 
 
 def connect() -> psycopg.Connection:
-    return psycopg.connect(get_settings().database_url, row_factory=dict_row)
+    return psycopg.connect(
+        get_settings().database_url,
+        row_factory=dict_row,
+        connect_timeout=5,
+    )
 
 
 @contextmanager
