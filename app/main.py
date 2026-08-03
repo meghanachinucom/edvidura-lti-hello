@@ -1,11 +1,10 @@
 """EdVidura LTI Hello — FastAPI multi-tenant Moodle LTI 1.3 spike."""
 from __future__ import annotations
 
-import html
 from uuid import UUID
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from pylti1p3.exception import LtiException
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -19,6 +18,8 @@ from app.lti_fastapi import (
     FastAPIRequest,
     make_launch_data_storage,
 )
+from app.quiz_routes import SESSION_KEY as QUIZ_SESSION_KEY
+from app.quiz_routes import router as quiz_router
 from app.settings import get_settings
 from app.tenancy import TENANT_A_ID, TENANT_B_ID, build_tool_conf_from_db, resolve_platform
 from app.tenancy_isolation import prove_launch_events_isolation
@@ -26,11 +27,12 @@ from app.tenancy_isolation import prove_launch_events_isolation
 app = FastAPI(
     title="EdVidura LTI Hello",
     description="Multi-tenant Moodle LTI 1.3 Hello spike (not full EdVidura).",
-    version="0.2.0",
+    version="0.3.0",
 )
 
 app.include_router(institution_router)
 app.include_router(student_router)
+app.include_router(quiz_router)
 
 _boot = get_settings()
 app.add_middleware(
@@ -70,11 +72,12 @@ def home():
     base = settings.app_base_url
     body = f"""
     <h1>EdVidura LTI Hello (multi-tenant)</h1>
-    <p>Dummy spike. Tenant is resolved from LTI iss + client_id + deployment.</p>
+    <p>Slice A: Moodle launch → quiz → score → optional AGS grade passback.</p>
     <ul>
       <li><a href="/health">/health</a></li>
       <li><a href="/.well-known/jwks.json">JWKS</a></li>
       <li><a href="/dev/tenancy/cross-check">/dev/tenancy/cross-check</a> (RLS proof)</li>
+      <li><a href="/quiz">/quiz</a> (requires prior LTI launch)</li>
       <li>LTI login: <code>{base}/lti/login</code></li>
       <li>LTI launch: <code>{base}/lti/launch</code></li>
     </ul>
@@ -212,45 +215,20 @@ async def lti_launch(request: Request):
             },
         )
 
-        safe_name = html.escape(str(name))
-        safe_role = html.escape(role_text)
-        safe_course = html.escape(str(course))
-        safe_sub = html.escape(str(launch_data.get("sub", "")))
-        safe_tenant = html.escape(f"{tenant.slug} — {tenant.name}")
-        safe_event = html.escape(str(event["id"]))
-
-        page = f"""
-        <!doctype html>
-        <html>
-        <head>
-          <meta charset="utf-8"/>
-          <title>EdVidura Hello</title>
-          <style>
-            body {{ font-family: Segoe UI, sans-serif; margin: 2rem; background: #F5F7FA; color: #1A1A2E; }}
-            .card {{ background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 1.5rem; max-width: 560px; }}
-            h1 {{ color: #0D47A1; margin-top: 0; }}
-            .ok {{ color: #2E7D32; font-weight: 600; }}
-            code {{ background: #F3F4F6; padding: 0.1rem 0.35rem; border-radius: 4px; }}
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <p class="ok">LTI 1.3 launch OK</p>
-            <h1>Hello from EdVidura</h1>
-            <p><strong>Tenant:</strong> {safe_tenant}</p>
-            <p><strong>Name / id:</strong> {safe_name}</p>
-            <p><strong>Subject:</strong> <code>{safe_sub}</code></p>
-            <p><strong>Role:</strong> {safe_role}</p>
-            <p><strong>Course:</strong> {safe_course}</p>
-            <p><strong>Stored launch id:</strong> <code>{safe_event}</code></p>
-            <p style="color:#6B7280;font-size:0.9rem">
-              Multi-tenant spike — tenant from LTI registration only.
-            </p>
-          </div>
-        </body>
-        </html>
-        """
-        return HTMLResponse(page)
+        is_instructor = "Instructor" in role_text
+        request.session[QUIZ_SESSION_KEY] = {
+            "launch_id": message_launch.get_launch_id(),
+            "tenant_id": str(tenant.tenant_id),
+            "tenant_slug": tenant.slug,
+            "tenant_name": tenant.name,
+            "subject": str(launch_data.get("sub", "")),
+            "learner_name": str(name),
+            "roles": role_text,
+            "is_instructor": is_instructor,
+            "course": str(course),
+            "launch_event_id": str(event["id"]),
+        }
+        return RedirectResponse(url="/quiz", status_code=303)
     except LtiException as exc:
         print(f"LTI launch failed: {exc}", flush=True)
         return PlainTextResponse(f"LTI launch failed: {exc}", status_code=400)

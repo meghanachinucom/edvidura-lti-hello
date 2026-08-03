@@ -98,9 +98,16 @@ class FastAPIRedirect(Redirect):
 
 
 class FastAPIOIDCLogin(OIDCLogin):
-    def __init__(self, request: FastAPIRequest, tool_config, launch_data_storage=None):
-        cookie_service = FastAPICookieService(request)
-        session_service = FastAPISessionService(request)
+    def __init__(
+        self,
+        request: FastAPIRequest,
+        tool_config,
+        session_service=None,
+        cookie_service=None,
+        launch_data_storage=None,
+    ):
+        cookie_service = cookie_service or FastAPICookieService(request)
+        session_service = session_service or FastAPISessionService(request)
         super().__init__(
             request, tool_config, session_service, cookie_service, launch_data_storage
         )
@@ -120,15 +127,24 @@ class FastAPIOIDCLogin(OIDCLogin):
 
 
 class FastAPIMessageLaunch(MessageLaunch):
-    def __init__(self, request: FastAPIRequest, tool_config, launch_data_storage=None):
-        cookie_service = FastAPICookieService(request)
-        session_service = FastAPISessionService(request)
+    def __init__(
+        self,
+        request: FastAPIRequest,
+        tool_config,
+        session_service=None,
+        cookie_service=None,
+        launch_data_storage=None,
+        requests_session=None,
+    ):
+        cookie_service = cookie_service or FastAPICookieService(request)
+        session_service = session_service or FastAPISessionService(request)
         super().__init__(
             request,
             tool_config,
             session_service,
             cookie_service,
             launch_data_storage,
+            requests_session,
         )
 
     def _get_request_param(self, key: str):

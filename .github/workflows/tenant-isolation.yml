@@ -52,4 +52,4 @@ jobs:
         env:
           REQUIRE_DB: "1"
           DATABASE_URL: postgresql://edvidura_app:edvidura_app@127.0.0.1:5432/edvidura
-        run: pytest -q tests/test_tenant_isolation.py
+        run: pytest -q tests/
