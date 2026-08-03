@@ -75,16 +75,15 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## LTI Launch Testing
+## LTI Launch Testing (Slice A)
 
-1. Start Moodle and the FastAPI application.
-2. Log in to Moodle.
-3. Open the configured **EdVidura Hello** external tool.
-4. Verify the launch displays:
-   - Learner Name
-   - Institution/Tenant
-   - Course
-   - Role
+1. Start Postgres, FastAPI, and Moodle.
+2. If the DB already existed before Slice A, apply:
+   `psql ... -f db/migration_quiz_attempts.sql`
+3. In Moodle external tool settings, enable **Accept grades from the tool** (AGS) so scores can pass back.
+4. Launch the tool as a student → you should land on the **3-question quiz**.
+5. Submit → see score; check Moodle gradebook if AGS is enabled.
+6. Launch as a teacher → open **Teacher: view attempts** for the tenant-scoped list.
 
 ---
 
@@ -95,6 +94,8 @@ http://127.0.0.1:8000/docs
 | Backend | http://127.0.0.1:8000 |
 | Swagger | http://127.0.0.1:8000/docs |
 | Health | http://127.0.0.1:8000/health |
+| Quiz (after launch) | http://127.0.0.1:8000/quiz |
+| Teacher attempts | http://127.0.0.1:8000/teacher/attempts |
 | Moodle | http://localhost:8085 |
 
 ---

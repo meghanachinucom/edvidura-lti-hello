@@ -118,6 +118,77 @@ def count_launch_events_visible(tenant_id: UUID | str) -> int:
         return int(row["n"])
 
 
+def insert_quiz_attempt(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    course_label: str,
+    score: int,
+    max_score: int,
+    answers: dict[str, Any],
+    grade_sent: bool = False,
+    grade_error: str | None = None,
+) -> dict[str, Any]:
+    import json
+
+    with tenant_connection(tenant_id) as conn:
+        row = conn.execute(
+            """
+            INSERT INTO quiz_attempts (
+                tenant_id, subject, learner_name, course_label,
+                score, max_score, answers, grade_sent, grade_error
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+            RETURNING id, tenant_id, subject, learner_name, course_label,
+                      score, max_score, answers, grade_sent, grade_error, created_at
+            """,
+            (
+                str(tenant_id),
+                subject,
+                learner_name,
+                course_label,
+                score,
+                max_score,
+                json.dumps(answers),
+                grade_sent,
+                grade_error,
+            ),
+        ).fetchone()
+        return dict(row)
+
+
+def get_quiz_attempt(tenant_id: UUID | str, attempt_id: UUID | str) -> dict[str, Any] | None:
+    with tenant_connection(tenant_id) as conn:
+        row = conn.execute(
+            """
+            SELECT id, tenant_id, subject, learner_name, course_label,
+                   score, max_score, answers, grade_sent, grade_error, created_at
+            FROM quiz_attempts
+            WHERE id = %s
+            """,
+            (str(attempt_id),),
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def list_quiz_attempts_for_tenant(
+    tenant_id: UUID | str, *, limit: int = 50
+) -> list[dict[str, Any]]:
+    with tenant_connection(tenant_id) as conn:
+        rows = conn.execute(
+            """
+            SELECT id, tenant_id, subject, learner_name, course_label,
+                   score, max_score, grade_sent, grade_error, created_at
+            FROM quiz_attempts
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (limit,),
+        ).fetchall()
+        return list(rows)
+
+
 def upsert_platform(
     *,
     tenant_id: str,
