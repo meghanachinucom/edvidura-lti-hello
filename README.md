@@ -99,6 +99,18 @@ http://127.0.0.1:8000/docs
 
 ---
 
+## Tenant isolation tests (CI)
+
+Postgres must be running (`cd db && docker compose up -d`) and `DATABASE_URL` must use the non-superuser role `edvidura_app` (see `config.example.env`).
+
+```bash
+pytest -q tests/test_tenant_isolation.py
+```
+
+Or hit the live proof endpoint: `GET /dev/tenancy/cross-check`
+
+These tests prove Tenant A cannot read Tenant B `launch_events` under RLS, forged inserts are rejected, and unknown LTI platforms fail closed.
+
 ## Notes
 
 - Tenant resolution is based on registered LTI platforms.

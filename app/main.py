@@ -21,6 +21,7 @@ from app.lti_fastapi import (
 )
 from app.settings import get_settings
 from app.tenancy import TENANT_A_ID, TENANT_B_ID, build_tool_conf_from_db, resolve_platform
+from app.tenancy_isolation import prove_launch_events_isolation
 
 app = FastAPI(
     title="EdVidura LTI Hello",
@@ -95,42 +96,10 @@ def jwks():
 def tenancy_cross_check():
     """Dev-only: prove Tenant A cannot see Tenant B launch_events under RLS."""
     try:
-        # Ensure each tenant has at least one marker row (subject unique enough)
-        db.insert_launch_event(
-            tenant_id=TENANT_A_ID,
-            subject="cross-check-tenant-a",
-            roles="system",
-            course_label="cross-check",
-            raw_claims={"marker": "A"},
-        )
-        db.insert_launch_event(
-            tenant_id=TENANT_B_ID,
-            subject="cross-check-tenant-b",
-            roles="system",
-            course_label="cross-check",
-            raw_claims={"marker": "B"},
-        )
-
-        visible_as_a = db.list_launch_events_for_tenant(TENANT_A_ID)
-        visible_as_b = db.list_launch_events_for_tenant(TENANT_B_ID)
-        count_a = db.count_launch_events_visible(TENANT_A_ID)
-        count_b = db.count_launch_events_visible(TENANT_B_ID)
-
-        leaked_to_a = [
-            r for r in visible_as_a if str(r["tenant_id"]) == TENANT_B_ID
-        ]
-        leaked_to_b = [
-            r for r in visible_as_b if str(r["tenant_id"]) == TENANT_A_ID
-        ]
-        ok = len(leaked_to_a) == 0 and len(leaked_to_b) == 0
-        return {
-            "ok": ok,
-            "count_visible_as_tenant_a": count_a,
-            "count_visible_as_tenant_b": count_b,
-            "leaked_b_rows_to_a": len(leaked_to_a),
-            "leaked_a_rows_to_b": len(leaked_to_b),
-            "detail": "RLS pass" if ok else "CROSS-TENANT LEAK",
-        }
+        result = prove_launch_events_isolation()
+        if not result["ok"]:
+            return JSONResponse(result, status_code=500)
+        return result
     except Exception as exc:  # noqa: BLE001
         return JSONResponse(
             {"ok": False, "error": str(exc)},
