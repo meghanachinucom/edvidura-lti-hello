@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import html
+import traceback
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -18,9 +20,11 @@ from app.tenancy import build_tool_conf_from_db
 router = APIRouter(tags=["quiz"])
 
 SESSION_KEY = "lti_slice_a"
+QUIZ_CTX_PREFIX = "quizctx:"
+AGS_TIMEOUT_SEC = 8
 
 
-def _page(title: str, body: str) -> HTMLResponse:
+def _page(title: str, body: str, status_code: int = 200) -> HTMLResponse:
     return HTMLResponse(
         f"""<!doctype html>
 <html lang="en">
@@ -57,25 +61,52 @@ def _page(title: str, body: str) -> HTMLResponse:
   </style>
 </head>
 <body><div class="wrap">{body}</div></body>
-</html>"""
+</html>""",
+        status_code=status_code,
     )
 
 
-def get_lti_session(request: Request) -> dict[str, Any] | None:
-    data = request.session.get(SESSION_KEY)
+def store_quiz_context(data: dict[str, Any], *, ttl_sec: int = 3600) -> str:
+    """Persist launch context in memory cache (survives cookie/session loss on local HTTP)."""
+    token = uuid4().hex
+    payload = {**dict(data), "quiz_token": token}
+    LAUNCH_CACHE.set(f"{QUIZ_CTX_PREFIX}{token}", payload, exp=ttl_sec)
+    return token
+
+
+def load_quiz_context(token: str | None) -> dict[str, Any] | None:
+    if not token:
+        return None
+    data = LAUNCH_CACHE.get(f"{QUIZ_CTX_PREFIX}{token}")
     return dict(data) if isinstance(data, dict) else None
 
 
-def require_lti_session(request: Request) -> dict[str, Any] | HTMLResponse:
-    data = get_lti_session(request)
-    if not data or not data.get("tenant_id") or not data.get("subject"):
+def resolve_quiz_session(
+    request: Request, *, token: str | None = None
+) -> dict[str, Any] | None:
+    data = request.session.get(SESSION_KEY)
+    if isinstance(data, dict) and data.get("tenant_id") and data.get("subject"):
+        return dict(data)
+    cached = load_quiz_context(token)
+    if cached and cached.get("tenant_id") and cached.get("subject"):
+        request.session[SESSION_KEY] = cached
+        return dict(cached)
+    return None
+
+
+def require_quiz_session(
+    request: Request, *, token: str | None = None
+) -> dict[str, Any] | HTMLResponse:
+    data = resolve_quiz_session(request, token=token)
+    if not data:
         return _page(
             "Launch required",
             """
             <h1>Launch required</h1>
-            <p class="sub">Open this tool from Moodle (LTI launch) first.</p>
+            <p class="sub">Open this tool from Moodle (LTI launch) first, then submit the quiz.</p>
             <p><a class="btn secondary" href="/">Home</a></p>
             """,
+            status_code=401,
         )
     return data
 
@@ -92,11 +123,44 @@ def _restore_launch(request: Request, launch_id: str) -> FastAPIMessageLaunch:
     )
 
 
+def _try_ags(
+    request: Request, session: dict[str, Any], *, score: int
+) -> tuple[bool, str | None]:
+    launch_id = session.get("launch_id")
+    if not launch_id:
+        return False, "No launch_id in session — grade not sent"
+
+    def _run() -> tuple[bool, str | None]:
+        message_launch = _restore_launch(request, str(launch_id))
+        return send_quiz_grade(
+            message_launch,
+            user_id=str(session["subject"]),
+            score=float(score),
+            score_maximum=float(MAX_SCORE),
+        )
+
+    try:
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(_run)
+            return future.result(timeout=AGS_TIMEOUT_SEC)
+    except FuturesTimeout:
+        return False, f"AGS timed out after {AGS_TIMEOUT_SEC}s (Moodle unreachable?)"
+    except Exception as exc:  # noqa: BLE001
+        return False, f"Could not restore launch for AGS: {exc}"
+
+
 @router.get("/quiz", response_class=HTMLResponse)
-async def quiz_form(request: Request):
-    session = require_lti_session(request)
+async def quiz_form(request: Request, token: str | None = None):
+    session = require_quiz_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
+
+    # Prefer token from query; else create one so submit works without cookies
+    quiz_token = token or session.get("quiz_token")
+    if not quiz_token or not load_quiz_context(str(quiz_token)):
+        quiz_token = store_quiz_context(session)
+        session = {**session, "quiz_token": quiz_token}
+        request.session[SESSION_KEY] = session
 
     fields = []
     for i, q in enumerate(QUESTIONS, start=1):
@@ -114,7 +178,10 @@ async def quiz_form(request: Request):
 
     teacher_link = ""
     if session.get("is_instructor"):
-        teacher_link = '<p><a class="btn secondary" href="/teacher/attempts">Teacher: view attempts</a></p>'
+        teacher_link = (
+            f'<p><a class="btn secondary" href="/teacher/attempts?token={html.escape(str(quiz_token))}">'
+            "Teacher: view attempts</a></p>"
+        )
 
     body = f"""
     <h1>EdVidura — Slice A Quiz</h1>
@@ -125,7 +192,9 @@ async def quiz_form(request: Request):
     </p>
     <div class="card">
       <form method="post" action="/quiz/submit">
+        <input type="hidden" name="quiz_token" value="{html.escape(str(quiz_token))}"/>
         {''.join(fields)}
+        <p class="meta">Answer all three questions, then submit.</p>
         <button type="submit">Submit quiz</button>
       </form>
     </div>
@@ -137,51 +206,61 @@ async def quiz_form(request: Request):
 @router.post("/quiz/submit", response_class=HTMLResponse)
 async def quiz_submit(
     request: Request,
+    quiz_token: str = Form(""),
     q1: str = Form(...),
     q2: str = Form(...),
     q3: str = Form(...),
 ):
-    session = require_lti_session(request)
+    session = require_quiz_session(request, token=quiz_token or None)
     if isinstance(session, HTMLResponse):
         return session
 
-    score, detail = grade_answers({"q1": q1, "q2": q2, "q3": q3})
-    grade_sent = False
-    grade_error: str | None = None
+    try:
+        score, detail = grade_answers({"q1": q1, "q2": q2, "q3": q3})
 
-    launch_id = session.get("launch_id")
-    if launch_id:
-        try:
-            message_launch = _restore_launch(request, str(launch_id))
-            grade_sent, grade_error = send_quiz_grade(
-                message_launch,
-                user_id=str(session["subject"]),
-                score=float(score),
-                score_maximum=float(MAX_SCORE),
-            )
-        except Exception as exc:  # noqa: BLE001
-            grade_sent = False
-            grade_error = f"Could not restore launch for AGS: {exc}"
-    else:
-        grade_error = "No launch_id in session — grade not sent"
+        # Save first so submit always succeeds even if AGS hangs
+        attempt = db.insert_quiz_attempt(
+            tenant_id=session["tenant_id"],
+            subject=str(session["subject"]),
+            learner_name=str(session.get("learner_name") or ""),
+            course_label=str(session.get("course") or ""),
+            score=score,
+            max_score=MAX_SCORE,
+            answers={"submitted": {"q1": q1, "q2": q2, "q3": q3}, "detail": detail},
+            grade_sent=False,
+            grade_error="pending",
+        )
 
-    attempt = db.insert_quiz_attempt(
-        tenant_id=session["tenant_id"],
-        subject=str(session["subject"]),
-        learner_name=str(session.get("learner_name") or ""),
-        course_label=str(session.get("course") or ""),
-        score=score,
-        max_score=MAX_SCORE,
-        answers={"submitted": {"q1": q1, "q2": q2, "q3": q3}, "detail": detail},
-        grade_sent=grade_sent,
-        grade_error=grade_error,
-    )
-    return RedirectResponse(url=f"/quiz/result/{attempt['id']}", status_code=303)
+        grade_sent, grade_error = _try_ags(request, session, score=score)
+        db.update_quiz_attempt_grade(
+            tenant_id=session["tenant_id"],
+            attempt_id=attempt["id"],
+            grade_sent=grade_sent,
+            grade_error=grade_error,
+        )
+
+        token_q = f"?token={quiz_token}" if quiz_token else ""
+        return RedirectResponse(
+            url=f"/quiz/result/{attempt['id']}{token_q}",
+            status_code=303,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"Quiz submit failed: {exc}\n{traceback.format_exc()}", flush=True)
+        return _page(
+            "Submit failed",
+            f"""
+            <h1>Submit failed</h1>
+            <p class="bad">{html.escape(str(exc))}</p>
+            <p class="sub">Check that Postgres is up and <code>quiz_attempts</code> migration was applied.</p>
+            <p><a class="btn secondary" href="/quiz{'?token=' + html.escape(quiz_token) if quiz_token else ''}">Back to quiz</a></p>
+            """,
+            status_code=500,
+        )
 
 
 @router.get("/quiz/result/{attempt_id}", response_class=HTMLResponse)
-async def quiz_result(request: Request, attempt_id: UUID):
-    session = require_lti_session(request)
+async def quiz_result(request: Request, attempt_id: UUID, token: str | None = None):
+    session = require_quiz_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
 
@@ -198,8 +277,12 @@ async def quiz_result(request: Request, attempt_id: UUID):
         else f'<p class="bad">Grade not sent: {html.escape(str(attempt.get("grade_error") or "unknown"))}</p>'
     )
     teacher_link = ""
+    token_q = f"?token={html.escape(token)}" if token else ""
     if session.get("is_instructor"):
-        teacher_link = '<p><a class="btn secondary" href="/teacher/attempts">Teacher: view attempts</a></p>'
+        teacher_link = (
+            f'<p><a class="btn secondary" href="/teacher/attempts{token_q}">'
+            "Teacher: view attempts</a></p>"
+        )
 
     body = f"""
     <h1>Quiz result</h1>
@@ -212,7 +295,7 @@ async def quiz_result(request: Request, attempt_id: UUID):
       <p class="meta">Attempt <code>{html.escape(str(attempt['id']))}</code></p>
     </div>
     <p>
-      <a class="btn" href="/quiz">Retake quiz</a>
+      <a class="btn" href="/quiz{token_q}">Retake quiz</a>
       {teacher_link}
     </p>
     """
@@ -220,18 +303,18 @@ async def quiz_result(request: Request, attempt_id: UUID):
 
 
 @router.get("/teacher/attempts", response_class=HTMLResponse)
-async def teacher_attempts(request: Request):
-    session = require_lti_session(request)
+async def teacher_attempts(request: Request, token: str | None = None):
+    session = require_quiz_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
 
     if not session.get("is_instructor"):
         return _page(
             "Teachers only",
-            """
+            f"""
             <h1>Teachers only</h1>
             <p class="sub">This list is available when the LTI launch includes an Instructor role.</p>
-            <p><a class="btn secondary" href="/quiz">Back to quiz</a></p>
+            <p><a class="btn secondary" href="/quiz{'?token=' + html.escape(token) if token else ''}">Back to quiz</a></p>
             """,
         )
 
@@ -259,6 +342,7 @@ async def teacher_attempts(request: Request):
             + "</tbody></table>"
         )
 
+    token_q = f"?token={html.escape(token)}" if token else ""
     body = f"""
     <h1>Quiz attempts</h1>
     <p class="sub">
@@ -266,6 +350,6 @@ async def teacher_attempts(request: Request):
       only rows visible under this tenant’s RLS context.
     </p>
     <div class="card">{table}</div>
-    <p><a class="btn secondary" href="/quiz">Back to quiz</a></p>
+    <p><a class="btn secondary" href="/quiz{token_q}">Back to quiz</a></p>
     """
     return _page("Attempts", body)

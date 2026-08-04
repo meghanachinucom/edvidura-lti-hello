@@ -189,6 +189,24 @@ def list_quiz_attempts_for_tenant(
         return list(rows)
 
 
+def update_quiz_attempt_grade(
+    *,
+    tenant_id: UUID | str,
+    attempt_id: UUID | str,
+    grade_sent: bool,
+    grade_error: str | None,
+) -> None:
+    with tenant_connection(tenant_id) as conn:
+        conn.execute(
+            """
+            UPDATE quiz_attempts
+            SET grade_sent = %s, grade_error = %s
+            WHERE id = %s
+            """,
+            (grade_sent, grade_error, str(attempt_id)),
+        )
+
+
 def upsert_platform(
     *,
     tenant_id: str,

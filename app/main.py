@@ -20,6 +20,7 @@ from app.lti_fastapi import (
 )
 from app.quiz_routes import SESSION_KEY as QUIZ_SESSION_KEY
 from app.quiz_routes import router as quiz_router
+from app.quiz_routes import store_quiz_context
 from app.settings import get_settings
 from app.tenancy import TENANT_A_ID, TENANT_B_ID, build_tool_conf_from_db, resolve_platform
 from app.tenancy_isolation import prove_launch_events_isolation
@@ -216,7 +217,7 @@ async def lti_launch(request: Request):
         )
 
         is_instructor = "Instructor" in role_text
-        request.session[QUIZ_SESSION_KEY] = {
+        quiz_ctx = {
             "launch_id": message_launch.get_launch_id(),
             "tenant_id": str(tenant.tenant_id),
             "tenant_slug": tenant.slug,
@@ -228,7 +229,10 @@ async def lti_launch(request: Request):
             "course": str(course),
             "launch_event_id": str(event["id"]),
         }
-        return RedirectResponse(url="/quiz", status_code=303)
+        quiz_token = store_quiz_context(quiz_ctx)
+        quiz_ctx["quiz_token"] = quiz_token
+        request.session[QUIZ_SESSION_KEY] = quiz_ctx
+        return RedirectResponse(url=f"/quiz?token={quiz_token}", status_code=303)
     except LtiException as exc:
         print(f"LTI launch failed: {exc}", flush=True)
         return PlainTextResponse(f"LTI launch failed: {exc}", status_code=400)
