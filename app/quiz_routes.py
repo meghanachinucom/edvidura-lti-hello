@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import html
 import traceback
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -21,7 +20,6 @@ router = APIRouter(tags=["quiz"])
 
 SESSION_KEY = "lti_slice_a"
 QUIZ_CTX_PREFIX = "quizctx:"
-AGS_TIMEOUT_SEC = 8
 
 
 def _page(title: str, body: str, status_code: int = 200) -> HTMLResponse:
@@ -112,6 +110,11 @@ def require_quiz_session(
 
 
 def _restore_launch(request: Request, launch_id: str) -> FastAPIMessageLaunch:
+    # Re-inject cached JWT body when session cookies were dropped (local HTTP / new window)
+    cached = LAUNCH_CACHE.get(f"launchdata:{launch_id}")
+    if cached is not None:
+        request.session[launch_id] = cached
+
     tool_conf = build_tool_conf_from_db(require_platforms=True)
     fastapi_request = FastAPIRequest(request)
     storage = make_launch_data_storage(fastapi_request, LAUNCH_CACHE)
@@ -126,11 +129,20 @@ def _restore_launch(request: Request, launch_id: str) -> FastAPIMessageLaunch:
 def _try_ags(
     request: Request, session: dict[str, Any], *, score: int
 ) -> tuple[bool, str | None]:
+    """Run AGS in-request (not a worker thread) so session/launch restore works."""
     launch_id = session.get("launch_id")
     if not launch_id:
         return False, "No launch_id in session — grade not sent"
 
-    def _run() -> tuple[bool, str | None]:
+    if session.get("ags_available") is False:
+        return (
+            False,
+            "AGS not on this launch. In Moodle: tool Services → Assignment and Grade Services "
+            "= Use this service; activity Privacy → Accept grades = Yes; Grade type = Point. "
+            "Then relaunch as a student.",
+        )
+
+    try:
         message_launch = _restore_launch(request, str(launch_id))
         return send_quiz_grade(
             message_launch,
@@ -138,15 +150,8 @@ def _try_ags(
             score=float(score),
             score_maximum=float(MAX_SCORE),
         )
-
-    try:
-        with ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(_run)
-            return future.result(timeout=AGS_TIMEOUT_SEC)
-    except FuturesTimeout:
-        return False, f"AGS timed out after {AGS_TIMEOUT_SEC}s (Moodle unreachable?)"
     except Exception as exc:  # noqa: BLE001
-        return False, f"Could not restore launch for AGS: {exc}"
+        return False, f"AGS failed: {exc}"
 
 
 @router.get("/quiz", response_class=HTMLResponse)
@@ -183,6 +188,23 @@ async def quiz_form(request: Request, token: str | None = None):
             "Teacher: view attempts</a></p>"
         )
 
+    if session.get("ags_available"):
+        ags_banner = (
+            '<p class="ok">Moodle grades (AGS): available on this launch'
+            + (
+                " · line item present"
+                if session.get("ags_has_lineitem")
+                else " · no line item yet (tool may create one)"
+            )
+            + "</p>"
+        )
+    else:
+        ags_banner = (
+            '<p class="bad">Moodle grades (AGS): <strong>not available</strong> on this launch. '
+            "Fix in Moodle (tool Services → Assignment and Grade Services = Use this service; "
+            "activity → Accept grades = Yes; Grade = Point), then relaunch.</p>"
+        )
+
     body = f"""
     <h1>EdVidura — Slice A Quiz</h1>
     <p class="sub">
@@ -190,6 +212,7 @@ async def quiz_form(request: Request, token: str | None = None):
       · {html.escape(str(session.get('tenant_slug') or ''))}
       · {html.escape(str(session.get('course') or ''))}
     </p>
+    {ags_banner}
     <div class="card">
       <form method="post" action="/quiz/submit">
         <input type="hidden" name="quiz_token" value="{html.escape(str(quiz_token))}"/>

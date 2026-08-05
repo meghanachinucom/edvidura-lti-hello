@@ -217,6 +217,13 @@ async def lti_launch(request: Request):
         )
 
         is_instructor = "Instructor" in role_text
+        ags_claim = launch_data.get(
+            "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"
+        ) or {}
+        ags_scopes = list(ags_claim.get("scope") or [])
+        ags_available = bool(ags_claim) and (
+            "https://purl.imsglobal.org/spec/lti-ags/scope/score" in ags_scopes
+        )
         quiz_ctx = {
             "launch_id": message_launch.get_launch_id(),
             "tenant_id": str(tenant.tenant_id),
@@ -228,7 +235,19 @@ async def lti_launch(request: Request):
             "is_instructor": is_instructor,
             "course": str(course),
             "launch_event_id": str(event["id"]),
+            "ags_available": ags_available,
+            "ags_scopes": ags_scopes,
+            "ags_has_lineitem": bool(ags_claim.get("lineitem")),
+            "ags_has_lineitems": bool(ags_claim.get("lineitems")),
         }
+        # Keep launch JWT body so AGS can restore even if browser cookies are dropped
+        from app.launch_cache import LAUNCH_CACHE
+
+        LAUNCH_CACHE.set(
+            f"launchdata:{message_launch.get_launch_id()}",
+            launch_data,
+            exp=3600,
+        )
         quiz_token = store_quiz_context(quiz_ctx)
         quiz_ctx["quiz_token"] = quiz_token
         request.session[QUIZ_SESSION_KEY] = quiz_ctx

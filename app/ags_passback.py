@@ -36,19 +36,26 @@ def send_quiz_grade(
     )
 
     try:
-        lineitem = None
-        # If Moodle did not attach a line item, create/find one for this quiz
-        if not message_launch.get_launch_data().get(
+        endpoint = message_launch.get_launch_data().get(
             "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint", {}
-        ).get("lineitem"):
-            if ags.can_create_lineitem():
-                lineitem = LineItem()
-                lineitem.set_tag("edvidura-slice-a-quiz")
-                lineitem.set_score_maximum(float(score_maximum))
-                lineitem.set_label("EdVidura Slice A Quiz")
-                lineitem.set_resource_id("edvidura-slice-a-quiz")
-            else:
-                return False, "No line item on launch and cannot create one"
+        ) or {}
+        lineitem = None
+        if endpoint.get("lineitem"):
+            # Use the line item Moodle attached to this resource link
+            lineitem = None
+        elif ags.can_create_lineitem():
+            lineitem = LineItem()
+            lineitem.set_tag("edvidura-slice-a-quiz")
+            lineitem.set_score_maximum(float(score_maximum))
+            lineitem.set_label("EdVidura Slice A Quiz")
+            lineitem.set_resource_id("edvidura-slice-a-quiz")
+        else:
+            scopes = ", ".join(endpoint.get("scope") or []) or "(none)"
+            return (
+                False,
+                "No line item on launch and cannot create one. "
+                f"Scopes={scopes}. In Moodle activity: Accept grades=Yes and set a Point grade, then relaunch.",
+            )
 
         ags.put_grade(grade, lineitem)
         return True, None
