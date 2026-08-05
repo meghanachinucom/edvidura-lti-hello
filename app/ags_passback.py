@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import traceback
 
 from pylti1p3.exception import LtiException
 from pylti1p3.grade import Grade
@@ -60,6 +61,9 @@ def send_quiz_grade(
         ags.put_grade(grade, lineitem)
         return True, None
     except LtiException as exc:
+        traceback.print_exc()
         return False, str(exc)
+
     except Exception as exc:  # noqa: BLE001
+        traceback.print_exc()
         return False, f"AGS error: {exc}"
