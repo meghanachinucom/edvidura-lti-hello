@@ -1,0 +1,126 @@
+"""Focused tests for quiz result ownership and instructor route authorization."""
+from __future__ import annotations
+
+from unittest.mock import patch
+from uuid import uuid4
+
+from fastapi.testclient import TestClient
+
+from app.main import app
+from app.quiz_routes import store_quiz_context
+
+
+def get_client() -> TestClient:
+    return TestClient(app)
+
+
+def test_learner_viewing_own_quiz_result_allowed():
+    client = get_client()
+    attempt_id = str(uuid4())
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "subject": "student-123",
+            "is_instructor": False,
+            "learner_name": "Student One",
+        }
+    )
+    mock_attempt = {
+        "id": attempt_id,
+        "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "subject": "student-123",
+        "learner_name": "Student One",
+        "score": 3,
+        "max_score": 3,
+        "grade_sent": True,
+        "grade_error": None,
+    }
+    with patch("app.quiz_routes.db.get_quiz_attempt", return_value=mock_attempt):
+        response = client.get(f"/quiz/result/{attempt_id}?token={token}")
+        assert response.status_code == 200
+        assert "Quiz result" in response.text
+
+
+def test_learner_viewing_other_learner_quiz_result_forbidden():
+    client = get_client()
+    attempt_id = str(uuid4())
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "subject": "student-456",  # Different student
+            "is_instructor": False,
+            "learner_name": "Student Two",
+        }
+    )
+    mock_attempt = {
+        "id": attempt_id,
+        "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "subject": "student-123",  # Owned by student-123
+        "learner_name": "Student One",
+        "score": 3,
+        "max_score": 3,
+        "grade_sent": True,
+        "grade_error": None,
+    }
+    with patch("app.quiz_routes.db.get_quiz_attempt", return_value=mock_attempt):
+        response = client.get(f"/quiz/result/{attempt_id}?token={token}")
+        assert response.status_code == 403
+        assert "Access denied" in response.text
+
+
+def test_instructor_viewing_learner_quiz_result_allowed():
+    client = get_client()
+    attempt_id = str(uuid4())
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "subject": "teacher-001",
+            "is_instructor": True,
+            "learner_name": "Teacher One",
+        }
+    )
+    mock_attempt = {
+        "id": attempt_id,
+        "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "subject": "student-123",
+        "learner_name": "Student One",
+        "score": 3,
+        "max_score": 3,
+        "grade_sent": True,
+        "grade_error": None,
+    }
+    with patch("app.quiz_routes.db.get_quiz_attempt", return_value=mock_attempt):
+        response = client.get(f"/quiz/result/{attempt_id}?token={token}")
+        assert response.status_code == 200
+        assert "Quiz result" in response.text
+
+
+def test_non_instructor_accessing_teacher_attempts_forbidden():
+    client = get_client()
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "subject": "student-123",
+            "is_instructor": False,
+            "learner_name": "Student One",
+        }
+    )
+    response = client.get(f"/teacher/attempts?token={token}")
+    assert response.status_code == 403
+    assert "Teachers only" in response.text
+
+
+def test_instructor_accessing_teacher_attempts_allowed():
+    client = get_client()
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "subject": "teacher-001",
+            "is_instructor": True,
+            "learner_name": "Teacher One",
+        }
+    )
+    with patch("app.quiz_routes.db.list_quiz_attempts_for_tenant", return_value=[]):
+        response = client.get(f"/teacher/attempts?token={token}")
+        assert response.status_code == 200
+        assert "Quiz attempts" in response.text

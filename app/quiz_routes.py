@@ -294,6 +294,15 @@ async def quiz_result(request: Request, attempt_id: UUID, token: str | None = No
             "<h1>Attempt not found</h1><p class='sub'>It may belong to another tenant or does not exist.</p>",
         )
 
+    is_owner = str(attempt.get("subject", "")) == str(session.get("subject", ""))
+    is_instructor = bool(session.get("is_instructor"))
+    if not (is_owner or is_instructor):
+        return _page(
+            "Access denied",
+            "<h1>Access denied</h1><p class='sub'>You are not authorized to view this result.</p>",
+            status_code=403,
+        )
+
     grade_line = (
         '<p class="ok">Grade sent to Moodle gradebook (AGS).</p>'
         if attempt["grade_sent"]
@@ -339,6 +348,7 @@ async def teacher_attempts(request: Request, token: str | None = None):
             <p class="sub">This list is available when the LTI launch includes an Instructor role.</p>
             <p><a class="btn secondary" href="/quiz{'?token=' + html.escape(token) if token else ''}">Back to quiz</a></p>
             """,
+            status_code=403,
         )
 
     rows = db.list_quiz_attempts_for_tenant(session["tenant_id"])
