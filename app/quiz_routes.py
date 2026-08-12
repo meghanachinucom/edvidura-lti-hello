@@ -235,63 +235,26 @@ async def quiz_form(request: Request, token: str | None = None):
         session = {**session, "quiz_token": quiz_token}
         request.session[SESSION_KEY] = session
 
-    fields = []
-    for i, q in enumerate(QUESTIONS, start=1):
-        opts = []
-        for idx, choice in enumerate(q.choices):
-            opts.append(
-                f'<label><input type="radio" name="{html.escape(q.id)}" value="{idx}" required/> '
-                f"{html.escape(choice)}</label>"
-            )
-        fields.append(
-            f'<fieldset class="q"><legend>Q{i}. {html.escape(q.prompt)}</legend>'
-            + "".join(opts)
-            + "</fieldset>"
-        )
+    from app.main import templates
 
-    teacher_link = ""
-    if session.get("is_instructor"):
-        teacher_link = (
-            f'<p><a class="btn secondary" href="/teacher/attempts?token={html.escape(str(quiz_token))}">'
-            "Teacher: view attempts</a></p>"
-        )
-
-    if session.get("ags_available"):
-        ags_banner = (
-            '<p class="ok">Moodle grades (AGS): available on this launch'
-            + (
-                " · line item present"
-                if session.get("ags_has_lineitem")
-                else " · no line item yet (tool may create one)"
-            )
-            + "</p>"
-        )
-    else:
-        ags_banner = (
-            '<p class="bad">Moodle grades (AGS): <strong>not available</strong> on this launch. '
-            "Fix in Moodle (tool Services → Assignment and Grade Services = Use this service; "
-            "activity → Accept grades = Yes; Grade = Point), then relaunch.</p>"
-        )
-
-    body = f"""
-    <h1>EdVidura — Slice A Quiz</h1>
-    <p class="sub">
-      {html.escape(str(session.get('learner_name') or session.get('subject')))}
-      · {html.escape(str(session.get('tenant_slug') or ''))}
-      · {html.escape(str(session.get('course') or ''))}
-    </p>
-    {ags_banner}
-    <div class="card">
-      <form method="post" action="/quiz/submit">
-        <input type="hidden" name="quiz_token" value="{html.escape(str(quiz_token))}"/>
-        {''.join(fields)}
-        <p class="meta">Answer all three questions, then submit.</p>
-        <button type="submit">Submit quiz</button>
-      </form>
-    </div>
-    {teacher_link}
-    """
-    return _page("Quiz", body)
+    return templates.TemplateResponse(
+        request=request,
+        name="quiz_session.html",
+        context={
+            "tenant_name": session.get("tenant_name") or session.get("tenant_slug") or "Current Institution",
+            "course": session.get("course") or "Current Course",
+            "user_name": session.get("learner_name") or session.get("subject") or "Learner",
+            "user_role": "Instructor" if session.get("is_instructor") else "Student",
+            "quiz_token": quiz_token,
+            "active_page": "quiz_session",
+            "page_title": "Quiz in Session",
+            "questions": QUESTIONS,
+            "questions_count": len(QUESTIONS),
+            "max_score": MAX_SCORE,
+            "ags_available": session.get("ags_available", False),
+            "session": session,
+        },
+    )
 
 
 @router.post("/quiz/submit", response_class=HTMLResponse)

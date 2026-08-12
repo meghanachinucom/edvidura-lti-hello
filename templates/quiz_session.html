@@ -1,0 +1,164 @@
+{% extends "base_shell.html" %}
+
+{% block content %}
+<style>
+  .quiz-choice-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    background-color: var(--bg-card);
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.93rem;
+    color: var(--text-main);
+  }
+  .quiz-choice-card:hover {
+    border-color: var(--primary-500);
+    background-color: var(--primary-50);
+  }
+  .quiz-choice-card input[type="radio"] {
+    accent-color: var(--primary-600);
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  .quiz-nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-card);
+    font-size: 0.86rem;
+    color: var(--text-main);
+    text-decoration: none;
+  }
+</style>
+
+<!-- Top Sub-Navigation Header -->
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <a href="/active-quizzes?token={{ quiz_token }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">
+      &larr; Active Quizzes
+    </a>
+    <div>
+      <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0;">
+        {{ course }}
+      </h2>
+      <span style="font-size: 0.84rem; color: var(--text-muted);">
+        EdVidura Assessment Quiz &bull; {{ tenant_name }}
+      </span>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <span class="badge badge-purple" style="font-size: 0.8rem; padding: 6px 12px;">
+      {{ questions_count }} Questions &bull; {{ max_score }} Points Max
+    </span>
+    <button type="submit" form="quiz-form" class="btn btn-primary" style="padding: 8px 18px; font-size: 0.88rem;">
+      Submit Quiz
+    </button>
+  </div>
+</div>
+
+<!-- 2-Column Assessment Layout -->
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start;">
+
+  <!-- Main Left Assessment Form Column -->
+  <div>
+    <!-- Progress Indicator Card -->
+    <div class="card" style="padding: 18px 24px; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <span style="font-size: 0.92rem; font-weight: 700; color: var(--text-main);">
+          Questions 1 to {{ questions_count }} of {{ questions_count }}
+        </span>
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--primary-600);">
+          Answer all questions
+        </span>
+      </div>
+      <div style="height: 6px; width: 100%; background-color: var(--bg-subtle); border-radius: 9999px; overflow: hidden;">
+        <div style="height: 100%; width: 100%; background-color: var(--primary-600); border-radius: 9999px;"></div>
+      </div>
+    </div>
+
+    <!-- Quiz Form -->
+    <form id="quiz-form" method="post" action="/quiz/submit">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+
+      {% for q in questions %}
+        <div class="card" id="question-{{ loop.index }}" style="padding: 24px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span class="badge badge-purple" style="font-size: 0.72rem; padding: 2px 8px;">
+              QUESTION {{ loop.index }} OF {{ questions_count }}
+            </span>
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">
+              Multiple Choice &bull; 1 Point
+            </span>
+          </div>
+
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin: 0 0 18px; line-height: 1.4;">
+            {{ q.prompt }}
+          </h3>
+
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            {% for choice in q.choices %}
+              <label class="quiz-choice-card">
+                <input type="radio" name="{{ q.id }}" value="{{ loop.index0 }}" required />
+                <span>{{ choice }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+
+      <!-- Bottom Submission Card -->
+      <div class="card" style="padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <p style="margin: 0; font-size: 0.88rem; color: var(--text-muted);">
+          Answer all {{ questions_count }} questions above, then click submit to finalize your attempt.
+        </p>
+        <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-size: 0.92rem;">
+          Submit Quiz
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Right Sidebar Column: Question Navigation -->
+  <div>
+    <div class="card" style="padding: 20px; position: sticky; top: 24px;">
+      <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin: 0 0 16px;">
+        Question Navigation
+      </h3>
+
+      <div style="display: flex; flex-direction: column; margin-bottom: 20px;">
+        {% for q in questions %}
+          <a href="#question-{{ loop.index }}" class="quiz-nav-item">
+            <span style="font-weight: 600;">Q{{ loop.index }}: {{ q.prompt[:28] }}...</span>
+            <span class="badge" style="background-color: var(--bg-subtle); color: var(--text-muted); font-size: 0.7rem;">
+              Required
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+
+      <button type="submit" form="quiz-form" class="btn btn-primary" style="width: 100%; padding: 10px; font-size: 0.9rem;">
+        <span>Submit Quiz</span>
+        <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+        </svg>
+      </button>
+      
+      <p style="font-size: 0.78rem; color: var(--text-muted); text-align: center; margin: 12px 0 0;">
+        Passes score back to gradebook on submit.
+      </p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

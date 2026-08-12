@@ -180,3 +180,25 @@ def test_active_quizzes_unauthenticated_returns_launch_required():
     response = client.get("/active-quizzes")
     assert response.status_code == 401
     assert "Launch required" in response.text
+
+
+def test_quiz_form_authenticated_renders_quiz_session():
+    client = get_client()
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "tenant_name": "Stanford University Sandbox",
+            "subject": "student-123",
+            "learner_name": "Alex Mercer",
+            "is_instructor": False,
+            "course": "CS101: Introduction to Computer Science",
+        }
+    )
+    response = client.get(f"/quiz?token={token}")
+    assert response.status_code == 200
+    assert "Quiz in Session" in response.text
+    assert "CS101: Introduction to Computer Science" in response.text
+    assert 'action="/quiz/submit"' in response.text
+    assert 'name="q1"' in response.text
+    assert 'name="q2"' in response.text
+    assert 'name="q3"' in response.text
