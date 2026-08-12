@@ -334,35 +334,58 @@ async def quiz_result(request: Request, attempt_id: UUID, token: str | None = No
             status_code=403,
         )
 
-    grade_line = (
-        '<p class="ok">Grade sent to Moodle gradebook (AGS).</p>'
-        if attempt["grade_sent"]
-        else f'<p class="bad">Grade not sent: {html.escape(str(attempt.get("grade_error") or "unknown"))}</p>'
-    )
-    teacher_link = ""
-    token_q = f"?token={html.escape(token)}" if token else ""
-    if session.get("is_instructor"):
-        teacher_link = (
-            f'<p><a class="btn secondary" href="/teacher/attempts{token_q}">'
-            "Teacher: view attempts</a></p>"
+    answers_data = attempt.get("answers") or {}
+    detail_map = answers_data.get("detail") or {}
+
+    question_details = []
+    for q in QUESTIONS:
+        info = detail_map.get(q.id) or {}
+        chosen_idx = info.get("chosen", -1)
+        if isinstance(chosen_idx, int) and 0 <= chosen_idx < len(q.choices):
+            chosen_text = q.choices[chosen_idx]
+        else:
+            chosen_text = "No answer selected"
+
+        is_correct = bool(info.get("correct", False))
+        question_details.append(
+            {
+                "id": q.id,
+                "prompt": q.prompt,
+                "chosen_text": chosen_text,
+                "is_correct": is_correct,
+            }
         )
 
-    body = f"""
-    <h1>Quiz result</h1>
-    <p class="sub">{html.escape(str(attempt['learner_name'] or attempt['subject']))}</p>
-    <div class="card">
-      <p style="font-size:1.4rem;margin:0">
-        Score: <strong>{attempt['score']}</strong> / {attempt['max_score']}
-      </p>
-      {grade_line}
-      <p class="meta">Attempt <code>{html.escape(str(attempt['id']))}</code></p>
-    </div>
-    <p>
-      <a class="btn" href="/quiz{token_q}">Retake quiz</a>
-      {teacher_link}
-    </p>
-    """
-    return _page("Result", body)
+    quiz_token = token or session.get("quiz_token") or ""
+    score = attempt.get("score", 0)
+    max_score = attempt.get("max_score", MAX_SCORE)
+    pct = int((score / max_score) * 100) if max_score > 0 else 0
+
+    from app.main import templates
+
+    return templates.TemplateResponse(
+        request=request,
+        name="quiz_result.html",
+        context={
+            "tenant_name": session.get("tenant_name") or session.get("tenant_slug") or "Current Institution",
+            "course": session.get("course") or attempt.get("course_label") or "Current Course",
+            "user_name": attempt.get("learner_name") or session.get("learner_name") or session.get("subject") or "Learner",
+            "user_role": "Instructor" if session.get("is_instructor") else "Student",
+            "quiz_token": quiz_token,
+            "active_page": "quiz_result",
+            "page_title": "Quiz Result Summary",
+            "attempt": attempt,
+            "attempt_id": str(attempt["id"]),
+            "score": score,
+            "max_score": max_score,
+            "pct": pct,
+            "created_at": attempt.get("created_at"),
+            "grade_sent": bool(attempt.get("grade_sent")),
+            "has_grade_error": bool(attempt.get("grade_error")),
+            "question_details": question_details,
+            "session": session,
+        },
+    )
 
 
 @router.get("/teacher/attempts", response_class=HTMLResponse)

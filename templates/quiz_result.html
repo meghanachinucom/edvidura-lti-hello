@@ -1,0 +1,165 @@
+{% extends "base_shell.html" %}
+
+{% block content %}
+<!-- Top Gradebook Sync Status Banner -->
+{% if grade_sent %}
+  <div class="card" style="background-color: var(--success-bg); border-color: #bbf7d0; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 36px; height: 36px; border-radius: 50%; background-color: var(--success-text); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <div>
+          <h4 style="margin: 0 0 2px; font-size: 0.98rem; color: #14532d; font-weight: 700;">Gradebook Sync Confirmed</h4>
+          <p style="margin: 0; font-size: 0.85rem; color: #166534;">
+            Successfully synchronized score of {{ pct }}% ({{ score }}/{{ max_score }} points) to Moodle gradebook.
+          </p>
+        </div>
+      </div>
+      <span class="badge badge-success" style="padding: 4px 10px; font-size: 0.78rem;">Confirmed &#10003;</span>
+    </div>
+  </div>
+{% elif has_grade_error %}
+  <div class="card" style="background-color: var(--warning-bg); border-color: #fde68a; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 36px; height: 36px; border-radius: 50%; background-color: var(--warning-text); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div>
+          <h4 style="margin: 0 0 2px; font-size: 0.98rem; color: #78350f; font-weight: 700;">Gradebook Sync Unavailable</h4>
+          <p style="margin: 0; font-size: 0.85rem; color: #92400e;">
+            Score recorded locally ({{ score }}/{{ max_score }} points). Gradebook service is pending configuration.
+          </p>
+        </div>
+      </div>
+      <span class="badge" style="background-color: #fde68a; color: #78350f; padding: 4px 10px; font-size: 0.78rem;">Unavailable</span>
+    </div>
+  </div>
+{% else %}
+  <div class="card" style="background-color: var(--bg-subtle); border-color: var(--border-color); margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 36px; height: 36px; border-radius: 50%; background-color: var(--navy-700); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div>
+          <h4 style="margin: 0 0 2px; font-size: 0.98rem; color: var(--text-main); font-weight: 700;">Gradebook Sync Not Confirmed</h4>
+          <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
+            Score recorded in EdVidura platform.
+          </p>
+        </div>
+      </div>
+      <span class="badge" style="background-color: var(--border-color); color: var(--text-muted); padding: 4px 10px; font-size: 0.78rem;">Pending</span>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Final Grade Hero Card -->
+<div class="card" style="padding: 32px; margin-bottom: 32px;">
+  <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 16px;">
+    FINAL GRADE
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 28px; flex-wrap: wrap; margin-bottom: 28px;">
+    <!-- Circular Percentage Badge -->
+    <div style="width: 90px; height: 90px; border-radius: 50%; border: 6px solid var(--primary-100); background-color: var(--primary-50); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      <span style="font-size: 1.6rem; font-weight: 800; color: var(--primary-600);">{{ pct }}%</span>
+    </div>
+
+    <div>
+      <h2 style="font-size: 1.65rem; font-weight: 800; color: var(--text-main); margin: 0 0 6px; letter-spacing: -0.02em;">
+        Quiz Attempt Completed
+      </h2>
+      <p style="margin: 0 0 4px; font-size: 0.98rem; color: var(--text-muted);">
+        Your score: <strong>{{ score }} / {{ max_score }} points</strong>
+      </p>
+      <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">
+        Attempt ID: <code>{{ attempt_id }}</code> &bull; Submitted {{ created_at.strftime('%b %d, %Y at %I:%M %p') if created_at else '' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Navigation Action Buttons -->
+  <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-top: 20px; border-top: 1px solid var(--border-color);">
+    <a href="/quiz?token={{ quiz_token }}" class="btn btn-primary" style="padding: 10px 20px; font-size: 0.9rem;">
+      Retake Quiz
+    </a>
+    <a href="/active-quizzes?token={{ quiz_token }}" class="btn btn-secondary" style="padding: 10px 20px; font-size: 0.9rem;">
+      Back to Active Quizzes
+    </a>
+    {% if session.is_instructor %}
+      <a href="/teacher/attempts?token={{ quiz_token }}" class="btn btn-outline" style="padding: 10px 20px; font-size: 0.9rem;">
+        Teacher: View All Attempts
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Question Review Section -->
+<h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin: 0 0 20px;">
+  Question Review
+</h3>
+
+<div style="display: flex; flex-direction: column; gap: 16px;">
+  {% for item in question_details %}
+    {% if item.is_correct %}
+      <div class="card" style="padding: 20px 24px; margin-bottom: 0; border-left: 4px solid var(--success-text); background-color: var(--bg-card);">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: flex-start; gap: 14px; flex: 1; min-width: 260px;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background-color: var(--success-bg); color: var(--success-text); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+              <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div>
+              <h4 style="font-size: 1.02rem; font-weight: 700; color: var(--text-main); margin: 0 0 6px;">
+                Question {{ loop.index }}: {{ item.prompt }}
+              </h4>
+              <p style="margin: 0; font-size: 0.88rem; color: var(--text-muted);">
+                Your answer: <strong>{{ item.chosen_text }}</strong> &bull; <span style="color: var(--success-text); font-weight: 600;">(Correct)</span>
+              </p>
+            </div>
+          </div>
+          <div>
+            <span class="badge badge-success" style="font-size: 0.8rem; padding: 4px 10px;">
+              1.0 / 1.0 PT
+            </span>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="card" style="padding: 20px 24px; margin-bottom: 0; border-left: 4px solid var(--danger-text); background-color: #fff5f5;">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: flex-start; gap: 14px; flex: 1; min-width: 260px;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background-color: var(--danger-bg); color: var(--danger-text); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+              <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </div>
+            <div>
+              <h4 style="font-size: 1.02rem; font-weight: 700; color: var(--text-main); margin: 0 0 6px;">
+                Question {{ loop.index }}: {{ item.prompt }}
+              </h4>
+              <p style="margin: 0; font-size: 0.88rem; color: var(--text-muted);">
+                Your answer: <strong>{{ item.chosen_text }}</strong> &bull; <span style="color: var(--danger-text); font-weight: 600;">(Incorrect)</span>
+              </p>
+            </div>
+          </div>
+          <div>
+            <span class="badge" style="background-color: var(--danger-bg); color: var(--danger-text); font-size: 0.8rem; padding: 4px 10px;">
+              0.0 / 1.0 PT
+            </span>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endblock %}

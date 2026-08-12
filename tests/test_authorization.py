@@ -38,7 +38,8 @@ def test_learner_viewing_own_quiz_result_allowed():
     with patch("app.quiz_routes.db.get_quiz_attempt", return_value=mock_attempt):
         response = client.get(f"/quiz/result/{attempt_id}?token={token}")
         assert response.status_code == 200
-        assert "Quiz result" in response.text
+        assert "Quiz Result Summary" in response.text
+        assert "Quiz Attempt Completed" in response.text
 
 
 def test_learner_viewing_other_learner_quiz_result_forbidden():
@@ -92,7 +93,7 @@ def test_instructor_viewing_learner_quiz_result_allowed():
     with patch("app.quiz_routes.db.get_quiz_attempt", return_value=mock_attempt):
         response = client.get(f"/quiz/result/{attempt_id}?token={token}")
         assert response.status_code == 200
-        assert "Quiz result" in response.text
+        assert "Quiz Result Summary" in response.text
 
 
 def test_non_instructor_accessing_teacher_attempts_forbidden():
