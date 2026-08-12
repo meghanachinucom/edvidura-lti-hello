@@ -234,3 +234,53 @@ def test_lti_integration_unauthenticated_returns_launch_required():
     response = client.get("/lti-integration")
     assert response.status_code == 401
     assert "Launch required" in response.text
+
+
+def test_institution_detail_authenticated_renders_page():
+    client = get_client()
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "tenant_slug": "stanford",
+            "tenant_name": "Stanford University Sandbox",
+            "subject": "teacher-123",
+            "learner_name": "Dr. Smith",
+            "is_instructor": True,
+            "course": "CS101: Introduction to Computer Science",
+        }
+    )
+    with patch("app.quiz_routes.db.list_quiz_attempts_for_tenant", return_value=[]):
+        response = client.get(f"/institution-detail?token={token}")
+        assert response.status_code == 200
+        assert "Tenant Institution Profile" in response.text
+        assert "Stanford University Sandbox" in response.text
+        assert "CS101: Introduction to Computer Science" in response.text
+
+
+def test_institution_detail_unauthenticated_returns_launch_required():
+    client = get_client()
+    response = client.get("/institution-detail")
+    assert response.status_code == 401
+    assert "Launch required" in response.text
+
+
+def test_institution_detail_ignores_arbitrary_institution_id():
+    client = get_client()
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "tenant_slug": "stanford",
+            "tenant_name": "Stanford University Sandbox",
+            "subject": "teacher-123",
+            "learner_name": "Dr. Smith",
+            "is_instructor": True,
+            "course": "CS101: Introduction to Computer Science",
+        }
+    )
+    with patch("app.quiz_routes.db.list_quiz_attempts_for_tenant", return_value=[]) as mock_list:
+        # Pass an arbitrary institution_id parameter in query string
+        response = client.get(f"/institution-detail?token={token}&institution_id=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+        assert response.status_code == 200
+        # Ensure db query was called ONLY with tenant_id from session, NOT client-supplied institution_id
+        mock_list.assert_called_once_with("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        assert "Stanford University Sandbox" in response.text

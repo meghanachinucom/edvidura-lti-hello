@@ -1,0 +1,244 @@
+{% extends "base_shell.html" %}
+
+{% block content %}
+<!-- Subtitle -->
+<div style="margin-bottom: 24px;">
+  <p style="margin: 0; font-size: 0.95rem; color: var(--text-muted);">
+    Tenant-scoped read-only integration profile and assessment summary for <strong>{{ tenant_name }}</strong>.
+  </p>
+</div>
+
+<!-- Header Card matching Stitch header card -->
+<div class="card" style="padding: 24px; margin-bottom: 24px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <div style="width: 52px; height: 52px; border-radius: var(--radius-sm); background-color: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg style="width: 28px; height: 28px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+      </div>
+      <div>
+        <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0 0 4px;">
+          {{ tenant_name }}
+        </h2>
+        <p style="margin: 0; font-size: 0.86rem; color: var(--text-muted);">
+          Slug: <code>{{ tenant_slug }}</code> &bull; Active Course: <strong>{{ course }}</strong>
+        </p>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span class="badge badge-success" style="padding: 6px 12px; font-size: 0.8rem;">
+        &bull; LTI 1.3 Active
+      </span>
+      <span class="badge badge-purple" style="padding: 6px 12px; font-size: 0.8rem;">
+        RLS Enforced
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- 2-Column Main Section -->
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; margin-bottom: 28px;">
+
+  <!-- Left Main Column: Read-Only Tenant Credentials & Metadata Card -->
+  <div class="card" style="padding: 24px; margin-bottom: 0;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0;">
+        Tenant Parameters & Metadata
+      </h3>
+      <span class="badge" style="background-color: var(--bg-subtle); color: var(--text-muted); font-size: 0.76rem;">
+        Read-Only Profile
+      </span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <!-- Field 1: Institution Title -->
+      <div>
+        <label style="display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">
+          Institution Name
+        </label>
+        <div style="padding: 10px 14px; background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600; color: var(--text-main);">
+          {{ tenant_name }}
+        </div>
+      </div>
+
+      <!-- Field 2: Tenant Slug Identifier -->
+      <div>
+        <label style="display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">
+          Tenant Identifier (Slug)
+        </label>
+        <div style="padding: 10px 14px; background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.9rem; font-family: monospace; color: var(--primary-700);">
+          {{ tenant_slug }}
+        </div>
+      </div>
+
+      <!-- Field 3: Course Context -->
+      <div>
+        <label style="display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">
+          Current Course Context
+        </label>
+        <div style="padding: 10px 14px; background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.9rem; color: var(--text-main);">
+          {{ course }}
+        </div>
+      </div>
+
+      <!-- Field 4: LTI Security Specification -->
+      <div>
+        <label style="display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">
+          Security & Specification Protocol
+        </label>
+        <div style="padding: 10px 14px; background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.9rem; color: var(--text-main);">
+          LTI 1.3 Core &bull; OAuth2 / OIDC Authorization Code Flow &bull; RS256 JWT
+        </div>
+      </div>
+
+      <!-- Field 5: Isolation Scoping -->
+      <div>
+        <label style="display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">
+          PostgreSQL Database Row-Level Security (RLS)
+        </label>
+        <div style="padding: 10px 14px; background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.9rem; color: var(--success-text); font-weight: 600;">
+          Enforced (`SET LOCAL app.tenant_id`)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Sidebar Column -->
+  <div style="display: flex; flex-direction: column; gap: 24px;">
+
+    <!-- At a Glance Metrics Card -->
+    <div class="card" style="padding: 24px; margin-bottom: 0;">
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0 0 16px;">
+        Tenant at a Glance
+      </h3>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+          <span style="font-size: 0.86rem; color: var(--text-muted);">Recorded Learners</span>
+          <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">{{ recorded_learners }}</span>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+          <span style="font-size: 0.86rem; color: var(--text-muted);">Total Quiz Attempts</span>
+          <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">{{ total_attempts }}</span>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 0.86rem; color: var(--text-muted);">Recorded Average Score</span>
+          <span style="font-size: 1.1rem; font-weight: 800; color: var(--primary-600);">{{ avg_score }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scopes & Claim Configs Card matching Stitch right card -->
+    <div class="card" style="padding: 24px; margin-bottom: 0;">
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0 0 16px;">
+        Scopes & Claim Configs
+      </h3>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.82rem;">
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <input type="checkbox" {% if ags_available %}checked{% endif %} disabled style="margin-top: 2px;">
+          <div>
+            <code style="font-size: 0.76rem; color: var(--text-main); display: block; word-break: break-all;">
+              https://purl.imsglobal.org/spec/lti-ags/scope/lineitem
+            </code>
+            <span style="color: var(--text-muted); font-size: 0.74rem;">Lineitem management claim</span>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <input type="checkbox" {% if ags_available %}checked{% endif %} disabled style="margin-top: 2px;">
+          <div>
+            <code style="font-size: 0.76rem; color: var(--text-main); display: block; word-break: break-all;">
+              https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly
+            </code>
+            <span style="color: var(--text-muted); font-size: 0.74rem;">Read-only result fetch claim</span>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <input type="checkbox" {% if ags_available %}checked{% endif %} disabled style="margin-top: 2px;">
+          <div>
+            <code style="font-size: 0.76rem; color: var(--text-main); display: block; word-break: break-all;">
+              https://purl.imsglobal.org/spec/lti-ags/scope/score
+            </code>
+            <span style="color: var(--text-muted); font-size: 0.74rem;">Score grade passback claim</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Full Width Bottom Table: Recorded Learner Attempts -->
+<div class="card" style="padding: 24px; margin-bottom: 0;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0;">
+      Recorded Learner Attempts for {{ tenant_name }}
+    </h3>
+    <span class="badge badge-purple" style="font-size: 0.78rem;">
+      Tenant Isolated
+    </span>
+  </div>
+
+  {% if attempts and attempts | length > 0 %}
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 1.5px solid var(--border-color); text-align: left;">
+            <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">Name / Subject</th>
+            <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">Course</th>
+            <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">Score</th>
+            <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">Sync Status</th>
+            <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">Submitted</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in attempts %}
+            <tr style="border-bottom: 1px solid var(--border-color);">
+              <td style="padding: 12px; font-weight: 600; color: var(--text-main);">
+                {{ r.learner_name or r.subject }}
+              </td>
+              <td style="padding: 12px; color: var(--text-muted);">
+                {{ r.course_label or course }}
+              </td>
+              <td style="padding: 12px;">
+                <span style="font-weight: 700; color: var(--text-main);">{{ r.pct }}%</span>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">({{ r.score }}/{{ r.max_score }})</span>
+              </td>
+              <td style="padding: 12px;">
+                {% if r.grade_sent %}
+                  <span class="badge badge-success" style="font-size: 0.76rem; padding: 4px 8px;">
+                    Synced &#10003;
+                  </span>
+                {% elif r.has_error %}
+                  <span class="badge" style="background-color: var(--warning-bg); color: var(--warning-text); font-size: 0.76rem; padding: 4px 8px;">
+                    Sync Error
+                  </span>
+                {% else %}
+                  <span class="badge" style="background-color: var(--bg-subtle); color: var(--text-muted); font-size: 0.76rem; padding: 4px 8px;">
+                    Not Confirmed
+                  </span>
+                {% endif %}
+              </td>
+              <td style="padding: 12px; color: var(--text-muted); font-size: 0.8rem;">
+                {{ r.created_at.strftime('%b %d, %H:%M') if r.created_at else '—' }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="padding: 32px; text-align: center; background-color: var(--bg-main); border-radius: var(--radius-sm);">
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">
+        No learner attempts recorded yet for {{ tenant_name }}.
+      </p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
