@@ -1,0 +1,134 @@
+{% extends "base_shell.html" %}
+
+{% block content %}
+<!-- Top Integration Verified Banner -->
+<div class="card" style="background-color: var(--success-bg); border-color: #bbf7d0; margin-bottom: 24px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <div style="width: 38px; height: 38px; border-radius: 50%; background-color: var(--success-text); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <div>
+        <h3 style="margin: 0 0 2px; font-size: 1.05rem; color: #14532d; font-weight: 700;">Moodle LTI 1.3 Integration Verified</h3>
+        <p style="margin: 0; font-size: 0.88rem; color: #166534;">
+          Successfully authenticated from <strong>{{ tenant_name }}</strong>. 
+          {% if ags_available %}
+            LTI Assignment and Grade Services (AGS) score passback is enabled.
+          {% else %}
+            AGS score passback is pending gradebook service configuration.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    <div>
+      <span class="badge badge-success" style="font-size: 0.82rem; padding: 6px 12px; background-color: #bbf7d0; color: #14532d;">
+        Connected &#10003;
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Launched Course Hero Card -->
+<div class="card" style="padding: 28px 32px; margin-bottom: 32px;">
+  <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 280px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <span class="badge badge-purple">LAUNCHED COURSE</span>
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">&bull; &nbsp;Moodle LTI 1.3</span>
+      </div>
+      <h2 style="font-size: 1.65rem; font-weight: 800; margin: 0 0 8px; color: var(--text-main); letter-spacing: -0.02em;">
+        {{ course }}
+      </h2>
+      <p style="margin: 0; font-size: 0.92rem; color: var(--text-muted);">
+        Active Course Context &bull; {{ tenant_name }}
+      </p>
+    </div>
+
+    <div style="align-self: center;">
+      <a href="/quiz?token={{ quiz_token }}" class="btn btn-secondary" style="padding: 10px 18px; font-size: 0.9rem;">
+        <span>Go to Course</span>
+        <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions Section -->
+<h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin: 0 0 18px;">
+  Quick Actions
+</h3>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+  
+  <!-- Card 1: Quiz Playground (Primary Action) -->
+  <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
+    <div>
+      <div style="width: 42px; height: 42px; border-radius: var(--radius-sm); background-color: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+        <svg style="width: 22px; height: 22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 8px; color: var(--text-main);">Quiz Playground</h4>
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0 0 20px; line-height: 1.5;">
+        Access interactive quizzes and assessment sessions for {{ course }}.
+      </p>
+    </div>
+    <div>
+      <a href="/quiz?token={{ quiz_token }}" class="btn btn-primary" style="width: 100%;">
+        <span>View Quizzes &rarr;</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Card 2: Grades & Sync Logs -->
+  <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
+    <div>
+      <div style="width: 42px; height: 42px; border-radius: var(--radius-sm); background-color: var(--success-bg); color: var(--success-text); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+        <svg style="width: 22px; height: 22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </div>
+      <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 8px; color: var(--text-main);">Grades & Sync Logs</h4>
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0 0 20px; line-height: 1.5;">
+        View completed quiz attempt submissions and grading feedback for {{ course }}.
+      </p>
+    </div>
+    <div>
+      {% if session.is_instructor %}
+        <a href="/teacher/attempts?token={{ quiz_token }}" class="btn btn-secondary" style="width: 100%;">
+          <span>Open Instructor Reports &rarr;</span>
+        </a>
+      {% else %}
+        <a href="/quiz?token={{ quiz_token }}" class="btn btn-secondary" style="width: 100%;">
+          <span>Open Performance &rarr;</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Card 3: Integration Config -->
+  <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
+    <div>
+      <div style="width: 42px; height: 42px; border-radius: var(--radius-sm); background-color: var(--warning-bg); color: var(--warning-text); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+        <svg style="width: 22px; height: 22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      </div>
+      <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 8px; color: var(--text-main);">Integration Config</h4>
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0 0 20px; line-height: 1.5;">
+        Inspect the platform public JSON Web Key Set (JWKS) endpoint used for LTI 1.3 verification.
+      </p>
+    </div>
+    <div>
+      <a href="/.well-known/jwks.json" target="_blank" class="btn btn-outline" style="width: 100%;">
+        <span>Check Keys &rarr;</span>
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

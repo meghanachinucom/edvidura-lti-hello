@@ -246,8 +246,6 @@ async def lti_launch(request: Request):
             "ags_has_lineitems": bool(ags_claim.get("lineitems")),
         }
         # Keep launch JWT body so AGS can restore even if browser cookies are dropped
-        from app.launch_cache import LAUNCH_CACHE
-
         LAUNCH_CACHE.set(
             f"launchdata:{message_launch.get_launch_id()}",
             launch_data,
@@ -256,7 +254,7 @@ async def lti_launch(request: Request):
         quiz_token = store_quiz_context(quiz_ctx)
         quiz_ctx["quiz_token"] = quiz_token
         request.session[QUIZ_SESSION_KEY] = quiz_ctx
-        return RedirectResponse(url=f"/quiz?token={quiz_token}", status_code=303)
+        return RedirectResponse(url=f"/launch-hub?token={quiz_token}", status_code=303)
     except LtiException as exc:
         print(f"LTI launch failed: {exc}", flush=True)
         return PlainTextResponse(f"LTI launch failed: {exc}", status_code=400)

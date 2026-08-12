@@ -124,3 +124,31 @@ def test_instructor_accessing_teacher_attempts_allowed():
         response = client.get(f"/teacher/attempts?token={token}")
         assert response.status_code == 200
         assert "Quiz attempts" in response.text
+
+
+def test_launch_hub_authenticated_renders_page():
+    client = get_client()
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "tenant_name": "Stanford University Sandbox",
+            "subject": "student-123",
+            "learner_name": "Alex Mercer",
+            "is_instructor": False,
+            "course": "CS101: Introduction to Computer Science",
+            "ags_available": True,
+        }
+    )
+    response = client.get(f"/launch-hub?token={token}")
+    assert response.status_code == 200
+    assert "LTI Launch Hub" in response.text
+    assert "CS101: Introduction to Computer Science" in response.text
+    assert "Moodle LTI 1.3 Integration Verified" in response.text
+    assert "View Quizzes" in response.text
+
+
+def test_launch_hub_unauthenticated_returns_launch_required():
+    client = get_client()
+    response = client.get("/launch-hub")
+    assert response.status_code == 401
+    assert "Launch required" in response.text

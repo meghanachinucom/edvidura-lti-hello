@@ -154,6 +154,33 @@ def _try_ags(
         return False, f"AGS failed: {exc}"
 
 
+@router.get("/launch-hub", response_class=HTMLResponse)
+async def launch_hub(request: Request, token: str | None = None):
+    session = require_quiz_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+
+    quiz_token = token or session.get("quiz_token") or ""
+
+    from app.main import templates
+
+    return templates.TemplateResponse(
+        request=request,
+        name="launch_hub.html",
+        context={
+            "tenant_name": session.get("tenant_name") or session.get("tenant_slug") or "Current Institution",
+            "course": session.get("course") or "Current Course",
+            "user_name": session.get("learner_name") or session.get("subject") or "Learner",
+            "user_role": "Instructor" if session.get("is_instructor") else "Student",
+            "quiz_token": quiz_token,
+            "active_page": "launch_hub",
+            "page_title": "LTI Launch Hub",
+            "ags_available": session.get("ags_available", False),
+            "session": session,
+        },
+    )
+
+
 @router.get("/quiz", response_class=HTMLResponse)
 async def quiz_form(request: Request, token: str | None = None):
     session = require_quiz_session(request, token=token)
