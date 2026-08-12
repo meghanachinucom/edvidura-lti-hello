@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura LTI Platform</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- EdVidura Common Shell Stylesheet -->
+  <link rel="stylesheet" href="/static/css/edvidura-shell.css"/>
+</head>
+<body>
+  <div class="ev-shell">
+
+    <!-- =========================================================================
+         DARK NAVY SIDEBAR & NAVIGATION STRUCTURE
+         ========================================================================= -->
+    <aside class="ev-sidebar" id="ev-sidebar">
+
+      <!-- Brand Header -->
+      <div class="ev-sidebar-brand">
+        <div class="ev-logo-badge">EV</div>
+        <div>
+          <span class="ev-brand-title">EdVidura</span>
+          <span class="ev-brand-subtitle">LTI 1.3 Platform</span>
+        </div>
+      </div>
+
+      <!-- Tenant & Course Context Widget -->
+      <div class="ev-sidebar-context">
+        <span class="ev-context-label">Active Context</span>
+        <div class="ev-context-value" id="ev-tenant-display">
+          {{ tenant_name | default("Current Institution") }}
+        </div>
+      </div>
+
+      <!-- Navigation Links Grouped by Role -->
+      <nav class="ev-sidebar-nav">
+
+        <!-- Student Section -->
+        <div class="ev-nav-section-title">Student</div>
+        <ul class="ev-nav-list">
+          <li class="ev-nav-item">
+            <a href="#" class="ev-nav-link {{ 'active' if active_page == 'launch_hub' else '' }}">
+              <svg class="ev-nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              <span>1. LTI Launch Hub</span>
+            </a>
+          </li>
+          <li class="ev-nav-item">
+            <a href="/quiz" class="ev-nav-link {{ 'active' if active_page == 'active_quizzes' else '' }}">
+              <svg class="ev-nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              <span>2. Active Quizzes</span>
+            </a>
+          </li>
+          <li class="ev-nav-item">
+            <a href="/quiz" class="ev-nav-link {{ 'active' if active_page == 'quiz_session' else '' }}">
+              <svg class="ev-nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+              </svg>
+              <span>3. Quiz in Session</span>
+            </a>
+          </li>
+          <li class="ev-nav-item">
+            <a href="#" class="ev-nav-link {{ 'active' if active_page == 'quiz_result' else '' }}">
+              <svg class="ev-nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>4. Quiz Result Summary</span>
+            </a>
+          </li>
+        </ul>
+
+        <!-- Instructor Section -->
+        <div class="ev-nav-section-title">Instructor</div>
+        <ul class="ev-nav-list">
+          <li class="ev-nav-item">
+            <a href="/teacher/attempts" class="ev-nav-link {{ 'active' if active_page == 'instructor_overview' else '' }}">
+              <svg class="ev-nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <span>5. Instructor Overview</span>
+            </a>
+          </li>
+        </ul>
+
+        <!-- Admin Section -->
+        <div class="ev-nav-section-title">Admin</div>
+        <ul class="ev-nav-list">
+          <li class="ev-nav-item">
+            <a href="#" class="ev-nav-link {{ 'active' if active_page == 'system_control' else '' }}">
+              <svg class="ev-nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              </svg>
+              <span>6. Global LTI System Control</span>
+            </a>
+          </li>
+          <li class="ev-nav-item">
+            <a href="#" class="ev-nav-link {{ 'active' if active_page == 'institutions' else '' }}">
+              <svg class="ev-nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              <span>7. Registered Institutions</span>
+            </a>
+          </li>
+          <li class="ev-nav-item">
+            <a href="#" class="ev-nav-link {{ 'active' if active_page == 'students' else '' }}">
+              <svg class="ev-nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </svg>
+              <span>8. Global Student Directory</span>
+            </a>
+          </li>
+          <li class="ev-nav-item">
+            <a href="#" class="ev-nav-link {{ 'active' if active_page == 'institution_detail' else '' }}">
+              <svg class="ev-nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>9. Institution Detail</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- User Profile Footer in Sidebar -->
+      <div class="ev-sidebar-user">
+        <div class="ev-user-avatar">
+          {{ (user_name | default("Learner"))[0] | upper }}
+        </div>
+        <div class="ev-user-info">
+          <p class="ev-user-name">{{ user_name | default("User") }}</p>
+          <p class="ev-user-role">{{ user_role | default("Learner") }}</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- =========================================================================
+         MAIN CONTENT WRAPPER & HEADER TOP BAR
+         ========================================================================= -->
+    <div class="ev-content-wrapper">
+
+      <!-- Top Header Bar -->
+      <header class="ev-header">
+        <div class="ev-header-left">
+          <button class="ev-mobile-toggle" id="ev-mobile-toggle" aria-label="Toggle menu">
+            <svg style="width:24px;height:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <h1 class="ev-page-title">{{ page_title | default("EdVidura Platform") }}</h1>
+        </div>
+
+        <div class="ev-header-right">
+          <span class="badge badge-purple">LTI 1.3</span>
+        </div>
+      </header>
+
+      <!-- Main Viewport Body -->
+      <main class="ev-main">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+  </div>
+
+  <!-- Responsive Mobile Drawer Toggle Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var toggleBtn = document.getElementById('ev-mobile-toggle');
+      var sidebar = document.getElementById('ev-sidebar');
+      if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', function() {
+          sidebar.classList.toggle('open');
+        });
+      }
+    });
+  </script>
+</body>
+</html>
