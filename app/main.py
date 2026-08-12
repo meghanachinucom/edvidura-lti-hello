@@ -5,6 +5,8 @@ from uuid import UUID
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pylti1p3.exception import LtiException
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -30,6 +32,9 @@ app = FastAPI(
     description="Multi-tenant Moodle LTI 1.3 Hello spike (not full EdVidura).",
     version="0.3.0",
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 app.include_router(institution_router)
 app.include_router(student_router)
