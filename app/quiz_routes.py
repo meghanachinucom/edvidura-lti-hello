@@ -551,3 +551,78 @@ async def institution_detail(request: Request, token: str | None = None):
             "session": session,
         },
     )
+
+
+@router.get("/student-directory", response_class=HTMLResponse)
+async def student_directory(request: Request, token: str | None = None, q: str | None = None):
+    session = require_quiz_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+
+    quiz_token = token or session.get("quiz_token") or ""
+
+    rows = db.list_quiz_attempts_for_tenant(session["tenant_id"])
+
+    student_map = {}
+    for r in rows:
+        subj = r.get("subject") or "unknown"
+        name = r.get("learner_name") or subj
+        if subj not in student_map:
+            student_map[subj] = {
+                "subject": subj,
+                "name": name,
+                "courses": set(),
+                "attempts_count": 0,
+                "total_score": 0,
+                "total_max": 0,
+                "last_activity": r.get("created_at"),
+            }
+        entry = student_map[subj]
+        entry["attempts_count"] += 1
+        entry["total_score"] += r.get("score", 0)
+        entry["total_max"] += r.get("max_score", 1)
+        if r.get("course_label"):
+            entry["courses"].add(r["course_label"])
+        if r.get("created_at") and (not entry["last_activity"] or r["created_at"] > entry["last_activity"]):
+            entry["last_activity"] = r["created_at"]
+
+    student_list = []
+    search_term = q.strip().lower() if q else ""
+    for entry in student_map.values():
+        name_match = search_term in entry["name"].lower()
+        subj_match = search_term in entry["subject"].lower()
+        if search_term and not (name_match or subj_match):
+            continue
+
+        avg_pct = int((entry["total_score"] / entry["total_max"]) * 100) if entry["total_max"] > 0 else 0
+        student_list.append(
+            {
+                "name": entry["name"],
+                "subject": entry["subject"],
+                "courses_count": len(entry["courses"]) or 1,
+                "attempts_count": entry["attempts_count"],
+                "avg_pct": avg_pct,
+                "last_activity": entry["last_activity"],
+            }
+        )
+
+    from app.main import templates
+
+    return templates.TemplateResponse(
+        request=request,
+        name="student_directory.html",
+        context={
+            "tenant_name": session.get("tenant_name") or session.get("tenant_slug") or "Current Institution",
+            "tenant_slug": session.get("tenant_slug") or "",
+            "course": session.get("course") or "Current Course",
+            "user_name": session.get("learner_name") or session.get("subject") or "User",
+            "user_role": "Instructor" if session.get("is_instructor") else "Student",
+            "quiz_token": quiz_token,
+            "active_page": "students",
+            "page_title": "Tenant Student Directory",
+            "students": student_list,
+            "total_students": len(student_list),
+            "search_query": q or "",
+            "session": session,
+        },
+    )
