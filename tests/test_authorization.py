@@ -204,3 +204,33 @@ def test_quiz_form_authenticated_renders_quiz_session():
     assert 'name="q1"' in response.text
     assert 'name="q2"' in response.text
     assert 'name="q3"' in response.text
+
+
+def test_lti_integration_authenticated_renders_page():
+    client = get_client()
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "tenant_slug": "stanford",
+            "tenant_name": "Stanford University Sandbox",
+            "subject": "teacher-123",
+            "learner_name": "Dr. Smith",
+            "is_instructor": True,
+            "course": "CS101: Introduction to Computer Science",
+        }
+    )
+    response = client.get(f"/lti-integration?token={token}")
+    assert response.status_code == 200
+    assert "LTI Integration Status" in response.text
+    assert "Stanford University Sandbox" in response.text
+    assert "CS101: Introduction to Computer Science" in response.text
+    assert "/lti/login" in response.text
+    assert "/lti/launch" in response.text
+    assert "/.well-known/jwks.json" in response.text
+
+
+def test_lti_integration_unauthenticated_returns_launch_required():
+    client = get_client()
+    response = client.get("/lti-integration")
+    assert response.status_code == 401
+    assert "Launch required" in response.text

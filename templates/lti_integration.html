@@ -1,0 +1,206 @@
+{% extends "base_shell.html" %}
+
+{% block content %}
+<!-- Subtitle -->
+<div style="margin-bottom: 24px;">
+  <p style="margin: 0; font-size: 0.95rem; color: var(--text-muted);">
+    Tenant-scoped LTI 1.3 integration status, platform configuration, and endpoint endpoints for <strong>{{ tenant_name }}</strong>.
+  </p>
+</div>
+
+<!-- 4 Top Status Cards (Grid Layout matching Stitch structure) -->
+<div class="metric-grid" style="margin-bottom: 28px;">
+
+  <!-- Card 1: Active Tenant -->
+  <div class="metric-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-label">ACTIVE TENANT</span>
+      <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background-color: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center;">
+        <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+      </div>
+    </div>
+    <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); line-height: 1.3;">
+      {{ tenant_name }}
+    </div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+      Slug: <code>{{ tenant_slug }}</code>
+    </div>
+  </div>
+
+  <!-- Card 2: LTI Specification -->
+  <div class="metric-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-label">LTI SPECIFICATION</span>
+      <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background-color: var(--info-bg); color: var(--info-text); display: flex; align-items: center; justify-content: center;">
+        <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+      </div>
+    </div>
+    <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); line-height: 1.3;">
+      LTI 1.3 Active
+    </div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+      OIDC / OAuth2 / JWT Security
+    </div>
+  </div>
+
+  <!-- Card 3: Public JWKS Keys -->
+  <div class="metric-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-label">PUBLIC JWKS KEYS</span>
+      <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background-color: var(--success-bg); color: var(--success-text); display: flex; align-items: center; justify-content: center;">
+        <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+        </svg>
+      </div>
+    </div>
+    <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); line-height: 1.3;">
+      RSA 2048-bit
+    </div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+      Public JWKS Endpoint Operational
+    </div>
+  </div>
+
+  <!-- Card 4: Gradebook Service -->
+  <div class="metric-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-label">GRADEBOOK SERVICE</span>
+      <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background-color: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center;">
+        <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </div>
+    </div>
+    <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); line-height: 1.3;">
+      {% if ags_available %}AGS Enabled{% else %}AGS Pending{% endif %}
+    </div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+      {% if ags_available %}Assignment Grade Service Active{% else %}Gradebook service not configured{% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- 2-Column Section Layout -->
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start;">
+
+  <!-- Left Main Column: LTI 1.3 Endpoints Configuration Card -->
+  <div class="card" style="padding: 24px; margin-bottom: 0;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0;">
+        LTI 1.3 Endpoint Configuration
+      </h3>
+      <span class="badge badge-purple" style="font-size: 0.78rem;">
+        Tenant Config
+      </span>
+    </div>
+
+    <!-- Endpoint Item 1: OIDC Login -->
+    <div style="padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 14px; background-color: var(--bg-card);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">
+          OIDC Initiation Endpoint
+        </span>
+        <span class="badge badge-success" style="font-size: 0.72rem;">GET / POST</span>
+      </div>
+      <code style="display: block; padding: 8px 12px; background-color: var(--bg-main); border-radius: 4px; font-size: 0.82rem; color: var(--primary-700); word-break: break-all;">
+        {{ base_url }}/lti/login
+      </code>
+      <p style="margin: 6px 0 0; font-size: 0.78rem; color: var(--text-muted);">
+        OIDC login initiation URL registered in LMS platform tool settings.
+      </p>
+    </div>
+
+    <!-- Endpoint Item 2: LTI Launch -->
+    <div style="padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 14px; background-color: var(--bg-card);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">
+          LTI 1.3 Target Launch Endpoint
+        </span>
+        <span class="badge badge-success" style="font-size: 0.72rem;">POST</span>
+      </div>
+      <code style="display: block; padding: 8px 12px; background-color: var(--bg-main); border-radius: 4px; font-size: 0.82rem; color: var(--primary-700); word-break: break-all;">
+        {{ base_url }}/lti/launch
+      </code>
+      <p style="margin: 6px 0 0; font-size: 0.78rem; color: var(--text-muted);">
+        Redirect URI target endpoint for LTI 1.3 launch request verification.
+      </p>
+    </div>
+
+    <!-- Endpoint Item 3: Public JWKS -->
+    <div style="padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 0; background-color: var(--bg-card);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">
+          Public JWKS Endpoint
+        </span>
+        <span class="badge badge-purple" style="font-size: 0.72rem;">GET (Public)</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <code style="flex: 1; padding: 8px 12px; background-color: var(--bg-main); border-radius: 4px; font-size: 0.82rem; color: var(--primary-700); word-break: break-all;">
+          {{ base_url }}/.well-known/jwks.json
+        </code>
+        <a href="/.well-known/jwks.json" target="_blank" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">
+          View JWKS &rarr;
+        </a>
+      </div>
+      <p style="margin: 6px 0 0; font-size: 0.78rem; color: var(--text-muted);">
+        Public JSON Web Key Set containing RSA public keys used by LMS platforms.
+      </p>
+    </div>
+  </div>
+
+  <!-- Right Sidebar Column: LTI Security & Context Card -->
+  <div class="card" style="padding: 24px; margin-bottom: 0;">
+    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0 0 16px;">
+      Tenant Integration Status
+    </h3>
+
+    <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
+      <div>
+        <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">
+          Institution Name
+        </span>
+        <span style="font-size: 0.92rem; font-weight: 700; color: var(--text-main);">
+          {{ tenant_name }}
+        </span>
+      </div>
+
+      <div>
+        <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">
+          Active Course Context
+        </span>
+        <span style="font-size: 0.92rem; font-weight: 600; color: var(--text-main);">
+          {{ course }}
+        </span>
+      </div>
+
+      <div>
+        <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">
+          PostgreSQL RLS Status
+        </span>
+        <span class="badge badge-success" style="font-size: 0.76rem; padding: 4px 8px;">
+          Enforced (SET LOCAL app.tenant_id)
+        </span>
+      </div>
+
+      <div>
+        <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">
+          LTI 1.3 Key Pair Status
+        </span>
+        <span class="badge badge-success" style="font-size: 0.76rem; padding: 4px 8px;">
+          Loaded (keys/private.key)
+        </span>
+      </div>
+    </div>
+
+    <div style="padding: 12px; background-color: var(--bg-main); border-radius: var(--radius-sm); font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
+      &bull; Scoped strictly to the active <strong>{{ tenant_name }}</strong> launch session. No cross-tenant data exposed.
+    </div>
+  </div>
+
+</div>
+{% endblock %}

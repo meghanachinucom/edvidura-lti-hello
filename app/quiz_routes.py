@@ -459,3 +459,36 @@ async def teacher_attempts(request: Request, token: str | None = None):
             "session": session,
         },
     )
+
+
+@router.get("/lti-integration", response_class=HTMLResponse)
+async def lti_integration(request: Request, token: str | None = None):
+    session = require_quiz_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+
+    quiz_token = token or session.get("quiz_token") or ""
+
+    from app.settings import get_settings
+    settings = get_settings()
+    base_url = settings.app_base_url
+
+    from app.main import templates
+
+    return templates.TemplateResponse(
+        request=request,
+        name="lti_integration.html",
+        context={
+            "tenant_name": session.get("tenant_name") or session.get("tenant_slug") or "Current Institution",
+            "tenant_slug": session.get("tenant_slug") or "",
+            "course": session.get("course") or "Current Course",
+            "user_name": session.get("learner_name") or session.get("subject") or "User",
+            "user_role": "Instructor" if session.get("is_instructor") else "Student",
+            "quiz_token": quiz_token,
+            "active_page": "system_control",
+            "page_title": "LTI Integration Status",
+            "base_url": base_url,
+            "ags_available": session.get("ags_available", False),
+            "session": session,
+        },
+    )
