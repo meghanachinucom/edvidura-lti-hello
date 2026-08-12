@@ -626,3 +626,60 @@ async def student_directory(request: Request, token: str | None = None, q: str |
             "session": session,
         },
     )
+
+
+@router.get("/institutions", response_class=HTMLResponse)
+async def registered_institutions(request: Request, token: str | None = None):
+    session = require_quiz_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+
+    quiz_token = token or session.get("quiz_token") or ""
+
+    rows = db.list_quiz_attempts_for_tenant(session["tenant_id"])
+
+    formatted_attempts = []
+    for r in rows:
+        pct = int((r["score"] / r["max_score"]) * 100) if r.get("max_score") else 0
+        has_error = bool(not r.get("grade_sent") and r.get("grade_error"))
+        formatted_attempts.append({**r, "pct": pct, "has_error": has_error})
+
+    total_attempts = len(formatted_attempts)
+    recorded_learners = len(set(str(r.get("subject")) for r in formatted_attempts if r.get("subject")))
+    if total_attempts > 0:
+        avg_score = round(
+            sum((r["score"] / r["max_score"]) * 100 for r in formatted_attempts if r.get("max_score"))
+            / total_attempts,
+            1,
+        )
+        sync_rate = round(
+            (sum(1 for r in formatted_attempts if r.get("grade_sent")) / total_attempts) * 100,
+            1,
+        )
+    else:
+        avg_score = 0.0
+        sync_rate = 0.0
+
+    from app.main import templates
+
+    return templates.TemplateResponse(
+        request=request,
+        name="registered_institutions.html",
+        context={
+            "tenant_name": session.get("tenant_name") or session.get("tenant_slug") or "Current Institution",
+            "tenant_slug": session.get("tenant_slug") or "",
+            "course": session.get("course") or "Current Course",
+            "user_name": session.get("learner_name") or session.get("subject") or "User",
+            "user_role": "Instructor" if session.get("is_instructor") else "Student",
+            "quiz_token": quiz_token,
+            "active_page": "institutions",
+            "page_title": "Tenant Institution Profile",
+            "attempts": formatted_attempts,
+            "total_attempts": total_attempts,
+            "recorded_learners": recorded_learners,
+            "avg_score": avg_score,
+            "sync_rate": sync_rate,
+            "ags_available": session.get("ags_available", False),
+            "session": session,
+        },
+    )

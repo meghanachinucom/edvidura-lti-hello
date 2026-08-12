@@ -331,3 +331,50 @@ def test_student_directory_ignores_arbitrary_tenant_id():
         assert response.status_code == 200
         mock_list.assert_called_once_with("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
         assert "Stanford University Sandbox" in response.text
+
+
+def test_registered_institutions_authenticated_renders_page():
+    client = get_client()
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "tenant_slug": "stanford",
+            "tenant_name": "Stanford University Sandbox",
+            "subject": "teacher-123",
+            "learner_name": "Dr. Smith",
+            "is_instructor": True,
+            "course": "CS101: Introduction to Computer Science",
+        }
+    )
+    with patch("app.quiz_routes.db.list_quiz_attempts_for_tenant", return_value=[]):
+        response = client.get(f"/institutions?token={token}")
+        assert response.status_code == 200
+        assert "Tenant Institution Profile" in response.text
+        assert "Stanford University Sandbox" in response.text
+
+
+def test_registered_institutions_unauthenticated_returns_launch_required():
+    client = get_client()
+    response = client.get("/institutions")
+    assert response.status_code == 401
+    assert "Launch required" in response.text
+
+
+def test_registered_institutions_ignores_arbitrary_params():
+    client = get_client()
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "tenant_slug": "stanford",
+            "tenant_name": "Stanford University Sandbox",
+            "subject": "teacher-123",
+            "learner_name": "Dr. Smith",
+            "is_instructor": True,
+            "course": "CS101: Introduction to Computer Science",
+        }
+    )
+    with patch("app.quiz_routes.db.list_quiz_attempts_for_tenant", return_value=[]) as mock_list:
+        response = client.get(f"/institutions?token={token}&institution_id=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb&tenant_id=cccccccc-cccc-cccc-cccc-cccccccccccc")
+        assert response.status_code == 200
+        mock_list.assert_called_once_with("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        assert "Stanford University Sandbox" in response.text
