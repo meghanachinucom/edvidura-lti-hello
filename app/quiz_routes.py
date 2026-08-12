@@ -406,37 +406,56 @@ async def teacher_attempts(request: Request, token: str | None = None):
         )
 
     rows = db.list_quiz_attempts_for_tenant(session["tenant_id"])
-    if not rows:
-        table = "<p class='sub'>No attempts yet for this tenant.</p>"
-    else:
-        trs = []
-        for r in rows:
-            sent = "yes" if r["grade_sent"] else "no"
-            trs.append(
-                "<tr>"
-                f"<td>{html.escape(str(r['learner_name'] or r['subject']))}</td>"
-                f"<td>{html.escape(str(r['course_label'] or '—'))}</td>"
-                f"<td>{r['score']}/{r['max_score']}</td>"
-                f"<td>{sent}</td>"
-                f"<td class='meta'>{html.escape(r['created_at'].isoformat())}</td>"
-                "</tr>"
-            )
-        table = (
-            "<table><thead><tr>"
-            "<th>Learner</th><th>Course</th><th>Score</th><th>Grade sent</th><th>When</th>"
-            "</tr></thead><tbody>"
-            + "".join(trs)
-            + "</tbody></table>"
+    quiz_token = token or session.get("quiz_token") or ""
+
+    formatted_attempts = []
+    for r in rows:
+        pct = int((r["score"] / r["max_score"]) * 100) if r.get("max_score") else 0
+        has_error = bool(not r.get("grade_sent") and r.get("grade_error"))
+        formatted_attempts.append(
+            {
+                **r,
+                "pct": pct,
+                "has_error": has_error,
+            }
         )
 
-    token_q = f"?token={html.escape(token)}" if token else ""
-    body = f"""
-    <h1>Quiz attempts</h1>
-    <p class="sub">
-      Tenant {html.escape(str(session.get('tenant_slug') or ''))} —
-      only rows visible under this tenant’s RLS context.
-    </p>
-    <div class="card">{table}</div>
-    <p><a class="btn secondary" href="/quiz{token_q}">Back to quiz</a></p>
-    """
-    return _page("Attempts", body)
+    total_attempts = len(formatted_attempts)
+    recorded_learners = len(
+        set(str(r.get("subject")) for r in formatted_attempts if r.get("subject"))
+    )
+    if total_attempts > 0:
+        avg_score = round(
+            sum((r["score"] / r["max_score"]) * 100 for r in formatted_attempts if r.get("max_score"))
+            / total_attempts,
+            1,
+        )
+        sync_rate = round(
+            (sum(1 for r in formatted_attempts if r.get("grade_sent")) / total_attempts) * 100,
+            1,
+        )
+    else:
+        avg_score = 0.0
+        sync_rate = 0.0
+
+    from app.main import templates
+
+    return templates.TemplateResponse(
+        request=request,
+        name="instructor_overview.html",
+        context={
+            "tenant_name": session.get("tenant_name") or session.get("tenant_slug") or "Current Institution",
+            "course": session.get("course") or "Current Course",
+            "user_name": session.get("learner_name") or session.get("subject") or "Instructor",
+            "user_role": "Instructor",
+            "quiz_token": quiz_token,
+            "active_page": "instructor_overview",
+            "page_title": "Instructor Overview",
+            "attempts": formatted_attempts,
+            "recorded_learners": recorded_learners,
+            "total_attempts": total_attempts,
+            "avg_score": avg_score,
+            "sync_rate": sync_rate,
+            "session": session,
+        },
+    )

@@ -1,0 +1,221 @@
+{% extends "base_shell.html" %}
+
+{% block content %}
+<style>
+  .ev-progress-fill {
+    height: 100%;
+    background-color: var(--primary-600);
+    border-radius: 9999px;
+    width: var(--progress-pct, 0%);
+  }
+</style>
+
+<!-- Subtitle -->
+<div style="margin-bottom: 24px;">
+  <p style="margin: 0; font-size: 0.95rem; color: var(--text-muted);">
+    Performance metrics and gradebook synchronization summary for recorded student quiz attempts across <strong>{{ tenant_name }}</strong>.
+  </p>
+</div>
+
+<!-- KPI Cards Grid (4 Top Metric Cards) -->
+<div class="metric-grid" style="margin-bottom: 28px;">
+  
+  <!-- KPI 1: Recorded Learners -->
+  <div class="metric-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-label">RECORDED LEARNERS</span>
+      <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background-color: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center;">
+        <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="metric-value">{{ recorded_learners }}</div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+      Unique students with submissions
+    </div>
+  </div>
+
+  <!-- KPI 2: Total Attempts -->
+  <div class="metric-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-label">TOTAL ATTEMPTS</span>
+      <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background-color: var(--info-bg); color: var(--info-text); display: flex; align-items: center; justify-content: center;">
+        <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+    </div>
+    <div class="metric-value">{{ total_attempts }}</div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+      Submitted assessment attempts
+    </div>
+  </div>
+
+  <!-- KPI 3: Avg Score -->
+  <div class="metric-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-label">AVG SCORE</span>
+      <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background-color: var(--success-bg); color: var(--success-text); display: flex; align-items: center; justify-content: center;">
+        <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+        </svg>
+      </div>
+    </div>
+    <div class="metric-value">{{ avg_score }}%</div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+      Average score across attempts
+    </div>
+  </div>
+
+  <!-- KPI 4: Gradebook Sync Rate -->
+  <div class="metric-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-label">GRADEBOOK SYNC RATE</span>
+      <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background-color: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center;">
+        <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </div>
+    </div>
+    <div class="metric-value">{{ sync_rate }}%</div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+      Successful LTI AGS passbacks
+    </div>
+  </div>
+
+</div>
+
+<!-- 2-Column Section Layout -->
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start;">
+
+  <!-- Left Main Column: Recent Quiz Attempts Table -->
+  <div class="card" style="padding: 24px; margin-bottom: 0;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0;">
+        Recent Quiz Attempts
+      </h3>
+      <span class="badge badge-purple" style="font-size: 0.78rem;">
+        Tenant Isolated
+      </span>
+    </div>
+
+    {% if attempts and attempts | length > 0 %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+          <thead>
+            <tr style="border-bottom: 1.5px solid var(--border-color); text-align: left;">
+              <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">Learner</th>
+              <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">Course</th>
+              <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">Quiz Title</th>
+              <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">Score</th>
+              <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">LTI Sync</th>
+              <th style="padding: 10px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase;">Submitted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in attempts %}
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 12px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0;">
+                      {{ (r.learner_name or r.subject or 'L')[0] | upper }}
+                    </div>
+                    <span style="font-weight: 600; color: var(--text-main);">
+                      {{ r.learner_name or r.subject }}
+                    </span>
+                  </div>
+                </td>
+                <td style="padding: 12px; color: var(--text-muted);">
+                  {{ r.course_label or course }}
+                </td>
+                <td style="padding: 12px; color: var(--text-main); font-weight: 500;">
+                  EdVidura Assessment Quiz
+                </td>
+                <td style="padding: 12px;">
+                  <span style="font-weight: 700; color: var(--text-main);">
+                    {{ r.pct }}%
+                  </span>
+                  <span style="font-size: 0.78rem; color: var(--text-muted); margin-left: 4px;">
+                    ({{ r.score }}/{{ r.max_score }})
+                  </span>
+                </td>
+                <td style="padding: 12px;">
+                  {% if r.grade_sent %}
+                    <span class="badge badge-success" style="font-size: 0.76rem; padding: 4px 8px;">
+                      SYNCED &#10003;
+                    </span>
+                  {% elif r.has_error %}
+                    <span class="badge" style="background-color: var(--warning-bg); color: var(--warning-text); font-size: 0.76rem; padding: 4px 8px;">
+                      SYNC ERROR
+                    </span>
+                  {% else %}
+                    <span class="badge" style="background-color: var(--bg-subtle); color: var(--text-muted); font-size: 0.76rem; padding: 4px 8px;">
+                      NOT CONFIRMED
+                    </span>
+                  {% endif %}
+                </td>
+                <td style="padding: 12px; color: var(--text-muted); font-size: 0.8rem;">
+                  {{ r.created_at.strftime('%b %d, %H:%M') if r.created_at else '—' }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 32px; text-align: center; background-color: var(--bg-main); border-radius: var(--radius-sm);">
+        <div style="width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+          <svg style="width: 22px; height: 22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <h4 style="font-size: 1rem; font-weight: 600; color: var(--text-main); margin: 0 0 4px;">No Quiz Attempts Yet</h4>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+          Student attempts will appear here automatically once submitted.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Right Sidebar Column: Current Course Performance -->
+  <div class="card" style="padding: 24px; margin-bottom: 0;">
+    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0 0 16px;">
+      Current Course Performance
+    </h3>
+
+    <div style="margin-bottom: 20px;">
+      <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">
+        {{ course }}
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 6px;">
+        <span>Recorded Average Score</span>
+        <span style="font-weight: 700; color: var(--primary-600);">{{ avg_score }}%</span>
+      </div>
+      <div style="height: 8px; width: 100%; background-color: var(--bg-subtle); border-radius: 9999px; overflow: hidden; margin-bottom: 16px;">
+        <div class="ev-progress-fill" style="--progress-pct: {{ avg_score }}%;"></div>
+      </div>
+    </div>
+
+    <div style="padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.84rem;">
+        <span style="color: var(--text-muted);">Gradebook Sync Rate</span>
+        <span style="font-weight: 600; color: var(--text-main);">{{ sync_rate }}%</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.84rem;">
+        <span style="color: var(--text-muted);">Recorded Attempts</span>
+        <span style="font-weight: 600; color: var(--text-main);">{{ total_attempts }}</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.84rem;">
+        <span style="color: var(--text-muted);">Learner Submissions</span>
+        <span style="font-weight: 600; color: var(--text-main);">{{ recorded_learners }}</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; padding: 12px; background-color: var(--bg-main); border-radius: var(--radius-sm); font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
+      &bull; Metrics computed dynamically from recorded student attempts for <strong>{{ tenant_name }}</strong>.
+    </div>
+  </div>
+
+</div>
+{% endblock %}

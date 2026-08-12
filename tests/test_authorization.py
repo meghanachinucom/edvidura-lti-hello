@@ -124,7 +124,8 @@ def test_instructor_accessing_teacher_attempts_allowed():
     with patch("app.quiz_routes.db.list_quiz_attempts_for_tenant", return_value=[]):
         response = client.get(f"/teacher/attempts?token={token}")
         assert response.status_code == 200
-        assert "Quiz attempts" in response.text
+        assert "Instructor Overview" in response.text
+        assert "Recent Quiz Attempts" in response.text
 
 
 def test_launch_hub_authenticated_renders_page():
