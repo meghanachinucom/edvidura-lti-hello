@@ -5,6 +5,8 @@ from uuid import UUID
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pylti1p3.exception import LtiException
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -20,6 +22,7 @@ from app.lti_fastapi import (
 )
 from app.quiz_routes import SESSION_KEY as QUIZ_SESSION_KEY
 from app.quiz_routes import router as quiz_router
+from app.quiz_routes import store_quiz_context
 from app.settings import get_settings
 from app.tenancy import TENANT_A_ID, TENANT_B_ID, build_tool_conf_from_db, resolve_platform
 from app.tenancy_isolation import prove_launch_events_isolation
@@ -29,6 +32,9 @@ app = FastAPI(
     description="Multi-tenant Moodle LTI 1.3 Hello spike (not full EdVidura).",
     version="0.3.0",
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 app.include_router(institution_router)
 app.include_router(student_router)
@@ -216,7 +222,14 @@ async def lti_launch(request: Request):
         )
 
         is_instructor = "Instructor" in role_text
-        request.session[QUIZ_SESSION_KEY] = {
+        ags_claim = launch_data.get(
+            "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"
+        ) or {}
+        ags_scopes = list(ags_claim.get("scope") or [])
+        ags_available = bool(ags_claim) and (
+            "https://purl.imsglobal.org/spec/lti-ags/scope/score" in ags_scopes
+        )
+        quiz_ctx = {
             "launch_id": message_launch.get_launch_id(),
             "tenant_id": str(tenant.tenant_id),
             "tenant_slug": tenant.slug,
@@ -227,8 +240,21 @@ async def lti_launch(request: Request):
             "is_instructor": is_instructor,
             "course": str(course),
             "launch_event_id": str(event["id"]),
+            "ags_available": ags_available,
+            "ags_scopes": ags_scopes,
+            "ags_has_lineitem": bool(ags_claim.get("lineitem")),
+            "ags_has_lineitems": bool(ags_claim.get("lineitems")),
         }
-        return RedirectResponse(url="/quiz", status_code=303)
+        # Keep launch JWT body so AGS can restore even if browser cookies are dropped
+        LAUNCH_CACHE.set(
+            f"launchdata:{message_launch.get_launch_id()}",
+            launch_data,
+            exp=3600,
+        )
+        quiz_token = store_quiz_context(quiz_ctx)
+        quiz_ctx["quiz_token"] = quiz_token
+        request.session[QUIZ_SESSION_KEY] = quiz_ctx
+        return RedirectResponse(url=f"/launch-hub?token={quiz_token}", status_code=303)
     except LtiException as exc:
         print(f"LTI launch failed: {exc}", flush=True)
         return PlainTextResponse(f"LTI launch failed: {exc}", status_code=400)
