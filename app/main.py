@@ -167,9 +167,7 @@ async def lti_launch(request: Request):
             fastapi_request, tool_conf, launch_data_storage=storage
         )
         launch_data = message_launch.get_launch_data()
-        import json
-        print(json.dumps(launch_data, indent=2))
-        
+
         iss = str(launch_data.get("iss") or "").rstrip("/")
         aud = launch_data.get("aud")
         if isinstance(aud, list):
