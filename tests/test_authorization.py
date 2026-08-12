@@ -152,3 +152,31 @@ def test_launch_hub_unauthenticated_returns_launch_required():
     response = client.get("/launch-hub")
     assert response.status_code == 401
     assert "Launch required" in response.text
+
+
+def test_active_quizzes_authenticated_renders_page():
+    client = get_client()
+    token = store_quiz_context(
+        {
+            "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "tenant_name": "Stanford University Sandbox",
+            "subject": "student-123",
+            "learner_name": "Alex Mercer",
+            "is_instructor": False,
+            "course": "CS101: Introduction to Computer Science",
+        }
+    )
+    with patch("app.quiz_routes.db.list_quiz_attempts_for_tenant", return_value=[]):
+        response = client.get(f"/active-quizzes?token={token}")
+        assert response.status_code == 200
+        assert "Active Quizzes" in response.text
+        assert "CS101: Introduction to Computer Science" in response.text
+        assert "Start Quiz" in response.text
+        assert "3 Questions" in response.text
+
+
+def test_active_quizzes_unauthenticated_returns_launch_required():
+    client = get_client()
+    response = client.get("/active-quizzes")
+    assert response.status_code == 401
+    assert "Launch required" in response.text

@@ -181,6 +181,47 @@ async def launch_hub(request: Request, token: str | None = None):
     )
 
 
+@router.get("/active-quizzes", response_class=HTMLResponse)
+async def active_quizzes(request: Request, token: str | None = None):
+    session = require_quiz_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+
+    quiz_token = token or session.get("quiz_token") or ""
+
+    recent_attempts = []
+    try:
+        attempts = db.list_quiz_attempts_for_tenant(session["tenant_id"], limit=10)
+        if not session.get("is_instructor"):
+            recent_attempts = [
+                a for a in attempts if str(a.get("subject")) == str(session.get("subject"))
+            ]
+        else:
+            recent_attempts = attempts
+    except Exception:  # noqa: BLE001
+        recent_attempts = []
+
+    from app.main import templates
+
+    return templates.TemplateResponse(
+        request=request,
+        name="active_quizzes.html",
+        context={
+            "tenant_name": session.get("tenant_name") or session.get("tenant_slug") or "Current Institution",
+            "course": session.get("course") or "Current Course",
+            "user_name": session.get("learner_name") or session.get("subject") or "Learner",
+            "user_role": "Instructor" if session.get("is_instructor") else "Student",
+            "quiz_token": quiz_token,
+            "active_page": "active_quizzes",
+            "page_title": "Active Quizzes",
+            "recent_attempts": recent_attempts,
+            "questions_count": len(QUESTIONS),
+            "max_score": MAX_SCORE,
+            "session": session,
+        },
+    )
+
+
 @router.get("/quiz", response_class=HTMLResponse)
 async def quiz_form(request: Request, token: str | None = None):
     session = require_quiz_session(request, token=token)
