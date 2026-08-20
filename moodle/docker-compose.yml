@@ -38,6 +38,9 @@ services:
     volumes:
       - moodledata:/var/www/moodledata
       - moodlehtml:/var/www/html
+      # EdVidura Boost child theme (amber/navy — matches LTI shell)
+      # Moodle 5.x serves themes from public/theme
+      - ./themes/edvidura:/var/www/html/public/theme/edvidura:ro
     depends_on:
       postgres:
         condition: service_healthy

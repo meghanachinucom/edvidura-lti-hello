@@ -1,0 +1,147 @@
+{% extends "base_shell.html" %}
+{% block content %}
+
+{% if is_school_admin %}
+<section class="hero-panel">
+  <p class="welcome-kicker">{{ tenant_name }}</p>
+  <h2 class="welcome-title">Hi{% if first_name %}, {{ first_name }}{% endif %}</h2>
+  <p class="welcome-lede">School directories for teachers, classes, and students.</p>
+  <div class="welcome-actions">
+    <a class="btn primary btn-lg" href="/school-admin/teachers?token={{ quiz_token }}">Manage teachers</a>
+    <a class="btn secondary" href="/school-admin/classes?token={{ quiz_token }}">View classes</a>
+  </div>
+</section>
+{% if school_snap %}
+<div class="rail-grid">
+  <div class="block-panel">
+    <h3>School snapshot</h3>
+    <ol class="chapter-timeline">
+      <li class="done">
+        <span class="tl-mark">{{ school_snap.teacher_count }}</span>
+        <span><span class="tl-title">Teachers</span><span class="tl-meta">Active this term</span></span>
+        <span class="pill teal">OK</span>
+      </li>
+      <li class="done">
+        <span class="tl-mark">{{ school_snap.class_count }}</span>
+        <span><span class="tl-title">Classes</span><span class="tl-meta">With LTI launch</span></span>
+        <span class="pill teal">OK</span>
+      </li>
+      <li class="now">
+        <span class="tl-mark">{{ school_snap.student_count }}</span>
+        <span><span class="tl-title">Students</span><span class="tl-meta">Enrolled across courses</span></span>
+        <span class="pill gold">Live</span>
+      </li>
+    </ol>
+  </div>
+  <div class="block-panel">
+    <h3>Today</h3>
+    <ul class="tip-list">
+      <li><strong>Add</strong> a teacher if Moodle enrolls them.</li>
+      <li><strong>Open</strong> Classes to check roster links.</li>
+    </ul>
+  </div>
+</div>
+{% endif %}
+
+{% elif is_instructor %}
+<section class="hero-panel">
+  <p class="welcome-kicker">{{ course }} · {{ tenant_name }}</p>
+  <h2 class="welcome-title">Hi{% if first_name %}, {{ first_name }}{% endif %}</h2>
+  <p class="welcome-lede">Review class results or upload content for this school.</p>
+  <div class="welcome-actions">
+    <a class="btn primary btn-lg" href="/teacher/attempts?token={{ quiz_token }}">View class results</a>
+    <a class="btn secondary" href="/teacher/content?token={{ quiz_token }}">Upload content</a>
+  </div>
+</section>
+<div class="rail-grid">
+  <div class="block-panel">
+    <h3>Teach</h3>
+    <ul class="tip-list">
+      <li><strong>Class results</strong> — see who attempted the quiz.</li>
+      <li><strong>Upload</strong> — add a lesson or question for this school.</li>
+    </ul>
+  </div>
+  <div class="block-panel">
+    <h3>School</h3>
+    {% if school_snap %}
+    <div class="score-big">{{ school_snap.student_count }}</div>
+    <div class="score-sub">Students across {{ school_snap.class_count }} classes</div>
+    {% else %}
+    <p class="soft-note">Open Class results to review attempts.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% else %}
+<section class="hero-panel">
+  <p class="welcome-kicker">{{ course }} · {{ tenant_name }}</p>
+  <h2 class="welcome-title">Hi{% if first_name %}, {{ first_name }}{% endif %}</h2>
+  <p class="welcome-lede">
+    {% if progress and progress.all_lessons_done %}
+    Lessons done — quiz is next.
+    {% elif progress and progress.completed_count %}
+    Continue where you left off. One path: lessons, then quiz.
+    {% else %}
+    Start with lessons, then take the quiz.
+    {% endif %}
+  </p>
+  <div class="continue-card">
+    <div>
+      <div class="continue-tag">Continue</div>
+      <div class="continue-name">{{ continue_label }}</div>
+      <div class="continue-meta">
+        {% if progress and progress.next_lesson %}
+        {{ progress.next_lesson.title }}
+        {% else %}
+        Your next step in this course
+        {% endif %}
+      </div>
+    </div>
+    <a class="btn primary btn-lg" href="{{ continue_href }}">{{ continue_label }}</a>
+  </div>
+</section>
+
+<div class="rail-grid">
+  <div class="block-panel">
+    <h3>This chapter</h3>
+    {% if chapter_items %}
+    <ol class="chapter-timeline">
+      {% for L in chapter_items %}
+      <li class="{% if L.done %}done{% elif L.now %}now{% else %}open{% endif %}">
+        <span class="tl-mark">{% if L.done %}✓{% elif L.now %}→{% else %}·{% endif %}</span>
+        <span>
+          <span class="tl-title">{{ L.title }}</span>
+          <span class="tl-meta">{{ L.lesson_type | capitalize }}</span>
+        </span>
+        {% if L.done %}<span class="pill teal">Done</span>
+        {% elif L.now %}<span class="pill gold">Now</span>
+        {% else %}<span class="pill">Open</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <p class="soft-note">No lessons published yet for this school.</p>
+    {% endif %}
+  </div>
+  <div class="block-panel">
+    <h3>Last score</h3>
+    {% if last_score is not none %}
+    <div class="score-big">{{ last_score }} / {{ last_max }}</div>
+    <div class="score-sub">
+      {% if ags_available %}Can sync to Moodle{% else %}Saved in EdVidura{% endif %}
+    </div>
+    {% else %}
+    <div class="score-big">—</div>
+    <div class="score-sub">No quiz attempt yet</div>
+    {% endif %}
+    <ul class="tip-list">
+      <li><strong>Path:</strong> Lessons → Quiz → My results</li>
+      {% if not ags_available %}
+      <li>Enable <em>Accept grades from the tool</em> in Moodle to sync scores.</li>
+      {% endif %}
+    </ul>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

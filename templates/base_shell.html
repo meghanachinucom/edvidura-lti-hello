@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{ page_title | default("EdVidura") }} · EdVidura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/shell.css?v=product2"/>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark" aria-hidden="true">EV</div>
+        <div class="brand-text">
+          <div class="brand-name">Ed<span>Vidura</span></div>
+          <div class="brand-tag">Inside Moodle</div>
+        </div>
+      </div>
+
+      <div class="side-stack">
+        <div class="side-card">
+          <small>Now learning</small>
+          <div class="side-course">{{ course | default("Course") }}</div>
+          <div class="side-school">{{ tenant_name | default("School") }}</div>
+          {% if shell_progress and shell_progress.total_count %}
+          <div class="side-bar" aria-hidden="true"><i style="width: {{ shell_progress.percent }}%"></i></div>
+          <div class="side-prog">
+            <span>Course progress</span>
+            <strong>{{ shell_progress.completed_count }} / {{ shell_progress.total_count }} done</strong>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if not is_instructor and not is_school_admin %}
+        <div class="side-card side-next">
+          <small>Up next</small>
+          <div class="side-what">{{ up_next_title }}</div>
+          <div class="side-meta">{{ up_next_meta }}</div>
+          <a class="side-cta" href="{{ up_next_href }}">Continue →</a>
+        </div>
+        <div class="side-card">
+          <small>Your path</small>
+          <div class="side-path">
+            <div class="side-step {{ path_lessons }}">Lessons</div>
+            <div class="side-dot"></div>
+            <div class="side-step {{ path_quiz }}">Quiz</div>
+            <div class="side-dot"></div>
+            <div class="side-step {{ path_results }}">Results</div>
+          </div>
+        </div>
+        {% elif is_instructor and not is_school_admin and school_snap %}
+        <div class="side-card">
+          <small>This school</small>
+          <div class="side-course">{{ tenant_name }}</div>
+          <div class="side-stats">
+            <div class="side-stat"><b>{{ school_snap.teacher_count }}</b><span>teachers</span></div>
+            <div class="side-stat"><b>{{ school_snap.class_count }}</b><span>classes</span></div>
+            <div class="side-stat"><b>{{ school_snap.student_count }}</b><span>students</span></div>
+            <div class="side-stat"><b>{{ school_snap.chapter_count }}</b><span>lessons</span></div>
+          </div>
+        </div>
+        {% elif is_school_admin and school_snap %}
+        <div class="side-card">
+          <small>This school</small>
+          <div class="side-course">{{ tenant_name }}</div>
+          <div class="side-stats">
+            <div class="side-stat"><b>{{ school_snap.teacher_count }}</b><span>teachers</span></div>
+            <div class="side-stat"><b>{{ school_snap.class_count }}</b><span>classes</span></div>
+            <div class="side-stat"><b>{{ school_snap.student_count }}</b><span>students</span></div>
+            <div class="side-stat"><b>{{ school_snap.chapter_count }}</b><span>lessons</span></div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Main">
+        <div class="nav-section">Learn</div>
+        <ul class="nav-list">
+          <li>
+            <a class="nav-link {% if active_page == 'launch_hub' %}active{% endif %}" href="/launch-hub?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">⌂</span> Home
+            </a>
+          </li>
+          <li>
+            <a class="nav-link {% if active_page == 'lessons' %}active{% endif %}" href="/lessons?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">≡</span> Lessons
+            </a>
+          </li>
+          <li>
+            <a class="nav-link {% if active_page == 'quiz_session' %}active{% endif %}" href="/quiz?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">?</span> Quiz
+            </a>
+          </li>
+          <li>
+            {% if last_result_id %}
+            <a class="nav-link {% if active_page == 'quiz_result' or active_page == 'active_quizzes' %}active{% endif %}" href="/quiz/result/{{ last_result_id }}?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">★</span> My results
+            </a>
+            {% else %}
+            <a class="nav-link {% if active_page == 'quiz_result' or active_page == 'active_quizzes' %}active{% endif %}" href="/active-quizzes?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">★</span> My results
+            </a>
+            {% endif %}
+          </li>
+        </ul>
+
+        {% if is_instructor %}
+        <div class="nav-section">Teach</div>
+        <ul class="nav-list">
+          <li>
+            <a class="nav-link {% if active_page == 'teacher_content' %}active{% endif %}" href="/teacher/content?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">↑</span> Upload content
+            </a>
+          </li>
+          <li>
+            <a class="nav-link {% if active_page == 'instructor_overview' %}active{% endif %}" href="/teacher/attempts?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">▦</span> Class results
+            </a>
+          </li>
+        </ul>
+        {% endif %}
+
+        {% if is_school_admin %}
+        <div class="nav-section">School</div>
+        <ul class="nav-list">
+          <li>
+            <a class="nav-link {% if active_page == 'school_admin_teachers' %}active{% endif %}" href="/school-admin/teachers?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">▣</span> Teachers
+            </a>
+          </li>
+          <li>
+            <a class="nav-link {% if active_page == 'school_admin_classes' %}active{% endif %}" href="/school-admin/classes?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">▤</span> Classes
+            </a>
+          </li>
+          <li>
+            <a class="nav-link {% if active_page == 'school_admin_students' %}active{% endif %}" href="/school-admin/students?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">☰</span> Students
+            </a>
+          </li>
+        </ul>
+        {% endif %}
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="user-who">
+          <div class="user-avatar" aria-hidden="true">{{ avatar_initials | default("EV") }}</div>
+          <div>
+            <div class="user-name">{{ learner_name | default("Learner") }}</div>
+            <div class="user-role">{{ user_role | default("Student") }}</div>
+          </div>
+        </div>
+        <a class="btn-back-moodle sidebar-back" href="{{ moodle_return_href }}" target="_top" rel="noopener">← Back to Moodle</a>
+      </div>
+    </aside>
+
+    <div class="content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-toggle" id="menu-toggle" type="button" aria-label="Menu">☰</button>
+          <div>
+            <h1 class="page-title">{{ page_title | default("EdVidura") }}</h1>
+            {% if page_subtitle %}<p class="page-subtitle">{{ page_subtitle }}</p>{% endif %}
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a class="btn-back-moodle" href="{{ moodle_return_href }}" target="_top" rel="noopener">← Back to Moodle</a>
+        </div>
+      </header>
+      <main class="main">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <script>
+    document.getElementById('menu-toggle')?.addEventListener('click', function () {
+      document.getElementById('sidebar')?.classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

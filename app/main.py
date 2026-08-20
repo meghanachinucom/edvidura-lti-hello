@@ -5,10 +5,13 @@ from uuid import UUID
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from pylti1p3.exception import LtiException
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import db
+from app.api.admin_tenants import router as admin_tenants_router
 from app.api.institution import router as institution_router
 from app.api.student import router as student_router
 from app.launch_cache import LAUNCH_CACHE
@@ -18,22 +21,37 @@ from app.lti_fastapi import (
     FastAPIRequest,
     make_launch_data_storage,
 )
+from app.onboard_routes import router as onboard_router
 from app.quiz_routes import SESSION_KEY as QUIZ_SESSION_KEY
 from app.quiz_routes import router as quiz_router
 from app.quiz_routes import store_quiz_context
+from app.shell_routes import router as shell_router
 from app.settings import get_settings
-from app.tenancy import TENANT_A_ID, TENANT_B_ID, build_tool_conf_from_db, resolve_platform
+from app.tenant_context import TenantContext, use_tenant_context
+from app.tenancy import (
+    TENANT_A_ID,
+    TENANT_B_ID,
+    build_tool_conf_from_db,
+    display_name_from_launch,
+    resolve_platform,
+)
 from app.tenancy_isolation import prove_launch_events_isolation
 
 app = FastAPI(
     title="EdVidura LTI Hello",
     description="Multi-tenant Moodle LTI 1.3 Hello spike (not full EdVidura).",
-    version="0.3.0",
+    version="0.5.0",
 )
 
+app.include_router(admin_tenants_router)
+app.include_router(onboard_router)
+app.include_router(shell_router)
 app.include_router(institution_router)
 app.include_router(student_router)
 app.include_router(quiz_router)
+
+_STATIC = Path(__file__).resolve().parent / "static"
+app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 
 _boot = get_settings()
 app.add_middleware(
@@ -75,14 +93,17 @@ def home():
     <h1>EdVidura LTI Hello (multi-tenant)</h1>
     <p>Slice A: Moodle launch → quiz → score → optional AGS grade passback.</p>
     <ul>
+      <li><a href="/onboard">/onboard</a> — institution onboarding (BYO Moodle)</li>
       <li><a href="/health">/health</a></li>
       <li><a href="/.well-known/jwks.json">JWKS</a></li>
       <li><a href="/dev/tenancy/cross-check">/dev/tenancy/cross-check</a> (RLS proof)</li>
-      <li><a href="/quiz">/quiz</a> (requires prior LTI launch)</li>
+      <li><a href="/launch-hub">/launch-hub</a> — 9-screen product shell (after LTI)</li>
+      <li><a href="/quiz">/quiz</a> — quiz inside the shell</li>
+      <li><a href="/docs">/docs</a> — includes <code>POST /admin/tenants</code></li>
       <li>LTI login: <code>{base}/lti/login</code></li>
       <li>LTI launch: <code>{base}/lti/launch</code></li>
     </ul>
-    <p>See <code>docs/TENANT_RESOLUTION.md</code>.</p>
+    <p>See <code>docs/TENANT_RESOLUTION.md</code> and <code>docs/decisions/DEC-006.md</code>.</p>
     """
     return HTMLResponse(body)
 
@@ -184,7 +205,10 @@ async def lti_launch(request: Request):
         )
         tenant = resolve_platform(iss, client_id, deployment_id)
 
-        name = launch_data.get("name") or launch_data.get("sub") or "unknown"
+        name = display_name_from_launch(launch_data) or "Learner"
+        given = str(launch_data.get("given_name") or "").strip()
+        family = str(launch_data.get("family_name") or "").strip()
+        email = str(launch_data.get("email") or "").strip()
         roles = launch_data.get(
             "https://purl.imsglobal.org/spec/lti/claim/roles", []
         )
@@ -192,6 +216,8 @@ async def lti_launch(request: Request):
         for role in roles:
             if "Instructor" in role:
                 role_labels.append("Instructor")
+            elif "Administrator" in role or "Admin" in str(role).split("#")[-1]:
+                role_labels.append("Administrator")
             elif "Learner" in role or "Student" in role:
                 role_labels.append("Learner")
             else:
@@ -203,22 +229,41 @@ async def lti_launch(request: Request):
         )
         course = context.get("title") or context.get("label") or context.get("id") or "—"
 
-        # Persist under RLS (SET LOCAL app.tenant_id)
-        event = db.insert_launch_event(
+        # Bind request-scoped TenantContext; persist under RLS
+        tctx = TenantContext(
             tenant_id=tenant.tenant_id,
-            subject=str(launch_data.get("sub", "")),
-            roles=role_text,
-            course_label=str(course),
-            raw_claims={
-                "iss": iss,
-                "aud": client_id,
-                "deployment_id": deployment_id,
-                "name": name,
-                "tenant_slug": tenant.slug,
-            },
+            slug=tenant.slug,
+            name=tenant.name,
         )
+        with use_tenant_context(tctx):
+            event = db.insert_launch_event(
+                tenant_id=tenant.tenant_id,
+                subject=str(launch_data.get("sub", "")),
+                roles=role_text,
+                course_label=str(course),
+                raw_claims={
+                    "iss": iss,
+                    "aud": client_id,
+                    "deployment_id": deployment_id,
+                    "name": name,
+                    "tenant_slug": tenant.slug,
+                },
+            )
+        try:
+            db.touch_platform_last_launch(issuer=iss, client_id=client_id)
+        except Exception as exc:  # noqa: BLE001
+            print(f"Warning: could not update last_launch_at: {exc}", flush=True)
 
-        is_instructor = "Instructor" in role_text
+        is_instructor = "Instructor" in role_text or "Administrator" in role_text
+        try:
+            from app.modules.school import find_school_admin
+
+            admin_row = find_school_admin(
+                tenant.tenant_id, email=email, name=str(name)
+            )
+        except Exception:  # noqa: BLE001
+            admin_row = None
+        is_school_admin = bool(admin_row) or "Administrator" in role_text
         ags_claim = launch_data.get(
             "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"
         ) or {}
@@ -226,6 +271,18 @@ async def lti_launch(request: Request):
         ags_available = bool(ags_claim) and (
             "https://purl.imsglobal.org/spec/lti-ags/scope/score" in ags_scopes
         )
+        launch_pres = launch_data.get(
+            "https://purl.imsglobal.org/spec/lti/claim/launch_presentation"
+        ) or {}
+        moodle_return = str(launch_pres.get("return_url") or "").strip()
+        if not moodle_return and iss:
+            ctx_id = context.get("id")
+            if ctx_id and str(ctx_id).isdigit():
+                moodle_return = f"{iss}/course/view.php?id={ctx_id}"
+            else:
+                moodle_return = f"{iss}/my/"
+        if not moodle_return:
+            moodle_return = "http://localhost:8085/my/"
         quiz_ctx = {
             "launch_id": message_launch.get_launch_id(),
             "tenant_id": str(tenant.tenant_id),
@@ -233,27 +290,42 @@ async def lti_launch(request: Request):
             "tenant_name": tenant.name,
             "subject": str(launch_data.get("sub", "")),
             "learner_name": str(name),
+            "given_name": given,
+            "family_name": family,
             "roles": role_text,
+            "email": email,
             "is_instructor": is_instructor,
+            "is_school_admin": is_school_admin,
             "course": str(course),
             "launch_event_id": str(event["id"]),
             "ags_available": ags_available,
             "ags_scopes": ags_scopes,
             "ags_has_lineitem": bool(ags_claim.get("lineitem")),
             "ags_has_lineitems": bool(ags_claim.get("lineitems")),
+            "client_id": client_id,
+            "moodle_return_url": moodle_return,
+            "moodle_base_url": iss or "http://localhost:8085",
         }
-        # Keep launch JWT body so AGS can restore even if browser cookies are dropped
-        from app.launch_cache import LAUNCH_CACHE
-
-        LAUNCH_CACHE.set(
-            f"launchdata:{message_launch.get_launch_id()}",
-            launch_data,
-            exp=3600,
-        )
+        # Keep launch JWT body in memory and Postgres (survives uvicorn --reload)
+        launch_id = message_launch.get_launch_id()
+        LAUNCH_CACHE.set(launch_id, launch_data, exp=3600)
+        LAUNCH_CACHE.set(f"launchdata:{launch_id}", launch_data, exp=3600)
+        try:
+            db.save_launch_snapshot(
+                launch_id=launch_id,
+                tenant_id=tenant.tenant_id,
+                launch_data=launch_data,
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"Warning: could not persist launch snapshot: {exc}", flush=True)
+        quiz_ctx["launch_id"] = launch_id
         quiz_token = store_quiz_context(quiz_ctx)
         quiz_ctx["quiz_token"] = quiz_token
+        # Keep session cookie small (quiz context only). Full JWT lives in
+        # LAUNCH_CACHE + lti_launch_snapshots — stuffing it into the cookie
+        # exceeds browser limits and leaves a stale launch_id after reload.
         request.session[QUIZ_SESSION_KEY] = quiz_ctx
-        return RedirectResponse(url=f"/quiz?token={quiz_token}", status_code=303)
+        return RedirectResponse(url=f"/launch-hub?token={quiz_token}", status_code=303)
     except LtiException as exc:
         print(f"LTI launch failed: {exc}", flush=True)
         return PlainTextResponse(f"LTI launch failed: {exc}", status_code=400)

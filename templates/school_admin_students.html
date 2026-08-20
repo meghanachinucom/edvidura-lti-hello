@@ -1,0 +1,45 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">School admin</p>
+  <h2 class="welcome-title">Students</h2>
+  <p class="welcome-lede">Learners enrolled in classes at <strong>{{ tenant_name }}</strong>.</p>
+</section>
+
+<section class="panel">
+  <h2>Directory ({{ students|length }})</h2>
+  {% if students %}
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
+    <tbody>
+    {% for s in students %}
+      <tr>
+        <td><code>{{ s.student_code }}</code></td>
+        <td>{{ s.name }}</td>
+        <td class="meta">{{ s.email }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><p>No enrolled students yet.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>By class</h2>
+  {% if classes %}
+  {% for c in classes %}
+  <div class="class-block">
+    <h3>{{ c.class_name }}</h3>
+    <p class="meta">{{ c.students|length }} enrolled</p>
+    <p>
+      {% for s in c.students %}{{ s.name }}{% if not loop.last %}, {% endif %}{% else %}—{% endfor %}
+    </p>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty"><p>No classes.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

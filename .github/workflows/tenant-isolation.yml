@@ -47,9 +47,15 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client
           psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/init.sql
+          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_platform_last_launch.sql
+          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_course_content.sql
+          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_school_org.sql
+          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_school_admins.sql
+          python scripts/seed_schools.py
 
       - name: Run isolation tests
         env:
           REQUIRE_DB: "1"
+          ADMIN_API_KEY: test-admin-key
           DATABASE_URL: postgresql://edvidura_app:edvidura_app@127.0.0.1:5432/edvidura
         run: pytest -q tests/

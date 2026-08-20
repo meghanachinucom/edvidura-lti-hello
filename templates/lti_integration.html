@@ -1,0 +1,24 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Moodle connection</h2>
+  <p class="lede">How this EdVidura workspace is linked for the current launch.</p>
+  <div class="insight-row">
+    <div class="insight">
+      <span class="insight-k">Gradebook sync</span>
+      <span class="insight-v insight-v-sm">{% if ags_available %}Ready{% else %}Not on this launch{% endif %}</span>
+    </div>
+    <div class="insight">
+      <span class="insight-k">Client ID</span>
+      <span class="insight-v insight-v-sm">{{ client_id }}</span>
+    </div>
+  </div>
+  <dl class="kv">
+    <div><dt>Tool URL</dt><dd><code>{{ base_url }}</code></dd></div>
+    <div><dt>Moodle issuer</dt><dd><code>{{ issuer }}</code></dd></div>
+    <div><dt>Login</dt><dd><code>{{ base_url }}/lti/login</code></dd></div>
+    <div><dt>Launch</dt><dd><code>{{ base_url }}/lti/launch</code></dd></div>
+    <div><dt>Keys (JWKS)</dt><dd><code>{{ base_url }}/.well-known/jwks.json</code></dd></div>
+  </dl>
+</section>
+{% endblock %}

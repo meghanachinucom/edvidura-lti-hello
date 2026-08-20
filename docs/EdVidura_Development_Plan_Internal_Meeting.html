@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EdVidura — Development Plan (Internal Meeting)</title>
+<style>
+  :root{
+    --ink:#1a2233; --muted:#5b6474; --bg:#f6f7f9; --card:#fff; --line:#e3e6ec;
+    --accent:#0f6b6b; --ok:#15803d; --warn:#b45309; --bad:#b91c1c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;font-size:15px}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 18px 56px}
+  h1{font-size:1.6rem;margin:0 0 4px;color:var(--accent)}
+  h2{font-size:1.15rem;margin:28px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  h3{font-size:1rem;margin:16px 0 6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
+  @media(max-width:700px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .stat{text-align:center}
+  .stat .v{font-size:1.2rem;font-weight:700}
+  .stat .l{font-size:12px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px;margin:10px 0}
+  th{background:#eef1f6;text-align:left;padding:8px 10px}
+  td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+  .ok{color:var(--ok);font-weight:600}
+  .warn{color:var(--warn);font-weight:600}
+  .bad{color:var(--bad);font-weight:600}
+  ul{margin:6px 0;padding-left:20px}
+  li{margin:5px 0}
+  .callout{border-left:4px solid var(--accent);background:#e8f4f4;padding:12px 14px;border-radius:0 8px 8px 0;margin:14px 0}
+  .ask{border-left-color:var(--warn);background:#fdf6e9}
+  @media print{body{background:#fff}.card,table{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>EdVidura — Development Plan</h1>
+<div class="sub">Internal meeting brief · 6 Aug 2026 · For alignment on status, next 90 days, and decisions needed</div>
+
+<div class="grid">
+  <div class="card stat"><div class="v ok">Slice A live</div><div class="l">Launch → quiz → score → AGS</div></div>
+  <div class="card stat"><div class="v">Shared DB + RLS</div><div class="l">Tenancy model locked (DEC-006)</div></div>
+  <div class="card stat"><div class="v warn">Decisions still open</div><div class="l">Security authority, GPU, languages</div></div>
+</div>
+
+<h2>1. What EdVidura is (one minute)</h2>
+<p>EdVidura is a learning tool that opens <b>inside the customer’s LMS (Moodle)</b> via LTI 1.3. We do not rebuild Moodle. Moodle keeps courses and the official gradebook; EdVidura adds quizzes and later modules (content, skills, AI) with strict multi-tenant data separation.</p>
+<p><b>Two delivery forms later:</b> shared cloud SaaS, and private offline instances for regulated / defence customers.</p>
+
+<h2>2. Where we are today</h2>
+<table>
+  <tr><th>Area</th><th>Status</th><th>Evidence</th></tr>
+  <tr><td>Moodle LTI 1.3 launch</td><td class="ok">Done</td><td>Login + launch working; fail-closed for unknown platforms</td></tr>
+  <tr><td>Multi-tenant resolution</td><td class="ok">Done</td><td>Tenant from issuer + client_id + deployment only</td></tr>
+  <tr><td>Postgres + RLS isolation</td><td class="ok">Done</td><td>launch_events + quiz_attempts; CI isolation tests</td></tr>
+  <tr><td>Institution / student onboarding APIs</td><td class="ok">Done</td><td>Swagger APIs on main</td></tr>
+  <tr><td>Slice A quiz journey</td><td class="ok">Done (merged)</td><td>3-question quiz, tenant-scoped attempts, teacher list, AGS passback</td></tr>
+  <tr><td>Moodle grade passback (AGS)</td><td class="warn">Works when Moodle configured</td><td>Needs “Accept grades” + AGS service on tool/activity</td></tr>
+  <tr><td>Stage 0 contracts pack</td><td class="warn">Drafted</td><td>Tenancy, LTI, grades SoR, event transport, scope — needs formal sign-off</td></tr>
+  <tr><td>AI / XR / federation / Keycloak / enclave</td><td class="bad">Deferred</td><td>Explicitly out of current build</td></tr>
+</table>
+
+<h2>3. Locked technical decisions (do not reopen without change control)</h2>
+<table>
+  <tr><th>Decision</th><th>Choice</th></tr>
+  <tr><td>LMS for Release 1</td><td>Moodle only</td></tr>
+  <tr><td>Launch model</td><td>LTI 1.3, PyLTI1p3, new window</td></tr>
+  <tr><td>Tenancy (cloud)</td><td>Shared database + shared schema + Row Level Security</td></tr>
+  <tr><td>Tenancy (defence / regulated)</td><td>Dedicated instance later (not schema-per-tenant)</td></tr>
+  <tr><td>Official grades</td><td>Moodle gradebook is system of record; EdVidura passes scores via AGS</td></tr>
+  <tr><td>Build style</td><td>Thin vertical slices; not all 38 modules at once</td></tr>
+</table>
+
+<h2>4. Proposed development plan (next 90 days)</h2>
+
+<h3>Week 1–2 — Stabilize Slice A</h3>
+<ul>
+  <li>Confirm AGS end-to-end in every demo Moodle (checklist for juniors)</li>
+  <li>Minimal onboarding UI (create tenant/platform without raw SQL)</li>
+  <li>Merge remaining docs/contracts; leadership initials on DEC board</li>
+  <li>Demo script: student launch → quiz → gradebook → teacher attempts</li>
+</ul>
+
+<h3>Week 3–6 — Slice A hardening + foundations</h3>
+<ul>
+  <li>Request-scoped tenant context (ContextVar) + audit of tenant-tagged writes</li>
+  <li>Event envelope v1 on quiz submit (outbox table, still Postgres)</li>
+  <li>Isolation tests for quiz_attempts in CI</li>
+  <li>Basic ops: health, structured logs, backup note for shared DB</li>
+</ul>
+
+<h3>Week 7–12 — Slice B start (content) <span class="warn">if capacity allows</span></h3>
+<ul>
+  <li>One technical manual / eBook path with version tracking (no AI yet)</li>
+  <li>Same dual rule: cloud path first; offline/enclave design notes only</li>
+  <li>Freeze skills registry schema on paper before coding skill features</li>
+</ul>
+
+<div class="callout">
+  <b>Exit goal for 90 days</b>
+  Reliable demo for a real pilot conversation: onboard a Moodle → launch → assess → grade back → teacher view → proof that Tenant A cannot see Tenant B.
+</div>
+
+<h2>5. What we are explicitly not building in this window</h2>
+<ul>
+  <li>AI chatbot / auto-grading / GPU appliances</li>
+  <li>XR / immersive labs</li>
+  <li>Cross-command federation</li>
+  <li>Keycloak as primary IdP (Moodle LTI remains front door)</li>
+  <li>Canvas / Open edX</li>
+  <li>Schema-per-tenant or DB-per-tenant for SaaS</li>
+</ul>
+
+<h2>6. Team capacity suggestion</h2>
+<table>
+  <tr><th>Role</th><th>Focus</th></tr>
+  <tr><td>Lead / you</td><td>Scope control, contract sign-off, PR review, Moodle/AGS demo readiness</td></tr>
+  <tr><td>Junior (backend)</td><td>Onboarding UI, tests, event outbox, bugfixes on Slice A</td></tr>
+  <tr><td>Junior / design (optional)</td><td>Screens for home, launch error, onboarding, quiz, result, teacher list only</td></tr>
+  <tr><td>Product / leadership</td><td>Sign DECs; name owners for parked items (security authority, languages, GPU)</td></tr>
+</table>
+
+<h2>7. Risks to raise in the meeting</h2>
+<table>
+  <tr><th>Risk</th><th>Impact</th><th>Mitigation</th></tr>
+  <tr><td>AGS misconfigured in Moodle</td><td>Demo looks broken even when quiz works</td><td>Fixed checklist + AGS banner on quiz page</td></tr>
+  <tr><td>Scope creep (AI / 38 modules)</td><td>No working vertical</td><td>DEC-011: slices only; defer list above</td></tr>
+  <tr><td>Unsigned Stage 0 decisions</td><td>Rework later</td><td>15-minute sign-off in this meeting</td></tr>
+  <tr><td>Defence air-gap promised early</td><td>Unfunded GPU + offline debt</td><td>Keep enclave as later track; don’t staff until Slice A stable</td></tr>
+</table>
+
+<div class="callout ask">
+  <b>Asks from this meeting</b>
+  <ol>
+    <li>Confirm 90-day plan: stabilize Slice A → harden → optional Slice B start</li>
+    <li>Sign / accept Stage 0 decisions (Moodle-first, shared DB+RLS, LMS gradebook SoR)</li>
+    <li>Name owners for parked items: accrediting authority, language tiers, GPU sizing (even if “later”)</li>
+    <li>Agree demo date for external/pilot-ready walkthrough</li>
+  </ol>
+</div>
+
+<h2>8. One-slide summary</h2>
+<p><b>Build thin. Prove isolation. Pass grades to Moodle. Don’t start AI yet.</b></p>
+<p>We have a working multi-tenant LTI path and Slice A quiz on GitHub <code>main</code>. Next is operational polish and a repeatable demo—not more modules.</p>
+
+<p class="sub">Repo: https://github.com/meghanachinucom/edvidura-lti-hello · Branch baseline: main (Slice A merged)</p>
+
+</div>
+</body>
+</html>

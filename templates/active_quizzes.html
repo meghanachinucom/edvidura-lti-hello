@@ -1,0 +1,45 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h2>Course readiness check</h2>
+      <p class="lede">{{ questions_count }} questions · scored out of {{ max_score }}.</p>
+    </div>
+    <a class="btn primary" href="/quiz?token={{ quiz_token }}">Take quiz</a>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>{% if is_instructor %}Recent attempts{% else %}Your attempts{% endif %}</h2>
+  {% if recent_attempts %}
+  <table>
+    <thead>
+      <tr>
+        {% if is_instructor %}<th>Learner</th>{% endif %}
+        <th>Score</th>
+        <th>In Moodle</th>
+        <th>When</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for a in recent_attempts %}
+      <tr>
+        {% if is_instructor %}<td>{{ a.learner_name or a.subject }}</td>{% endif %}
+        <td><strong>{{ a.score }}/{{ a.max_score }}</strong></td>
+        <td>{% if a.grade_sent %}<span class="ok">Synced</span>{% else %}<span class="meta">Not synced</span>{% endif %}</td>
+        <td class="meta">{{ a.created_at }}</td>
+        <td><a class="link" href="/quiz/result/{{ a.id }}?token={{ quiz_token }}">Review</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p>No attempts yet.</p>
+    <a class="btn primary" href="/quiz?token={{ quiz_token }}">Start your first attempt</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

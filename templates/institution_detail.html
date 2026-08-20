@@ -1,0 +1,136 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">This school workspace</p>
+  <h2 class="welcome-title">{{ tenant_name }}</h2>
+  <p class="welcome-lede">
+    School admin runs this workspace. Teachers, classes, and students stay private to this school.
+  </p>
+</section>
+
+<div class="insight-row">
+  <div class="insight">
+    <span class="insight-k">School admins</span>
+    <span class="insight-v">{{ snapshot.admin_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Teachers</span>
+    <span class="insight-v">{{ snapshot.teacher_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Classes</span>
+    <span class="insight-v">{{ snapshot.class_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Students</span>
+    <span class="insight-v">{{ snapshot.student_count }}</span>
+  </div>
+</div>
+
+<section class="panel">
+  <h2>School admins</h2>
+  {% if snapshot.admins %}
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
+    <tbody>
+    {% for a in snapshot.admins %}
+      <tr><td><code>{{ a.admin_code }}</code></td><td>{{ a.name }}</td><td class="meta">{{ a.email }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><p>No school admin seeded. Run <code>python scripts/seed_schools.py</code>.</p></div>
+  {% endif %}
+</section>
+
+{% if snapshot.course %}
+<section class="panel">
+  <h2>{{ snapshot.course.title }}</h2>
+  <p class="lede">{{ snapshot.course.description }}</p>
+  {% if snapshot.chapters %}
+  <ol class="lesson-list">
+    {% for ch in snapshot.chapters %}
+    <li class="lesson-item">
+      <a href="{% if ch.lesson_type == 'quiz' %}/quiz?token={{ quiz_token }}{% else %}/lessons/{{ ch.id }}?token={{ quiz_token }}{% endif %}">
+        <span class="lesson-pos">{{ '%02d'|format(ch.position) }}</span>
+        <span class="lesson-body">
+          <span class="lesson-title">{{ ch.title }}</span>
+          <span class="lesson-type">{{ ch.lesson_type }}</span>
+        </span>
+        <span class="lesson-go" aria-hidden="true">→</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>Classes</h2>
+  {% if snapshot.classes %}
+  {% for c in snapshot.classes %}
+  <div class="class-block">
+    <h3>{{ c.class_name }} <span class="meta">({{ c.class_code }})</span></h3>
+    <p class="meta">{{ c.subject }} · {{ c.term }}</p>
+    <p><strong>Teachers:</strong>
+      {% for t in c.teachers %}{{ t.name }} ({{ t.role }}){% if not loop.last %}, {% endif %}{% else %}—{% endfor %}
+    </p>
+    <p><strong>Students:</strong>
+      {% for s in c.students %}{{ s.name }}{% if not loop.last %}, {% endif %}{% else %}—{% endfor %}
+    </p>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty"><p>No classes for this school yet.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Teachers</h2>
+  {% if snapshot.teachers %}
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
+    <tbody>
+    {% for t in snapshot.teachers %}
+      <tr><td><code>{{ t.teacher_code }}</code></td><td>{{ t.name }}</td><td class="meta">{{ t.email }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><p>No teachers in this school.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Quiz activity (this school only)</h2>
+  <div class="insight-row">
+    <div class="insight">
+      <span class="insight-k">Attempts</span>
+      <span class="insight-v">{{ total_attempts }}</span>
+    </div>
+    <div class="insight">
+      <span class="insight-k">Learners recorded</span>
+      <span class="insight-v">{{ recorded_learners }}</span>
+    </div>
+  </div>
+  {% if attempts %}
+  <table>
+    <thead><tr><th>Learner</th><th>Course</th><th>Score</th><th>In Moodle</th><th>When</th></tr></thead>
+    <tbody>
+    {% for a in attempts %}
+      <tr>
+        <td>{{ a.learner_name or a.subject }}</td>
+        <td>{{ a.course_label or "—" }}</td>
+        <td><strong>{{ a.score }}/{{ a.max_score }}</strong></td>
+        <td>{% if a.grade_sent %}<span class="ok">Synced</span>{% else %}<span class="meta">Not synced</span>{% endif %}</td>
+        <td class="meta">{{ a.created_at }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><p>No quiz attempts in this school yet.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

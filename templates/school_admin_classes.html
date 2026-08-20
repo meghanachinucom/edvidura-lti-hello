@@ -1,0 +1,46 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">School admin</p>
+  <h2 class="welcome-title">Classes</h2>
+  <p class="welcome-lede">Rosters stay private to <strong>{{ tenant_name }}</strong>.</p>
+</section>
+
+{% if ok_message %}
+<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
+{% endif %}
+
+<section class="panel">
+  <h2>Add class</h2>
+  <form method="post" action="/school-admin/classes" class="teach-form">
+    <input type="hidden" name="token" value="{{ quiz_token }}"/>
+    <div class="teach-grid">
+      <label>Code <input name="class_code" required placeholder="ALG-104"/></label>
+      <label>Name <input name="class_name" required placeholder="Algebra Period 4"/></label>
+      <label>Subject <input name="subject" placeholder="Algebra"/></label>
+      <label>Term <input name="term" placeholder="2026 Fall"/></label>
+    </div>
+    <button type="submit" class="btn primary">Save class</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Class roster</h2>
+  {% if classes %}
+  {% for c in classes %}
+  <div class="class-block">
+    <h3>{{ c.class_name }} <span class="meta">({{ c.class_code }})</span></h3>
+    <p class="meta">{{ c.subject }} · {{ c.term }}</p>
+    <p><strong>Teachers:</strong>
+      {% for t in c.teachers %}{{ t.name }} ({{ t.role }}){% if not loop.last %}, {% endif %}{% else %}—{% endfor %}
+    </p>
+    <p><strong>Students:</strong>
+      {% for s in c.students %}{{ s.name }}{% if not loop.last %}, {% endif %}{% else %}—{% endfor %}
+    </p>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty"><p>No classes yet.</p></div>
+  {% endif %}
+</section>
+{% endblock %}
