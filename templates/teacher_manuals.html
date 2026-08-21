@@ -1,0 +1,76 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Teach · versioned manuals</p>
+  <h2 class="welcome-title">Manual versions</h2>
+  <p class="welcome-lede">Create a technical manual and publish new versions over time (no AI).</p>
+</section>
+
+{% if ok_message %}
+<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
+{% endif %}
+
+<section class="panel">
+  <h2>New manual</h2>
+  <form method="post" action="/teacher/manuals/new" class="teach-form">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>Title <input name="title" required placeholder="Algebra I technical guide"/></label>
+    <label>Description <input name="description" placeholder="Short summary"/></label>
+    <label>Initial body
+      <textarea name="body_md" rows="6" placeholder="Chapter text (markdown-ish paragraphs)…"></textarea>
+    </label>
+    <label>Publish now?
+      <select name="publish">
+        <option value="1">Yes — publish v1</option>
+        <option value="0">No — keep draft</option>
+      </select>
+    </label>
+    <button type="submit" class="btn primary">Create manual</button>
+  </form>
+</section>
+
+{% for m in manuals %}
+<section class="panel">
+  <div class="panel-head">
+    <h2>{{ m.title }}</h2>
+    <a class="btn secondary" href="/manuals/{{ m.id }}?token={{ quiz_token }}">Student view</a>
+  </div>
+  <p class="meta">{{ m.status }} · {{ m.slug }}</p>
+  {% if m.versions %}
+  <table>
+    <thead><tr><th>Ver</th><th>Status</th><th>Changelog</th><th></th></tr></thead>
+    <tbody>
+    {% for v in m.versions %}
+      <tr>
+        <td>v{{ v.version }}</td>
+        <td>{% if v.is_published %}<span class="ok">Published</span>{% else %}<span class="meta">Draft</span>{% endif %}</td>
+        <td>{{ v.changelog }}</td>
+        <td>
+          <a class="link" href="/manuals/{{ m.id }}?token={{ quiz_token }}&v={{ v.version }}">Open</a>
+          {% if not v.is_published %}
+          <form method="post" action="/teacher/manuals/{{ m.id }}/versions/{{ v.version }}/publish" style="display:inline">
+            <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+            <button type="submit" class="btn secondary">Publish</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  <details class="teach-edit">
+    <summary>Add new version</summary>
+    <form method="post" action="/teacher/manuals/{{ m.id }}/versions" class="teach-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <label>Changelog <input name="changelog" placeholder="What changed in this version"/></label>
+      <label>Body <textarea name="body_md" rows="5" required></textarea></label>
+      <label><input type="checkbox" name="publish" value="1"/> Publish immediately</label>
+      <button type="submit" class="btn primary">Save version</button>
+    </form>
+  </details>
+</section>
+{% else %}
+<section class="panel"><div class="empty"><p>No manuals yet — create one above.</p></div></section>
+{% endfor %}
+{% endblock %}

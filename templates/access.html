@@ -1,0 +1,11 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Access</p>
+  <h2 class="welcome-title">{{ heading | default("Unavailable") }}</h2>
+  <p class="welcome-lede">{{ message | default("You cannot open this screen.") }}</p>
+  <div class="welcome-actions">
+    <a class="btn primary" href="/launch-hub?token={{ quiz_token }}">Back to Home</a>
+  </div>
+</section>
+{% endblock %}

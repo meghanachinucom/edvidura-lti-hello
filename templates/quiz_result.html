@@ -1,0 +1,52 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="result-hero">
+  <p class="welcome-kicker">Attempt complete</p>
+  <div class="score-value">{{ score }} <span class="score-max">/ {{ max_score }}</span></div>
+  <p class="result-copy">
+    {% if score == max_score %}
+      Nice work — full marks.
+    {% elif score == 0 %}
+      No correct answers this time. Review and try again.
+    {% else %}
+      Partial credit. You can retake anytime.
+    {% endif %}
+  </p>
+  <p class="meta">{{ learner_name }} · {{ course }}</p>
+</section>
+
+{% if grade_sent %}
+<div class="banner ok">Score sent to the Moodle gradebook.</div>
+{% elif grade_error %}
+<div class="banner info">Saved in EdVidura. Moodle sync note: {{ grade_error }}</div>
+{% else %}
+<div class="banner info">Saved in EdVidura. Moodle gradebook sync was not available on this launch.</div>
+{% endif %}
+
+{% if review %}
+<section class="panel">
+  <h2>Answer review</h2>
+  <ul class="review-list">
+  {% for item in review %}
+    <li class="review-item {% if item.correct %}is-correct{% else %}is-wrong{% endif %}">
+      <div class="review-q">{{ item.prompt }}</div>
+      <div class="review-a">
+        {% if item.correct %}
+          Correct
+        {% else %}
+          Your answer was incorrect
+          {% if item.correct_choice %} · correct: <strong>{{ item.correct_choice }}</strong>{% endif %}
+        {% endif %}
+      </div>
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<div class="actions">
+  <a class="btn primary" href="/quiz?token={{ quiz_token }}">Try again</a>
+  <a class="btn secondary" href="/active-quizzes?token={{ quiz_token }}">My attempts</a>
+  <a class="btn secondary" href="{{ moodle_return_href }}" target="_top" rel="noopener">← Back to Moodle</a>
+</div>
+{% endblock %}

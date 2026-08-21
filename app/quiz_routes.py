@@ -2,25 +2,28 @@
 from __future__ import annotations
 
 import html
+import traceback
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, BackgroundTasks, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from starlette.requests import Request as StarletteRequest
 
 from app import db
 from app.ags_passback import send_quiz_grade
 from app.launch_cache import LAUNCH_CACHE
 from app.lti_fastapi import FastAPIMessageLaunch, FastAPIRequest, make_launch_data_storage
-from app.quiz_content import MAX_SCORE, QUESTIONS, grade_answers
-from app.tenancy import build_tool_conf_from_db
+from app.quiz_content import grade_answers, questions_for_tenant
+from app.modules.tenancy import build_tool_conf_from_db
 
 router = APIRouter(tags=["quiz"])
 
 SESSION_KEY = "lti_slice_a"
+QUIZ_CTX_PREFIX = "quizctx:"
 
 
-def _page(title: str, body: str) -> HTMLResponse:
+def _page(title: str, body: str, status_code: int = 200) -> HTMLResponse:
     return HTMLResponse(
         f"""<!doctype html>
 <html lang="en">
@@ -45,6 +48,7 @@ def _page(title: str, body: str) -> HTMLResponse:
     button, .btn {{ display:inline-block; background:var(--accent); color:#fff; border:0;
                     border-radius:8px; padding:10px 16px; font-size:0.95rem; cursor:pointer;
                     text-decoration:none; }}
+    button:disabled {{ opacity:0.6; cursor:wait; }}
     .btn.secondary {{ background:transparent; color:var(--accent); border:1px solid var(--accent); }}
     table {{ width:100%; border-collapse:collapse; font-size:0.9rem; }}
     th, td {{ text-align:left; padding:8px 6px; border-bottom:1px solid var(--line);
@@ -57,215 +61,284 @@ def _page(title: str, body: str) -> HTMLResponse:
   </style>
 </head>
 <body><div class="wrap">{body}</div></body>
-</html>"""
+</html>""",
+        status_code=status_code,
     )
 
 
-def get_lti_session(request: Request) -> dict[str, Any] | None:
+def store_quiz_context(data: dict[str, Any], *, ttl_sec: int = 3600) -> str:
+    """Persist launch context (memory + DB so submit survives uvicorn --reload)."""
+    token = uuid4().hex
+    payload = {**dict(data), "quiz_token": token}
+    LAUNCH_CACHE.set(f"{QUIZ_CTX_PREFIX}{token}", payload, exp=ttl_sec)
+    try:
+        db.save_quiz_context(token, payload, ttl_sec=ttl_sec)
+    except Exception as exc:  # noqa: BLE001
+        print(f"Warning: could not persist quiz context: {exc}", flush=True)
+    return token
+
+
+def load_quiz_context(token: str | None) -> dict[str, Any] | None:
+    if not token:
+        return None
+    data = LAUNCH_CACHE.get(f"{QUIZ_CTX_PREFIX}{token}")
+    if isinstance(data, dict):
+        return dict(data)
+    try:
+        data = db.get_quiz_context(token)
+    except Exception as exc:  # noqa: BLE001
+        print(f"Quiz context lookup failed: {exc}", flush=True)
+        return None
+    if isinstance(data, dict):
+        LAUNCH_CACHE.set(f"{QUIZ_CTX_PREFIX}{token}", data, exp=3600)
+        return dict(data)
+    return None
+
+
+def resolve_quiz_session(
+    request: Request, *, token: str | None = None
+) -> dict[str, Any] | None:
+    # Prefer quiz token (tied to this launch) over cookie session, which can
+    # be stale after a reload or a dropped Set-Cookie.
+    cached = load_quiz_context(token)
+    if cached and cached.get("tenant_id") and cached.get("subject"):
+        request.session[SESSION_KEY] = cached
+        return dict(cached)
     data = request.session.get(SESSION_KEY)
-    return dict(data) if isinstance(data, dict) else None
+    if isinstance(data, dict) and data.get("tenant_id") and data.get("subject"):
+        return dict(data)
+    return None
 
 
-def require_lti_session(request: Request) -> dict[str, Any] | HTMLResponse:
-    data = get_lti_session(request)
-    if not data or not data.get("tenant_id") or not data.get("subject"):
+def require_quiz_session(
+    request: Request, *, token: str | None = None
+) -> dict[str, Any] | HTMLResponse:
+    data = resolve_quiz_session(request, token=token)
+    if not data:
         return _page(
             "Launch required",
             """
             <h1>Launch required</h1>
-            <p class="sub">Open this tool from Moodle (LTI launch) first.</p>
+            <p class="sub">Open this tool from Moodle (LTI launch) first, then submit the quiz.</p>
             <p><a class="btn secondary" href="/">Home</a></p>
             """,
+            status_code=401,
         )
     return data
 
 
-def _restore_launch(request: Request, launch_id: str) -> FastAPIMessageLaunch:
+def _fake_request_with_launch(launch_id: str, launch_data: dict[str, Any] | None = None) -> StarletteRequest:
+    data = launch_data if launch_data is not None else _load_launch_data(str(launch_id))
+    scope = {
+        "type": "http",
+        "asgi": {"version": "3.0", "spec_version": "2.0"},
+        "http_version": "1.1",
+        "method": "GET",
+        "scheme": "http",
+        "path": "/",
+        "raw_path": b"/",
+        "query_string": b"",
+        "headers": [],
+        "client": ("127.0.0.1", 0),
+        "server": ("127.0.0.1", 8000),
+        "session": {str(launch_id): data} if data is not None else {},
+    }
+
+    async def receive() -> dict[str, str]:
+        return {"type": "http.disconnect"}
+
+    return StarletteRequest(scope, receive)
+
+
+def _load_launch_data(launch_id: str) -> dict[str, Any] | None:
+    if not launch_id:
+        return None
+    # PyLTI stores under the bare launch_id; we also keep a launchdata: alias.
+    for key in (launch_id, f"launchdata:{launch_id}"):
+        cached = LAUNCH_CACHE.get(key)
+        if isinstance(cached, dict):
+            return dict(cached)
+    try:
+        data = db.get_launch_snapshot(launch_id)
+        if data is None:
+            print(f"No launch snapshot for {launch_id!r}", flush=True)
+        return data
+    except Exception as exc:  # noqa: BLE001
+        print(f"Launch snapshot lookup failed for {launch_id!r}: {exc}", flush=True)
+        return None
+
+
+def _restore_launch_from_id(
+    launch_id: str, launch_data: dict[str, Any] | None = None
+) -> FastAPIMessageLaunch:
+    data = launch_data if launch_data is not None else _load_launch_data(str(launch_id))
+    if data is None:
+        raise RuntimeError(f"Launch data missing for {launch_id}")
+    # from_cache → SessionService.get_launch_data(launch_id) reads this key.
+    LAUNCH_CACHE.set(str(launch_id), data, exp=3600)
+    LAUNCH_CACHE.set(f"launchdata:{launch_id}", data, exp=3600)
+    starlette_request = _fake_request_with_launch(str(launch_id), data)
     tool_conf = build_tool_conf_from_db(require_platforms=True)
-    fastapi_request = FastAPIRequest(request)
+    fastapi_request = FastAPIRequest(starlette_request)
     storage = make_launch_data_storage(fastapi_request, LAUNCH_CACHE)
     return FastAPIMessageLaunch.from_cache(
-        launch_id,
+        str(launch_id),
         fastapi_request,
         tool_conf,
         launch_data_storage=storage,
     )
 
 
-@router.get("/quiz", response_class=HTMLResponse)
-async def quiz_form(request: Request):
-    session = require_lti_session(request)
-    if isinstance(session, HTMLResponse):
-        return session
-
-    fields = []
-    for i, q in enumerate(QUESTIONS, start=1):
-        opts = []
-        for idx, choice in enumerate(q.choices):
-            opts.append(
-                f'<label><input type="radio" name="{html.escape(q.id)}" value="{idx}" required/> '
-                f"{html.escape(choice)}</label>"
-            )
-        fields.append(
-            f'<fieldset class="q"><legend>Q{i}. {html.escape(q.prompt)}</legend>'
-            + "".join(opts)
-            + "</fieldset>"
+def _ags_background(
+    *,
+    launch_id: str,
+    subject: str,
+    score: int,
+    score_maximum: int,
+    tenant_id: str,
+    attempt_id: str,
+    ags_available: bool | None,
+    launch_data: dict[str, Any] | None = None,
+) -> None:
+    if ags_available is False:
+        db.update_quiz_attempt_grade(
+            tenant_id=tenant_id,
+            attempt_id=attempt_id,
+            grade_sent=False,
+            grade_error=(
+                "AGS not on this launch. In Moodle: tool Services → Assignment and Grade "
+                "Services = Use this service; activity Privacy → Accept grades = Yes; "
+                "Grade type = Point. Then relaunch as a student."
+            ),
         )
+        return
 
-    teacher_link = ""
-    if session.get("is_instructor"):
-        teacher_link = '<p><a class="btn secondary" href="/teacher/attempts">Teacher: view attempts</a></p>'
+    data = launch_data if isinstance(launch_data, dict) else None
+    if data is None:
+        data = _load_launch_data(launch_id) if launch_id else None
+    if not launch_id or data is None:
+        db.update_quiz_attempt_grade(
+            tenant_id=tenant_id,
+            attempt_id=attempt_id,
+            grade_sent=False,
+            grade_error=(
+                "Launch data expired (server reloaded?). "
+                f"Relaunch from Moodle and submit again. (launch_id={launch_id or 'missing'})"
+            ),
+        )
+        return
 
-    body = f"""
-    <h1>EdVidura — Slice A Quiz</h1>
-    <p class="sub">
-      {html.escape(str(session.get('learner_name') or session.get('subject')))}
-      · {html.escape(str(session.get('tenant_slug') or ''))}
-      · {html.escape(str(session.get('course') or ''))}
-    </p>
-    <div class="card">
-      <form method="post" action="/quiz/submit">
-        {''.join(fields)}
-        <button type="submit">Submit quiz</button>
-      </form>
-    </div>
-    {teacher_link}
-    """
-    return _page("Quiz", body)
+    try:
+        message_launch = _restore_launch_from_id(launch_id, data)
+        grade_sent, grade_error = send_quiz_grade(
+            message_launch,
+            user_id=subject,
+            score=float(score),
+            score_maximum=float(score_maximum),
+        )
+    except Exception as exc:  # noqa: BLE001
+        grade_sent, grade_error = False, f"AGS failed: {exc}"
+
+    try:
+        db.update_quiz_attempt_grade(
+            tenant_id=tenant_id,
+            attempt_id=attempt_id,
+            grade_sent=grade_sent,
+            grade_error=grade_error,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"Failed to update quiz grade status: {exc}", flush=True)
 
 
 @router.post("/quiz/submit", response_class=HTMLResponse)
 async def quiz_submit(
     request: Request,
-    q1: str = Form(...),
-    q2: str = Form(...),
-    q3: str = Form(...),
+    background_tasks: BackgroundTasks,
+    quiz_token: str = Form(""),
 ):
-    session = require_lti_session(request)
+    session = require_quiz_session(request, token=quiz_token or None)
     if isinstance(session, HTMLResponse):
         return session
 
-    score, detail = grade_answers({"q1": q1, "q2": q2, "q3": q3})
-    grade_sent = False
-    grade_error: str | None = None
+    try:
+        form = await request.form()
+        questions = questions_for_tenant(session.get("tenant_id"))
+        submitted = {q.id: str(form.get(q.id) or "") for q in questions}
+        score, detail = grade_answers(submitted, questions)
+        max_score = len(questions)
 
-    launch_id = session.get("launch_id")
-    if launch_id:
+        # Save + redirect immediately; AGS runs in background so the browser never hangs
+        attempt = db.insert_quiz_attempt(
+            tenant_id=session["tenant_id"],
+            subject=str(session["subject"]),
+            learner_name=str(session.get("learner_name") or ""),
+            course_label=str(session.get("course") or ""),
+            score=score,
+            max_score=max_score,
+            answers={"submitted": submitted, "detail": detail},
+            grade_sent=False,
+            grade_error="Grade passback queued…",
+        )
+
         try:
-            message_launch = _restore_launch(request, str(launch_id))
-            grade_sent, grade_error = send_quiz_grade(
-                message_launch,
-                user_id=str(session["subject"]),
-                score=float(score),
-                score_maximum=float(MAX_SCORE),
+            from app.modules.events import enqueue_quiz_attempt_submitted
+
+            enqueue_quiz_attempt_submitted(
+                tenant_id=session["tenant_id"],
+                subject=str(session["subject"]),
+                attempt_id=attempt["id"],
+                score=score,
+                max_score=max_score,
+                course_label=str(session.get("course") or ""),
             )
-        except Exception as exc:  # noqa: BLE001
-            grade_sent = False
-            grade_error = f"Could not restore launch for AGS: {exc}"
-    else:
-        grade_error = "No launch_id in session — grade not sent"
+        except Exception as outbox_exc:  # noqa: BLE001
+            print(f"Outbox enqueue failed (attempt saved): {outbox_exc}", flush=True)
 
-    attempt = db.insert_quiz_attempt(
-        tenant_id=session["tenant_id"],
-        subject=str(session["subject"]),
-        learner_name=str(session.get("learner_name") or ""),
-        course_label=str(session.get("course") or ""),
-        score=score,
-        max_score=MAX_SCORE,
-        answers={"submitted": {"q1": q1, "q2": q2, "q3": q3}, "detail": detail},
-        grade_sent=grade_sent,
-        grade_error=grade_error,
-    )
-    return RedirectResponse(url=f"/quiz/result/{attempt['id']}", status_code=303)
-
-
-@router.get("/quiz/result/{attempt_id}", response_class=HTMLResponse)
-async def quiz_result(request: Request, attempt_id: UUID):
-    session = require_lti_session(request)
-    if isinstance(session, HTMLResponse):
-        return session
-
-    attempt = db.get_quiz_attempt(session["tenant_id"], attempt_id)
-    if not attempt:
-        return _page(
-            "Not found",
-            "<h1>Attempt not found</h1><p class='sub'>It may belong to another tenant or does not exist.</p>",
+        launch_id = str(session.get("launch_id") or "")
+        launch_data = _load_launch_data(launch_id) if launch_id else None
+        background_tasks.add_task(
+            _ags_background,
+            launch_id=launch_id,
+            subject=str(session["subject"]),
+            score=score,
+            score_maximum=max_score,
+            tenant_id=str(session["tenant_id"]),
+            attempt_id=str(attempt["id"]),
+            ags_available=session.get("ags_available"),
+            launch_data=launch_data,
         )
 
-    grade_line = (
-        '<p class="ok">Grade sent to Moodle gradebook (AGS).</p>'
-        if attempt["grade_sent"]
-        else f'<p class="bad">Grade not sent: {html.escape(str(attempt.get("grade_error") or "unknown"))}</p>'
-    )
-    teacher_link = ""
-    if session.get("is_instructor"):
-        teacher_link = '<p><a class="btn secondary" href="/teacher/attempts">Teacher: view attempts</a></p>'
+        session["last_result_id"] = str(attempt["id"])
+        if quiz_token:
+            session["quiz_token"] = quiz_token
+            LAUNCH_CACHE.set(
+                f"{QUIZ_CTX_PREFIX}{quiz_token}",
+                {**session, "quiz_token": quiz_token},
+                exp=3600,
+            )
+            try:
+                db.save_quiz_context(
+                    quiz_token, {**session, "quiz_token": quiz_token}, ttl_sec=3600
+                )
+            except Exception:  # noqa: BLE001
+                pass
+        request.session[SESSION_KEY] = session
 
-    body = f"""
-    <h1>Quiz result</h1>
-    <p class="sub">{html.escape(str(attempt['learner_name'] or attempt['subject']))}</p>
-    <div class="card">
-      <p style="font-size:1.4rem;margin:0">
-        Score: <strong>{attempt['score']}</strong> / {attempt['max_score']}
-      </p>
-      {grade_line}
-      <p class="meta">Attempt <code>{html.escape(str(attempt['id']))}</code></p>
-    </div>
-    <p>
-      <a class="btn" href="/quiz">Retake quiz</a>
-      {teacher_link}
-    </p>
-    """
-    return _page("Result", body)
-
-
-@router.get("/teacher/attempts", response_class=HTMLResponse)
-async def teacher_attempts(request: Request):
-    session = require_lti_session(request)
-    if isinstance(session, HTMLResponse):
-        return session
-
-    if not session.get("is_instructor"):
+        token_q = f"?token={quiz_token}" if quiz_token else ""
+        return RedirectResponse(
+            url=f"/quiz/result/{attempt['id']}{token_q}",
+            status_code=303,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"Quiz submit failed: {exc}\n{traceback.format_exc()}", flush=True)
         return _page(
-            "Teachers only",
-            """
-            <h1>Teachers only</h1>
-            <p class="sub">This list is available when the LTI launch includes an Instructor role.</p>
-            <p><a class="btn secondary" href="/quiz">Back to quiz</a></p>
+            "Submit failed",
+            f"""
+            <h1>Submit failed</h1>
+            <p class="bad">{html.escape(str(exc))}</p>
+            <p class="sub">Check that Postgres is up and <code>quiz_attempts</code> migration was applied.</p>
+            <p><a class="btn secondary" href="/quiz{'?token=' + html.escape(quiz_token) if quiz_token else ''}">Back to quiz</a></p>
             """,
+            status_code=500,
         )
 
-    rows = db.list_quiz_attempts_for_tenant(session["tenant_id"])
-    if not rows:
-        table = "<p class='sub'>No attempts yet for this tenant.</p>"
-    else:
-        trs = []
-        for r in rows:
-            sent = "yes" if r["grade_sent"] else "no"
-            trs.append(
-                "<tr>"
-                f"<td>{html.escape(str(r['learner_name'] or r['subject']))}</td>"
-                f"<td>{html.escape(str(r['course_label'] or '—'))}</td>"
-                f"<td>{r['score']}/{r['max_score']}</td>"
-                f"<td>{sent}</td>"
-                f"<td class='meta'>{html.escape(r['created_at'].isoformat())}</td>"
-                "</tr>"
-            )
-        table = (
-            "<table><thead><tr>"
-            "<th>Learner</th><th>Course</th><th>Score</th><th>Grade sent</th><th>When</th>"
-            "</tr></thead><tbody>"
-            + "".join(trs)
-            + "</tbody></table>"
-        )
-
-    body = f"""
-    <h1>Quiz attempts</h1>
-    <p class="sub">
-      Tenant {html.escape(str(session.get('tenant_slug') or ''))} —
-      only rows visible under this tenant’s RLS context.
-    </p>
-    <div class="card">{table}</div>
-    <p><a class="btn secondary" href="/quiz">Back to quiz</a></p>
-    """
-    return _page("Attempts", body)

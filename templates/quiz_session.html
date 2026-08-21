@@ -1,0 +1,35 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<div class="quiz-meta">
+  <span>{{ questions|length }} questions</span>
+  <span>·</span>
+  <span>{% if ags_available %}Score will sync to Moodle{% else %}Score saves here; Moodle sync off{% endif %}</span>
+</div>
+
+<form method="post" action="/quiz/submit" id="quiz-form" class="quiz-form">
+  <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+  {% for q in questions %}
+  <fieldset class="q">
+    <legend>Question {{ loop.index }} of {{ questions|length }}</legend>
+    <p class="q-prompt">{{ q.prompt }}</p>
+    {% for choice in q.choices %}
+    <label class="choice">
+      <input type="radio" name="{{ q.id }}" value="{{ loop.index0 }}" required/>
+      <span>{{ choice }}</span>
+    </label>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+  <div class="actions sticky-actions">
+    <button type="submit" class="primary btn-lg" id="quiz-submit-btn">Submit answers</button>
+    <a class="btn secondary" href="/launch-hub?token={{ quiz_token }}">Cancel</a>
+  </div>
+</form>
+<script>
+  document.getElementById('quiz-form').addEventListener('submit', function () {
+    var btn = document.getElementById('quiz-submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+  });
+</script>
+{% endblock %}

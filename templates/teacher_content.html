@@ -1,0 +1,193 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Teach · this school only</p>
+  <h2 class="welcome-title">Upload content</h2>
+  <p class="welcome-lede">
+    Add lessons and quiz questions for <strong>{{ tenant_name }}</strong>.
+    Students in other schools cannot see this.
+  </p>
+</section>
+
+{% if ok_message %}
+<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
+{% endif %}
+
+<div class="teach-grid">
+  <section class="panel">
+    <h2>Add a lesson</h2>
+    <form method="post" action="/teacher/lessons/new" class="teach-form" enctype="multipart/form-data">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <label>Title
+        <input name="title" required placeholder="Chapter title"/>
+      </label>
+      <label>Type
+        <select name="lesson_type">
+          <option value="article">Reading</option>
+          <option value="video">Video</option>
+          <option value="quiz">Quiz step (links to school quiz)</option>
+        </select>
+      </label>
+      <label>Visibility
+        <select name="status">
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
+      </label>
+      <label>Lesson text
+        <textarea name="body_md" rows="6" placeholder="Write the lesson students will read…"></textarea>
+      </label>
+      <label>Or upload lesson text (.md / .txt)
+        <input type="file" name="body_file" accept=".md,.txt,.markdown,text/plain"/>
+      </label>
+      <label>Attachment (optional PDF / image)
+        <input type="file" name="attachment" accept=".pdf,image/*"/>
+      </label>
+      <label>Video URL (optional, embed URL)
+        <input name="video_url" placeholder="https://www.youtube.com/embed/…"/>
+      </label>
+      <button type="submit" class="btn primary">Save lesson</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Add a quiz question</h2>
+    <form method="post" action="/teacher/quiz/questions" class="teach-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <label>Question
+        <textarea name="prompt" rows="3" required placeholder="Ask something students in this school should know…"></textarea>
+      </label>
+      <label>Choice A <input name="choice0" required/></label>
+      <label>Choice B <input name="choice1" required/></label>
+      <label>Choice C <input name="choice2"/></label>
+      <label>Choice D <input name="choice3"/></label>
+      <label>Correct answer
+        <select name="correct_index">
+          <option value="0">A</option>
+          <option value="1">B</option>
+          <option value="2">C</option>
+          <option value="3">D</option>
+        </select>
+      </label>
+      <button type="submit" class="btn primary">Save question</button>
+    </form>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Published lessons</h2>
+    <a class="btn secondary" href="/lessons?token={{ quiz_token }}">Student view</a>
+  </div>
+  {% if lessons %}
+  <ol class="lesson-list">
+    {% for L in lessons %}
+    <li class="lesson-item lesson-item-manage">
+      <a href="{% if L.lesson_type == 'quiz' %}/quiz?token={{ quiz_token }}{% else %}/lessons/{{ L.id }}?token={{ quiz_token }}{% endif %}">
+        <span class="lesson-pos">{{ '%02d'|format(L.position) }}</span>
+        <span class="lesson-body">
+          <span class="lesson-title">{{ L.title }}</span>
+          <span class="lesson-type">{{ L.lesson_type }} · {{ L.status or 'published' }}</span>
+        </span>
+        <span class="lesson-go">→</span>
+      </a>
+      <div class="teach-actions">
+        <form method="post" action="/teacher/lessons/{{ L.id }}/reorder">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="direction" value="up"/>
+          <button type="submit" class="btn secondary">↑</button>
+        </form>
+        <form method="post" action="/teacher/lessons/{{ L.id }}/reorder">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="direction" value="down"/>
+          <button type="submit" class="btn secondary">↓</button>
+        </form>
+        {% if (L.status or 'published') == 'published' %}
+        <form method="post" action="/teacher/lessons/{{ L.id }}/status">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="status" value="draft"/>
+          <button type="submit" class="btn secondary">Unpublish</button>
+        </form>
+        {% else %}
+        <form method="post" action="/teacher/lessons/{{ L.id }}/status">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="status" value="published"/>
+          <button type="submit" class="btn primary">Publish</button>
+        </form>
+        {% endif %}
+      </div>
+      <details class="teach-edit">
+        <summary>Edit</summary>
+        <form method="post" action="/teacher/lessons/{{ L.id }}/edit" class="teach-form" enctype="multipart/form-data">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <label>Title <input name="title" value="{{ L.title }}" required/></label>
+          <label>Type
+            <select name="lesson_type">
+              <option value="article" {% if L.lesson_type == 'article' %}selected{% endif %}>Reading</option>
+              <option value="video" {% if L.lesson_type == 'video' %}selected{% endif %}>Video</option>
+              <option value="quiz" {% if L.lesson_type == 'quiz' %}selected{% endif %}>Quiz step</option>
+            </select>
+          </label>
+          <label>Visibility
+            <select name="status">
+              <option value="published" {% if (L.status or 'published') == 'published' %}selected{% endif %}>Published</option>
+              <option value="draft" {% if L.status == 'draft' %}selected{% endif %}>Draft</option>
+              <option value="archived" {% if L.status == 'archived' %}selected{% endif %}>Archived</option>
+            </select>
+          </label>
+          <label>Lesson text
+            <textarea name="body_md" rows="4">{{ L.body_md or '' }}</textarea>
+          </label>
+          <label>Replace text from file
+            <input type="file" name="body_file" accept=".md,.txt,.markdown,text/plain"/>
+          </label>
+          <label>Add attachment
+            <input type="file" name="attachment" accept=".pdf,image/*"/>
+          </label>
+          <label>Video URL
+            <input name="video_url" value="{{ L.video_url or '' }}"/>
+          </label>
+          <div class="cta-row">
+            <button type="submit" class="btn primary">Update</button>
+          </div>
+        </form>
+        <form method="post" action="/teacher/lessons/{{ L.id }}/delete" class="teach-form" onsubmit="return confirm('Delete this lesson?');">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <button type="submit" class="btn secondary">Delete lesson</button>
+        </form>
+      </details>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <div class="empty"><p>No lessons yet — add one above.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Quiz questions {% if quiz %}<span class="meta">· {{ quiz.title }}</span>{% endif %}</h2>
+    <a class="btn secondary" href="/quiz?token={{ quiz_token }}">Preview quiz</a>
+  </div>
+  {% if questions %}
+  <ol class="q-list">
+    {% for q in questions %}
+    <li>
+      <strong>{{ q.prompt }}</strong>
+      <ul>
+        {% for c in q.choices %}
+        <li{% if loop.index0 == q.correct_index %} class="ok"{% endif %}>{{ c }}{% if loop.index0 == q.correct_index %} ← correct{% endif %}</li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="/teacher/quiz/questions/{{ q.id }}/delete" onsubmit="return confirm('Delete this question?');">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <button type="submit" class="btn secondary">Delete</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <div class="empty"><p>No questions yet — add one above. Students take the quiz from Learn → Take the quiz.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

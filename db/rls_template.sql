@@ -1,0 +1,23 @@
+-- RLS template for new tenant-owned tables (DEC-006).
+-- Copy, replace {{table_name}}, apply in the same migration that creates the table.
+-- Checklist before merge:
+--   [ ] tenant_id UUID NOT NULL REFERENCES tenants(id)
+--   [ ] ENABLE + FORCE ROW LEVEL SECURITY
+--   [ ] Policy uses current_setting('app.tenant_id') with USING + WITH CHECK
+--   [ ] App role edvidura_app is NOSUPERUSER NOBYPASSRLS
+--   [ ] Negative test: cross-tenant SELECT returns 0; forged INSERT rejected
+
+-- Example:
+-- ALTER TABLE {{table_name}} ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE {{table_name}} FORCE ROW LEVEL SECURITY;
+--
+-- CREATE POLICY {{table_name}}_tenant_isolation ON {{table_name}}
+--     FOR ALL
+--     USING (
+--         tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid
+--     )
+--     WITH CHECK (
+--         tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid
+--     );
+--
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON {{table_name}} TO edvidura_app;

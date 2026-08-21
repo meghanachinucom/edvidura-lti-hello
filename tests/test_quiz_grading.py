@@ -5,7 +5,7 @@ from app.quiz_content import MAX_SCORE, grade_answers
 
 
 def test_perfect_score():
-    score, detail = grade_answers({"q1": "0", "q2": "2", "q3": "1"})
+    score, detail = grade_answers({"q1": "0", "q2": "1", "q3": "1"})
     assert score == MAX_SCORE == 3
     assert all(detail[qid]["correct"] is True for qid in ("q1", "q2", "q3"))
 

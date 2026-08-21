@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EdVidura LTI Hello — Formal Progress Report (Completed Work)</title>
+<style>
+  /* Print-first black & white formal report */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: #000;
+    background: #fff;
+    font-family: "Times New Roman", Times, Georgia, serif;
+    font-size: 12pt;
+    line-height: 1.45;
+  }
+  .page {
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 18mm 18mm 22mm;
+  }
+  .cover {
+    border: 2px solid #000;
+    padding: 28px 24px;
+    margin-bottom: 28px;
+    text-align: center;
+  }
+  .cover .org { font-size: 11pt; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 18px; }
+  .cover h1 { font-size: 18pt; margin: 0 0 10px; font-weight: 700; }
+  .cover .subtitle { font-size: 13pt; margin: 0 0 22px; }
+  .meta { width: 100%; border-collapse: collapse; margin-top: 12px; text-align: left; font-size: 11pt; }
+  .meta th, .meta td { border: 1px solid #000; padding: 6px 10px; vertical-align: top; }
+  .meta th { width: 32%; font-weight: 700; background: #f0f0f0; }
+  h2 {
+    font-size: 13pt;
+    margin: 26px 0 10px;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid #000;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  h3 { font-size: 12pt; margin: 16px 0 6px; font-weight: 700; }
+  p { margin: 0 0 10px; text-align: justify; }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin: 4px 0; }
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px;
+    font-size: 10.5pt;
+  }
+  table.data th, table.data td {
+    border: 1px solid #000;
+    padding: 6px 8px;
+    vertical-align: top;
+    text-align: left;
+  }
+  table.data th { background: #e8e8e8; font-weight: 700; }
+  .status { font-weight: 700; }
+  .fig {
+    border: 1px solid #000;
+    padding: 12px 14px;
+    margin: 12px 0 16px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 9.5pt;
+    white-space: pre;
+    line-height: 1.35;
+    background: #fafafa;
+  }
+  .note {
+    border: 1px solid #000;
+    padding: 10px 12px;
+    margin: 12px 0;
+    font-size: 10.5pt;
+  }
+  .sig {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .sig .box { border-top: 1px solid #000; padding-top: 8px; font-size: 10.5pt; min-height: 64px; }
+  .footer {
+    margin-top: 28px;
+    border-top: 1px solid #000;
+    padding-top: 8px;
+    font-size: 9.5pt;
+    color: #222;
+  }
+  @media print {
+    body { background: #fff; }
+    .page { max-width: none; padding: 12mm 14mm; }
+    .cover, table.data, .fig, .note { break-inside: avoid; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="cover">
+    <div class="org">EdVidura · Engineering Progress Report</div>
+    <h1>LTI Hello / Multi-Tenant Spike<br/>Completed Work to Date</h1>
+    <p class="subtitle">Formal status report of delivered capability through Slice&nbsp;A</p>
+    <table class="meta">
+      <tr><th>Document type</th><td>Formal progress report (black &amp; white / print-ready)</td></tr>
+      <tr><th>Project</th><td>EdVidura LTI Hello (FastAPI + Moodle LTI&nbsp;1.3 + PostgreSQL)</td></tr>
+      <tr><th>Repository</th><td>https://github.com/meghanachinucom/edvidura-lti-hello</td></tr>
+      <tr><th>Report date</th><td>11 August 2026</td></tr>
+      <tr><th>Scope of this report</th><td>Work completed and verified in the development spike; excludes deferred modules (AI, XR, federation, enclave)</td></tr>
+      <tr><th>Classification</th><td>Internal — technical / project governance</td></tr>
+    </table>
+  </div>
+
+  <h2>1. Executive summary</h2>
+  <p>
+    EdVidura LTI Hello is a working demonstration of an LMS-embedded learning tool.
+    Learners and instructors open the tool from <strong>Moodle</strong> using <strong>LTI&nbsp;1.3</strong>.
+    The application resolves the correct institution (<strong>tenant</strong>) from verified platform registration data,
+    stores activity in a shared <strong>PostgreSQL</strong> database protected by <strong>Row Level Security (RLS)</strong>,
+    and delivers a vertical product slice: a short quiz with optional grade return to the Moodle gradebook
+    via <strong>Assignment and Grade Services (AGS)</strong>.
+  </p>
+  <p>
+    As of this report, the core launch path, tenancy model, onboarding APIs, tenant-isolation tests,
+    and Slice&nbsp;A quiz journey are <strong>complete</strong>. Remaining work is operational hardening,
+    configuration checklists for demos, and later product slices—not foundational redesign.
+  </p>
+
+  <h2>2. Purpose and objectives</h2>
+  <h3>2.1 Purpose</h3>
+  <p>
+    To prove that EdVidura can run inside a customer LMS without replacing Moodle, while enforcing
+    strict multi-tenant data separation and returning scores to the institutional gradebook.
+  </p>
+  <h3>2.2 Objectives achieved</h3>
+  <ol>
+    <li>Secure LTI&nbsp;1.3 login and launch against a local Moodle instance.</li>
+    <li>Tenant resolution derived only from verified issuer, client identifier, and deployment.</li>
+    <li>Shared-database tenancy with PostgreSQL RLS (decision DEC-006).</li>
+    <li>Institution and student onboarding HTTP APIs.</li>
+    <li>End-to-end Slice&nbsp;A: launch → three-question quiz → persisted attempt → teacher list → AGS passback.</li>
+    <li>Automated tests proving cross-tenant isolation on launch events.</li>
+  </ol>
+
+  <h2>3. Technical environment</h2>
+  <table class="data">
+    <tr><th>Layer</th><th>Technology</th><th>Notes</th></tr>
+    <tr><td>Application</td><td>Python 3.11+ / FastAPI / PyLTI1p3</td><td>Runs locally via uvicorn (typically port 8000)</td></tr>
+    <tr><td>Database</td><td>PostgreSQL 16 (Docker image <code>postgres:16-alpine</code>)</td><td>Host port 5433; no native Postgres install required</td></tr>
+    <tr><td>LMS</td><td>Moodle (Docker Compose)</td><td>Host port 8085</td></tr>
+    <tr><td>Tenancy</td><td>Shared schema + RLS</td><td>App role <code>edvidura_app</code> (non-superuser)</td></tr>
+    <tr><td>Grades</td><td>LTI AGS</td><td>Moodle gradebook is system of record</td></tr>
+  </table>
+
+  <div class="note">
+    <strong>Note on database hosting.</strong>
+    PostgreSQL is not installed as a Windows application. Docker Desktop runs the database container;
+    the FastAPI process connects to <code>127.0.0.1:5433</code> through Docker port mapping.
+  </div>
+
+  <h2>4. Architecture overview</h2>
+  <div class="fig">Learner / Instructor
+        |
+        v
+   Moodle (LTI 1.3 platform)
+        |
+        |  OIDC login + launch (iss, client_id, deployment)
+        v
+   EdVidura FastAPI tool
+        |-- resolve tenant from lti_platforms (fail closed)
+        |-- SET LOCAL app.tenant_id  (RLS)
+        |-- quiz / APIs / teacher views
+        |
+        +--> PostgreSQL (shared DB, RLS policies)
+        |
+        +--> AGS score POST --> Moodle gradebook (when enabled)</div>
+
+  <h2>5. Completed work (by workstream)</h2>
+
+  <h3>5.1 LTI 1.3 integration</h3>
+  <table class="data">
+    <tr><th>Item</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td>OIDC login endpoint</td><td class="status">Completed</td><td><code>/lti/login</code></td></tr>
+    <tr><td>Launch endpoint</td><td class="status">Completed</td><td><code>/lti/launch</code> → redirect to quiz</td></tr>
+    <tr><td>JWKS publication</td><td class="status">Completed</td><td><code>/.well-known/jwks.json</code></td></tr>
+    <tr><td>Unknown platform rejection</td><td class="status">Completed</td><td>Fail-closed on unregistered issuer/client</td></tr>
+    <tr><td>Launch event audit write</td><td class="status">Completed</td><td><code>launch_events</code> under RLS</td></tr>
+  </table>
+
+  <h3>5.2 Multi-tenancy and data isolation</h3>
+  <table class="data">
+    <tr><th>Item</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td>Tenant + platform schema</td><td class="status">Completed</td><td><code>tenants</code>, <code>lti_platforms</code> in <code>db/init.sql</code></td></tr>
+    <tr><td>Resolution contract</td><td class="status">Completed</td><td><code>docs/TENANT_RESOLUTION.md</code></td></tr>
+    <tr><td>RLS on launch events</td><td class="status">Completed</td><td>FORCE RLS + tenant policy</td></tr>
+    <tr><td>RLS on quiz attempts</td><td class="status">Completed</td><td>Tenant-scoped insert/select</td></tr>
+    <tr><td>Isolation CI tests</td><td class="status">Completed</td><td>PR #2 merged; <code>tests/test_tenant_isolation.py</code></td></tr>
+    <tr><td>Live cross-check endpoint</td><td class="status">Completed</td><td><code>GET /dev/tenancy/cross-check</code></td></tr>
+  </table>
+
+  <h3>5.3 Onboarding APIs</h3>
+  <table class="data">
+    <tr><th>Item</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td>Institution create/list</td><td class="status">Completed</td><td><code>POST/GET /api/v1/institutions</code></td></tr>
+    <tr><td>Student create/list</td><td class="status">Completed</td><td><code>POST/GET /api/v1/students</code></td></tr>
+    <tr><td>OpenAPI / Swagger</td><td class="status">Completed</td><td><code>http://127.0.0.1:8000/docs</code></td></tr>
+  </table>
+
+  <h3>5.4 Slice A — quiz journey</h3>
+  <table class="data">
+    <tr><th>Item</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td>Three-question quiz UI</td><td class="status">Completed</td><td><code>/quiz</code> after LTI launch</td></tr>
+    <tr><td>Score calculation</td><td class="status">Completed</td><td><code>app/quiz_content.py</code>; unit tests</td></tr>
+    <tr><td>Persist attempts</td><td class="status">Completed</td><td><code>quiz_attempts</code> table + migration</td></tr>
+    <tr><td>Result page</td><td class="status">Completed</td><td><code>/quiz/result/{id}</code></td></tr>
+    <tr><td>Teacher attempts list</td><td class="status">Completed</td><td><code>/teacher/attempts</code> (tenant-scoped)</td></tr>
+    <tr><td>AGS grade passback</td><td class="status">Completed*</td><td><code>app/ags_passback.py</code>; requires Moodle AGS config</td></tr>
+    <tr><td>Submit UX (non-blocking)</td><td class="status">Completed</td><td>Save + redirect; AGS in background task</td></tr>
+    <tr><td>Launch snapshot persistence</td><td class="status">Completed</td><td><code>lti_launch_snapshots</code> + quiz session tokens (survives reload)</td></tr>
+  </table>
+  <p>
+    <em>*AGS passback is implemented in code. Successful delivery to Moodle depends on tool/activity configuration
+    (Assignment and Grade Services enabled; activity set to accept grades).</em>
+  </p>
+
+  <h3>5.5 Platform operations (local)</h3>
+  <table class="data">
+    <tr><th>Item</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td>Postgres Compose stack</td><td class="status">Completed</td><td><code>db/docker-compose.yml</code></td></tr>
+    <tr><td>Moodle Compose stack</td><td class="status">Completed</td><td><code>moodle/docker-compose.yml</code></td></tr>
+    <tr><td>Health endpoint</td><td class="status">Completed</td><td><code>GET /health</code> (includes DB check)</td></tr>
+    <tr><td>Seed / setup scripts</td><td class="status">Completed</td><td>Key generation; platform seed scripts</td></tr>
+    <tr><td>Project README</td><td class="status">Completed</td><td>Setup and Slice&nbsp;A test steps</td></tr>
+  </table>
+
+  <h2>6. Key design decisions (locked)</h2>
+  <table class="data">
+    <tr><th>Decision</th><th>Choice</th><th>Rationale</th></tr>
+    <tr><td>LMS for Release&nbsp;1</td><td>Moodle only</td><td>Fastest path to a demoable LTI product</td></tr>
+    <tr><td>Launch protocol</td><td>LTI&nbsp;1.3 (PyLTI1p3), new window</td><td>Standard Advantage path; avoids iframe cookie traps where possible</td></tr>
+    <tr><td>Cloud tenancy</td><td>Shared DB + shared schema + RLS</td><td>Operationally simple for SaaS spike; isolation enforced in database</td></tr>
+    <tr><td>Regulated / defence</td><td>Dedicated instance later</td><td>Not schema-per-tenant in this spike</td></tr>
+    <tr><td>Official grades</td><td>Moodle gradebook via AGS</td><td>Institution remains system of record</td></tr>
+    <tr><td>Delivery style</td><td>Thin vertical slices</td><td>Prove one journey end-to-end before expanding modules</td></tr>
+  </table>
+
+  <h2>7. Verification and acceptance evidence</h2>
+  <ol>
+    <li><strong>Functional:</strong> Student launch from Moodle lands on quiz; submit stores attempt; instructor can view tenant-scoped attempts.</li>
+    <li><strong>Security / tenancy:</strong> Isolation tests and <code>/dev/tenancy/cross-check</code> show Tenant&nbsp;A cannot read Tenant&nbsp;B launch data under RLS.</li>
+    <li><strong>Integration:</strong> When Moodle AGS is enabled, score is posted to the gradebook; quiz UI reports AGS availability on launch.</li>
+    <li><strong>Resilience (dev):</strong> Launch JWT and quiz session token persist in PostgreSQL so grade passback survives local server reload.</li>
+  </ol>
+
+  <h2>8. How to inspect stored data</h2>
+  <p>Data may be reviewed without a desktop Postgres installation:</p>
+  <ul>
+    <li><strong>Application UI:</strong> Teacher attempts list after instructor launch.</li>
+    <li><strong>SQL via Docker:</strong> <code>docker exec -it db-db-1 psql -U edvidura -d edvidura</code></li>
+    <li><strong>GUI tools:</strong> Connect to host <code>127.0.0.1</code>, port <code>5433</code>, database <code>edvidura</code>.</li>
+  </ul>
+  <p>Primary tables: <code>tenants</code>, <code>lti_platforms</code>, <code>launch_events</code>, <code>quiz_attempts</code>, <code>lti_launch_snapshots</code>, <code>quiz_session_tokens</code>.</p>
+
+  <h2>9. Explicitly out of scope (not completed — deferred)</h2>
+  <table class="data">
+    <tr><th>Area</th><th>Status</th></tr>
+    <tr><td>AI tutoring / generation features</td><td>Deferred</td></tr>
+    <tr><td>XR / simulation modules</td><td>Deferred</td></tr>
+    <tr><td>Federation / Keycloak enterprise IdP</td><td>Deferred</td></tr>
+    <tr><td>Air-gapped defence enclave deployment</td><td>Deferred</td></tr>
+    <tr><td>Full production observability / HA / multi-region</td><td>Not in spike</td></tr>
+  </table>
+
+  <h2>10. Known limitations and residual risks</h2>
+  <ul>
+    <li>AGS success depends on correct Moodle external-tool and activity settings.</li>
+    <li>Local development uses in-memory caches plus Postgres snapshots; production should use a shared cache or durable session store.</li>
+    <li>Stage&nbsp;0 contract pack still requires formal leadership sign-off where drafted.</li>
+    <li>Onboarding remains API-first; a minimal admin UI is recommended for demo operators.</li>
+  </ul>
+
+  <h2>11. Conclusion</h2>
+  <p>
+    The EdVidura LTI Hello spike has achieved its stated goal for Slice&nbsp;A: a multi-tenant,
+    Moodle-launched quiz with tenant-isolated persistence and optional grade return to the LMS.
+    The technical foundation (LTI&nbsp;1.3, PostgreSQL RLS, onboarding APIs, isolation tests) is in place
+    for subsequent hardening and later product slices.
+  </p>
+  <p>
+    <strong>Overall status of scoped spike work: COMPLETE for Slice&nbsp;A delivery criteria,</strong>
+    subject to Moodle AGS configuration for gradebook demonstration and routine operational polish.
+  </p>
+
+  <div class="sig">
+    <div class="box">
+      Prepared by:<br/><br/>
+      Name / Role: _______________________________<br/><br/>
+      Date: _______________ &nbsp;&nbsp; Signature: _______________
+    </div>
+    <div class="box">
+      Reviewed / acknowledged by:<br/><br/>
+      Name / Role: _______________________________<br/><br/>
+      Date: _______________ &nbsp;&nbsp; Signature: _______________
+    </div>
+  </div>
+
+  <div class="footer">
+    EdVidura LTI Hello — Formal Progress Report (Completed Work) · 11 August 2026 ·
+    Black &amp; white print version · Page content ends here.
+    Open this file in a browser and use Print → Save as PDF if a PDF copy is required.
+  </div>
+
+</div>
+</body>
+</html>

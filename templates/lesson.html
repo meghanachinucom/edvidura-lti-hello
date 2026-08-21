@@ -1,0 +1,54 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<article class="lesson-player">
+  <section class="welcome">
+    <p class="welcome-kicker">
+      {% if lesson.lesson_type == 'video' %}Video{% else %}Reading{% endif %}
+      · Lesson {{ lesson.position }}
+    </p>
+    <h2 class="welcome-title">{{ lesson.title }}</h2>
+  </section>
+
+  {% if video_url %}
+  <div class="video-frame">
+    <iframe
+      src="{{ video_url }}"
+      title="{{ lesson.title }}"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      loading="lazy"
+    ></iframe>
+  </div>
+  {% endif %}
+
+  {% if body_html %}
+  <div class="lesson-prose">
+    {{ body_html | safe }}
+  </div>
+  {% endif %}
+
+  <div class="lesson-actions">
+    {% if prev_href %}
+    <a class="btn secondary" href="{{ prev_href }}">← Previous</a>
+    {% else %}
+    <a class="btn secondary" href="/lessons?token={{ quiz_token }}">All lessons</a>
+    {% endif %}
+
+    <form method="post" action="/lessons/{{ lesson_id }}/complete" class="lesson-complete-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <button type="submit" class="btn primary btn-lg">
+        {% if next_is_quiz %}Mark done &amp; take quiz
+        {% elif next_href %}Mark done &amp; continue
+        {% elif is_completed %}Continue
+        {% else %}Mark complete{% endif %}
+      </button>
+    </form>
+    {% if is_completed %}
+    <form method="post" action="/lessons/{{ lesson_id }}/uncomplete" class="lesson-complete-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <button type="submit" class="btn secondary">Mark incomplete</button>
+    </form>
+    {% endif %}
+  </div>
+</article>
+{% endblock %}

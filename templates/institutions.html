@@ -1,0 +1,32 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h2>Institutions</h2>
+      <p class="lede">Organizations registered to launch EdVidura from their LMS.</p>
+    </div>
+    <a class="btn secondary" href="/onboard">Onboard org</a>
+  </div>
+  {% if institutions %}
+  <table>
+    <thead><tr><th>Name</th><th>Code</th><th>Moodle URL</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for i in institutions %}
+      <tr>
+        <td><strong>{{ i.institution_name }}</strong></td>
+        <td><code>{{ i.institution_code }}</code></td>
+        <td class="meta">{{ i.issuer }}</td>
+        <td>{{ i.status }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p>No institutions registered yet.</p>
+    <a class="btn primary" href="/onboard">Register the first one</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

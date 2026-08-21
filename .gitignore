@@ -27,3 +27,7 @@ moodle/data/
 uvicorn*.log
 *.err.log
 
+# Teacher lesson uploads
+app/static/uploads/
+!app/static/uploads/.gitkeep
+

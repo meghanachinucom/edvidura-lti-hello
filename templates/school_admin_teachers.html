@@ -1,0 +1,44 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">School admin</p>
+  <h2 class="welcome-title">Teachers</h2>
+  <p class="welcome-lede">Staff for <strong>{{ tenant_name }}</strong> only.</p>
+</section>
+
+{% if ok_message %}
+<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
+{% endif %}
+
+<div class="teach-grid">
+  <section class="panel">
+    <h2>Add teacher</h2>
+    <form method="post" action="/school-admin/teachers" class="teach-form">
+      <input type="hidden" name="token" value="{{ quiz_token }}"/>
+      <label>Code <input name="teacher_code" required placeholder="TCH-04"/></label>
+      <label>Name <input name="name" required placeholder="Full name"/></label>
+      <label>Email <input name="email" type="email" required placeholder="teacher@school.test"/></label>
+      <button type="submit" class="btn primary">Save teacher</button>
+    </form>
+  </section>
+  <section class="panel">
+    <h2>Directory</h2>
+    {% if teachers %}
+    <table>
+      <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
+      <tbody>
+      {% for t in teachers %}
+        <tr>
+          <td><code>{{ t.teacher_code }}</code></td>
+          <td>{{ t.name }}</td>
+          <td class="meta">{{ t.email }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty"><p>No teachers yet.</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

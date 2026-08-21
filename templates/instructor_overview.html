@@ -1,0 +1,146 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<div class="insight-row insight-row-4">
+  <div class="insight">
+    <span class="insight-k">Attempts</span>
+    <span class="insight-v">{{ total_attempts }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Learners</span>
+    <span class="insight-v">{{ learner_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Avg score</span>
+    <span class="insight-v">{% if avg_percent is not none %}{{ avg_percent }}%{% else %}—{% endif %}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Pass rate</span>
+    <span class="insight-v">{% if pass_rate is not none %}{{ pass_rate }}%{% else %}—{% endif %}</span>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Filters</h2>
+    <a class="btn secondary" href="/teacher/attempts.csv?token={{ quiz_token }}{{ filter_qs }}">Export CSV</a>
+  </div>
+  <form method="get" action="/teacher/attempts" class="teach-form filter-row">
+    <input type="hidden" name="token" value="{{ quiz_token }}"/>
+    <label>Class
+      <select name="class_id">
+        <option value="">All classes</option>
+        {% for c in classes %}
+        <option value="{{ c.id }}" {% if filter_class_id == (c.id ~ '') %}selected{% endif %}>{{ c.class_name }} ({{ c.class_code }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Course label
+      <select name="course">
+        <option value="">All courses</option>
+        {% for label in course_labels %}
+        <option value="{{ label }}" {% if filter_course == label %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>From
+      <input type="date" name="date_from" value="{{ filter_date_from }}"/>
+    </label>
+    <label>To
+      <input type="date" name="date_to" value="{{ filter_date_to }}"/>
+    </label>
+    <div class="cta-row">
+      <button type="submit" class="btn primary">Apply</button>
+      <a class="btn secondary" href="/teacher/attempts?token={{ quiz_token }}">Clear</a>
+    </div>
+  </form>
+  {% if selected_class_name %}
+  <p class="meta">Showing roster match for <strong>{{ selected_class_name }}</strong> (by learner name / email / code).</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Learner best scores</h2>
+    <span class="meta">Pass ≥ 60% · {{ synced_count }} synced to Moodle</span>
+  </div>
+  {% if learners %}
+  <table>
+    <thead>
+      <tr>
+        <th>Learner</th>
+        <th>Best</th>
+        <th>Attempts</th>
+        <th>Moodle</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for L in learners %}
+      <tr>
+        <td>{{ L.learner_name or L.subject }}</td>
+        <td><strong>{{ L.best_score }}/{{ L.best_max }}</strong> <span class="meta">({{ L.best_percent }}%)</span></td>
+        <td>{{ L.attempts }}</td>
+        <td>{% if L.grade_sent %}<span class="ok">Synced</span>{% else %}<span class="meta">—</span>{% endif %}</td>
+        <td><a class="link" href="/quiz/result/{{ L.best_attempt_id }}?token={{ quiz_token }}">Review</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p>No student attempts for this filter.</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Lesson progress</h2>
+    <span class="meta">{{ course_title }}</span>
+  </div>
+  {% if progress_roster %}
+  <table>
+    <thead><tr><th>Learner</th><th>Completed</th><th>Progress</th></tr></thead>
+    <tbody>
+    {% for p in progress_roster %}
+      <tr>
+        <td>{{ p.learner_name or p.subject }}</td>
+        <td>{{ p.completed_count }}/{{ p.total_count }}</td>
+        <td><strong>{{ p.percent }}%</strong></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p>No lesson completions recorded yet.</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Recent attempts</h2>
+  <p class="lede">Everyone who has submitted from this institution’s Moodle link.</p>
+  {% if attempts %}
+  <table>
+    <thead><tr><th>Learner</th><th>Course</th><th>Score</th><th>In Moodle</th><th>When</th><th></th></tr></thead>
+    <tbody>
+    {% for a in attempts %}
+      <tr>
+        <td>{{ a.learner_name or a.subject }}</td>
+        <td>{{ a.course_label or "—" }}</td>
+        <td><strong>{{ a.score }}/{{ a.max_score }}</strong></td>
+        <td>{% if a.grade_sent %}<span class="ok">Synced</span>{% else %}<span class="meta">Not synced</span>{% endif %}</td>
+        <td class="meta">{{ a.created_at }}</td>
+        <td><a class="link" href="/quiz/result/{{ a.id }}?token={{ quiz_token }}">Open</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p>No student attempts yet.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

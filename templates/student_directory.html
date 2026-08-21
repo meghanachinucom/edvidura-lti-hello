@@ -1,0 +1,33 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Learners</h2>
+  <p class="lede">People with quiz activity in this workspace{% if search_query %} · matching “{{ search_query }}”{% endif %}.</p>
+  <form method="get" action="/student-directory" class="search-row">
+    <input type="hidden" name="token" value="{{ quiz_token }}"/>
+    <input name="q" value="{{ search_query or '' }}" placeholder="Search by name"/>
+    <button type="submit" class="primary">Search</button>
+  </form>
+  {% if students %}
+  <table>
+    <thead><tr><th>Learner</th><th>Attempts</th><th>Average</th></tr></thead>
+    <tbody>
+    {% for s in students %}
+      <tr>
+        <td>
+          <strong>{{ s.name }}</strong>
+          <div class="meta">{{ s.subject }}</div>
+        </td>
+        <td>{{ s.attempts }}</td>
+        <td>{{ s.avg_score }} / {{ max_score | default(3) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p>No learners yet — results appear after students submit the quiz.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

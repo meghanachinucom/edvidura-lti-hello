@@ -17,6 +17,7 @@ class Settings:
     session_secret: str
     private_key_path: Path
     database_url: str
+    admin_api_key: str
 
     @property
     def private_key_pem(self) -> str:
@@ -25,7 +26,7 @@ class Settings:
 
 def get_settings() -> Settings:
     return Settings(
-        app_base_url=os.getenv("APP_BASE_URL", "http://host.docker.internal:8000").rstrip(
+        app_base_url=os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip(
             "/"
         ),
         session_secret=os.getenv("SESSION_SECRET", "dev-only-change-me"),
@@ -35,4 +36,6 @@ def get_settings() -> Settings:
             "DATABASE_URL",
             "postgresql://edvidura_app:edvidura_app@127.0.0.1:5433/edvidura",
         ),
+        # Ops secret for tenant/platform onboarding APIs (Keycloak later).
+        admin_api_key=os.getenv("ADMIN_API_KEY", "dev-admin-change-me").strip(),
     )

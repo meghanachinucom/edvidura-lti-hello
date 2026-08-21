@@ -1,0 +1,31 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<article class="lesson-player">
+  <section class="welcome">
+    <p class="welcome-kicker">Manual · v{{ version.version }}{% if version.is_published %} · published{% endif %}</p>
+    <h2 class="welcome-title">{{ manual.title }}</h2>
+    {% if version.changelog %}<p class="welcome-lede">{{ version.changelog }}</p>{% endif %}
+  </section>
+
+  {% if body_html %}
+  <div class="lesson-prose">
+    {{ body_html | safe }}
+  </div>
+  {% endif %}
+
+  <section class="panel">
+    <h2>Version history</h2>
+    <ul class="q-list">
+      {% for v in versions %}
+      <li>
+        <a class="link" href="/manuals/{{ manual.id }}?token={{ quiz_token }}&v={{ v.version }}">
+          v{{ v.version }}{% if v.is_published %} · published{% else %} · draft{% endif %}
+        </a>
+        {% if v.changelog %}<div class="meta">{{ v.changelog }}</div>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    <p><a class="btn secondary" href="/manuals?token={{ quiz_token }}">All manuals</a></p>
+  </section>
+</article>
+{% endblock %}

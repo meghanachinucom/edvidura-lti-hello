@@ -1,0 +1,47 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">{{ course_row.title }}</p>
+  <h2 class="welcome-title">Lessons</h2>
+  <p class="welcome-lede">
+    {% if is_instructor %}
+    Students work through these in order. Add more from
+    <a class="link" href="/teacher/content?token={{ quiz_token }}">Upload content</a>.
+    {% else %}
+    Open each lesson, mark it complete, then take the quiz when you’re ready.
+    {% endif %}
+  </p>
+</section>
+
+{% if progress %}
+<div class="progress-block">
+  <div class="progress-head">
+    <span>Your progress</span>
+    <span>{{ progress.completed_count }}/{{ progress.total_count }} complete</span>
+  </div>
+  <div class="progress-track" aria-hidden="true">
+    <div class="progress-fill" style="width: {{ progress.percent }}%"></div>
+  </div>
+</div>
+{% endif %}
+
+<ol class="lesson-list">
+  {% for item in lesson_items %}
+  <li class="lesson-item {% if item.completed %}done{% endif %}">
+    <a href="{{ item.href }}">
+      <span class="lesson-pos">{{ '%02d'|format(item.position) }}</span>
+      <span class="lesson-body">
+        <span class="lesson-title">{{ item.title }}</span>
+        <span class="lesson-type">
+          {% if item.lesson_type == 'video' %}Video
+          {% elif item.lesson_type == 'quiz' %}Quiz
+          {% else %}Reading{% endif %}
+          {% if item.completed %} · Completed{% endif %}
+        </span>
+      </span>
+      <span class="lesson-go" aria-hidden="true">→</span>
+    </a>
+  </li>
+  {% endfor %}
+</ol>
+{% endblock %}

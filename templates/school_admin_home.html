@@ -1,0 +1,66 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">School admin · {{ tenant_name }}</p>
+  <h2 class="welcome-title">Hi{% if first_name %}, {{ first_name }}{% endif %}</h2>
+  <p class="welcome-lede">
+    Manage teachers, classes, and students for this school. Other schools cannot see this roster.
+  </p>
+  <div class="welcome-actions">
+    <a class="btn primary btn-lg" href="/school-admin/teachers?token={{ quiz_token }}">Teachers</a>
+    <a class="btn secondary" href="/school-admin/classes?token={{ quiz_token }}">Classes</a>
+    <a class="btn secondary" href="/school-admin/students?token={{ quiz_token }}">Students</a>
+    <a class="btn secondary" href="/institution-detail?token={{ quiz_token }}">Full workspace</a>
+  </div>
+</section>
+
+<div class="insight-row insight-row-4">
+  <div class="insight">
+    <span class="insight-k">Teachers</span>
+    <span class="insight-v">{{ snapshot.teacher_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Classes</span>
+    <span class="insight-v">{{ snapshot.class_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Students</span>
+    <span class="insight-v">{{ snapshot.student_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Quiz attempts</span>
+    <span class="insight-v">{{ total_attempts }}</span>
+  </div>
+</div>
+
+{% if snapshot.admins %}
+<section class="panel">
+  <h2>School admins</h2>
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
+    <tbody>
+    {% for a in snapshot.admins %}
+      <tr><td><code>{{ a.admin_code }}</code></td><td>{{ a.name }}</td><td class="meta">{{ a.email }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Classes</h2>
+    <a class="btn secondary" href="/school-admin/classes?token={{ quiz_token }}">Manage</a>
+  </div>
+  {% if snapshot.classes %}
+  {% for c in snapshot.classes[:5] %}
+  <div class="class-block">
+    <h3>{{ c.class_name }} <span class="meta">({{ c.class_code }})</span></h3>
+    <p class="meta">{{ c.subject }} · {{ c.term }} · {{ c.students|length }} students</p>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty"><p>No classes yet. Add one under Classes.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -57,6 +57,48 @@ http://localhost:8085
 
 ---
 
+## Tenant onboarding (BYO Moodle)
+
+Guided UI: http://127.0.0.1:8000/onboard
+
+Seed two demo schools + students (idempotent):
+
+```bash
+python scripts/seed_schools.py
+```
+
+Creates **Riverside High** and **Lakeside Academy** with classes, teachers,
+students, chapters, and school-specific quizzes (tenant-isolated).
+
+```bash
+# once per DB
+Get-Content db/migration_school_org.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
+python scripts/seed_schools.py
+```
+
+Admin API (header `X-Admin-Key` = `ADMIN_API_KEY` from `.env`):
+
+- `POST /admin/tenants` — create tenant
+- `POST /admin/tenants/{id}/lti-platforms` — register Moodle issuer + Client ID + deployments
+- `GET /admin/tenants` / `GET /admin/lti-platforms`
+
+Runtime LTI config is always loaded from Postgres `lti_platforms` (not from `MOODLE_*` env).  
+`MOODLE_*` is only for optional local seed (`python scripts/seed_platforms.py`).
+
+Contracts: `docs/decisions/DEC-006.md`, `docs/TENANT_RESOLUTION.md`, `docs/EVENT_ENVELOPE_V1.md`.
+
+Pilot scripts: `docs/DEMO_SCRIPT.md`, AGS: `docs/AGS_CHECKLIST.md`, backups: `docs/BACKUP.md`.
+
+If the DB already existed before newer slices, also apply:
+
+```bash
+Get-Content db/migration_lesson_workflow.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
+Get-Content db/migration_event_outbox.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
+Get-Content db/migration_manuals.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
+```
+
+---
+
 ## API Testing
 
 ### Institution
@@ -78,12 +120,13 @@ http://127.0.0.1:8000/docs
 ## LTI Launch Testing (Slice A)
 
 1. Start Postgres, FastAPI, and Moodle.
-2. If the DB already existed before Slice A, apply:
+2. If the DB already existed before Slice A / course content, apply:
    `psql ... -f db/migration_quiz_attempts.sql`
+   and `psql ... -f db/migration_course_content.sql`
 3. In Moodle external tool settings, enable **Accept grades from the tool** (AGS) so scores can pass back.
-4. Launch the tool as a student → you should land on the **3-question quiz**.
+4. Launch the tool as a student → **Home** → **Lessons** (tenant-private) → **Quiz**.
 5. Submit → see score; check Moodle gradebook if AGS is enabled.
-6. Launch as a teacher → open **Teacher: view attempts** for the tenant-scoped list.
+6. Launch as a teacher → **Upload content** (draft/publish, reorder, edit/delete, file attach) → **Class results** (filters, CSV, best scores + lesson progress).
 
 ---
 
