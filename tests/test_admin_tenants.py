@@ -88,9 +88,10 @@ def test_create_tenant_and_platform(client: TestClient):
 def test_onboard_page_renders(client: TestClient):
     r = client.get("/onboard")
     assert r.status_code == 200
-    assert "Institution onboarding" in r.text
+    assert "Connect your school" in r.text
     assert "/lti/login" in r.text
     assert "Client ID" in r.text
+    assert "Create school" in r.text
 
 
 def test_onboard_tenant_rejects_bad_key(client: TestClient):

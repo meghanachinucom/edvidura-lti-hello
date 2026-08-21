@@ -1,18 +1,43 @@
-# Identity (Keycloak) — after onboarding works
+# Identity (Keycloak) — ops / API auth
 
-**Status:** Deferred until Admin API + BYO-Moodle onboarding are stable.
+**Status:** Implemented (optional). Moodle LTI remains the learner/teacher front door.
 
 ## Preferred model (SaaS)
 
-- **Single realm** (or equivalent IdP) with a **`tenant_id` claim** in access tokens (**C1**).
-- Map LTI launch → app session that already embeds `tenant_id` (same value as `lti_platforms.tenant_id`).
-- Service accounts are **tenant-scoped** — no all-tenant super tokens for normal app services.
-- Replace `ADMIN_API_KEY` / `X-Admin-Key` with role-gated ops auth once IdP is live.
+- **Single realm** `edvidura` with optional **`tenant_id`** user attribute on tokens.
+- Realm role **`ops`** gates `/admin/*` and onboarding saves.
+- Legacy **`X-Admin-Key` / `ADMIN_API_KEY`** still accepted (dual auth).
+
+## Run Keycloak (dev)
+
+```bash
+cd identity
+docker compose up -d
+```
+
+- Console: http://localhost:8087 — `admin` / `admin`
+- Realm: `edvidura` (imported from `realm-edvidura.json`)
+- Ops user: `ops` / `OpsPass123!` (role `ops`)
+- Client: `edvidura-api` · secret `edvidura-api-dev-secret`
+
+## App `.env`
+
+```env
+KEYCLOAK_ENABLED=1
+KEYCLOAK_URL=http://localhost:8087
+KEYCLOAK_REALM=edvidura
+KEYCLOAK_CLIENT_ID=edvidura-api
+KEYCLOAK_CLIENT_SECRET=edvidura-api-dev-secret
+```
+
+## Flows
+
+| Path | How |
+|------|-----|
+| Browser onboarding | http://127.0.0.1:8000/auth/login → Keycloak → `/onboard` |
+| Admin API | `Authorization: Bearer <access_token>` **or** `X-Admin-Key` |
+| Status | `GET /auth/status` · `GET /auth/me` |
 
 ## Not preferred for SaaS
 
-- Realm-per-tenant (**C2**) — heavy ops; only if a customer pays for that model or pairs with DB-per-tenant enclave.
-
-## Front door today
-
-Moodle LTI 1.3 remains the learner/instructor front door. Keycloak does not replace LTI for LMS launch; it complements staff/API identity later.
+- Realm-per-tenant — heavy ops; only for paid enclave customers.

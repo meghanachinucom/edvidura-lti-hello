@@ -24,11 +24,15 @@ from app.lti_fastapi import (
     make_launch_data_storage,
 )
 from app.onboard_routes import router as onboard_router
+from app.auth_routes import router as auth_router
+from app.deep_link_routes import router as deep_link_router
+from app.lti_register_routes import router as lti_register_router
 from app.quiz_routes import SESSION_KEY as QUIZ_SESSION_KEY
 from app.quiz_routes import router as quiz_router
 from app.quiz_routes import store_quiz_context
 from app.shell_routes import router as shell_router
 from app.settings import get_settings
+from app.security_boot import assert_safe_for_environment, require_dev_tools
 from app.tenant_context import TenantContext, use_tenant_context
 from app.tenancy import (
     TENANT_A_ID,
@@ -41,14 +45,23 @@ from app.tenancy_isolation import prove_launch_events_isolation
 
 configure_logging()
 
+_boot = get_settings()
+assert_safe_for_environment(_boot)
+
 app = FastAPI(
-    title="EdVidura LTI Hello",
-    description="Multi-tenant Moodle LTI 1.3 Hello spike (not full EdVidura).",
-    version="0.6.0",
+    title="EdVidura",
+    description="Multi-tenant LTI 1.3 learning platform for schools (Moodle front door).",
+    version="0.7.0",
+    docs_url=None if _boot.is_production else "/docs",
+    redoc_url=None if _boot.is_production else "/redoc",
+    openapi_url=None if _boot.is_production else "/openapi.json",
 )
 
 app.include_router(admin_tenants_router)
+app.include_router(auth_router)
 app.include_router(onboard_router)
+app.include_router(deep_link_router)
+app.include_router(lti_register_router)
 app.include_router(shell_router)
 app.include_router(institution_router)
 app.include_router(student_router)
@@ -57,7 +70,6 @@ app.include_router(quiz_router)
 _STATIC = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 
-_boot = get_settings()
 app.add_middleware(StructuredLoggingMiddleware)
 app.add_middleware(
     SessionMiddleware,
@@ -90,27 +102,25 @@ def health():
     }
 
 
-@app.get("/")
-def home():
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    from fastapi.templating import Jinja2Templates
+
     settings = get_settings()
-    base = settings.app_base_url
-    body = f"""
-    <h1>EdVidura LTI Hello (multi-tenant)</h1>
-    <p>Slice A: Moodle launch → quiz → score → optional AGS grade passback.</p>
-    <ul>
-      <li><a href="/onboard">/onboard</a> — institution onboarding (BYO Moodle)</li>
-      <li><a href="/health">/health</a></li>
-      <li><a href="/.well-known/jwks.json">JWKS</a></li>
-      <li><a href="/dev/tenancy/cross-check">/dev/tenancy/cross-check</a> (RLS proof)</li>
-      <li><a href="/launch-hub">/launch-hub</a> — 9-screen product shell (after LTI)</li>
-      <li><a href="/quiz">/quiz</a> — quiz inside the shell</li>
-      <li><a href="/docs">/docs</a> — includes <code>POST /admin/tenants</code></li>
-      <li>LTI login: <code>{base}/lti/login</code></li>
-      <li>LTI launch: <code>{base}/lti/launch</code></li>
-    </ul>
-    <p>See <code>docs/TENANT_RESOLUTION.md</code> and <code>docs/decisions/DEC-006.md</code>.</p>
-    """
-    return HTMLResponse(body)
+    templates = Jinja2Templates(
+        directory=str(Path(__file__).resolve().parents[1] / "templates")
+    )
+    from app.modules.identity import keycloak_enabled
+
+    return templates.TemplateResponse(
+        request,
+        "landing.html",
+        {
+            "base": settings.app_base_url,
+            "keycloak_enabled": keycloak_enabled(),
+            "metabase_url": settings.metabase_url or "",
+        },
+    )
 
 
 @app.get("/.well-known/jwks.json")
@@ -123,8 +133,9 @@ def jwks():
 
 
 @app.get("/dev/tenancy/cross-check")
-def tenancy_cross_check():
+def tenancy_cross_check(request: Request):
     """Dev-only: prove Tenant A cannot see Tenant B launch_events under RLS."""
+    require_dev_tools(request)
     try:
         result = prove_launch_events_isolation()
         if not result["ok"]:
@@ -140,12 +151,9 @@ def tenancy_cross_check():
 @app.post("/dev/outbox/drain/{tenant_id}")
 def outbox_drain(tenant_id: UUID, request: Request):
     """Mark pending outbox events published for one tenant (local sink)."""
-    from app.admin_auth import admin_key_matches
+    require_dev_tools(request)
     from app.modules.events import drain_tenant
 
-    key = request.headers.get("X-Admin-Key") or ""
-    if not admin_key_matches(key):
-        return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
     try:
         result = drain_tenant(tenant_id, limit=100)
         return {"ok": True, **result}
@@ -155,12 +163,9 @@ def outbox_drain(tenant_id: UUID, request: Request):
 
 @app.get("/dev/outbox/pending/{tenant_id}")
 def outbox_pending(tenant_id: UUID, request: Request):
-    from app.admin_auth import admin_key_matches
+    require_dev_tools(request)
     from app.modules.events import list_pending_for_tenant
 
-    key = request.headers.get("X-Admin-Key") or ""
-    if not admin_key_matches(key):
-        return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
     rows = list_pending_for_tenant(tenant_id, limit=50)
     return {
         "ok": True,
@@ -175,6 +180,52 @@ def outbox_pending(tenant_id: UUID, request: Request):
             for r in rows
         ],
     }
+
+
+@app.get("/dev/xapi/statements/{tenant_id}")
+def xapi_statements(tenant_id: UUID, request: Request, tier: str | None = None):
+    """List recent xAPI statements for a tenant (ops auth)."""
+    require_dev_tools(request)
+    from app.modules.xapi import list_statements
+
+    try:
+        rows = list_statements(tenant_id, limit=50, tier=tier)
+    except Exception as exc:  # noqa: BLE001
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
+    return {
+        "ok": True,
+        "count": len(rows),
+        "statements": [
+            {
+                "statement_id": str(r["statement_id"]),
+                "verb_id": r["verb_id"],
+                "actor_sub": r.get("actor_sub"),
+                "object_id": r.get("object_id"),
+                "tier": r.get("tier"),
+                "sent_to_lrs": r.get("sent_to_lrs"),
+                "lrs_error": r.get("lrs_error"),
+                "lrs_attempts": r.get("lrs_attempts"),
+                "attempt_id": str(r["attempt_id"]) if r.get("attempt_id") else None,
+                "created_at": r["created_at"].isoformat()
+                if r.get("created_at")
+                else None,
+                "statement": r.get("statement"),
+            }
+            for r in rows
+        ],
+    }
+
+
+@app.post("/dev/xapi/retry-lrs/{tenant_id}")
+def xapi_retry_lrs(tenant_id: UUID, request: Request):
+    require_dev_tools(request)
+    from app.modules.xapi import retry_failed_lrs, tier_counts
+
+    try:
+        result = retry_failed_lrs(tenant_id, limit=100)
+        return {"ok": True, **result, "tiers": tier_counts(tenant_id)}
+    except Exception as exc:  # noqa: BLE001
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
 
 
 async def _collect_params(request: Request) -> dict:
@@ -309,6 +360,11 @@ async def lti_launch(request: Request):
         except Exception:  # noqa: BLE001
             admin_row = None
         is_school_admin = bool(admin_row) or "Administrator" in role_text
+        is_deep_link = False
+        try:
+            is_deep_link = bool(message_launch.is_deep_link_launch())
+        except Exception:  # noqa: BLE001
+            is_deep_link = False
         ags_claim = launch_data.get(
             "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"
         ) or {}
@@ -341,6 +397,7 @@ async def lti_launch(request: Request):
             "email": email,
             "is_instructor": is_instructor,
             "is_school_admin": is_school_admin,
+            "is_deep_link": is_deep_link,
             "course": str(course),
             "launch_event_id": str(event["id"]),
             "ags_available": ags_available,
@@ -370,6 +427,10 @@ async def lti_launch(request: Request):
         # LAUNCH_CACHE + lti_launch_snapshots — stuffing it into the cookie
         # exceeds browser limits and leaves a stale launch_id after reload.
         request.session[QUIZ_SESSION_KEY] = quiz_ctx
+        if is_deep_link:
+            return RedirectResponse(
+                url=f"/lti/deep-link?token={quiz_token}", status_code=303
+            )
         return RedirectResponse(url=f"/launch-hub?token={quiz_token}", status_code=303)
     except LtiException as exc:
         print(f"LTI launch failed: {exc}", flush=True)
@@ -380,8 +441,9 @@ async def lti_launch(request: Request):
 
 
 @app.get("/dev/tenancy/launches/{tenant_slug}")
-def list_launches(tenant_slug: str):
+def list_launches(tenant_slug: str, request: Request):
     """Dev helper: list launch_events visible under the named tenant's RLS context."""
+    require_dev_tools(request)
     tenant_map = {
         "tenant-a": TENANT_A_ID,
         "a": TENANT_A_ID,

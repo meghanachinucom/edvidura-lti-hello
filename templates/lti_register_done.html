@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{% if ok %}EdVidura connected{% else %}Registration failed{% endif %}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 28rem; margin: 2rem auto; padding: 0 1.25rem; color: #0c1a1f; }
+    h1 { font-size: 1.4rem; margin: 0 0 0.5rem; }
+    p { line-height: 1.5; color: #24353c; }
+    .ok { color: #0f766e; }
+    .bad { color: #b42318; }
+    code { background: #f0eee8; padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
+    ol { padding-left: 1.2rem; line-height: 1.55; }
+    button { margin-top: 1rem; background: #0f766e; color: #fff; border: 0; border-radius: 999px; padding: 0.65rem 1.2rem; font-weight: 700; cursor: pointer; }
+  </style>
+</head>
+<body>
+  {% if ok %}
+  <h1 class="ok">Connected to Moodle</h1>
+  <p><strong>{{ tenant_name }}</strong> (<code>{{ tenant_slug }}</code>) is linked to <code>{{ issuer }}</code>.</p>
+  <ol>
+    <li>Close this panel.</li>
+    <li>In Moodle, <strong>activate</strong> the pending EdVidura tool.</li>
+    <li>In a course, add an External tool → launch EdVidura (new window).</li>
+  </ol>
+  <p>Client ID <code>{{ client_id }}</code> · Deployment <code>{{ deployment_id }}</code></p>
+  {% else %}
+  <h1 class="bad">Could not finish registration</h1>
+  <p>{{ error }}</p>
+  <p>Close this panel and try again from EdVidura Connect, or use the manual advanced path.</p>
+  {% endif %}
+  <button type="button" id="close-reg">Close and return to Moodle</button>
+  <script>
+    function closeReg() {
+      try { (window.opener || window.parent).postMessage({subject:'org.imsglobal.lti.close'}, '*'); } catch (e) {}
+    }
+    document.getElementById('close-reg').addEventListener('click', closeReg);
+    {% if ok %}
+    setTimeout(closeReg, 1200);
+    {% endif %}
+  </script>
+</body>
+</html>

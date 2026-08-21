@@ -19,7 +19,7 @@ TENANT_B_COURSE_ID = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
 
 
 def body_md_to_html(body_md: str) -> str:
-    """Minimal safe formatting — escape HTML, paragraphs, simple [label](url) links."""
+    """Minimal safe formatting — escape HTML, ## headings with ids, paragraphs, links."""
     text = (body_md or "").strip()
     if not text:
         return ""
@@ -36,8 +36,30 @@ def body_md_to_html(body_md: str) -> str:
     parts = re.split(r"\n\s*\n", text)
     blocks: list[str] = []
     for part in parts:
-        lines = [html.escape(line.strip()) for line in part.splitlines() if line.strip()]
-        if not lines:
+        raw_lines = [line.strip() for line in part.splitlines() if line.strip()]
+        if not raw_lines:
+            continue
+        # Single ## heading paragraph → anchored h2
+        if len(raw_lines) == 1 and raw_lines[0].startswith("## "):
+            title = raw_lines[0][3:].strip()
+            slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-") or "section"
+            blocks.append(
+                f'<h2 class="manual-h" id="{html.escape(slug, quote=True)}">'
+                f"{html.escape(title)}</h2>"
+            )
+            continue
+        lines = [html.escape(line) for line in raw_lines]
+        # Inline ## at start of first line inside a block
+        if lines and raw_lines[0].startswith("## "):
+            title = raw_lines[0][3:].strip()
+            slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-") or "section"
+            blocks.append(
+                f'<h2 class="manual-h" id="{html.escape(slug, quote=True)}">'
+                f"{html.escape(title)}</h2>"
+            )
+            rest = lines[1:]
+            if rest:
+                blocks.append("<p>" + "<br/>".join(rest) + "</p>")
             continue
         blocks.append("<p>" + "<br/>".join(lines) + "</p>")
     out = "\n".join(blocks)

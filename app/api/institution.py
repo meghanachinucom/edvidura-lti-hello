@@ -1,4 +1,4 @@
-"""Institution onboarding router."""
+"""Institution onboarding router (ops-authenticated)."""
 from __future__ import annotations
 
 import logging
@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, status
 import psycopg
 
 from app import db
+from app.admin_auth import OpsAuth
 from app.schemas.institution import InstitutionCreate, InstitutionResponse
 
 logger = logging.getLogger(__name__)
@@ -17,14 +18,13 @@ router = APIRouter(prefix="/api/v1/institutions", tags=["Institutions"])
 
 @router.post("", response_model=InstitutionResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=InstitutionResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
-def create_institution(payload: InstitutionCreate) -> dict:
+def create_institution(payload: InstitutionCreate, _ops: OpsAuth) -> dict:
     logger.info(
         "Creating institution code=%s for tenant_id=%s",
         payload.institution_code,
         payload.tenant_id,
     )
 
-    # 1. Validate tenant existence
     tenant = db.get_tenant(payload.tenant_id)
     if not tenant:
         logger.warning("Tenant %s not found for institution creation", payload.tenant_id)
@@ -33,7 +33,6 @@ def create_institution(payload: InstitutionCreate) -> dict:
             detail=f"Tenant with id '{payload.tenant_id}' does not exist.",
         )
 
-    # 2. Validate duplicate institution_code
     existing = db.get_institution_by_code(payload.institution_code)
     if existing:
         logger.warning("Duplicate institution_code: %s", payload.institution_code)
@@ -42,7 +41,6 @@ def create_institution(payload: InstitutionCreate) -> dict:
             detail=f"Institution with code '{payload.institution_code}' already exists.",
         )
 
-    # 3. Create institution & automatically register LTI platform
     try:
         institution = db.create_institution(
             tenant_id=payload.tenant_id,
@@ -96,6 +94,6 @@ def create_institution(payload: InstitutionCreate) -> dict:
 
 @router.get("", response_model=List[InstitutionResponse])
 @router.get("/", response_model=List[InstitutionResponse], include_in_schema=False)
-def list_institutions() -> list[dict]:
+def list_institutions(_ops: OpsAuth) -> list[dict]:
     logger.info("Listing all institutions")
     return db.list_institutions()

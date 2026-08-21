@@ -22,6 +22,9 @@ class MemoryCache:
         return value
 
     def set(self, key: str, value: Any, exp: int | None = None) -> None:
+        if value is None:
+            self._store.pop(key, None)
+            return
         expires = (time.time() + exp) if exp else None
         self._store[key] = (value, expires)
 

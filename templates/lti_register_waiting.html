@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Connect {{ tenant_name }} · EdVidura</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 2rem auto; padding: 0 1.25rem; color: #0c1a1f; }
+    h1 { font-size: 1.4rem; }
+    code { word-break: break-all; background: #f0eee8; padding: 0.35rem 0.5rem; display: block; border-radius: 8px; margin: 0.75rem 0; }
+    .tip { background: #fff7e8; padding: 0.85rem 1rem; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <h1>{% if already_done %}Already connected{% else %}Waiting for Moodle{% endif %}</h1>
+  <p>School: <strong>{{ tenant_name }}</strong> (<code style="display:inline;padding:0.1em 0.3em">{{ tenant_slug }}</code>)</p>
+  {% if already_done %}
+  <p>Linked to <code style="display:inline">{{ issuer }}</code> · client <code style="display:inline">{{ client_id }}</code>.</p>
+  <p>Activate the tool in Moodle if it is still pending, then launch once from a course.</p>
+  {% else %}
+  <div class="tip">
+    Don’t open this link in a normal tab. In Moodle go to
+    <strong>Site administration → Plugins → External tool → Manage tools</strong>,
+    choose <strong>Add LTI Advantage</strong>, and paste:
+  </div>
+  <code>{{ registration_url }}</code>
+  {% endif %}
+</body>
+</html>

@@ -59,7 +59,8 @@ http://localhost:8085
 
 ## Tenant onboarding (BYO Moodle)
 
-Guided UI: http://127.0.0.1:8000/onboard
+Guided UI: http://127.0.0.1:8000/onboard  
+**Preferred:** one-click Moodle **Add LTI Advantage** (Dynamic Registration) — see [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
 
 Seed two demo schools + students (idempotent):
 
@@ -85,7 +86,9 @@ Admin API (header `X-Admin-Key` = `ADMIN_API_KEY` from `.env`):
 Runtime LTI config is always loaded from Postgres `lti_platforms` (not from `MOODLE_*` env).  
 `MOODLE_*` is only for optional local seed (`python scripts/seed_platforms.py`).
 
-Contracts: `docs/decisions/DEC-006.md`, `docs/TENANT_RESOLUTION.md`, `docs/EVENT_ENVELOPE_V1.md`.
+Contracts: `docs/decisions/DEC-006.md`, `docs/TENANT_RESOLUTION.md`, `docs/EVENT_ENVELOPE_V1.md`, `docs/XAPI.md`, `docs/SPECIALS.md`, `docs/ANALYTICS.md`, `docs/AI_ASSESSMENT.md`.
+
+**Deploy to Railway:** see [`docs/RAILWAY.md`](docs/RAILWAY.md) (`Dockerfile`, `railway.toml`, `LTI_PRIVATE_KEY_PEM`).
 
 Pilot scripts: `docs/DEMO_SCRIPT.md`, AGS: `docs/AGS_CHECKLIST.md`, backups: `docs/BACKUP.md`.
 
@@ -95,8 +98,14 @@ If the DB already existed before newer slices, also apply:
 Get-Content db/migration_lesson_workflow.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
 Get-Content db/migration_event_outbox.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
 Get-Content db/migration_manuals.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
+Get-Content db/migration_xapi_statements.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
+Get-Content db/migration_specials.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
+Get-Content db/migration_bi_views.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
 ```
 
+Or: `python scripts/apply_migrations.py` (uses `DATABASE_URL`).
+
+Optional Metabase BI: `cd db; docker compose --profile bi up -d` → http://localhost:3001 (see `docs/ANALYTICS.md`).
 ---
 
 ## API Testing
@@ -151,7 +160,8 @@ Postgres must be running (`cd db && docker compose up -d`) and `DATABASE_URL` mu
 pytest -q tests/test_tenant_isolation.py
 ```
 
-Or hit the live proof endpoint: `GET /dev/tenancy/cross-check`
+Or hit the live proof endpoint (ops auth): `GET /dev/tenancy/cross-check` with header `X-Admin-Key`.
+Hidden entirely when `ENVIRONMENT=production`.
 
 These tests prove Tenant A cannot read Tenant B `launch_events` under RLS, forged inserts are rejected, and unknown LTI platforms fail closed.
 

@@ -13,6 +13,13 @@
 <p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
 {% endif %}
 
+{% if ai %}
+<p class="banner-note info">
+  AI quiz: <strong>{{ ai.provider }}</strong> ({{ ai.model }})
+  — use <em>AI quiz</em> on a reading lesson to draft MCQs.
+</p>
+{% endif %}
+
 <div class="teach-grid">
   <section class="panel">
     <h2>Add a lesson</h2>
@@ -102,6 +109,14 @@
           <input type="hidden" name="direction" value="down"/>
           <button type="submit" class="btn secondary">↓</button>
         </form>
+        {% if L.lesson_type != 'quiz' and (L.body_md or '')|length > 40 %}
+        <form method="post" action="/teacher/ai/generate">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
+          <input type="hidden" name="count" value="3"/>
+          <button type="submit" class="btn secondary" title="Generate MCQs from lesson text">AI quiz</button>
+        </form>
+        {% endif %}
         {% if (L.status or 'published') == 'published' %}
         <form method="post" action="/teacher/lessons/{{ L.id }}/status">
           <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>

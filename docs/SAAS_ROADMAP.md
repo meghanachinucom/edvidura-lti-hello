@@ -6,8 +6,8 @@ Implement **one phase at a time**.
 |-------|------|--------|
 | **1** | Security foundations | **Done** |
 | **2** | Railway deploy + migrations hardened | **Done** |
-| **3** | Land uncommitted SaaS modules (dynreg, xAPI, identity, …) | Next |
-| **4** | RLS on invites / snapshots / tokens + non-bypass DB role | Pending |
+| **3** | Land uncommitted SaaS modules (dynreg, xAPI, identity, …) | **Done** |
+| **4** | RLS on invites / snapshots / tokens + non-bypass DB role | Next |
 | **5** | Shared launch cache (Redis/DB) for multi-instance | Pending |
 | **6** | Rate limits, backups, monitoring | Pending |
 
@@ -28,3 +28,12 @@ Implement **one phase at a time**.
 - Default image `ENVIRONMENT=production` (override locally)
 
 Local stays `ENVIRONMENT=development` in `.env`.
+
+## Phase 3 (done)
+
+Landed SaaS modules and HTTP wiring in git:
+
+- Modules: `identity`, `xapi`, `lti_dynreg`, `specials`, `analytics`, `ai_assessment`
+- Routes: Keycloak auth, Dynamic Registration, Deep Linking, onboard wizard
+- Keycloak compose: `identity/`
+- Product docs + module tests

@@ -1,0 +1,99 @@
+{
+  "realm": "edvidura",
+  "enabled": true,
+  "displayName": "EdVidura Ops",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "sslRequired": "external",
+  "roles": {
+    "realm": [
+      {
+        "name": "ops",
+        "description": "EdVidura platform operator — admin APIs and onboarding",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "school_admin",
+        "description": "School administrator (tenant-scoped via tenant_id claim)",
+        "composite": false,
+        "clientRole": false
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "edvidura-api",
+      "name": "EdVidura API",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "edvidura-api-dev-secret",
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8000/*",
+        "http://127.0.0.1:8000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "+"
+      ],
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8000/*##http://127.0.0.1:8000/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "audience-edvidura-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "edvidura-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "ops",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "ops@edvidura.local",
+      "firstName": "Ops",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "OpsPass123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["ops"]
+    }
+  ]
+}

@@ -14,8 +14,10 @@ from app.settings import get_settings
 def build_tool_conf_from_db(*, require_platforms: bool = True) -> ToolConfDict:
     """Build ToolConfDict from all active lti_platforms rows (multi-issuer)."""
     settings = get_settings()
-    if not settings.private_key_path.exists():
-        raise LtiException("Missing private key. Run: python scripts/generate_keys.py")
+    if not settings.has_private_key:
+        raise LtiException(
+            "Missing private key. Set LTI_PRIVATE_KEY_PEM or run: python scripts/generate_keys.py"
+        )
 
     platforms = db.fetch_all_active_platforms()
     if require_platforms and not platforms:

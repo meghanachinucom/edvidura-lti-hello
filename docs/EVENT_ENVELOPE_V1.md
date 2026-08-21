@@ -33,4 +33,4 @@ All domain events emitted by EdVidura (outbox, webhooks, future bus) **must** in
 
 ## Status
 
-Contract published for Slice 0. **Outbox table + producer implemented** (`event_outbox`, `app.modules.events`). Quiz submit enqueues `quiz.attempt.submitted`. Local drain marks rows published (no external bus yet).
+Contract published for Slice 0. **Outbox table + producer implemented** (`event_outbox`, `app.modules.events`). Quiz submit enqueues `quiz.attempt.submitted`. Local drain marks rows published (no external bus yet). Quiz submit also records an xAPI statement in parallel (`docs/XAPI.md`).

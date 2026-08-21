@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Add EdVidura content · Deep Linking</title>
+  <link rel="stylesheet" href="/static/css/onboard.css?v=2"/>
+  <style>
+    .pick-grid { display: grid; gap: 0.65rem; margin-top: 0.75rem; }
+    .pick-grid form {
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+      padding: 0.85rem 1rem; background: var(--white); border: 1px solid var(--line); border-radius: 12px;
+    }
+    .pick-grid strong { display: block; font-family: var(--display); }
+    .pick-grid span { color: var(--ink-soft); font-size: 0.88rem; }
+  </style>
+</head>
+<body>
+  <header class="ob-top">
+    <a class="ob-logo" href="#">EdVidura</a>
+    <span style="opacity:.8;font-size:.9rem">Deep Linking · {{ tenant_name }}</span>
+  </header>
+  <main class="ob">
+    <header class="ob-hero">
+      <p class="ob-kicker">LTI Advantage</p>
+      <h1>Add content to Moodle</h1>
+      <p class="ob-lede">Pick one item. Moodle will place a link that opens it in a new window.</p>
+    </header>
+
+    <section class="ob-panel">
+      <h2>Quick links</h2>
+      <div class="pick-grid">
+        <form method="post" action="/lti/deep-link/submit">
+          <input type="hidden" name="token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="item_type" value="hub"/>
+          <input type="hidden" name="title" value="EdVidura home"/>
+          <div><strong>EdVidura home</strong><span>Launch hub for this school</span></div>
+          <button class="ob-btn" type="submit">Add</button>
+        </form>
+        <form method="post" action="/lti/deep-link/submit">
+          <input type="hidden" name="token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="item_type" value="quiz"/>
+          <input type="hidden" name="title" value="School quiz"/>
+          <div><strong>School quiz</strong><span>Graded quiz with AGS passback</span></div>
+          <button class="ob-btn" type="submit">Add</button>
+        </form>
+      </div>
+    </section>
+
+    {% if lessons %}
+    <section class="ob-panel">
+      <h2>Lessons</h2>
+      <div class="pick-grid">
+        {% for L in lessons %}
+        {% if L.lesson_type != 'quiz' %}
+        <form method="post" action="/lti/deep-link/submit">
+          <input type="hidden" name="token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="item_type" value="lesson"/>
+          <input type="hidden" name="item_id" value="{{ L.id }}"/>
+          <input type="hidden" name="title" value="{{ L.title }}"/>
+          <div><strong>{{ L.title }}</strong><span>{{ L.lesson_type }}</span></div>
+          <button class="ob-btn" type="submit">Add</button>
+        </form>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if manuals %}
+    <section class="ob-panel">
+      <h2>Manuals</h2>
+      <div class="pick-grid">
+        {% for m in manuals %}
+        <form method="post" action="/lti/deep-link/submit">
+          <input type="hidden" name="token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="item_type" value="manual"/>
+          <input type="hidden" name="item_id" value="{{ m.id }}"/>
+          <input type="hidden" name="title" value="{{ m.title }}"/>
+          <div><strong>{{ m.title }}</strong><span>Versioned manual</span></div>
+          <button class="ob-btn" type="submit">Add</button>
+        </form>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </main>
+</body>
+</html>

@@ -60,6 +60,74 @@
 
 <section class="panel">
   <div class="panel-head">
+    <h2>At-risk coach</h2>
+    <span class="meta">Rules only — repeat fails, low score, incomplete path</span>
+  </div>
+  {% if at_risk %}
+  <ul class="at-risk-list">
+    {% for r in at_risk %}
+    <li>
+      <strong>{{ r.learner_name }}</strong>
+      <span class="meta">{{ r.attempt_count }} attempts · latest {{ r.latest_percent }}%</span>
+      <ul>
+        {% for reason in r.reasons %}
+        <li>{{ reason }}</li>
+        {% endfor %}
+      </ul>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="meta">No at-risk signals for this filter yet.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Class competency map</h2>
+    <span class="meta">Aggregated skill strength from attempts</span>
+  </div>
+  {% if competency_map %}
+  <div class="comp-bars">
+    {% for c in competency_map %}
+    <div class="comp-row status-{{ c.status }}">
+      <div class="comp-label">{{ c.label }}</div>
+      <div class="comp-track" aria-hidden="true"><i style="width: {{ c.percent if c.percent is not none else 0 }}%"></i></div>
+      <div class="comp-pct">{% if c.percent is not none %}{{ c.percent }}%{% else %}—{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="meta">No competency samples yet.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Quiet class radar</h2>
+    <span class="meta">Where the class stalls — not a leaderboard</span>
+  </div>
+  {% if radar and radar.hottest %}
+  <p class="lede">Hottest miss: <strong>{{ radar.hottest.prompt }}</strong> ({{ radar.hottest.fail_rate }}% fail · {{ radar.hottest.fail_count }}/{{ radar.hottest.attempts }})</p>
+  <div class="radar-bars">
+    {% for item in radar.items %}
+    <div class="radar-row">
+      <div class="radar-label">{{ item.prompt }}</div>
+      <div class="radar-track" aria-hidden="true"><i style="width: {{ item.fail_rate }}%"></i></div>
+      <div class="radar-pct">{{ item.fail_rate }}%</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="meta">Not enough attempt detail yet for item-level radar.</p>
+  {% endif %}
+  <div class="actions">
+    <a class="btn secondary" href="/teacher/time-capsule.json?token={{ quiz_token }}">Download time capsule</a>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
     <h2>Learner best scores</h2>
     <span class="meta">Pass ≥ 60% · {{ synced_count }} synced to Moodle</span>
   </div>

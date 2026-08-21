@@ -1,52 +1,111 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="result-hero">
-  <p class="welcome-kicker">Attempt complete</p>
-  <div class="score-value">{{ score }} <span class="score-max">/ {{ max_score }}</span></div>
-  <p class="result-copy">
-    {% if score == max_score %}
-      Nice work — full marks.
-    {% elif score == 0 %}
-      No correct answers this time. Review and try again.
-    {% else %}
-      Partial credit. You can retake anytime.
-    {% endif %}
-  </p>
-  <p class="meta">{{ learner_name }} · {{ course }}</p>
-</section>
-
-{% if grade_sent %}
-<div class="banner ok">Score sent to the Moodle gradebook.</div>
+{% if receipt and receipt.practice %}
+<div class="banner-note info">Practice attempt — not sent to Moodle gradebook.</div>
+{% elif grade_sent %}
+<div class="banner-note ok">Score sent to the Moodle gradebook.</div>
 {% elif grade_error %}
-<div class="banner info">Saved in EdVidura. Moodle sync note: {{ grade_error }}</div>
+<div class="banner-note info">Saved in EdVidura. Moodle sync note: {{ grade_error }}</div>
 {% else %}
-<div class="banner info">Saved in EdVidura. Moodle gradebook sync was not available on this launch.</div>
+<div class="banner-note info">Saved in EdVidura. Moodle gradebook sync was not available on this launch.</div>
 {% endif %}
 
-{% if review %}
-<section class="panel">
-  <h2>Answer review</h2>
-  <ul class="review-list">
-  {% for item in review %}
-    <li class="review-item {% if item.correct %}is-correct{% else %}is-wrong{% endif %}">
-      <div class="review-q">{{ item.prompt }}</div>
-      <div class="review-a">
-        {% if item.correct %}
-          Correct
-        {% else %}
-          Your answer was incorrect
-          {% if item.correct_choice %} · correct: <strong>{{ item.correct_choice }}</strong>{% endif %}
-        {% endif %}
-      </div>
-    </li>
+{% if stickers %}
+<div class="sticker-row">
+  {% for s in stickers %}
+  <span class="sticker sticker-{{ s.tone }}">{{ s.label }}</span>
   {% endfor %}
-  </ul>
+</div>
+{% endif %}
+
+<div class="stats">
+  <div class="stat"><div class="stat-ico i1">★</div><div><b>{{ score }}/{{ max_score }}</b><span>Score</span></div></div>
+  <div class="stat"><div class="stat-ico i2">✓</div><div><b>{{ score }}</b><span>Correct</span></div></div>
+  <div class="stat"><div class="stat-ico i3">×</div><div><b>{{ max_score - score }}</b><span>Missed</span></div></div>
+  <div class="stat"><div class="stat-ico i4">↻</div><div><b>Retry</b><span>Missed only</span></div></div>
+</div>
+
+{% if receipt %}
+<div class="card receipt-card">
+  <div class="card-h"><h2>Grade receipt</h2><span class="badge">Evidence</span></div>
+  <dl class="kv receipt-kv">
+    <dt>Attempt</dt><dd><code>{{ receipt.attempt_id }}</code></dd>
+    <dt>Score</dt><dd>{{ receipt.score }}/{{ receipt.max_score }} ({{ receipt.percent }}%)</dd>
+    <dt>Moodle gradebook</dt>
+    <dd>{% if receipt.practice %}Skipped (practice){% elif receipt.grade_sent %}Synced{% elif receipt.ags_available %}Pending / not synced{% else %}AGS off on launch{% endif %}</dd>
+    <dt>xAPI statement</dt>
+    <dd>{% if receipt.xapi_statement_id %}<code>{{ receipt.xapi_statement_id }}</code>{% else %}—{% endif %}</dd>
+    <dt>Issued</dt><dd class="meta">{{ receipt.issued_at }}</dd>
+  </dl>
+  <p class="lede" style="margin:0.75rem 0 0">Moodle owns the official grade; EdVidura keeps the learning story.</p>
+</div>
+{% endif %}
+
+{% if competencies %}
+<section class="panel competency-panel">
+  <div class="panel-head">
+    <h2>Competency map</h2>
+    <span class="meta">Skills from this attempt</span>
+  </div>
+  <div class="comp-bars">
+    {% for c in competencies %}
+    <div class="comp-row status-{{ c.status }}">
+      <div class="comp-label">{{ c.label }}</div>
+      <div class="comp-track" aria-hidden="true"><i style="width: {{ c.percent if c.percent is not none else 0 }}%"></i></div>
+      <div class="comp-pct">{% if c.percent is not none %}{{ c.percent }}%{% else %}—{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
 </section>
 {% endif %}
 
-<div class="actions">
-  <a class="btn primary" href="/quiz?token={{ quiz_token }}">Try again</a>
-  <a class="btn secondary" href="/active-quizzes?token={{ quiz_token }}">My attempts</a>
-  <a class="btn secondary" href="{{ moodle_return_href }}" target="_top" rel="noopener">← Back to Moodle</a>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-h"><h2>Breakdown</h2></div>
+    {% if review %}
+      {% for item in review %}
+      <div class="course-item {% if not item.correct %}now{% endif %}">
+        <div class="thumb {% if item.correct %}t2{% else %}t3{% endif %}">{% if item.correct %}✓{% else %}×{% endif %}</div>
+        <div>
+          <div class="ci-title">{{ item.prompt }}</div>
+          <div class="ci-meta">
+            {% if item.correct %}Correct
+            {% else %}Missed{% if item.correct_choice %} · correct: {{ item.correct_choice }}{% endif %}
+            {% endif %}
+          </div>
+          {% if item.teleport_href %}
+          <div class="teleport">
+            <a class="link" href="{{ item.teleport_href }}">{{ item.teleport_label }} →</a>
+            <span class="meta">{{ item.teleport_hint }}</span>
+          </div>
+          {% endif %}
+          {% if item.manual_href %}
+          <div class="teleport">
+            <a class="link" href="{{ item.manual_href }}">{{ item.manual_label or "Pinned manual section" }} →</a>
+            <span class="meta">Version-pinned · then practice → graded retry</span>
+          </div>
+          {% endif %}
+        </div>
+        {% if item.correct %}<span class="badge ok">1 pt</span>
+        {% else %}<span class="badge warn">0 pt</span>{% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="lede">{{ learner_name }} · {{ course }}</p>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-h"><h2>Next step</h2></div>
+    <p class="lede" style="margin:0">
+      {% if score == max_score %}Nice work — full marks.
+      {% elif score == 0 %}Open the pinned manual or lesson, practice, then graded retry.
+      {% else %}Miss → manual section → practice lane → graded retry.{% endif %}
+    </p>
+    <div class="actions" style="margin-top:1rem">
+      <a class="btn primary" href="{{ retry_href }}">Retry missed</a>
+      <a class="btn secondary" href="{{ practice_href }}">Practice lane</a>
+      <a class="btn secondary" href="/lessons?token={{ quiz_token }}">Lessons</a>
+    </div>
+  </div>
 </div>
 {% endblock %}

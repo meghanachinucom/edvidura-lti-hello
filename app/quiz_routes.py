@@ -168,7 +168,7 @@ def _load_launch_data(launch_id: str) -> dict[str, Any] | None:
         return None
 
 
-def _restore_launch_from_id(
+def restore_launch_from_id(
     launch_id: str, launch_data: dict[str, Any] | None = None
 ) -> FastAPIMessageLaunch:
     data = launch_data if launch_data is not None else _load_launch_data(str(launch_id))
@@ -187,6 +187,10 @@ def _restore_launch_from_id(
         tool_conf,
         launch_data_storage=storage,
     )
+
+
+# Back-compat alias
+_restore_launch_from_id = restore_launch_from_id
 
 
 def _ags_background(
@@ -262,10 +266,25 @@ async def quiz_submit(
 
     try:
         form = await request.form()
-        questions = questions_for_tenant(session.get("tenant_id"))
+        practice_mode = str(form.get("practice_mode") or "") == "1"
+        all_questions = questions_for_tenant(session.get("tenant_id"))
+        form_keys = set(form.keys())
+        questions = tuple(q for q in all_questions if q.id in form_keys)
+        if not questions:
+            questions = all_questions
         submitted = {q.id: str(form.get(q.id) or "") for q in questions}
         score, detail = grade_answers(submitted, questions)
         max_score = len(questions)
+
+        answers_payload: dict[str, Any] = {
+            "submitted": submitted,
+            "detail": detail,
+        }
+        if practice_mode:
+            answers_payload["mode"] = "practice"
+        retry_from = str(form.get("retry_from") or "").strip()
+        if retry_from:
+            answers_payload["retry_from"] = retry_from
 
         # Save + redirect immediately; AGS runs in background so the browser never hangs
         attempt = db.insert_quiz_attempt(
@@ -275,9 +294,13 @@ async def quiz_submit(
             course_label=str(session.get("course") or ""),
             score=score,
             max_score=max_score,
-            answers={"submitted": submitted, "detail": detail},
+            answers=answers_payload,
             grade_sent=False,
-            grade_error="Grade passback queued…",
+            grade_error=(
+                "Practice attempt — not sent to Moodle"
+                if practice_mode
+                else "Grade passback queued…"
+            ),
         )
 
         try:
@@ -294,19 +317,45 @@ async def quiz_submit(
         except Exception as outbox_exc:  # noqa: BLE001
             print(f"Outbox enqueue failed (attempt saved): {outbox_exc}", flush=True)
 
-        launch_id = str(session.get("launch_id") or "")
-        launch_data = _load_launch_data(launch_id) if launch_id else None
-        background_tasks.add_task(
-            _ags_background,
-            launch_id=launch_id,
-            subject=str(session["subject"]),
-            score=score,
-            score_maximum=max_score,
-            tenant_id=str(session["tenant_id"]),
-            attempt_id=str(attempt["id"]),
-            ags_available=session.get("ags_available"),
-            launch_data=launch_data,
-        )
+        try:
+            from app.modules.xapi import record_quiz_attempt
+
+            record_quiz_attempt(
+                tenant_id=session["tenant_id"],
+                subject=str(session["subject"]),
+                learner_name=str(session.get("learner_name") or ""),
+                attempt_id=attempt["id"],
+                score=score,
+                max_score=max_score,
+                course_label=str(session.get("course") or ""),
+            )
+        except Exception as xapi_exc:  # noqa: BLE001
+            print(f"xAPI record failed (attempt saved): {xapi_exc}", flush=True)
+
+        if not practice_mode:
+            launch_id = str(session.get("launch_id") or "")
+            launch_data = _load_launch_data(launch_id) if launch_id else None
+            background_tasks.add_task(
+                _ags_background,
+                launch_id=launch_id,
+                subject=str(session["subject"]),
+                score=score,
+                score_maximum=max_score,
+                tenant_id=str(session["tenant_id"]),
+                attempt_id=str(attempt["id"]),
+                ags_available=session.get("ags_available"),
+                launch_data=launch_data,
+            )
+        else:
+            try:
+                db.update_quiz_attempt_grade(
+                    tenant_id=session["tenant_id"],
+                    attempt_id=attempt["id"],
+                    grade_sent=False,
+                    grade_error="Practice attempt — not sent to Moodle",
+                )
+            except Exception:  # noqa: BLE001
+                pass
 
         session["last_result_id"] = str(attempt["id"])
         if quiz_token:

@@ -7,6 +7,19 @@
     {% if version.changelog %}<p class="welcome-lede">{{ version.changelog }}</p>{% endif %}
   </section>
 
+  {% if focus %}
+  <div class="banner-note info focus-banner" id="focus-banner">
+    Jumping to pinned section: <strong>{{ focus_label }}</strong>
+    <span class="meta"> · version {{ version.version }}</span>
+    {% if quiz_token %}
+    <div class="actions" style="margin-top:0.65rem">
+      <a class="btn secondary" href="/quiz?token={{ quiz_token }}&practice=1">Practice this skill</a>
+      <a class="btn primary" href="/quiz?token={{ quiz_token }}">Graded retry</a>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
   {% if body_html %}
   <div class="lesson-prose">
     {{ body_html | safe }}
@@ -18,7 +31,7 @@
     <ul class="q-list">
       {% for v in versions %}
       <li>
-        <a class="link" href="/manuals/{{ manual.id }}?token={{ quiz_token }}&v={{ v.version }}">
+        <a class="link" href="/manuals/{{ manual.id }}?token={{ quiz_token }}&v={{ v.version }}{% if focus %}&focus={{ focus }}{% endif %}">
           v{{ v.version }}{% if v.is_published %} · published{% else %} · draft{% endif %}
         </a>
         {% if v.changelog %}<div class="meta">{{ v.changelog }}</div>{% endif %}
@@ -28,4 +41,17 @@
     <p><a class="btn secondary" href="/manuals?token={{ quiz_token }}">All manuals</a></p>
   </section>
 </article>
+{% if focus %}
+<script>
+(function () {
+  var id = {{ focus | tojson }};
+  if (!id) return;
+  var el = document.getElementById(id);
+  if (el) {
+    el.classList.add("manual-focus");
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+})();
+</script>
+{% endif %}
 {% endblock %}

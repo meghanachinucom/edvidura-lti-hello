@@ -36,7 +36,7 @@
 
 ### 4. Isolation proof (3 min)
 
-1. Open http://127.0.0.1:8000/dev/tenancy/cross-check → `ok: true`.  
+1. Open http://127.0.0.1:8000/dev/tenancy/cross-check with header `X-Admin-Key: <ADMIN_API_KEY>` → `ok: true`.  
 2. Or: `pytest -q tests/test_tenant_isolation.py` with Postgres up.  
 3. Narrative: Tenant A cannot read Tenant B under RLS.
 

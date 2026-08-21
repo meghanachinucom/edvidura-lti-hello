@@ -1,0 +1,15 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<div class="welcome solo">
+  <div>
+    <p class="welcome-k">Ghost coach</p>
+    <h2>Finish the path first</h2>
+    <p>{{ coach.message }}</p>
+    <div class="actions">
+      <a class="btn light" href="/lessons?token={{ quiz_token }}">Continue lessons</a>
+      <a class="btn ghost-w" href="/quiz?token={{ quiz_token }}&force=1">Take quiz anyway</a>
+      <a class="btn ghost-w" href="/quiz?token={{ quiz_token }}&practice=1">Practice lane (no grade)</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

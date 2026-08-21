@@ -1,0 +1,40 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Teach · AI draft · {{ provider }} / {{ model }}</p>
+  <h2 class="welcome-title">Review generated questions</h2>
+  <p class="welcome-lede">
+    From lesson <strong>{{ lesson.title }}</strong>. Select what to save into this school’s quiz bank.
+    {% if note %}<span class="meta">{{ note }}</span>{% endif %}
+  </p>
+</section>
+
+{% if drafts %}
+<form method="post" action="/teacher/ai/save" class="teach-form">
+  <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+  <textarea name="drafts_json" hidden>{{ drafts | tojson }}</textarea>
+  {% for q in drafts %}
+  <section class="panel">
+    <label class="ai-pick">
+      <input type="checkbox" name="selected" value="{{ loop.index0 }}" checked/>
+      Save question {{ loop.index }}
+    </label>
+    <p class="lede"><strong>{{ q.prompt }}</strong></p>
+    <ol type="A">
+      {% for c in q.choices %}
+      <li{% if loop.index0 == q.correct_index %} class="ok"{% endif %}>{{ c }}{% if loop.index0 == q.correct_index %} ← correct{% endif %}</li>
+      {% endfor %}
+    </ol>
+    {% if q.source_excerpt %}<p class="meta">Source: {{ q.source_excerpt }}</p>{% endif %}
+  </section>
+  {% endfor %}
+  <div class="actions">
+    <button type="submit" class="btn primary">Save selected</button>
+    <a class="btn secondary" href="/teacher/content?token={{ quiz_token }}">Cancel</a>
+  </div>
+</form>
+{% else %}
+<p class="meta">No drafts produced.</p>
+<a class="btn secondary" href="/teacher/content?token={{ quiz_token }}">Back</a>
+{% endif %}
+{% endblock %}

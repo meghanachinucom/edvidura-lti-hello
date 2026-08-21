@@ -1,47 +1,55 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">{{ course_row.title }}</p>
-  <h2 class="welcome-title">Lessons</h2>
-  <p class="welcome-lede">
-    {% if is_instructor %}
-    Students work through these in order. Add more from
-    <a class="link" href="/teacher/content?token={{ quiz_token }}">Upload content</a>.
-    {% else %}
-    Open each lesson, mark it complete, then take the quiz when you’re ready.
-    {% endif %}
-  </p>
-</section>
+<div class="welcome solo">
+  <div>
+    <p class="welcome-k">{{ course_row.title }}</p>
+    <h2>Lessons</h2>
+    <p>
+      {% if is_instructor %}
+      Students work through these in order. Add more from Upload.
+      {% else %}
+      Open each lesson, mark it complete, then take the quiz when you’re ready.
+      {% endif %}
+    </p>
+    <div class="actions">
+      {% if is_instructor %}
+      <a class="btn light" href="/teacher/content?token={{ quiz_token }}">Upload content</a>
+      {% endif %}
+      <a class="btn ghost-w" href="/quiz?token={{ quiz_token }}">Go to quiz</a>
+    </div>
+  </div>
+</div>
 
 {% if progress %}
-<div class="progress-block">
-  <div class="progress-head">
-    <span>Your progress</span>
-    <span>{{ progress.completed_count }}/{{ progress.total_count }} complete</span>
-  </div>
-  <div class="progress-track" aria-hidden="true">
-    <div class="progress-fill" style="width: {{ progress.percent }}%"></div>
-  </div>
+<div class="stats">
+  <div class="stat"><div class="stat-ico i1">▦</div><div><b>{{ progress.completed_count }}/{{ progress.total_count }}</b><span>Complete</span></div></div>
+  <div class="stat"><div class="stat-ico i2">◎</div><div><b>{{ progress.percent }}%</b><span>Progress</span></div></div>
 </div>
 {% endif %}
 
-<ol class="lesson-list">
+<div class="card">
+  <div class="card-h">
+    <h2>Course path</h2>
+    <a href="/quiz?token={{ quiz_token }}">Quiz</a>
+  </div>
   {% for item in lesson_items %}
-  <li class="lesson-item {% if item.completed %}done{% endif %}">
-    <a href="{{ item.href }}">
-      <span class="lesson-pos">{{ '%02d'|format(item.position) }}</span>
-      <span class="lesson-body">
-        <span class="lesson-title">{{ item.title }}</span>
-        <span class="lesson-type">
-          {% if item.lesson_type == 'video' %}Video
-          {% elif item.lesson_type == 'quiz' %}Quiz
-          {% else %}Reading{% endif %}
-          {% if item.completed %} · Completed{% endif %}
-        </span>
-      </span>
-      <span class="lesson-go" aria-hidden="true">→</span>
-    </a>
-  </li>
+  <a class="course-item {% if not item.completed and loop.first %}now{% elif item.completed %}{% elif loop.index0 == progress.completed_count|default(0) %}now{% endif %}" href="{{ item.href }}">
+    <div class="thumb {% if loop.index % 3 == 1 %}t1{% elif loop.index % 3 == 2 %}t2{% else %}t3{% endif %}">{{ '%02d'|format(item.position) }}</div>
+    <div>
+      <div class="ci-title">{{ item.title }}</div>
+      <div class="ci-meta">
+        {% if item.lesson_type == 'video' %}Video
+        {% elif item.lesson_type == 'quiz' %}Quiz
+        {% else %}Reading{% endif %}
+        {% if item.completed %} · completed{% endif %}
+      </div>
+      <div class="bar"><i style="--w: {% if item.completed %}100{% else %}0{% endif %}%"></i></div>
+    </div>
+    {% if item.completed %}<span class="badge ok">Done</span>
+    {% else %}<span class="badge warn">Open</span>{% endif %}
+  </a>
+  {% else %}
+  <p class="lede">No lessons yet.</p>
   {% endfor %}
-</ol>
+</div>
 {% endblock %}

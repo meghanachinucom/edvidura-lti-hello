@@ -1,28 +1,41 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<div class="quiz-meta">
-  <span>{{ questions|length }} questions</span>
-  <span>·</span>
-  <span>{% if ags_available %}Score will sync to Moodle{% else %}Score saves here; Moodle sync off{% endif %}</span>
+{% if practice_mode %}
+<div class="banner-note info">Practice lane — scores save here and to xAPI, but <strong>not</strong> to Moodle.</div>
+{% elif coach_warn %}
+<div class="banner-note info">Ghost coach notes open lessons — you chose to continue anyway.</div>
+{% endif %}
+
+<div class="welcome solo">
+  <div>
+    <p class="welcome-k">Assessment</p>
+    <h2>{% if practice_mode %}Practice check{% elif retry_from %}Missed items{% else %}Chapter check{% endif %}</h2>
+    <p>{{ questions|length }} question{% if questions|length != 1 %}s{% endif %} · {% if practice_mode %}no Moodle sync{% elif ags_available %}can sync to Moodle{% else %}saves in EdVidura{% endif %}.</p>
+  </div>
 </div>
 
-<form method="post" action="/quiz/submit" id="quiz-form" class="quiz-form">
+<form method="post" action="/quiz/submit" id="quiz-form">
   <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+  {% if practice_mode %}<input type="hidden" name="practice_mode" value="1"/>{% endif %}
+  {% if retry_from %}<input type="hidden" name="retry_from" value="{{ retry_from }}"/>{% endif %}
   {% for q in questions %}
-  <fieldset class="q">
-    <legend>Question {{ loop.index }} of {{ questions|length }}</legend>
-    <p class="q-prompt">{{ q.prompt }}</p>
-    {% for choice in q.choices %}
-    <label class="choice">
-      <input type="radio" name="{{ q.id }}" value="{{ loop.index0 }}" required/>
-      <span>{{ choice }}</span>
-    </label>
-    {% endfor %}
-  </fieldset>
+  <div class="q">
+    <div class="qn">{{ loop.index }}. {{ q.prompt }}</div>
+    <div class="opts">
+      {% for choice in q.choices %}
+      <label>
+        <input type="radio" name="{{ q.id }}" value="{{ loop.index0 }}" required/>
+        {{ choice }}
+      </label>
+      {% endfor %}
+    </div>
+  </div>
   {% endfor %}
   <div class="actions sticky-actions">
-    <button type="submit" class="primary btn-lg" id="quiz-submit-btn">Submit answers</button>
-    <a class="btn secondary" href="/launch-hub?token={{ quiz_token }}">Cancel</a>
+    <button type="submit" class="btn primary btn-lg" id="quiz-submit-btn">
+      {% if practice_mode %}Submit practice{% else %}Submit quiz{% endif %}
+    </button>
+    <a class="btn secondary" href="/lessons?token={{ quiz_token }}">Back</a>
   </div>
 </form>
 <script>
