@@ -21,6 +21,45 @@
 
 <section class="panel">
   <div class="panel-head">
+    <h2>Filters</h2>
+    <a class="btn secondary" href="/teacher/attempts.csv?token={{ quiz_token }}{{ filter_qs }}">Export CSV</a>
+  </div>
+  <form method="get" action="/teacher/attempts" class="teach-form filter-row">
+    <input type="hidden" name="token" value="{{ quiz_token }}"/>
+    <label>Class
+      <select name="class_id">
+        <option value="">All classes</option>
+        {% for c in classes %}
+        <option value="{{ c.id }}" {% if filter_class_id == (c.id ~ '') %}selected{% endif %}>{{ c.class_name }} ({{ c.class_code }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Course label
+      <select name="course">
+        <option value="">All courses</option>
+        {% for label in course_labels %}
+        <option value="{{ label }}" {% if filter_course == label %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>From
+      <input type="date" name="date_from" value="{{ filter_date_from }}"/>
+    </label>
+    <label>To
+      <input type="date" name="date_to" value="{{ filter_date_to }}"/>
+    </label>
+    <div class="cta-row">
+      <button type="submit" class="btn primary">Apply</button>
+      <a class="btn secondary" href="/teacher/attempts?token={{ quiz_token }}">Clear</a>
+    </div>
+  </form>
+  {% if selected_class_name %}
+  <p class="meta">Showing roster match for <strong>{{ selected_class_name }}</strong> (by learner name / email / code).</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head">
     <h2>Learner best scores</h2>
     <span class="meta">Pass ≥ 60% · {{ synced_count }} synced to Moodle</span>
   </div>
@@ -49,7 +88,7 @@
   </table>
   {% else %}
   <div class="empty">
-    <p>No student attempts yet. Ask learners to open the tool from Moodle.</p>
+    <p>No student attempts for this filter.</p>
   </div>
   {% endif %}
 </section>

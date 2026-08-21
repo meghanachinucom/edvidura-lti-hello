@@ -28,6 +28,12 @@
           <option value="quiz">Quiz step (links to school quiz)</option>
         </select>
       </label>
+      <label>Visibility
+        <select name="status">
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
+      </label>
       <label>Lesson text
         <textarea name="body_md" rows="6" placeholder="Write the lesson students will read…"></textarea>
       </label>
@@ -81,10 +87,35 @@
         <span class="lesson-pos">{{ '%02d'|format(L.position) }}</span>
         <span class="lesson-body">
           <span class="lesson-title">{{ L.title }}</span>
-          <span class="lesson-type">{{ L.lesson_type }}</span>
+          <span class="lesson-type">{{ L.lesson_type }} · {{ L.status or 'published' }}</span>
         </span>
         <span class="lesson-go">→</span>
       </a>
+      <div class="teach-actions">
+        <form method="post" action="/teacher/lessons/{{ L.id }}/reorder">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="direction" value="up"/>
+          <button type="submit" class="btn secondary">↑</button>
+        </form>
+        <form method="post" action="/teacher/lessons/{{ L.id }}/reorder">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="direction" value="down"/>
+          <button type="submit" class="btn secondary">↓</button>
+        </form>
+        {% if (L.status or 'published') == 'published' %}
+        <form method="post" action="/teacher/lessons/{{ L.id }}/status">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="status" value="draft"/>
+          <button type="submit" class="btn secondary">Unpublish</button>
+        </form>
+        {% else %}
+        <form method="post" action="/teacher/lessons/{{ L.id }}/status">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="status" value="published"/>
+          <button type="submit" class="btn primary">Publish</button>
+        </form>
+        {% endif %}
+      </div>
       <details class="teach-edit">
         <summary>Edit</summary>
         <form method="post" action="/teacher/lessons/{{ L.id }}/edit" class="teach-form" enctype="multipart/form-data">
@@ -95,6 +126,13 @@
               <option value="article" {% if L.lesson_type == 'article' %}selected{% endif %}>Reading</option>
               <option value="video" {% if L.lesson_type == 'video' %}selected{% endif %}>Video</option>
               <option value="quiz" {% if L.lesson_type == 'quiz' %}selected{% endif %}>Quiz step</option>
+            </select>
+          </label>
+          <label>Visibility
+            <select name="status">
+              <option value="published" {% if (L.status or 'published') == 'published' %}selected{% endif %}>Published</option>
+              <option value="draft" {% if L.status == 'draft' %}selected{% endif %}>Draft</option>
+              <option value="archived" {% if L.status == 'archived' %}selected{% endif %}>Archived</option>
             </select>
           </label>
           <label>Lesson text

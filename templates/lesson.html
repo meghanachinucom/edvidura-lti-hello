@@ -43,6 +43,12 @@
         {% else %}Mark complete{% endif %}
       </button>
     </form>
+    {% if is_completed %}
+    <form method="post" action="/lessons/{{ lesson_id }}/uncomplete" class="lesson-complete-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <button type="submit" class="btn secondary">Mark incomplete</button>
+    </form>
+    {% endif %}
   </div>
 </article>
 {% endblock %}

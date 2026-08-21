@@ -83,35 +83,62 @@ def get_course(tenant_id: UUID | str, course_id: UUID | str) -> dict[str, Any] |
         return dict(row) if row else None
 
 
-def list_lessons(tenant_id: UUID | str, course_id: UUID | str) -> list[dict[str, Any]]:
+def list_lessons(
+    tenant_id: UUID | str,
+    course_id: UUID | str,
+    *,
+    include_unpublished: bool = False,
+) -> list[dict[str, Any]]:
     with db.tenant_connection(tenant_id) as conn:
-        rows = conn.execute(
-            """
-            SELECT id, tenant_id, course_id, slug, title, position,
-                   lesson_type, body_md, video_url, created_at
-            FROM lessons
-            WHERE course_id = %s
-            ORDER BY position ASC
-            """,
-            (str(course_id),),
-        ).fetchall()
+        if include_unpublished:
+            rows = conn.execute(
+                """
+                SELECT id, tenant_id, course_id, slug, title, position,
+                       lesson_type, body_md, video_url, status, created_at
+                FROM lessons
+                WHERE course_id = %s
+                ORDER BY position ASC
+                """,
+                (str(course_id),),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT id, tenant_id, course_id, slug, title, position,
+                       lesson_type, body_md, video_url, status, created_at
+                FROM lessons
+                WHERE course_id = %s
+                  AND COALESCE(status, 'published') = 'published'
+                ORDER BY position ASC
+                """,
+                (str(course_id),),
+            ).fetchall()
         return [dict(r) for r in rows]
 
 
 def get_lesson(
-    tenant_id: UUID | str, lesson_id: UUID | str
+    tenant_id: UUID | str,
+    lesson_id: UUID | str,
+    *,
+    allow_unpublished: bool = False,
 ) -> dict[str, Any] | None:
     with db.tenant_connection(tenant_id) as conn:
         row = conn.execute(
             """
             SELECT id, tenant_id, course_id, slug, title, position,
-                   lesson_type, body_md, video_url, created_at
+                   lesson_type, body_md, video_url, status, created_at
             FROM lessons
             WHERE id = %s
             """,
             (str(lesson_id),),
         ).fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        data = dict(row)
+        status = str(data.get("status") or "published")
+        if not allow_unpublished and status != "published":
+            return None
+        return data
 
 
 def completed_lesson_ids(
@@ -149,6 +176,27 @@ def mark_lesson_complete(
             """,
             (str(tenant_id), str(course_id), str(lesson_id), subject_clean),
         )
+
+
+def unmark_lesson_complete(
+    *,
+    tenant_id: UUID | str,
+    lesson_id: UUID | str,
+    subject: str,
+) -> bool:
+    subject_clean = (subject or "").strip()
+    if not subject_clean:
+        raise ValueError("Cannot clear progress without an LTI subject")
+    with db.tenant_connection(tenant_id) as conn:
+        row = conn.execute(
+            """
+            DELETE FROM lesson_progress
+            WHERE lesson_id = %s AND subject = %s
+            RETURNING id
+            """,
+            (str(lesson_id), subject_clean),
+        ).fetchone()
+        return bool(row)
 
 
 def lesson_completion_roster(
@@ -199,6 +247,7 @@ def update_lesson(
     body_md: str = "",
     video_url: str = "",
     lesson_type: str | None = None,
+    status: str | None = None,
 ) -> dict[str, Any] | None:
     tid = str(tenant_id)
     title_clean = (title or "").strip()
@@ -206,29 +255,111 @@ def update_lesson(
         raise ValueError("Lesson title required")
     with db.tenant_connection(tid) as conn:
         existing = conn.execute(
-            "SELECT id, lesson_type FROM lessons WHERE id = %s",
+            "SELECT id, lesson_type, status FROM lessons WHERE id = %s",
             (str(lesson_id),),
         ).fetchone()
         if not existing:
             return None
         ltype = lesson_type if lesson_type in {"article", "video", "quiz"} else existing["lesson_type"]
+        lstatus = (
+            status
+            if status in {"draft", "published", "archived"}
+            else str(existing.get("status") or "published")
+        )
         row = conn.execute(
             """
             UPDATE lessons
-            SET title = %s, body_md = %s, video_url = %s, lesson_type = %s
+            SET title = %s, body_md = %s, video_url = %s, lesson_type = %s, status = %s
             WHERE id = %s
             RETURNING id, tenant_id, course_id, slug, title, position,
-                      lesson_type, body_md, video_url, quiz_id, created_at
+                      lesson_type, body_md, video_url, quiz_id, status, created_at
             """,
             (
                 title_clean,
                 body_md or "",
                 (video_url or "").strip(),
                 ltype,
+                lstatus,
                 str(lesson_id),
             ),
         ).fetchone()
         return dict(row) if row else None
+
+
+def set_lesson_status(
+    *,
+    tenant_id: UUID | str,
+    lesson_id: UUID | str,
+    status: str,
+) -> dict[str, Any] | None:
+    if status not in {"draft", "published", "archived"}:
+        raise ValueError("Invalid lesson status")
+    with db.tenant_connection(tenant_id) as conn:
+        row = conn.execute(
+            """
+            UPDATE lessons SET status = %s WHERE id = %s
+            RETURNING id, tenant_id, course_id, slug, title, position,
+                      lesson_type, body_md, video_url, quiz_id, status, created_at
+            """,
+            (status, str(lesson_id)),
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def reorder_lesson(
+    *,
+    tenant_id: UUID | str,
+    lesson_id: UUID | str,
+    direction: str,
+) -> bool:
+    """Swap lesson with neighbor (up = earlier position)."""
+    direction = (direction or "").strip().lower()
+    if direction not in {"up", "down"}:
+        return False
+    tid = str(tenant_id)
+    with db.tenant_connection(tid) as conn:
+        cur = conn.execute(
+            "SELECT id, course_id, position FROM lessons WHERE id = %s",
+            (str(lesson_id),),
+        ).fetchone()
+        if not cur:
+            return False
+        if direction == "up":
+            neighbor = conn.execute(
+                """
+                SELECT id, position FROM lessons
+                WHERE course_id = %s AND position < %s
+                ORDER BY position DESC LIMIT 1
+                """,
+                (str(cur["course_id"]), int(cur["position"])),
+            ).fetchone()
+        else:
+            neighbor = conn.execute(
+                """
+                SELECT id, position FROM lessons
+                WHERE course_id = %s AND position > %s
+                ORDER BY position ASC LIMIT 1
+                """,
+                (str(cur["course_id"]), int(cur["position"])),
+            ).fetchone()
+        if not neighbor:
+            return False
+        a_pos = int(cur["position"])
+        b_pos = int(neighbor["position"])
+        # Temporary slot avoids unique collisions on older DBs that still enforce it
+        conn.execute(
+            "UPDATE lessons SET position = %s WHERE id = %s",
+            (-abs(a_pos) - 100000, str(cur["id"])),
+        )
+        conn.execute(
+            "UPDATE lessons SET position = %s WHERE id = %s",
+            (a_pos, str(neighbor["id"])),
+        )
+        conn.execute(
+            "UPDATE lessons SET position = %s WHERE id = %s",
+            (b_pos, str(cur["id"])),
+        )
+        return True
 
 
 def delete_lesson(*, tenant_id: UUID | str, lesson_id: UUID | str) -> bool:
@@ -339,9 +470,12 @@ def create_lesson(
     body_md: str = "",
     lesson_type: str = "article",
     video_url: str = "",
+    status: str = "published",
 ) -> dict[str, Any]:
     if lesson_type not in {"article", "video", "quiz"}:
         lesson_type = "article"
+    if status not in {"draft", "published", "archived"}:
+        status = "published"
     course = ensure_primary_course(tenant_id)
     tid = str(tenant_id)
     base_slug = _slugify(title)
@@ -370,11 +504,11 @@ def create_lesson(
             """
             INSERT INTO lessons (
                 tenant_id, course_id, slug, title, position,
-                lesson_type, body_md, video_url, quiz_id
+                lesson_type, body_md, video_url, quiz_id, status
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, tenant_id, course_id, slug, title, position,
-                      lesson_type, body_md, video_url, quiz_id, created_at
+                      lesson_type, body_md, video_url, quiz_id, status, created_at
             """,
             (
                 tid,
@@ -386,6 +520,7 @@ def create_lesson(
                 body_md or "",
                 video_url or "",
                 str(quiz_id) if quiz_id else None,
+                status,
             ),
         ).fetchone()
         return dict(row)

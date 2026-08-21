@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="/static/css/shell.css?v=product2"/>
+  <link rel="stylesheet" href="/static/css/shell.css?v=product3"/>
 </head>
 <body>
   <div class="shell">
@@ -90,6 +90,11 @@
             </a>
           </li>
           <li>
+            <a class="nav-link {% if active_page == 'manuals' %}active{% endif %}" href="/manuals?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">▦</span> Manual
+            </a>
+          </li>
+          <li>
             <a class="nav-link {% if active_page == 'quiz_session' %}active{% endif %}" href="/quiz?token={{ quiz_token }}">
               <span class="nav-ico" aria-hidden="true">?</span> Quiz
             </a>
@@ -113,6 +118,11 @@
           <li>
             <a class="nav-link {% if active_page == 'teacher_content' %}active{% endif %}" href="/teacher/content?token={{ quiz_token }}">
               <span class="nav-ico" aria-hidden="true">↑</span> Upload content
+            </a>
+          </li>
+          <li>
+            <a class="nav-link {% if active_page == 'teacher_manuals' %}active{% endif %}" href="/teacher/manuals?token={{ quiz_token }}">
+              <span class="nav-ico" aria-hidden="true">☰</span> Manual versions
             </a>
           </li>
           <li>

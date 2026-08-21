@@ -280,6 +280,20 @@ async def quiz_submit(
             grade_error="Grade passback queued…",
         )
 
+        try:
+            from app.modules.events import enqueue_quiz_attempt_submitted
+
+            enqueue_quiz_attempt_submitted(
+                tenant_id=session["tenant_id"],
+                subject=str(session["subject"]),
+                attempt_id=attempt["id"],
+                score=score,
+                max_score=max_score,
+                course_label=str(session.get("course") or ""),
+            )
+        except Exception as outbox_exc:  # noqa: BLE001
+            print(f"Outbox enqueue failed (attempt saved): {outbox_exc}", flush=True)
+
         launch_id = str(session.get("launch_id") or "")
         launch_data = _load_launch_data(launch_id) if launch_id else None
         background_tasks.add_task(

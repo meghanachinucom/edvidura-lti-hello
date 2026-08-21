@@ -164,6 +164,31 @@ def list_classes_with_roster(tenant_id: UUID | str) -> list[dict[str, Any]]:
         return out
 
 
+def class_roster_match_keys(
+    tenant_id: UUID | str, class_id: UUID | str
+) -> tuple[set[str], set[str]]:
+    """Return (names_lower, subject_like_keys) for enrolled students."""
+    names: set[str] = set()
+    codes: set[str] = set()
+    for c in list_classes_with_roster(tenant_id):
+        if str(c["id"]) != str(class_id):
+            continue
+        for s in c.get("students") or []:
+            n = str(s.get("name") or "").strip().lower()
+            code = str(s.get("student_code") or "").strip().lower()
+            email = str(s.get("email") or "").strip().lower()
+            if n:
+                names.add(n)
+            if code:
+                codes.add(code)
+            if email:
+                codes.add(email)
+                if "@" in email:
+                    codes.add(email.split("@", 1)[0])
+        break
+    return names, codes
+
+
 def school_snapshot(tenant_id: UUID | str) -> dict[str, Any]:
     course = get_primary_course(tenant_id)
     lessons = list_lessons(tenant_id, course["id"]) if course else []

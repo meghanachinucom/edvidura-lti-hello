@@ -1,0 +1,29 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Learn · this school only</p>
+  <h2 class="welcome-title">Technical manuals</h2>
+  <p class="welcome-lede">Published versions of school manuals and eBook chapters.</p>
+</section>
+
+<section class="panel">
+  {% if manuals %}
+  <ul class="lesson-list">
+    {% for m in manuals %}
+    <li class="lesson-item">
+      <a href="/manuals/{{ m.id }}?token={{ quiz_token }}">
+        <span class="lesson-pos">M</span>
+        <span class="lesson-body">
+          <span class="lesson-title">{{ m.title }}</span>
+          <span class="lesson-type">{{ m.description or m.slug }}</span>
+        </span>
+        <span class="lesson-go">→</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="empty"><p>No published manuals yet.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

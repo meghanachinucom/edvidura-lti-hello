@@ -14,6 +14,7 @@ from app import db
 from app.modules import content
 from app.modules.quiz import MAX_SCORE, QUESTIONS, questions_for_tenant
 from app.modules.school import (
+    class_roster_match_keys,
     create_class,
     create_teacher,
     list_classes_with_roster,
@@ -484,7 +485,11 @@ async def lesson_player(
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
-    lesson = content.get_lesson(session["tenant_id"], lesson_id)
+    lesson = content.get_lesson(
+        session["tenant_id"],
+        lesson_id,
+        allow_unpublished=bool(session.get("is_instructor")),
+    )
     if not lesson:
         return _shell(
             request,
@@ -582,6 +587,33 @@ async def lesson_complete(
             url=f"/lessons/{next_l['id']}?token={qtok}", status_code=303
         )
     return RedirectResponse(url=f"/lessons?token={qtok}", status_code=303)
+
+
+@router.post("/lessons/{lesson_id}/uncomplete", response_class=HTMLResponse)
+async def lesson_uncomplete(
+    request: Request, lesson_id: UUID, token: str | None = None
+):
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or "")
+    qtok = tok or _ensure_token(session)
+    subject = str(session.get("subject") or "").strip()
+    if not subject:
+        return RedirectResponse(
+            url=f"/lessons/{lesson_id}?token={qtok}&err=Missing+learner+id",
+            status_code=303,
+        )
+    try:
+        content.unmark_lesson_complete(
+            tenant_id=session["tenant_id"],
+            lesson_id=lesson_id,
+            subject=subject,
+        )
+    except ValueError:
+        pass
+    return RedirectResponse(url=f"/lessons/{lesson_id}?token={qtok}", status_code=303)
 
 
 @router.get("/active-quizzes", response_class=HTMLResponse)
@@ -684,32 +716,82 @@ async def quiz_result(request: Request, attempt_id: UUID, token: str | None = No
 
 
 @router.get("/teacher/attempts", response_class=HTMLResponse)
-async def teacher_attempts(request: Request, token: str | None = None):
+async def teacher_attempts(
+    request: Request,
+    token: str | None = None,
+    class_id: str | None = None,
+    course: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+):
     session = require_instructor(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
-    summary = db.quiz_attempt_class_summary(session["tenant_id"], limit=200)
+    classes = list_classes_with_roster(session["tenant_id"])
+    subjects = None
+    name_keys = None
+    selected_class = None
+    if class_id:
+        names, codes = class_roster_match_keys(session["tenant_id"], class_id)
+        name_keys = names
+        subjects = codes
+        selected_class = next((c for c in classes if str(c["id"]) == str(class_id)), None)
+    summary = db.quiz_attempt_class_summary(
+        session["tenant_id"],
+        limit=500,
+        course_label=(course or "").strip() or None,
+        date_from=(date_from or "").strip() or None,
+        date_to=(date_to or "").strip() or None,
+        subjects=subjects,
+        name_keys=name_keys,
+    )
+    # Distinct course labels from unfiltered set for dropdown
+    all_labels = db.quiz_attempt_class_summary(session["tenant_id"], limit=500).get(
+        "course_labels"
+    ) or []
     learners = []
     for L in summary["learners"]:
         item = dict(L)
         item["best_at"] = (
-            L["best_at"].isoformat() if getattr(L.get("best_at"), "isoformat", None) else str(L.get("best_at") or "")
+            L["best_at"].isoformat()
+            if getattr(L.get("best_at"), "isoformat", None)
+            else str(L.get("best_at") or "")
         )
         learners.append(item)
-    course = content.get_primary_course(session["tenant_id"])
+    course_row = content.get_primary_course(session["tenant_id"])
     progress_roster = []
-    if course:
+    if course_row:
         progress_roster = content.lesson_completion_roster(
-            session["tenant_id"], course_id=course["id"]
+            session["tenant_id"], course_id=course_row["id"]
         )
-        # Prefer display names from quiz attempts when available
-        names = {
+        names_map = {
             str(L["subject"]): str(L["learner_name"])
             for L in learners
             if L.get("subject")
         }
+        # If filtering by class, keep progress for matching names/subjects only
+        if class_id and (subjects is not None or name_keys is not None):
+            sub_set = {str(s).lower() for s in (subjects or [])}
+            name_set = {str(n).lower() for n in (name_keys or [])}
+            progress_roster = [
+                p
+                for p in progress_roster
+                if str(p.get("subject") or "").lower() in sub_set
+                or str(p.get("learner_name") or p.get("subject") or "").lower() in name_set
+                or str(names_map.get(str(p.get("subject") or ""), "")).lower() in name_set
+            ]
         for row in progress_roster:
-            row["learner_name"] = names.get(row["subject"], row["subject"])
+            row["learner_name"] = names_map.get(row["subject"], row["subject"])
+    q = []
+    if class_id:
+        q.append(f"class_id={class_id}")
+    if course:
+        q.append(f"course={course}")
+    if date_from:
+        q.append(f"date_from={date_from}")
+    if date_to:
+        q.append(f"date_to={date_to}")
+    filter_qs = ("&" + "&".join(q)) if q else ""
     return _shell(
         request,
         "instructor_overview.html",
@@ -726,7 +808,90 @@ async def teacher_attempts(request: Request, token: str | None = None):
             "synced_count": summary["synced_count"],
             "learners": learners,
             "progress_roster": progress_roster,
-            "course_title": (course or {}).get("title") or "Course",
+            "course_title": (course_row or {}).get("title") or "Course",
+            "classes": classes,
+            "course_labels": all_labels,
+            "filter_class_id": str(class_id or ""),
+            "filter_course": course or "",
+            "filter_date_from": date_from or "",
+            "filter_date_to": date_to or "",
+            "selected_class_name": (selected_class or {}).get("class_name") or "",
+            "filter_qs": filter_qs,
+        },
+    )
+
+
+@router.get("/teacher/attempts.csv")
+async def teacher_attempts_csv(
+    request: Request,
+    token: str | None = None,
+    class_id: str | None = None,
+    course: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+):
+    import csv
+    import io
+
+    from fastapi.responses import StreamingResponse
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    subjects = None
+    name_keys = None
+    if class_id:
+        names, codes = class_roster_match_keys(session["tenant_id"], class_id)
+        name_keys = names
+        subjects = codes
+    summary = db.quiz_attempt_class_summary(
+        session["tenant_id"],
+        limit=1000,
+        course_label=(course or "").strip() or None,
+        date_from=(date_from or "").strip() or None,
+        date_to=(date_to or "").strip() or None,
+        subjects=subjects,
+        name_keys=name_keys,
+    )
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(
+        [
+            "learner",
+            "subject",
+            "course",
+            "score",
+            "max_score",
+            "percent",
+            "grade_sent",
+            "created_at",
+            "attempt_id",
+        ]
+    )
+    for a in summary["attempts"]:
+        max_score = int(a.get("max_score") or 0) or 1
+        score = int(a.get("score") or 0)
+        created = a.get("created_at")
+        created_s = created.isoformat() if getattr(created, "isoformat", None) else str(created or "")
+        writer.writerow(
+            [
+                a.get("learner_name") or "",
+                a.get("subject") or "",
+                a.get("course_label") or "",
+                score,
+                max_score,
+                int(round(100 * score / max_score)),
+                "yes" if a.get("grade_sent") else "no",
+                created_s,
+                str(a.get("id") or ""),
+            ]
+        )
+    buf.seek(0)
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": 'attachment; filename="class-results.csv"'
         },
     )
 
@@ -1023,7 +1188,9 @@ async def teacher_content(request: Request, token: str | None = None, ok: str | 
     if isinstance(session, HTMLResponse):
         return session
     course = content.ensure_primary_course(session["tenant_id"])
-    lessons = content.list_lessons(session["tenant_id"], course["id"])
+    lessons = content.list_lessons(
+        session["tenant_id"], course["id"], include_unpublished=True
+    )
     from app.modules.quiz import get_primary_quiz, list_quiz_question_rows
 
     quiz = get_primary_quiz(session["tenant_id"])
@@ -1108,6 +1275,7 @@ async def teacher_lesson_new(request: Request, token: str | None = None):
     title = str(form.get("title") or "").strip()
     lesson_type = str(form.get("lesson_type") or "article").strip()
     video_url = str(form.get("video_url") or "").strip()
+    status = str(form.get("status") or "published").strip()
     if not title:
         return RedirectResponse(
             url=f"/teacher/content?token={tok}&ok=Lesson+title+required",
@@ -1124,6 +1292,7 @@ async def teacher_lesson_new(request: Request, token: str | None = None):
         body_md=body_md,
         lesson_type=lesson_type,
         video_url=video_url,
+        status=status,
     )
     return RedirectResponse(
         url=f"/teacher/content?token={tok}&ok=Lesson+saved",
@@ -1143,7 +1312,10 @@ async def teacher_lesson_edit(
     title = str(form.get("title") or "").strip()
     video_url = str(form.get("video_url") or "").strip()
     lesson_type = str(form.get("lesson_type") or "").strip() or None
-    existing = content.get_lesson(session["tenant_id"], lesson_id)
+    status = str(form.get("status") or "").strip() or None
+    existing = content.get_lesson(
+        session["tenant_id"], lesson_id, allow_unpublished=True
+    )
     if not existing:
         return RedirectResponse(
             url=f"/teacher/content?token={tok}&ok=Lesson+not+found",
@@ -1162,6 +1334,7 @@ async def teacher_lesson_edit(
             body_md=body_md,
             video_url=video_url,
             lesson_type=lesson_type,
+            status=status,
         )
     except ValueError as exc:
         msg = str(exc).replace(" ", "+")
@@ -1187,6 +1360,58 @@ async def teacher_lesson_delete(
     content.delete_lesson(tenant_id=session["tenant_id"], lesson_id=lesson_id)
     return RedirectResponse(
         url=f"/teacher/content?token={tok}&ok=Lesson+deleted",
+        status_code=303,
+    )
+
+
+@router.post("/teacher/lessons/{lesson_id}/status", response_class=HTMLResponse)
+async def teacher_lesson_status(
+    request: Request, lesson_id: UUID, token: str | None = None
+):
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    status = str(form.get("status") or "").strip()
+    try:
+        row = content.set_lesson_status(
+            tenant_id=session["tenant_id"], lesson_id=lesson_id, status=status
+        )
+    except ValueError as exc:
+        msg = str(exc).replace(" ", "+")
+        return RedirectResponse(
+            url=f"/teacher/content?token={tok}&ok={msg}",
+            status_code=303,
+        )
+    if not row:
+        return RedirectResponse(
+            url=f"/teacher/content?token={tok}&ok=Lesson+not+found",
+            status_code=303,
+        )
+    return RedirectResponse(
+        url=f"/teacher/content?token={tok}&ok=Lesson+{status}",
+        status_code=303,
+    )
+
+
+@router.post("/teacher/lessons/{lesson_id}/reorder", response_class=HTMLResponse)
+async def teacher_lesson_reorder(
+    request: Request, lesson_id: UUID, token: str | None = None
+):
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    direction = str(form.get("direction") or "").strip()
+    content.reorder_lesson(
+        tenant_id=session["tenant_id"],
+        lesson_id=lesson_id,
+        direction=direction,
+    )
+    return RedirectResponse(
+        url=f"/teacher/content?token={tok}&ok=Order+updated",
         status_code=303,
     )
 
@@ -1247,5 +1472,213 @@ async def teacher_quiz_question_delete(
     )
     return RedirectResponse(
         url=f"/teacher/content?token={tok}&ok=Question+deleted",
+        status_code=303,
+    )
+
+
+# —— Versioned manuals (Slice B) ——
+
+
+@router.get("/manuals", response_class=HTMLResponse)
+async def manuals_list(request: Request, token: str | None = None):
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    rows = manuals_mod.list_manuals(session["tenant_id"])
+    return _shell(
+        request,
+        "manuals.html",
+        session,
+        active_page="manuals",
+        page_title="Technical manuals",
+        page_subtitle="Published versions for this school",
+        extra={"manuals": rows},
+    )
+
+
+@router.get("/manuals/{manual_id}", response_class=HTMLResponse)
+async def manual_read(
+    request: Request, manual_id: UUID, token: str | None = None, v: int | None = None
+):
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    manual = manuals_mod.get_manual(session["tenant_id"], manual_id)
+    if not manual or (
+        manual.get("status") != "published" and not session.get("is_instructor")
+    ):
+        return _shell(
+            request,
+            "access.html",
+            session,
+            active_page="manuals",
+            page_title="Not found",
+            extra={
+                "heading": "Manual not found",
+                "message": "No published manual for this school, or it belongs elsewhere.",
+            },
+        )
+    versions = manuals_mod.list_versions(session["tenant_id"], manual_id)
+    if v is not None:
+        version = manuals_mod.get_version(
+            session["tenant_id"], manual_id=manual_id, version=v
+        )
+        if version and not version.get("is_published") and not session.get("is_instructor"):
+            version = None
+    else:
+        version = manuals_mod.latest_published_version(session["tenant_id"], manual_id)
+    if not version:
+        return _shell(
+            request,
+            "access.html",
+            session,
+            active_page="manuals",
+            page_title="No version",
+            extra={
+                "heading": "No published version yet",
+                "message": "A teacher needs to publish a version of this manual.",
+            },
+        )
+    return _shell(
+        request,
+        "manual_read.html",
+        session,
+        active_page="manuals",
+        page_title=str(manual["title"]),
+        page_subtitle=f"Version {version['version']}",
+        extra={
+            "manual": manual,
+            "version": version,
+            "versions": versions,
+            "body_html": manuals_mod.render_body(str(version.get("body_md") or "")),
+        },
+    )
+
+
+@router.get("/teacher/manuals", response_class=HTMLResponse)
+async def teacher_manuals(
+    request: Request, token: str | None = None, ok: str | None = None
+):
+    from app.modules import manuals as manuals_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    rows = manuals_mod.list_manuals(session["tenant_id"], include_unpublished=True)
+    enriched = []
+    for m in rows:
+        vers = manuals_mod.list_versions(session["tenant_id"], m["id"])
+        item = dict(m)
+        item["versions"] = vers
+        item["latest"] = vers[0] if vers else None
+        enriched.append(item)
+    return _shell(
+        request,
+        "teacher_manuals.html",
+        session,
+        active_page="teacher_manuals",
+        page_title="Manual versions",
+        page_subtitle="Technical manuals with version history",
+        extra={"manuals": enriched, "ok_message": ok or ""},
+    )
+
+
+@router.post("/teacher/manuals/new", response_class=HTMLResponse)
+async def teacher_manual_new(request: Request, token: str | None = None):
+    from app.modules import manuals as manuals_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    title = str(form.get("title") or "").strip()
+    description = str(form.get("description") or "")
+    body_md = str(form.get("body_md") or "")
+    publish = str(form.get("publish") or "1") != "0"
+    if not title:
+        return RedirectResponse(
+            url=f"/teacher/manuals?token={tok}&ok=Title+required",
+            status_code=303,
+        )
+    try:
+        manuals_mod.create_manual(
+            tenant_id=session["tenant_id"],
+            title=title,
+            description=description,
+            body_md=body_md,
+            subject=str(session.get("subject") or ""),
+            publish=publish,
+        )
+    except ValueError as exc:
+        msg = str(exc).replace(" ", "+")
+        return RedirectResponse(
+            url=f"/teacher/manuals?token={tok}&ok={msg}",
+            status_code=303,
+        )
+    return RedirectResponse(
+        url=f"/teacher/manuals?token={tok}&ok=Manual+created",
+        status_code=303,
+    )
+
+
+@router.post("/teacher/manuals/{manual_id}/versions", response_class=HTMLResponse)
+async def teacher_manual_add_version(
+    request: Request, manual_id: UUID, token: str | None = None
+):
+    from app.modules import manuals as manuals_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    body_md = str(form.get("body_md") or "")
+    changelog = str(form.get("changelog") or "")
+    publish = str(form.get("publish") or "") in {"1", "true", "on", "yes"}
+    try:
+        manuals_mod.add_version(
+            tenant_id=session["tenant_id"],
+            manual_id=manual_id,
+            body_md=body_md,
+            changelog=changelog,
+            subject=str(session.get("subject") or ""),
+            publish=publish,
+        )
+    except ValueError as exc:
+        msg = str(exc).replace(" ", "+")
+        return RedirectResponse(
+            url=f"/teacher/manuals?token={tok}&ok={msg}",
+            status_code=303,
+        )
+    return RedirectResponse(
+        url=f"/teacher/manuals?token={tok}&ok=Version+added",
+        status_code=303,
+    )
+
+
+@router.post(
+    "/teacher/manuals/{manual_id}/versions/{version}/publish",
+    response_class=HTMLResponse,
+)
+async def teacher_manual_publish_version(
+    request: Request, manual_id: UUID, version: int, token: str | None = None
+):
+    from app.modules import manuals as manuals_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    manuals_mod.publish_version(
+        tenant_id=session["tenant_id"], manual_id=manual_id, version=version
+    )
+    return RedirectResponse(
+        url=f"/teacher/manuals?token={tok}&ok=Version+published",
         status_code=303,
     )

@@ -87,6 +87,18 @@ Runtime LTI config is always loaded from Postgres `lti_platforms` (not from `MOO
 
 Contracts: `docs/decisions/DEC-006.md`, `docs/TENANT_RESOLUTION.md`, `docs/EVENT_ENVELOPE_V1.md`.
 
+Pilot scripts: `docs/DEMO_SCRIPT.md`, AGS: `docs/AGS_CHECKLIST.md`, backups: `docs/BACKUP.md`.
+
+If the DB already existed before newer slices, also apply:
+
+```bash
+Get-Content db/migration_lesson_workflow.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
+Get-Content db/migration_event_outbox.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
+Get-Content db/migration_manuals.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
+```
+
+---
+
 ## API Testing
 
 ### Institution
@@ -114,7 +126,7 @@ http://127.0.0.1:8000/docs
 3. In Moodle external tool settings, enable **Accept grades from the tool** (AGS) so scores can pass back.
 4. Launch the tool as a student → **Home** → **Lessons** (tenant-private) → **Quiz**.
 5. Submit → see score; check Moodle gradebook if AGS is enabled.
-6. Launch as a teacher → **Upload content** (create/edit/delete lessons, file attach) → **Class results** (best scores + lesson progress).
+6. Launch as a teacher → **Upload content** (draft/publish, reorder, edit/delete, file attach) → **Class results** (filters, CSV, best scores + lesson progress).
 
 ---
 

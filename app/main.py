@@ -15,6 +15,8 @@ from app.api.admin_tenants import router as admin_tenants_router
 from app.api.institution import router as institution_router
 from app.api.student import router as student_router
 from app.launch_cache import LAUNCH_CACHE
+from app.logconfig import configure_logging
+from app.logging_middleware import StructuredLoggingMiddleware
 from app.lti_fastapi import (
     FastAPIMessageLaunch,
     FastAPIOIDCLogin,
@@ -37,10 +39,12 @@ from app.tenancy import (
 )
 from app.tenancy_isolation import prove_launch_events_isolation
 
+configure_logging()
+
 app = FastAPI(
     title="EdVidura LTI Hello",
     description="Multi-tenant Moodle LTI 1.3 Hello spike (not full EdVidura).",
-    version="0.5.0",
+    version="0.6.0",
 )
 
 app.include_router(admin_tenants_router)
@@ -54,6 +58,7 @@ _STATIC = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 
 _boot = get_settings()
+app.add_middleware(StructuredLoggingMiddleware)
 app.add_middleware(
     SessionMiddleware,
     secret_key=_boot.session_secret,
@@ -130,6 +135,46 @@ def tenancy_cross_check():
             {"ok": False, "error": str(exc)},
             status_code=500,
         )
+
+
+@app.post("/dev/outbox/drain/{tenant_id}")
+def outbox_drain(tenant_id: UUID, request: Request):
+    """Mark pending outbox events published for one tenant (local sink)."""
+    from app.admin_auth import admin_key_matches
+    from app.modules.events import drain_tenant
+
+    key = request.headers.get("X-Admin-Key") or ""
+    if not admin_key_matches(key):
+        return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
+    try:
+        result = drain_tenant(tenant_id, limit=100)
+        return {"ok": True, **result}
+    except Exception as exc:  # noqa: BLE001
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
+
+
+@app.get("/dev/outbox/pending/{tenant_id}")
+def outbox_pending(tenant_id: UUID, request: Request):
+    from app.admin_auth import admin_key_matches
+    from app.modules.events import list_pending_for_tenant
+
+    key = request.headers.get("X-Admin-Key") or ""
+    if not admin_key_matches(key):
+        return JSONResponse({"ok": False, "error": "Unauthorized"}, status_code=401)
+    rows = list_pending_for_tenant(tenant_id, limit=50)
+    return {
+        "ok": True,
+        "count": len(rows),
+        "events": [
+            {
+                "event_id": str(r["event_id"]),
+                "event_type": r["event_type"],
+                "subject": r.get("subject"),
+                "created_at": r["created_at"].isoformat() if r.get("created_at") else None,
+            }
+            for r in rows
+        ],
+    }
 
 
 async def _collect_params(request: Request) -> dict:

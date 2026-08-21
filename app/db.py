@@ -180,27 +180,74 @@ def get_quiz_attempt(tenant_id: UUID | str, attempt_id: UUID | str) -> dict[str,
 
 
 def list_quiz_attempts_for_tenant(
-    tenant_id: UUID | str, *, limit: int = 200
+    tenant_id: UUID | str,
+    *,
+    limit: int = 200,
+    course_label: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    subjects: set[str] | list[str] | None = None,
+    name_keys: set[str] | list[str] | None = None,
 ) -> list[dict[str, Any]]:
+    clauses = ["TRUE"]
+    params: list[Any] = []
+    if course_label:
+        clauses.append("course_label ILIKE %s")
+        params.append(f"%{course_label.strip()}%")
+    if date_from:
+        clauses.append("created_at::date >= %s::date")
+        params.append(date_from.strip())
+    if date_to:
+        clauses.append("created_at::date <= %s::date")
+        params.append(date_to.strip())
+    where = " AND ".join(clauses)
+    params.append(limit)
     with tenant_connection(tenant_id) as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT id, tenant_id, subject, learner_name, course_label,
                    score, max_score, grade_sent, grade_error, created_at
             FROM quiz_attempts
+            WHERE {where}
             ORDER BY created_at DESC
             LIMIT %s
             """,
-            (limit,),
+            tuple(params),
         ).fetchall()
-        return list(rows)
+        out = [dict(r) for r in rows]
+    if subjects is not None or name_keys is not None:
+        sub_set = {str(s).strip().lower() for s in (subjects or []) if str(s).strip()}
+        name_set = {str(n).strip().lower() for n in (name_keys or []) if str(n).strip()}
+        filtered = []
+        for r in out:
+            sub = str(r.get("subject") or "").strip().lower()
+            name = str(r.get("learner_name") or "").strip().lower()
+            if sub in sub_set or name in name_set:
+                filtered.append(r)
+        out = filtered
+    return out
 
 
 def quiz_attempt_class_summary(
-    tenant_id: UUID | str, *, limit: int = 200
+    tenant_id: UUID | str,
+    *,
+    limit: int = 200,
+    course_label: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    subjects: set[str] | list[str] | None = None,
+    name_keys: set[str] | list[str] | None = None,
 ) -> dict[str, Any]:
     """Aggregates + per-learner best score for teacher class results."""
-    rows = list_quiz_attempts_for_tenant(tenant_id, limit=limit)
+    rows = list_quiz_attempts_for_tenant(
+        tenant_id,
+        limit=limit,
+        course_label=course_label,
+        date_from=date_from,
+        date_to=date_to,
+        subjects=subjects,
+        name_keys=name_keys,
+    )
     if not rows:
         return {
             "attempts": [],
@@ -210,11 +257,16 @@ def quiz_attempt_class_summary(
             "pass_rate": None,
             "synced_count": 0,
             "learners": [],
+            "course_labels": [],
         }
     percents: list[float] = []
     synced = 0
     by_subject: dict[str, dict[str, Any]] = {}
+    labels: set[str] = set()
     for r in rows:
+        label = str(r.get("course_label") or "").strip()
+        if label:
+            labels.add(label)
         max_score = int(r.get("max_score") or 0) or 1
         score = int(r.get("score") or 0)
         pct = 100.0 * score / max_score
@@ -235,6 +287,7 @@ def quiz_attempt_class_summary(
                 "best_attempt_id": str(r["id"]),
                 "attempts": 1,
                 "grade_sent": bool(r.get("grade_sent")),
+                "course_label": label,
             }
         else:
             cur["attempts"] = int(cur["attempts"]) + 1
@@ -246,8 +299,8 @@ def quiz_attempt_class_summary(
                 cur["best_attempt_id"] = str(r["id"])
                 cur["grade_sent"] = bool(r.get("grade_sent"))
                 cur["learner_name"] = name
+                cur["course_label"] = label
 
-    # Pass = best attempt >= 60%
     learners = sorted(
         by_subject.values(),
         key=lambda x: (-int(x["best_percent"]), str(x["learner_name"]).lower()),
@@ -262,6 +315,7 @@ def quiz_attempt_class_summary(
         "pass_rate": int(round(100 * passed / len(learners))) if learners else None,
         "synced_count": synced,
         "learners": learners,
+        "course_labels": sorted(labels),
     }
 
 
