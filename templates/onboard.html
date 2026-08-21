@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Connect your school · EdVidura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/onboard.css?v=5"/>
+</head>
+<body>
+  <header class="ob-top">
+    <a class="ob-logo" href="/">EdVidura</a>
+    <a class="ob-back" href="/">← Product home</a>
+  </header>
+
+  <main class="ob">
+    <header class="ob-hero">
+      <p class="ob-kicker">Connect · about 3 minutes</p>
+      <h1>Connect your school’s Moodle</h1>
+      <p class="ob-lede">
+        Name the school, paste one URL into Moodle, activate the tool, launch once.
+        No Client ID copy-paste required.
+      </p>
+    </header>
+
+    {% if ok %}
+    <div class="ob-banner ok" role="status">{{ ok }}</div>
+    {% endif %}
+    {% if err %}
+    <div class="ob-banner bad" role="alert">{{ err }}</div>
+    {% endif %}
+
+    <section class="ob-panel key-panel">
+      <h2>Who’s connecting?</h2>
+      {% if keycloak_enabled %}
+      <p class="ob-help">
+        {% if ops_email %}
+        Signed in as <strong>{{ ops_email }}</strong> · <a href="/auth/logout">Sign out</a>
+        {% else %}
+        <a class="ob-btn" href="/auth/login?next=/onboard">Sign in with Keycloak</a>
+        <span class="ob-help" style="display:block;margin-top:.5rem">Demo: <code>ops</code> / <code>OpsPass123!</code></span>
+        {% endif %}
+      </p>
+      <p class="ob-help">Or paste setup password below.</p>
+      {% else %}
+      <p class="ob-help">Paste <code>ADMIN_API_KEY</code> from <code>.env</code> (once).</p>
+      {% endif %}
+      <label class="ob-field">
+        <span>Setup password{% if ops_email %} (optional){% endif %}</span>
+        <input type="password" id="shared-admin-key" placeholder="Admin key" autocomplete="off"/>
+      </label>
+    </section>
+
+    {% if demo_ready %}
+    <section class="ob-panel">
+      <h2>Local demo Moodle</h2>
+      <p class="ob-help">Docker Moodle on port 8085 is already linked for a quick try.</p>
+      <div class="actions-row">
+        <a class="ob-btn" href="{{ demo_moodle_url }}" target="_blank" rel="noopener">Open demo Moodle</a>
+        <span class="ob-help">Login as a teacher → course → External tool → EdVidura</span>
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="ob-panel" id="connect">
+      <div class="ob-panel-head">
+        <span class="ob-num">1</span>
+        <div>
+          <h2>Create &amp; get registration URL</h2>
+          <p class="ob-help">We’ll create the school and a one-time Moodle install link.</p>
+        </div>
+      </div>
+      <form method="post" action="/onboard/connect" class="ob-form" data-needs-key>
+        <input type="hidden" name="admin_key" class="admin-key-mirror" value=""/>
+        <label class="ob-field">
+          <span>School name</span>
+          <input name="name" id="school-name" required maxlength="120" placeholder="Riverside High"/>
+        </label>
+        <label class="ob-field">
+          <span>School ID</span>
+          <input name="slug" id="school-slug" required pattern="[a-z0-9][a-z0-9_-]*" minlength="2" maxlength="63" placeholder="riverside"/>
+          <small>Auto-filled from the name — change if you like.</small>
+        </label>
+        <button type="submit" class="ob-btn">Create connect link</button>
+      </form>
+    </section>
+
+    {% if active_invite %}
+    <section class="ob-panel" id="paste">
+      <div class="ob-panel-head">
+        <span class="ob-num">2</span>
+        <div>
+          <h2>Paste into Moodle</h2>
+          <p class="ob-help">
+            Moodle → Site administration → Plugins → External tool → Manage tools →
+            <strong>Add LTI Advantage</strong> → paste this URL → continue.
+          </p>
+        </div>
+      </div>
+      <div class="ob-urls">
+        <li style="list-style:none;display:flex;gap:0.75rem;align-items:flex-start;justify-content:space-between;padding:0.85rem 0;border-bottom:1px solid var(--line)">
+          <div>
+            <strong>{{ active_invite.tenant_name }}</strong>
+            <code class="ob-url" data-copy="{{ active_invite.url }}">{{ active_invite.url }}</code>
+          </div>
+          <button type="button" class="ob-copy" data-copy="{{ active_invite.url }}">Copy</button>
+        </li>
+      </div>
+      <p class="ob-tip">After Moodle finishes, <strong>activate</strong> the pending EdVidura tool, then launch once from a course (new window).</p>
+    </section>
+    {% endif %}
+
+    <section class="ob-panel" id="status">
+      <div class="ob-panel-head">
+        <span class="ob-num">3</span>
+        <div>
+          <h2>Status</h2>
+          <p class="ob-help">Green means Moodle launched EdVidura at least once.</p>
+        </div>
+      </div>
+      <ul class="checklist">
+        <li class="{% if tenants %}done{% endif %}">School created</li>
+        <li class="{% if platforms %}done{% endif %}">Moodle tool registered</li>
+        <li class="{% if any_launched %}done{% endif %}">First launch completed</li>
+      </ul>
+      {% if platforms %}
+      <div class="ob-table-wrap" style="margin-top:1rem">
+        <table class="ob-table">
+          <thead>
+            <tr>
+              <th>School</th>
+              <th>Moodle</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for p in platforms %}
+            <tr>
+              <td>{{ p.tenant_slug }}</td>
+              <td class="meta">{{ p.issuer }}</td>
+              <td>
+                {% if not p.active %}Off
+                {% elif p.last_launch_at %}<span class="pill ok">Launched</span>
+                {% else %}<span class="pill wait">Waiting for launch</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="post" action="/onboard/platform/{{ p.id }}/active" data-needs-key style="display:inline">
+                  <input type="hidden" name="admin_key" class="admin-key-mirror" value=""/>
+                  <input type="hidden" name="active" value="{{ 'false' if p.active else 'true' }}"/>
+                  <button type="submit" class="ob-copy">{{ 'Turn off' if p.active else 'Turn on' }}</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="ob-help">No Moodle links yet — finish step 2.</p>
+      {% endif %}
+    </section>
+
+    <details class="ob-panel advanced">
+      <summary>Advanced — manual Client ID setup</summary>
+      <p class="ob-help">Only if Dynamic Registration isn’t available on your Moodle.</p>
+      <ul class="ob-urls">
+        {% for item in tool_urls %}
+        <li>
+          <div>
+            <strong>{{ item.label }}</strong>
+            <code class="ob-url" data-copy="{{ item.url }}">{{ item.url }}</code>
+          </div>
+          <button type="button" class="ob-copy" data-copy="{{ item.url }}">Copy</button>
+        </li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="/onboard/tenant" class="ob-form" data-needs-key>
+        <input type="hidden" name="admin_key" class="admin-key-mirror" value=""/>
+        <label class="ob-field"><span>School ID</span><input name="slug" required pattern="[a-z0-9][a-z0-9_-]*" placeholder="riverside"/></label>
+        <label class="ob-field"><span>School name</span><input name="name" required placeholder="Riverside High"/></label>
+        <button type="submit" class="ob-btn">Create school only</button>
+      </form>
+      <form method="post" action="/onboard/platform" class="ob-form" data-needs-key style="margin-top:1rem">
+        <input type="hidden" name="admin_key" class="admin-key-mirror" value=""/>
+        <label class="ob-field">
+          <span>School</span>
+          <select name="tenant_id" required {% if not tenants %}disabled{% endif %}>
+            {% for t in tenants %}
+            <option value="{{ t.id }}">{{ t.name }} ({{ t.slug }})</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="ob-field"><span>Moodle base URL</span><input name="issuer" required value="{{ default_issuer }}"/></label>
+        <label class="ob-field"><span>Client ID</span><input name="client_id" required/></label>
+        <label class="ob-field"><span>Deployment ID</span><input name="deployment_ids" value="1"/></label>
+        <button type="submit" class="ob-btn" {% if not tenants %}disabled{% endif %}>Save Moodle link</button>
+      </form>
+    </details>
+  </main>
+
+  <script>
+    (function () {
+      var keyInput = document.getElementById('shared-admin-key');
+      var nameInput = document.getElementById('school-name');
+      var slugInput = document.getElementById('school-slug');
+      var signedIn = {{ 'true' if ops_email else 'false' }};
+
+      function slugify(s) {
+        return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 63);
+      }
+      if (nameInput && slugInput) {
+        nameInput.addEventListener('input', function () {
+          if (!slugInput.dataset.touched) slugInput.value = slugify(nameInput.value);
+        });
+        slugInput.addEventListener('input', function () { slugInput.dataset.touched = '1'; });
+      }
+
+      function syncMirrors() {
+        document.querySelectorAll('.admin-key-mirror').forEach(function (el) {
+          el.value = keyInput.value || '';
+        });
+      }
+      if (keyInput) {
+        keyInput.addEventListener('input', syncMirrors);
+        keyInput.addEventListener('change', syncMirrors);
+      }
+      document.querySelectorAll('form[data-needs-key]').forEach(function (form) {
+        form.addEventListener('submit', function (ev) {
+          syncMirrors();
+          if (!signedIn && !(keyInput.value || '').trim()) {
+            ev.preventDefault();
+            keyInput.focus();
+            alert('Sign in with Keycloak or enter your setup password first.');
+          }
+        });
+      });
+      document.querySelectorAll('[data-copy]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var t = btn.getAttribute('data-copy') || '';
+          if (navigator.clipboard) navigator.clipboard.writeText(t);
+          btn.textContent = 'Copied';
+          setTimeout(function () { btn.textContent = btn.classList.contains('ob-copy') ? 'Copy' : btn.textContent; }, 1200);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

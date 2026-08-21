@@ -6,189 +6,201 @@
   <title>{{ page_title | default("EdVidura") }} · EdVidura</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="/static/css/shell.css?v=product3"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/shell.css?v=shiko9"/>
+  {% if theme %}
+  <style>
+    :root {
+      --indigo: {{ theme.accent }};
+      --indigo-deep: {{ theme.accent_deep }};
+      --indigo-soft: {{ theme.accent_soft }};
+    }
+  </style>
+  {% endif %}
 </head>
-<body>
+<body class="{% if is_school_admin %}role-admin{% elif is_instructor %}role-teacher{% else %}role-student{% endif %}">
   <div class="shell">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-brand">
-        <div class="brand-mark" aria-hidden="true">EV</div>
-        <div class="brand-text">
-          <div class="brand-name">Ed<span>Vidura</span></div>
-          <div class="brand-tag">Inside Moodle</div>
-        </div>
-      </div>
+    <header class="navbar" id="navbar">
+      <a class="nav-brand" href="/launch-hub?token={{ quiz_token }}">
+        <span class="mark" aria-hidden="true">EV</span>
+        <span class="brand-copy">
+          <span class="bname">EdVidura</span>
+          <span class="btag">{{ tenant_name | default("Learning OS") }}</span>
+        </span>
+      </a>
 
-      <div class="side-stack">
-        <div class="side-card">
-          <small>Now learning</small>
-          <div class="side-course">{{ course | default("Course") }}</div>
-          <div class="side-school">{{ tenant_name | default("School") }}</div>
-          {% if shell_progress and shell_progress.total_count %}
-          <div class="side-bar" aria-hidden="true"><i style="width: {{ shell_progress.percent }}%"></i></div>
-          <div class="side-prog">
-            <span>Course progress</span>
-            <strong>{{ shell_progress.completed_count }} / {{ shell_progress.total_count }} done</strong>
-          </div>
-          {% endif %}
-        </div>
+      <button class="nav-burger" id="nav-burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
 
-        {% if not is_instructor and not is_school_admin %}
-        <div class="side-card side-next">
-          <small>Up next</small>
-          <div class="side-what">{{ up_next_title }}</div>
-          <div class="side-meta">{{ up_next_meta }}</div>
-          <a class="side-cta" href="{{ up_next_href }}">Continue →</a>
-        </div>
-        <div class="side-card">
-          <small>Your path</small>
-          <div class="side-path">
-            <div class="side-step {{ path_lessons }}">Lessons</div>
-            <div class="side-dot"></div>
-            <div class="side-step {{ path_quiz }}">Quiz</div>
-            <div class="side-dot"></div>
-            <div class="side-step {{ path_results }}">Results</div>
-          </div>
-        </div>
-        {% elif is_instructor and not is_school_admin and school_snap %}
-        <div class="side-card">
-          <small>This school</small>
-          <div class="side-course">{{ tenant_name }}</div>
-          <div class="side-stats">
-            <div class="side-stat"><b>{{ school_snap.teacher_count }}</b><span>teachers</span></div>
-            <div class="side-stat"><b>{{ school_snap.class_count }}</b><span>classes</span></div>
-            <div class="side-stat"><b>{{ school_snap.student_count }}</b><span>students</span></div>
-            <div class="side-stat"><b>{{ school_snap.chapter_count }}</b><span>lessons</span></div>
-          </div>
-        </div>
-        {% elif is_school_admin and school_snap %}
-        <div class="side-card">
-          <small>This school</small>
-          <div class="side-course">{{ tenant_name }}</div>
-          <div class="side-stats">
-            <div class="side-stat"><b>{{ school_snap.teacher_count }}</b><span>teachers</span></div>
-            <div class="side-stat"><b>{{ school_snap.class_count }}</b><span>classes</span></div>
-            <div class="side-stat"><b>{{ school_snap.student_count }}</b><span>students</span></div>
-            <div class="side-stat"><b>{{ school_snap.chapter_count }}</b><span>lessons</span></div>
-          </div>
-        </div>
-        {% endif %}
-      </div>
-
-      <nav class="sidebar-nav" aria-label="Main">
-        <div class="nav-section">Learn</div>
-        <ul class="nav-list">
-          <li>
-            <a class="nav-link {% if active_page == 'launch_hub' %}active{% endif %}" href="/launch-hub?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">⌂</span> Home
-            </a>
-          </li>
-          <li>
-            <a class="nav-link {% if active_page == 'lessons' %}active{% endif %}" href="/lessons?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">≡</span> Lessons
-            </a>
-          </li>
-          <li>
-            <a class="nav-link {% if active_page == 'manuals' %}active{% endif %}" href="/manuals?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">▦</span> Manual
-            </a>
-          </li>
-          <li>
-            <a class="nav-link {% if active_page == 'quiz_session' %}active{% endif %}" href="/quiz?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">?</span> Quiz
-            </a>
-          </li>
-          <li>
+      <nav class="nav-menu" id="nav-menu" aria-label="Main">
+        <div class="nav-dd {% if active_page in ['launch_hub','lessons','manuals','quiz_session','quiz_result','active_quizzes'] %}active{% endif %}">
+          <button class="nav-dd-btn" type="button" aria-expanded="false">
+            Learn <span class="caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-dd-panel" role="menu">
+            <a role="menuitem" class="{% if active_page == 'launch_hub' %}on{% endif %}" href="/launch-hub?token={{ quiz_token }}">Dashboard</a>
+            <a role="menuitem" class="{% if active_page == 'lessons' %}on{% endif %}" href="/lessons?token={{ quiz_token }}">Lessons</a>
+            <a role="menuitem" class="{% if active_page == 'manuals' %}on{% endif %}" href="/manuals?token={{ quiz_token }}">Manual</a>
+            <a role="menuitem" class="{% if active_page == 'quiz_session' %}on{% endif %}" href="/quiz?token={{ quiz_token }}">Quiz</a>
+            <a role="menuitem" href="/quiz?token={{ quiz_token }}&practice=1">Practice lane</a>
             {% if last_result_id %}
-            <a class="nav-link {% if active_page == 'quiz_result' or active_page == 'active_quizzes' %}active{% endif %}" href="/quiz/result/{{ last_result_id }}?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">★</span> My results
-            </a>
+            <a role="menuitem" class="{% if active_page == 'quiz_result' or active_page == 'active_quizzes' %}on{% endif %}" href="/quiz/result/{{ last_result_id }}?token={{ quiz_token }}">My results</a>
             {% else %}
-            <a class="nav-link {% if active_page == 'quiz_result' or active_page == 'active_quizzes' %}active{% endif %}" href="/active-quizzes?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">★</span> My results
-            </a>
+            <a role="menuitem" class="{% if active_page == 'quiz_result' or active_page == 'active_quizzes' %}on{% endif %}" href="/active-quizzes?token={{ quiz_token }}">My results</a>
             {% endif %}
-          </li>
-        </ul>
+          </div>
+        </div>
 
         {% if is_instructor %}
-        <div class="nav-section">Teach</div>
-        <ul class="nav-list">
-          <li>
-            <a class="nav-link {% if active_page == 'teacher_content' %}active{% endif %}" href="/teacher/content?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">↑</span> Upload content
-            </a>
-          </li>
-          <li>
-            <a class="nav-link {% if active_page == 'teacher_manuals' %}active{% endif %}" href="/teacher/manuals?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">☰</span> Manual versions
-            </a>
-          </li>
-          <li>
-            <a class="nav-link {% if active_page == 'instructor_overview' %}active{% endif %}" href="/teacher/attempts?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">▦</span> Class results
-            </a>
-          </li>
-        </ul>
+        <div class="nav-dd {% if active_page in ['teacher_content','teacher_manuals','instructor_overview','teacher_analytics'] %}active{% endif %}">
+          <button class="nav-dd-btn" type="button" aria-expanded="false">
+            Teach <span class="caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-dd-panel" role="menu">
+            <a role="menuitem" class="{% if active_page == 'teacher_content' %}on{% endif %}" href="/teacher/content?token={{ quiz_token }}">Upload content</a>
+            <a role="menuitem" class="{% if active_page == 'teacher_manuals' %}on{% endif %}" href="/teacher/manuals?token={{ quiz_token }}">Manual versions</a>
+            <a role="menuitem" class="{% if active_page == 'instructor_overview' %}on{% endif %}" href="/teacher/attempts?token={{ quiz_token }}">Class results</a>
+            <a role="menuitem" class="{% if active_page == 'teacher_analytics' %}on{% endif %}" href="/teacher/analytics?token={{ quiz_token }}">Analytics</a>
+            <a role="menuitem" href="/teacher/time-capsule.json?token={{ quiz_token }}">Time capsule (JSON)</a>
+          </div>
+        </div>
         {% endif %}
 
         {% if is_school_admin %}
-        <div class="nav-section">School</div>
-        <ul class="nav-list">
-          <li>
-            <a class="nav-link {% if active_page == 'school_admin_teachers' %}active{% endif %}" href="/school-admin/teachers?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">▣</span> Teachers
-            </a>
-          </li>
-          <li>
-            <a class="nav-link {% if active_page == 'school_admin_classes' %}active{% endif %}" href="/school-admin/classes?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">▤</span> Classes
-            </a>
-          </li>
-          <li>
-            <a class="nav-link {% if active_page == 'school_admin_students' %}active{% endif %}" href="/school-admin/students?token={{ quiz_token }}">
-              <span class="nav-ico" aria-hidden="true">☰</span> Students
-            </a>
-          </li>
-        </ul>
-        {% endif %}
-      </nav>
-
-      <div class="sidebar-foot">
-        <div class="user-who">
-          <div class="user-avatar" aria-hidden="true">{{ avatar_initials | default("EV") }}</div>
-          <div>
-            <div class="user-name">{{ learner_name | default("Learner") }}</div>
-            <div class="user-role">{{ user_role | default("Student") }}</div>
+        <div class="nav-dd {% if active_page in ['school_admin_teachers','school_admin_classes','school_admin_students','school_admin_home'] %}active{% endif %}">
+          <button class="nav-dd-btn" type="button" aria-expanded="false">
+            School <span class="caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-dd-panel" role="menu">
+            <a role="menuitem" class="{% if active_page == 'school_admin_teachers' %}on{% endif %}" href="/school-admin/teachers?token={{ quiz_token }}">Teachers</a>
+            <a role="menuitem" class="{% if active_page == 'school_admin_classes' %}on{% endif %}" href="/school-admin/classes?token={{ quiz_token }}">Classes</a>
+            <a role="menuitem" class="{% if active_page == 'school_admin_students' %}on{% endif %}" href="/school-admin/students?token={{ quiz_token }}">Students</a>
           </div>
         </div>
-        <a class="btn-back-moodle sidebar-back" href="{{ moodle_return_href }}" target="_top" rel="noopener">← Back to Moodle</a>
-      </div>
-    </aside>
+        {% endif %}
+
+        <div class="nav-dd nav-dd-account">
+          <button class="nav-dd-btn nav-account-btn" type="button" aria-expanded="false">
+            <span class="avatar" aria-hidden="true">{{ avatar_initials | default("EV") }}</span>
+            <span class="nav-account-meta">
+              <span class="uname">{{ learner_name | default("Learner") }}</span>
+              <span class="urole">{{ user_role | default("Student") }}</span>
+            </span>
+            <span class="caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-dd-panel nav-dd-panel-end" role="menu">
+            <div class="nav-dd-label">{{ course | default("Course") }}</div>
+            <a role="menuitem" href="{{ moodle_return_href }}" target="_top" rel="noopener">← Back to Moodle</a>
+            <button type="button" class="nav-incident-btn" id="incident-btn">Report a problem</button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    {% if fingerprint %}
+    <div class="fingerprint" title="Launch fingerprint">
+      <span><b>Tenant</b> {{ fingerprint.tenant }}</span>
+      <span><b>Role</b> {{ fingerprint.role }}</span>
+      <span><b>AGS</b> {{ fingerprint.ags }}</span>
+      <span><b>Client</b> {{ fingerprint.client_id }}</span>
+      <span><b>Launch</b> {{ fingerprint.launch_id }}</span>
+      <span><b>Course</b> {{ fingerprint.course }}</span>
+    </div>
+    {% endif %}
+
+    <div class="scrim" id="nav-scrim" hidden></div>
 
     <div class="content">
-      <header class="topbar">
-        <div class="topbar-left">
-          <button class="mobile-toggle" id="menu-toggle" type="button" aria-label="Menu">☰</button>
-          <div>
-            <h1 class="page-title">{{ page_title | default("EdVidura") }}</h1>
-            {% if page_subtitle %}<p class="page-subtitle">{{ page_subtitle }}</p>{% endif %}
-          </div>
+      <div class="page-head">
+        <div>
+          <h1>{{ page_title | default("EdVidura") }}</h1>
+          {% if page_subtitle %}<p>{{ page_subtitle }}</p>
+          {% else %}<p>{{ course | default("Course") }} · {{ tenant_name | default("School") }}</p>{% endif %}
         </div>
-        <div class="topbar-right">
-          <a class="btn-back-moodle" href="{{ moodle_return_href }}" target="_top" rel="noopener">← Back to Moodle</a>
-        </div>
-      </header>
+        <a class="chip moodle-chip" href="{{ moodle_return_href }}" target="_top" rel="noopener">← Moodle</a>
+      </div>
+
+      {% if show_contract %}
+      <div class="contract-banner">
+        <strong>Two-window contract</strong>
+        <span>Moodle owns the gradebook. EdVidura owns the learning path, attempts, and xAPI story.</span>
+      </div>
+      {% endif %}
+
       <main class="main">
         {% block content %}{% endblock %}
       </main>
     </div>
   </div>
+  <div id="incident-toast" class="incident-toast" hidden></div>
   <script>
-    document.getElementById('menu-toggle')?.addEventListener('click', function () {
-      document.getElementById('sidebar')?.classList.toggle('open');
-    });
+    (function () {
+      var navbar = document.getElementById('navbar');
+      var burger = document.getElementById('nav-burger');
+      var menu = document.getElementById('nav-menu');
+      var scrim = document.getElementById('nav-scrim');
+
+      function closeAllDropdowns() {
+        document.querySelectorAll('.nav-dd.open').forEach(function (el) {
+          el.classList.remove('open');
+          var btn = el.querySelector('.nav-dd-btn');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        });
+      }
+
+      function setMobileOpen(open) {
+        navbar?.classList.toggle('nav-open', open);
+        if (scrim) scrim.hidden = !open;
+        if (burger) burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (!open) closeAllDropdowns();
+      }
+
+      burger?.addEventListener('click', function () {
+        setMobileOpen(!navbar?.classList.contains('nav-open'));
+      });
+      scrim?.addEventListener('click', function () { setMobileOpen(false); });
+
+      document.querySelectorAll('.nav-dd-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var dd = btn.closest('.nav-dd');
+          var willOpen = !dd.classList.contains('open');
+          closeAllDropdowns();
+          if (willOpen) {
+            dd.classList.add('open');
+            btn.setAttribute('aria-expanded', 'true');
+          }
+        });
+      });
+
+      document.addEventListener('click', function () { closeAllDropdowns(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { closeAllDropdowns(); setMobileOpen(false); }
+      });
+
+      var toast = document.getElementById('incident-toast');
+      document.getElementById('incident-btn')?.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var fd = new FormData();
+        fd.append('token', {{ quiz_token|tojson }});
+        fd.append('note', 'Learner reported a problem from ' + (document.title || 'shell'));
+        fetch('/incident', { method: 'POST', body: fd })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!toast) return;
+            toast.hidden = false;
+            toast.textContent = data.ok
+              ? ('Incident saved · ' + (data.incident_id || '').slice(0, 8))
+              : ('Could not save: ' + (data.error || 'error'));
+            setTimeout(function () { toast.hidden = true; }, 4000);
+          })
+          .catch(function () {
+            if (!toast) return;
+            toast.hidden = false;
+            toast.textContent = 'Could not reach incident endpoint';
+          });
+      });
+    })();
   </script>
 </body>
 </html>

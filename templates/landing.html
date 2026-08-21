@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura — Learning that opens inside your LMS</title>
+  <meta name="description" content="EdVidura connects to Moodle via LTI 1.3. Lessons, quizzes, grade sync, analytics — tenant-isolated for each school."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/landing.css?v=3"/>
+</head>
+<body>
+  <header class="top">
+    <a class="logo" href="/">EdVidura</a>
+    <nav class="top-nav" aria-label="Primary">
+      <a href="#how">How it works</a>
+      <a href="#stack">Platform</a>
+      <a href="/onboard">Connect a school</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-label="EdVidura">
+      <div class="hero-visual" role="img" aria-label="Classroom ready for learning">
+        <img src="/static/img/edvidura-hero.jpg" alt="" width="1600" height="900"/>
+        <div class="hero-veil" aria-hidden="true"></div>
+      </div>
+      <div class="hero-copy">
+        <p class="brand">EdVidura</p>
+        <h1>Opens inside Moodle. Different for every role.</h1>
+        <p class="lede">Students learn. Teachers see the class. School data stays isolated — grades sync back to Moodle.</p>
+        <div class="cta">
+          <a class="btn primary" href="/onboard">Connect your school</a>
+          <a class="btn ghost" href="#how">See how it works</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="band how" id="how">
+      <h2>One launch. Full learning loop.</h2>
+      <p class="section-lede">Students stay in Moodle. EdVidura opens in a new window, tenant-safe for that school alone.</p>
+      <ol class="flow">
+        <li>
+          <span class="step">01</span>
+          <strong>LTI launch</strong>
+          <span>Moodle hands off a verified session — no separate student login.</span>
+        </li>
+        <li>
+          <span class="step">02</span>
+          <strong>Learn &amp; practice</strong>
+          <span>Lessons, manuals, quizzes, retry with memory, practice lane.</span>
+        </li>
+        <li>
+          <span class="step">03</span>
+          <strong>Evidence home</strong>
+          <span>Scores to Moodle gradebook. Story stays in EdVidura — receipts, xAPI, analytics.</span>
+        </li>
+      </ol>
+    </section>
+
+    <section class="band teach" id="teach">
+      <div class="teach-copy">
+        <h2>Teachers see where the class stalls</h2>
+        <p class="section-lede">Quiet radar, competency map, and rule-based at-risk signals — not another leaderboard.</p>
+        <ul class="ticks">
+          <li>Wrong-answer teleport into pinned manual sections</li>
+          <li>AI draft quiz from a lesson (review before save)</li>
+          <li>Analytics export and Metabase-ready views</li>
+        </ul>
+      </div>
+      <div class="teach-art" aria-hidden="true">
+        <svg class="radar-art" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#5b5ce2"/>
+              <stop offset="100%" stop-color="#0d9488"/>
+            </linearGradient>
+          </defs>
+          <rect x="24" y="28" width="372" height="264" rx="18" fill="#0f172a"/>
+          <text x="48" y="64" fill="#94a3b8" font-family="Manrope,sans-serif" font-size="14">Class radar</text>
+          <text x="48" y="110" fill="#e8eef1" font-family="Manrope,sans-serif" font-size="13">Tenant isolation</text>
+          <rect x="48" y="120" width="300" height="10" rx="5" fill="#1e3238"/>
+          <rect x="48" y="120" width="246" height="10" rx="5" fill="url(#bar)" class="grow a"/>
+          <text x="48" y="168" fill="#e8eef1" font-family="Manrope,sans-serif" font-size="13">LTI launch</text>
+          <rect x="48" y="178" width="300" height="10" rx="5" fill="#1e3238"/>
+          <rect x="48" y="178" width="168" height="10" rx="5" fill="url(#bar)" class="grow b"/>
+          <text x="48" y="226" fill="#e8eef1" font-family="Manrope,sans-serif" font-size="13">Gradebook sync</text>
+          <rect x="48" y="236" width="300" height="10" rx="5" fill="#1e3238"/>
+          <rect x="48" y="236" width="210" height="10" rx="5" fill="url(#bar)" class="grow c"/>
+        </svg>
+      </div>
+    </section>
+
+    <section class="band stack" id="stack">
+      <h2>What’s live in this spike</h2>
+      <p class="section-lede">Newer platform pieces — open them from here (not only from Moodle).</p>
+      <div class="stack-grid">
+        <a class="stack-card" href="/onboard">
+          <strong>Keycloak ops login</strong>
+          <span>{% if keycloak_enabled %}Enabled — sign in on Connect{% else %}Off — set KEYCLOAK_ENABLED=1{% endif %}</span>
+        </a>
+        <a class="stack-card" href="{% if metabase_url %}{{ metabase_url }}{% else %}#stack{% endif %}" {% if metabase_url %}target="_blank" rel="noopener"{% endif %}>
+          <strong>Metabase BI</strong>
+          <span>{% if metabase_url %}Open dashboards →{% else %}Set METABASE_URL{% endif %}</span>
+        </a>
+        <div class="stack-card">
+          <strong>xAPI tiers + LRS</strong>
+          <span>noisy → transactional → authoritative; retry API ready</span>
+        </div>
+        <div class="stack-card">
+          <strong>Deep Linking</strong>
+          <span>Moodle → Select content → pick quiz / lesson / manual</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="band trust" id="trust">
+      <h2>Built for schools that bring their own Moodle</h2>
+      <p class="section-lede">Shared Postgres with row-level security. Each institution is a tenant — never mixed.</p>
+      <div class="trust-row">
+        <div>
+          <strong>LTI 1.3</strong>
+          <span>Industry handshake, not a plugin rewrite</span>
+        </div>
+        <div>
+          <strong>AGS grades</strong>
+          <span>Moodle remains the gradebook of record</span>
+        </div>
+        <div>
+          <strong>xAPI trail</strong>
+          <span>Learning statements for analytics &amp; LRS</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot-brand">EdVidura</div>
+    <div class="foot-links">
+      <a href="/onboard">Onboard</a>
+      <a href="/health">Health</a>
+      <a href="/docs">API docs</a>
+      <a href="/.well-known/jwks.json">JWKS</a>
+    </div>
+    <p class="foot-note">Builders: LTI login <code>{{ base }}/lti/login</code> · launch <code>{{ base }}/lti/launch</code></p>
+  </footer>
+</body>
+</html>
