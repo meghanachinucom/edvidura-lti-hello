@@ -51,6 +51,9 @@ jobs:
           psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_course_content.sql
           psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_school_org.sql
           psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_school_admins.sql
+          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_lesson_workflow.sql
+          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_event_outbox.sql
+          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_manuals.sql
           python scripts/seed_schools.py
 
       - name: Run isolation tests
