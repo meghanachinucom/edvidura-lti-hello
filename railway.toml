@@ -1,0 +1,11 @@
+# Railway service config — https://docs.railway.app/reference/config-as-code
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+# Set RUN_MIGRATIONS=1 in Railway variables for first boot (or run migrate once via shell)

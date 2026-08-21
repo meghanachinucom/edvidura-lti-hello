@@ -40,25 +40,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Apply schema (RLS + edvidura_app role)
+      - name: Apply schema (owner) then seed
         env:
-          PGPASSWORD: edvidura
+          # Owner role creates edvidura_app + RLS; app role used for tests below.
+          DATABASE_URL: postgresql://edvidura:edvidura@127.0.0.1:5432/edvidura
+          MIGRATE_STRICT: "1"
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client
-          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/init.sql
-          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_platform_last_launch.sql
-          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_course_content.sql
-          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_school_org.sql
-          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_school_admins.sql
-          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_lesson_workflow.sql
-          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_event_outbox.sql
-          psql -h 127.0.0.1 -U edvidura -d edvidura -v ON_ERROR_STOP=1 -f db/migration_manuals.sql
+          python scripts/apply_migrations.py
           python scripts/seed_schools.py
 
-      - name: Run isolation tests
+      - name: Run isolation + unit tests
         env:
           REQUIRE_DB: "1"
+          ENVIRONMENT: development
           ADMIN_API_KEY: test-admin-key
+          SESSION_SECRET: ci-session-secret-not-for-prod
           DATABASE_URL: postgresql://edvidura_app:edvidura_app@127.0.0.1:5432/edvidura
         run: pytest -q tests/
