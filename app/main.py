@@ -33,6 +33,8 @@ from app.quiz_routes import store_quiz_context
 from app.shell_routes import router as shell_router
 from app.settings import get_settings
 from app.security_boot import assert_safe_for_environment, require_dev_tools
+from app.monitoring import init_monitoring
+from app.rate_limit import RateLimitMiddleware
 from app.tenant_context import TenantContext, use_tenant_context
 from app.tenancy import (
     TENANT_A_ID,
@@ -44,6 +46,7 @@ from app.tenancy import (
 from app.tenancy_isolation import prove_launch_events_isolation
 
 configure_logging()
+init_monitoring()
 
 _boot = get_settings()
 assert_safe_for_environment(_boot)
@@ -51,7 +54,7 @@ assert_safe_for_environment(_boot)
 app = FastAPI(
     title="EdVidura",
     description="Multi-tenant LTI 1.3 learning platform for schools (Moodle front door).",
-    version="0.7.0",
+    version="0.8.0",
     docs_url=None if _boot.is_production else "/docs",
     redoc_url=None if _boot.is_production else "/redoc",
     openapi_url=None if _boot.is_production else "/openapi.json",
@@ -70,6 +73,10 @@ app.include_router(quiz_router)
 _STATIC = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 
+app.add_middleware(
+    RateLimitMiddleware,
+    enabled=_boot.rate_limit_enabled,
+)
 app.add_middleware(StructuredLoggingMiddleware)
 app.add_middleware(
     SessionMiddleware,
@@ -83,22 +90,37 @@ app.add_middleware(
 def health():
     platforms = 0
     db_ok = False
+    cache_backend = "unknown"
+    try:
+        from app.launch_cache import LAUNCH_CACHE
+
+        cache_backend = getattr(LAUNCH_CACHE, "backend", type(LAUNCH_CACHE).__name__)
+    except Exception:  # noqa: BLE001
+        cache_backend = "error"
     try:
         platforms = len(db.fetch_all_active_platforms())
         db_ok = True
     except Exception as exc:  # noqa: BLE001
         return {
             "ok": False,
-            "service": "edvidura-lti-hello",
+            "service": "edvidura",
+            "version": app.version,
+            "environment": _boot.environment,
             "db_ok": False,
             "db_error": str(exc),
             "platforms": 0,
+            "cache_backend": cache_backend,
+            "rate_limit": _boot.rate_limit_enabled,
         }
     return {
         "ok": True,
-        "service": "edvidura-lti-hello",
+        "service": "edvidura",
+        "version": app.version,
+        "environment": _boot.environment,
         "db_ok": db_ok,
         "platforms": platforms,
+        "cache_backend": cache_backend,
+        "rate_limit": _boot.rate_limit_enabled,
     }
 
 

@@ -8,8 +8,8 @@ Implement **one phase at a time**.
 | **2** | Railway deploy + migrations hardened | **Done** |
 | **3** | Land uncommitted SaaS modules (dynreg, xAPI, identity, …) | **Done** |
 | **4** | RLS on invites / snapshots / tokens + non-bypass DB role | **Done** |
-| **5** | Shared launch cache (Redis/DB) for multi-instance | Next |
-| **6** | Rate limits, backups, monitoring | Pending |
+| **5** | Shared launch cache (Postgres) for multi-instance | **Done** |
+| **6** | Rate limits, backups, monitoring | **Done** |
 
 ## Phase 1 (done)
 
@@ -44,3 +44,16 @@ Landed SaaS modules and HTTP wiring in git:
 - `app.capability_lookup` for opaque token / launch_id reads; inserts still require `app.tenant_id`
 - `db/ensure_app_role.sql` + Railway docs for NOBYPASSRLS app role
 - Isolation proof: `prove_capability_tables_isolation`
+
+## Phase 5 (done)
+
+- `shared_cache` Postgres table + `SharedCache` (memory L1 + DB)
+- LTI nonce/state/OIDC pending work across multiple workers
+- `/health` reports `cache_backend`
+
+## Phase 6 (done)
+
+- Rate limits on LTI / onboard / admin / API (`RATE_LIMIT_ENABLED`)
+- Backup scripts: `scripts/backup_postgres.ps1` / `.sh`
+- Optional Sentry via `SENTRY_DSN`
+- Health exposes `environment`, `version`, `rate_limit`

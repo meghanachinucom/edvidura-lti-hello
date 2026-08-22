@@ -33,6 +33,7 @@ MIGRATIONS = [
     "migration_xapi_tiers.sql",
     "migration_lti_dynreg.sql",
     "migration_rls_capability_tables.sql",
+    "migration_shared_cache.sql",
 ]
 
 # Postgres SQLSTATE values that mean "already applied" / safe to continue.

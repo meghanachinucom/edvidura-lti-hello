@@ -87,3 +87,5 @@ Capability tables (`lti_registration_invites`, `lti_launch_snapshots`, `quiz_ses
 - Teacher uploads under `app/static/uploads/` are ephemeral on Railway unless you add a volume/object store.
 - Do not commit `keys/*.key` — use `LTI_PRIVATE_KEY_PEM`.
 - Single replica recommended until Phase 5 (shared launch cache).
+- Phase 5+: LTI state uses Postgres `shared_cache` — safe for multiple Railway replicas.
+- Phase 6: set `SENTRY_DSN` for error tracking; run `scripts/backup_postgres.sh` on a schedule (or provider PITR).

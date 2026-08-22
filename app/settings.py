@@ -39,6 +39,10 @@ class Settings:
     keycloak_client_secret: str = ""
     # Metabase BI URL (optional link from teacher analytics).
     metabase_url: str = ""
+    # Phase 6 ops
+    rate_limit_enabled: bool = True
+    sentry_dsn: str = ""
+    sentry_traces_sample_rate: float = 0.0
 
     @property
     def is_production(self) -> bool:
@@ -77,6 +81,14 @@ def get_settings() -> Settings:
     else:
         environment = "development"
 
+    rate_raw = os.getenv("RATE_LIMIT_ENABLED", "1").strip().lower()
+    rate_limit_enabled = rate_raw not in {"0", "false", "no", "off"}
+
+    try:
+        traces = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0") or "0")
+    except ValueError:
+        traces = 0.0
+
     return Settings(
         app_base_url=os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip(
             "/"
@@ -114,4 +126,7 @@ def get_settings() -> Settings:
         metabase_url=os.getenv("METABASE_URL", "http://localhost:3001").rstrip(
             "/"
         ),
+        rate_limit_enabled=rate_limit_enabled,
+        sentry_dsn=os.getenv("SENTRY_DSN", "").strip(),
+        sentry_traces_sample_rate=max(0.0, min(1.0, traces)),
     )
