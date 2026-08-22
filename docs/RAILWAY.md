@@ -63,13 +63,23 @@ Launch container: **New window**. Enable **Accept grades from the tool** for AGS
 
 ## 6. Database role (RLS)
 
-Railway’s default Postgres user is often a **superuser** and **bypasses RLS**. For SaaS:
+Railway’s default Postgres user is often a **superuser** and **bypasses RLS**. For SaaS you **must** use a non-bypass app role:
 
-1. Connect as owner and create a non-bypass role (same idea as local `edvidura_app` in `db/init.sql`).
-2. Point `DATABASE_URL` at that role.
-3. Keep owner credentials only for migrations / break-glass.
+```bash
+# As owner / superuser
+psql "$OWNER_DATABASE_URL" -v ON_ERROR_STOP=1 -f db/ensure_app_role.sql
+# Edit the role password, then:
+# DATABASE_URL=postgresql://edvidura_app:STRONG@host:port/dbname
+```
 
-Until then, treat Railway as pilot-only isolation.
+Checklist:
+
+1. Run [`db/ensure_app_role.sql`](../db/ensure_app_role.sql) as owner.
+2. Point app `DATABASE_URL` at `edvidura_app` (NOSUPERUSER, NOBYPASSRLS).
+3. Keep owner credentials only for migrations / break-glass (`RUN_MIGRATIONS=1` can still use owner once, then switch).
+4. Confirm with: `GET /dev/tenancy/cross-check` (ops auth) or `pytest tests/test_tenant_isolation.py::test_app_role_is_not_bypassrls`.
+
+Capability tables (`lti_registration_invites`, `lti_launch_snapshots`, `quiz_session_tokens`) use RLS too; opaque token/launch lookups set `app.capability_lookup` inside the app only.
 
 ## Notes
 

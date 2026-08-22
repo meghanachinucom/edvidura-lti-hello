@@ -31,23 +31,22 @@ DEFAULT_SCOPES = " ".join(
 def create_invite(*, tenant_id: UUID | str, label: str = "", hours: int = 48) -> dict[str, Any]:
     token = secrets.token_urlsafe(24)
     expires = datetime.now(timezone.utc) + timedelta(hours=hours)
-    with db.connect() as conn:
-        with conn.transaction():
-            row = conn.execute(
-                """
-                INSERT INTO lti_registration_invites (
-                    token, tenant_id, label, expires_at
-                ) VALUES (%s, %s, %s, %s)
-                RETURNING token, tenant_id, label, created_at, expires_at,
-                          consumed_at, client_id, issuer
-                """,
-                (token, str(tenant_id), (label or "")[:120], expires),
-            ).fetchone()
-            return dict(row)
+    with db.tenant_connection(tenant_id) as conn:
+        row = conn.execute(
+            """
+            INSERT INTO lti_registration_invites (
+                token, tenant_id, label, expires_at
+            ) VALUES (%s, %s, %s, %s)
+            RETURNING token, tenant_id, label, created_at, expires_at,
+                      consumed_at, client_id, issuer
+            """,
+            (token, str(tenant_id), (label or "")[:120], expires),
+        ).fetchone()
+        return dict(row)
 
 
 def get_invite(token: str) -> dict[str, Any] | None:
-    with db.connect() as conn:
+    with db.capability_connection() as conn:
         row = conn.execute(
             """
             SELECT i.token, i.tenant_id, i.label, i.created_at, i.expires_at,
@@ -65,18 +64,17 @@ def get_invite(token: str) -> dict[str, Any] | None:
 def mark_invite_consumed(
     token: str, *, client_id: str, issuer: str
 ) -> None:
-    with db.connect() as conn:
-        with conn.transaction():
-            conn.execute(
-                """
-                UPDATE lti_registration_invites
-                SET consumed_at = now(),
-                    client_id = %s,
-                    issuer = %s
-                WHERE token = %s
-                """,
-                (client_id, issuer.rstrip("/"), token),
-            )
+    with db.capability_connection() as conn:
+        conn.execute(
+            """
+            UPDATE lti_registration_invites
+            SET consumed_at = now(),
+                client_id = %s,
+                issuer = %s
+            WHERE token = %s
+            """,
+            (client_id, issuer.rstrip("/"), token),
+        )
 
 
 def registration_url(token: str) -> str:

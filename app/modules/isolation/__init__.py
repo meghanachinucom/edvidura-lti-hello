@@ -2,6 +2,7 @@
 
 from app.modules.isolation.proofs import (
     assert_cross_tenant_insert_rejected,
+    prove_capability_tables_isolation,
     prove_course_content_isolation,
     prove_launch_events_isolation,
     prove_lesson_progress_isolation,
@@ -16,4 +17,5 @@ __all__ = [
     "prove_course_content_isolation",
     "prove_lesson_progress_isolation",
     "prove_teacher_content_write_isolation",
+    "prove_capability_tables_isolation",
 ]

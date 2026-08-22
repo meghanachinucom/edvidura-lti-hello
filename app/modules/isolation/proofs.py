@@ -335,3 +335,88 @@ def prove_teacher_content_write_isolation(
         "fetched_as_b": fetched_as_b is not None,
         "detail": "RLS pass" if ok else "CROSS-TENANT LEAK",
     }
+
+
+def prove_capability_tables_isolation(
+    *,
+    tenant_a_id: str = TENANT_A_ID,
+    tenant_b_id: str = TENANT_B_ID,
+) -> dict[str, Any]:
+    """Snapshots / quiz tokens / invites: tenant scans isolated; PK lookup works."""
+    marker = uuid4().hex[:12]
+    launch_a = f"launch-a-{marker}"
+    launch_b = f"launch-b-{marker}"
+    token_a = f"tok-a-{marker}"
+    token_b = f"tok-b-{marker}"
+
+    db.save_launch_snapshot(
+        launch_id=launch_a,
+        tenant_id=tenant_a_id,
+        launch_data={"sub": "a", "run": marker},
+    )
+    db.save_launch_snapshot(
+        launch_id=launch_b,
+        tenant_id=tenant_b_id,
+        launch_data={"sub": "b", "run": marker},
+    )
+    db.save_quiz_context(
+        token_a,
+        {"tenant_id": tenant_a_id, "subject": "a", "run": marker},
+        ttl_sec=600,
+    )
+    db.save_quiz_context(
+        token_b,
+        {"tenant_id": tenant_b_id, "subject": "b", "run": marker},
+        ttl_sec=600,
+    )
+
+    # Cross-tenant list must not leak (no capability_lookup).
+    with db.tenant_connection(tenant_a_id) as conn:
+        snap_as_a = conn.execute(
+            "SELECT launch_id FROM lti_launch_snapshots WHERE launch_id LIKE %s",
+            (f"launch-%-{marker}",),
+        ).fetchall()
+        tok_as_a = conn.execute(
+            "SELECT token FROM quiz_session_tokens WHERE token LIKE %s",
+            (f"tok-%-{marker}",),
+        ).fetchall()
+
+    leaked_snap = any(r["launch_id"] == launch_b for r in snap_as_a)
+    leaked_tok = any(r["token"] == token_b for r in tok_as_a)
+
+    # Capability PK lookup still works.
+    got_a = db.get_launch_snapshot(launch_a)
+    got_b_tok = db.get_quiz_context(token_b)
+
+    # Invite: create under A, invisible to B list, visible via capability token.
+    from app.modules import lti_dynreg
+
+    invite = lti_dynreg.create_invite(tenant_id=tenant_a_id, label=f"iso-{marker}")
+    with db.tenant_connection(tenant_b_id) as conn:
+        inv_as_b = conn.execute(
+            "SELECT token FROM lti_registration_invites WHERE label = %s",
+            (f"iso-{marker}",),
+        ).fetchall()
+    invite_leaked = len(inv_as_b) > 0
+    invite_got = lti_dynreg.get_invite(invite["token"])
+
+    ok = (
+        (not leaked_snap)
+        and (not leaked_tok)
+        and got_a is not None
+        and got_b_tok is not None
+        and (not invite_leaked)
+        and invite_got is not None
+        and str(invite_got["tenant_id"]) == str(tenant_a_id)
+    )
+    return {
+        "ok": ok,
+        "run": marker,
+        "leaked_snap_b_to_a": leaked_snap,
+        "leaked_tok_b_to_a": leaked_tok,
+        "pk_lookup_snap_ok": got_a is not None,
+        "pk_lookup_tok_ok": got_b_tok is not None,
+        "invite_leaked_to_b": invite_leaked,
+        "invite_capability_ok": invite_got is not None,
+        "detail": "RLS pass" if ok else "CROSS-TENANT LEAK",
+    }

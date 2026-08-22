@@ -24,6 +24,7 @@ from app.tenancy_isolation import (  # noqa: E402
     prove_quiz_attempts_isolation,
     prove_teacher_content_write_isolation,
 )
+from app.modules.isolation import prove_capability_tables_isolation  # noqa: E402
 
 
 def _db_required() -> bool:
@@ -126,6 +127,16 @@ def test_teacher_lesson_create_isolated_from_other_tenant():
     assert result["ok"] is True, result
     assert result["leaked_title_to_b"] is False
     assert result["fetched_as_b"] is False
+
+
+def test_capability_tables_rls_and_pk_lookup():
+    result = prove_capability_tables_isolation()
+    assert result["ok"] is True, result
+    assert result["leaked_snap_b_to_a"] is False
+    assert result["leaked_tok_b_to_a"] is False
+    assert result["invite_leaked_to_b"] is False
+    assert result["pk_lookup_snap_ok"] is True
+    assert result["pk_lookup_tok_ok"] is True
 
 
 def test_mark_complete_rejects_empty_subject():

@@ -7,8 +7,8 @@ Implement **one phase at a time**.
 | **1** | Security foundations | **Done** |
 | **2** | Railway deploy + migrations hardened | **Done** |
 | **3** | Land uncommitted SaaS modules (dynreg, xAPI, identity, …) | **Done** |
-| **4** | RLS on invites / snapshots / tokens + non-bypass DB role | Next |
-| **5** | Shared launch cache (Redis/DB) for multi-instance | Pending |
+| **4** | RLS on invites / snapshots / tokens + non-bypass DB role | **Done** |
+| **5** | Shared launch cache (Redis/DB) for multi-instance | Next |
 | **6** | Rate limits, backups, monitoring | Pending |
 
 ## Phase 1 (done)
@@ -37,3 +37,10 @@ Landed SaaS modules and HTTP wiring in git:
 - Routes: Keycloak auth, Dynamic Registration, Deep Linking, onboard wizard
 - Keycloak compose: `identity/`
 - Product docs + module tests
+
+## Phase 4 (done)
+
+- RLS on `lti_registration_invites`, `lti_launch_snapshots`, `quiz_session_tokens`
+- `app.capability_lookup` for opaque token / launch_id reads; inserts still require `app.tenant_id`
+- `db/ensure_app_role.sql` + Railway docs for NOBYPASSRLS app role
+- Isolation proof: `prove_capability_tables_isolation`

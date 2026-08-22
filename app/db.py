@@ -30,6 +30,21 @@ def tenant_connection(tenant_id: UUID | str) -> Iterator[psycopg.Connection]:
 
 
 @contextmanager
+def capability_connection() -> Iterator[psycopg.Connection]:
+    """Allow PK/token lookups on capability tables without listing other tenants.
+
+    Sets ``app.capability_lookup=1`` for the transaction. Inserts still require
+    ``tenant_connection`` (WITH CHECK does not allow capability-only inserts).
+    """
+    with connect() as conn:
+        with conn.transaction():
+            conn.execute(
+                "SELECT set_config('app.capability_lookup', '1', true)"
+            )
+            yield conn
+
+
+@contextmanager
 def with_tenant(tenant_id: UUID | str) -> Iterator[psycopg.Connection]:
     """Alias for tenant_connection — preferred name for new call sites."""
     with tenant_connection(tenant_id) as conn:
@@ -360,27 +375,25 @@ def save_launch_snapshot(
 ) -> None:
     import json
 
-    with connect() as conn:
-        with conn.transaction():
-            conn.execute(
-                """
-                INSERT INTO lti_launch_snapshots (launch_id, tenant_id, launch_data)
-                VALUES (%s, %s, %s::jsonb)
-                ON CONFLICT (launch_id) DO UPDATE SET
-                    tenant_id = EXCLUDED.tenant_id,
-                    launch_data = EXCLUDED.launch_data,
-                    created_at = now()
-                """,
-                (
-                    launch_id,
-                    str(tenant_id) if tenant_id else None,
-                    json.dumps(launch_data),
-                ),
-            )
+    if not tenant_id:
+        raise ValueError("tenant_id is required to persist launch snapshots under RLS")
+
+    with tenant_connection(tenant_id) as conn:
+        conn.execute(
+            """
+            INSERT INTO lti_launch_snapshots (launch_id, tenant_id, launch_data)
+            VALUES (%s, %s, %s::jsonb)
+            ON CONFLICT (launch_id) DO UPDATE SET
+                tenant_id = EXCLUDED.tenant_id,
+                launch_data = EXCLUDED.launch_data,
+                created_at = now()
+            """,
+            (launch_id, str(tenant_id), json.dumps(launch_data)),
+        )
 
 
 def get_launch_snapshot(launch_id: str) -> dict[str, Any] | None:
-    with connect() as conn:
+    with capability_connection() as conn:
         row = conn.execute(
             """
             SELECT launch_data
@@ -407,22 +420,26 @@ def save_quiz_context(token: str, context: dict[str, Any], *, ttl_sec: int = 360
     """Persist quiz session token so submit survives uvicorn --reload."""
     import json
 
-    with connect() as conn:
-        with conn.transaction():
-            conn.execute(
-                """
-                INSERT INTO quiz_session_tokens (token, context, expires_at)
-                VALUES (%s, %s::jsonb, now() + (%s || ' seconds')::interval)
-                ON CONFLICT (token) DO UPDATE SET
-                    context = EXCLUDED.context,
-                    expires_at = EXCLUDED.expires_at
-                """,
-                (token, json.dumps(context), str(int(ttl_sec))),
-            )
+    tenant_id = context.get("tenant_id")
+    if not tenant_id:
+        raise ValueError("quiz context requires tenant_id for RLS")
+
+    with tenant_connection(tenant_id) as conn:
+        conn.execute(
+            """
+            INSERT INTO quiz_session_tokens (token, tenant_id, context, expires_at)
+            VALUES (%s, %s, %s::jsonb, now() + (%s || ' seconds')::interval)
+            ON CONFLICT (token) DO UPDATE SET
+                tenant_id = EXCLUDED.tenant_id,
+                context = EXCLUDED.context,
+                expires_at = EXCLUDED.expires_at
+            """,
+            (token, str(tenant_id), json.dumps(context), str(int(ttl_sec))),
+        )
 
 
 def get_quiz_context(token: str) -> dict[str, Any] | None:
-    with connect() as conn:
+    with capability_connection() as conn:
         row = conn.execute(
             """
             SELECT context
