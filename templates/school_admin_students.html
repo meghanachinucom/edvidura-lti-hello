@@ -3,12 +3,29 @@
 <section class="welcome">
   <p class="welcome-kicker">School admin</p>
   <h2 class="welcome-title">Students</h2>
-  <p class="welcome-lede">Learners enrolled in classes at <strong>{{ tenant_name }}</strong>.</p>
+  <p class="welcome-lede">
+    Student accounts and enrollments are created in <strong>Moodle</strong>.
+    EdVidura does not create learner profiles — each launch brings the Moodle user id, name, and course.
+  </p>
+  <div class="welcome-actions">
+    <a class="btn primary" href="{{ moodle_base | default('http://localhost:8085') }}/user/index.php" target="_top" rel="noopener">Open Moodle participants</a>
+    <a class="btn secondary" href="/school-admin/classes?token={{ quiz_token }}">Link classes &amp; content</a>
+  </div>
 </section>
 
 <section class="panel">
-  <h2>Directory ({{ students|length }})</h2>
-  {% if students %}
+  <h2>How content stays dynamic</h2>
+  <ol class="meta" style="line-height:1.7;padding-left:1.25rem">
+    <li>Moodle admin adds/enrols students in a course.</li>
+    <li>EdVidura binds that Moodle course → class + curriculum.</li>
+    <li>Each student launch shows <em>that</em> course’s lessons and quizzes (keyed by Moodle user id).</li>
+  </ol>
+</section>
+
+{% if students %}
+<section class="panel">
+  <h2>Demo directory (optional seed)</h2>
+  <p class="meta">Local demo roster only. Live learners are whoever Moodle enrolled and who launched via LTI.</p>
   <table>
     <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
     <tbody>
@@ -21,25 +38,6 @@
     {% endfor %}
     </tbody>
   </table>
-  {% else %}
-  <div class="empty"><p>No enrolled students yet.</p></div>
-  {% endif %}
 </section>
-
-<section class="panel">
-  <h2>By class</h2>
-  {% if classes %}
-  {% for c in classes %}
-  <div class="class-block">
-    <h3>{{ c.class_name }}</h3>
-    <p class="meta">{{ c.students|length }} enrolled</p>
-    <p>
-      {% for s in c.students %}{{ s.name }}{% if not loop.last %}, {% endif %}{% else %}—{% endfor %}
-    </p>
-  </div>
-  {% endfor %}
-  {% else %}
-  <div class="empty"><p>No classes.</p></div>
-  {% endif %}
-</section>
+{% endif %}
 {% endblock %}

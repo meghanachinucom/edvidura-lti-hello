@@ -1,0 +1,57 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Teach · D11 DCT</p>
+  <h2 class="welcome-title">Lesson planner pack</h2>
+  <p class="welcome-lede">
+    Skills without a linked remediation lesson. Generate a micro-lesson, review the draft, then save &amp; link.
+  </p>
+</section>
+
+{% if ok_message %}
+<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
+{% endif %}
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Coverage</h2>
+    <span class="meta">{{ covered_count }} linked · {{ missing_count }} missing</span>
+  </div>
+  <p class="meta">DCT display order uses linked lessons once learners have gaps.</p>
+</section>
+
+{% if missing %}
+<section class="panel">
+  <h2>Needs remediation lesson</h2>
+  <ul class="loop-steps" style="line-height:1.9;padding-left:1.25rem">
+    {% for s in missing %}
+    <li>
+      <strong>{{ s.label }}</strong>
+      <code class="meta">{{ s.skill_code }}</code>
+      <form method="post" action="/teacher/dct/generate" style="display:inline;margin-left:0.5rem">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <input type="hidden" name="skill_id" value="{{ s.id }}"/>
+        <button type="submit" class="btn primary" style="padding:0.2rem 0.6rem;font-size:0.85rem">Generate draft</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% else %}
+<section class="panel">
+  <p class="lede">All skills have a linked lesson. Add skills or clear links from the Skills registry to regenerate.</p>
+</section>
+{% endif %}
+
+{% if covered %}
+<section class="panel">
+  <h2>Already linked</h2>
+  <p class="meta">
+    {% for s in covered %}
+      {{ s.label }}{% if not loop.last %} · {% endif %}
+    {% endfor %}
+  </p>
+  <a class="btn secondary" href="/teacher/skills?token={{ quiz_token }}">Skills registry</a>
+</section>
+{% endif %}
+{% endblock %}

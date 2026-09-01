@@ -3,7 +3,7 @@
 <section class="welcome">
   <p class="welcome-kicker">School admin</p>
   <h2 class="welcome-title">Classes</h2>
-  <p class="welcome-lede">Rosters stay private to <strong>{{ tenant_name }}</strong>.</p>
+  <p class="welcome-lede">Learning paths for <strong>{{ tenant_name }}</strong>. People (teachers &amp; students) are created in Moodle; here you bind Moodle courses to classes and curriculum.</p>
 </section>
 
 {% if ok_message %}
@@ -17,11 +17,51 @@
     <div class="teach-grid">
       <label>Code <input name="class_code" required placeholder="ALG-104"/></label>
       <label>Name <input name="class_name" required placeholder="Algebra Period 4"/></label>
-      <label>Subject <input name="subject" placeholder="Algebra"/></label>
+      <label>Subject <input name="subject" placeholder="Mathematics"/></label>
       <label>Term <input name="term" placeholder="2026 Fall"/></label>
+      <label>Curriculum
+        <select name="course_id">
+          <option value="">— none yet —</option>
+          {% for co in courses %}
+          <option value="{{ co.id }}">{{ co.title }}</option>
+          {% endfor %}
+        </select>
+      </label>
     </div>
     <button type="submit" class="btn primary">Save class</button>
   </form>
+</section>
+
+<section class="panel">
+  <h2>Bind Moodle course</h2>
+  <p class="meta">Map a Moodle course id (LTI context.id) to an EdVidura class. Launches from that course then show that class’s curriculum.</p>
+  <form method="post" action="/school-admin/classes/bind-moodle" class="teach-form">
+    <input type="hidden" name="token" value="{{ quiz_token }}"/>
+    <div class="teach-grid">
+      <label>Moodle context id <input name="lti_context_id" required placeholder="5"/></label>
+      <label>Class
+        <select name="class_id" required>
+          <option value="">— pick class —</option>
+          {% for c in classes %}
+          <option value="{{ c.id }}">{{ c.class_name }} ({{ c.class_code }})</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Label (optional) <input name="context_label" placeholder="ALG1"/></label>
+      <label>Title (optional) <input name="context_title" placeholder="Algebra I"/></label>
+    </div>
+    <button type="submit" class="btn primary">Save binding</button>
+  </form>
+  {% if bindings %}
+  <ul class="meta" style="margin-top:1rem">
+    {% for b in bindings %}
+    <li>Moodle <code>{{ b.lti_context_id }}</code> → {{ b.class_name }}
+      {% if b.course_title %} · {{ b.course_title }}{% endif %}
+      {% if b.context_label %} <span>({{ b.context_label }})</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
 </section>
 
 <section class="panel">
@@ -30,7 +70,22 @@
   {% for c in classes %}
   <div class="class-block">
     <h3>{{ c.class_name }} <span class="meta">({{ c.class_code }})</span></h3>
-    <p class="meta">{{ c.subject }} · {{ c.term }}</p>
+    <p class="meta">{{ c.subject }} · {{ c.term }}
+      {% if c.course_title %} · Curriculum: {{ c.course_title }}{% else %} · Curriculum: not linked{% endif %}
+    </p>
+    <form method="post" action="/school-admin/classes/link-course" class="teach-form" style="margin:0.5rem 0 1rem">
+      <input type="hidden" name="token" value="{{ quiz_token }}"/>
+      <input type="hidden" name="class_id" value="{{ c.id }}"/>
+      <label>Link curriculum
+        <select name="course_id">
+          <option value="">— clear —</option>
+          {% for co in courses %}
+          <option value="{{ co.id }}" {% if c.course_id == co.id|string %}selected{% endif %}>{{ co.title }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="btn">Update</button>
+    </form>
     <p><strong>Teachers:</strong>
       {% for t in c.teachers %}{{ t.name }} ({{ t.role }}){% if not loop.last %}, {% endif %}{% else %}—{% endfor %}
     </p>

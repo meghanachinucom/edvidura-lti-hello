@@ -33,4 +33,10 @@ All domain events emitted by EdVidura (outbox, webhooks, future bus) **must** in
 
 ## Status
 
-Contract published for Slice 0. **Outbox table + producer implemented** (`event_outbox`, `app.modules.events`). Quiz submit enqueues `quiz.attempt.submitted`. Local drain marks rows published (no external bus yet). Quiz submit also records an xAPI statement in parallel (`docs/XAPI.md`).
+Contract published for Slice 0. **Outbox table + producer implemented** (`event_outbox`, `app.modules.events`). Quiz submit enqueues `quiz.attempt.submitted`.
+
+**D17 drain:** `POST /api/v1/events/drain?tenant_id=` or `python scripts/drain_outbox.py <tenant_id>`.
+
+When `EVENT_PIPELINE_ENABLED=1` and `EVENT_WEBHOOK_URL` is set, drain POSTs each `EVENT_ENVELOPE_V1` body with optional `X-EdVidura-Signature: sha256=…` (`EVENT_WEBHOOK_SECRET`). Failures leave `published_at` null and set `publish_error`. Otherwise drain is a local sink (mark published).
+
+Quiz submit also records an xAPI statement in parallel (`docs/XAPI.md`).

@@ -73,8 +73,28 @@ def _row_to_question(row: dict[str, Any]) -> Question:
 
 
 def get_primary_quiz(tenant_id: UUID | str) -> dict[str, Any] | None:
+    return get_quiz_for_course(tenant_id, course_id=None)
+
+
+def get_quiz_for_course(
+    tenant_id: UUID | str, course_id: UUID | str | None = None
+) -> dict[str, Any] | None:
+    """Published quiz for a curriculum course, else first published quiz."""
     try:
         with db.tenant_connection(tenant_id) as conn:
+            if course_id:
+                row = conn.execute(
+                    """
+                    SELECT id, tenant_id, course_id, slug, title, description, status
+                    FROM quizzes
+                    WHERE status = 'published' AND course_id = %s
+                    ORDER BY created_at ASC
+                    LIMIT 1
+                    """,
+                    (str(course_id),),
+                ).fetchone()
+                if row:
+                    return dict(row)
             row = conn.execute(
                 """
                 SELECT id, tenant_id, course_id, slug, title, description, status
@@ -122,11 +142,15 @@ def list_quiz_question_rows(
         return out
 
 
-def questions_for_tenant(tenant_id: UUID | str | None) -> tuple[Question, ...]:
-    """Load this school's quiz; fall back to built-in bank if none."""
+def questions_for_tenant(
+    tenant_id: UUID | str | None,
+    *,
+    course_id: UUID | str | None = None,
+) -> tuple[Question, ...]:
+    """Load this school's quiz for a bound course; fall back to primary / built-in."""
     if not tenant_id:
         return FALLBACK_QUESTIONS
-    quiz = get_primary_quiz(tenant_id)
+    quiz = get_quiz_for_course(tenant_id, course_id=course_id)
     if not quiz:
         return FALLBACK_QUESTIONS
     try:

@@ -7,20 +7,22 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app import db
 from app.modules import content
 from app.modules.quiz import MAX_SCORE, QUESTIONS, questions_for_tenant
 from app.modules.school import (
-    class_roster_match_keys,
+    class_moodle_filter_labels,
     create_class,
-    create_teacher,
     list_classes_with_roster,
+    list_lti_context_bindings,
     list_school_students,
     list_teachers,
     school_snapshot,
+    set_class_course,
+    upsert_lti_context_binding,
 )
 from app.modules.tenancy.names import greeting_first_name
 from app.quiz_routes import (
@@ -47,17 +49,49 @@ def _ensure_token(session: dict[str, Any]) -> str:
     return token
 
 
-def _browser_moodle_url(url: str | None, *, base: str | None = None) -> str:
+def _persist_session(request: Request, session: dict[str, Any]) -> str:
+    """Write quiz session to Starlette + token cache."""
+    tok = _ensure_token(session)
+    payload = {**session, "quiz_token": tok}
+    request.session[SESSION_KEY] = payload
+    try:
+        from app.launch_cache import LAUNCH_CACHE
+        from app.quiz_routes import QUIZ_CTX_PREFIX
+
+        LAUNCH_CACHE.set(f"{QUIZ_CTX_PREFIX}{tok}", payload, exp=3600)
+        db.save_quiz_context(tok, payload, ttl_sec=3600)
+    except Exception:  # noqa: BLE001
+        pass
+    return tok
+
+
+def _bound_course(session: dict[str, Any]) -> dict[str, Any] | None:
+    """Curriculum for this launch: class-bound course, else primary."""
+    return content.get_bound_course(
+        session["tenant_id"], session.get("edvidura_course_id") or None
+    )
+
+
+def _default_class_id(session: dict[str, Any], class_id: str | None) -> str | None:
+    """Prefer explicit filter; else LTI-bound class from launch."""
+    if class_id and str(class_id).strip():
+        return str(class_id).strip()
+    bound = str(session.get("class_id") or "").strip()
+    return bound or None
+
+
+def _browser_lms_url(url: str | None, *, base: str | None = None) -> str:
+    """Normalize LMS return URL for the browser (Docker host → localhost)."""
     raw = str(url or "").strip()
-    moodle_base = (
+    lms_base = (
         str(base or "").strip().rstrip("/")
         or os.getenv("MOODLE_ISSUER", "http://localhost:8085").rstrip("/")
         or "http://localhost:8085"
     )
     if not raw:
-        return f"{moodle_base}/my/"
+        return f"{lms_base}/my/" if ":8085" in lms_base else f"{lms_base}/"
     if raw.startswith("/"):
-        raw = f"{moodle_base}{raw}"
+        raw = f"{lms_base}{raw}"
     raw = raw.replace("://host.docker.internal", "://localhost")
     for docker_host in ("http://moodle", "https://moodle", "http://moodle-moodle-1"):
         if raw == docker_host or raw.startswith(docker_host + "/"):
@@ -66,12 +100,28 @@ def _browser_moodle_url(url: str | None, *, base: str | None = None) -> str:
     return raw
 
 
-def resolve_moodle_return(session: dict[str, Any]) -> str:
-    base = str(session.get("moodle_base_url") or "").strip() or None
-    return _browser_moodle_url(
-        session.get("moodle_return_url") or base or None,
-        base=base,
+def _browser_moodle_url(url: str | None, *, base: str | None = None) -> str:
+    """Alias — prefer `_browser_lms_url` for new code."""
+    return _browser_lms_url(url, base=base)
+
+
+def resolve_lms_return(session: dict[str, Any]) -> str:
+    base = (
+        str(session.get("lms_base_url") or session.get("moodle_base_url") or "").strip()
+        or None
     )
+    target = (
+        session.get("lms_return_url")
+        or session.get("moodle_return_url")
+        or base
+        or None
+    )
+    return _browser_lms_url(target, base=base)
+
+
+def resolve_moodle_return(session: dict[str, Any]) -> str:
+    """Alias for resolve_lms_return (older call sites)."""
+    return resolve_lms_return(session)
 
 
 def _display_first_name(session: dict[str, Any]) -> str:
@@ -135,8 +185,8 @@ def _avatar_initials(name: str) -> str:
 
 
 def _shell_progress(session: dict[str, Any], token: str) -> dict[str, Any]:
-    """Sidebar + Home continue path from primary course progress."""
-    course = content.get_primary_course(session["tenant_id"])
+    """Sidebar + Home continue path from bound (or primary) course progress."""
+    course = _bound_course(session)
     progress = None
     up_next_title = "Lessons"
     up_next_href = f"/lessons?token={token}"
@@ -144,12 +194,24 @@ def _shell_progress(session: dict[str, Any], token: str) -> dict[str, Any]:
     path_lessons = "now"
     path_quiz = ""
     path_results = ""
+    gap_path = None
+    adaptive_next = None
     if course:
         progress = content.course_progress(
             session["tenant_id"],
             course_id=course["id"],
             subject=str(session.get("subject") or ""),
         )
+        try:
+            from app.modules import adaptive as adaptive_mod
+
+            progress = adaptive_mod.apply_dynamic_lesson_order(
+                session["tenant_id"],
+                subject=str(session.get("subject") or ""),
+                progress=progress,
+            )
+        except Exception:  # noqa: BLE001
+            progress.setdefault("order_mode", "linear")
         nxt = progress.get("next_lesson")
         if progress.get("completed_count"):
             path_lessons = "done" if progress.get("all_lessons_done") else "now"
@@ -165,12 +227,84 @@ def _shell_progress(session: dict[str, Any], token: str) -> dict[str, Any]:
             path_lessons = "now"
             up_next_title = str(nxt.get("title") or "Next lesson")
             up_next_href = f"/lessons/{nxt['id']}?token={token}"
-            up_next_meta = "Continue where you left off"
+            if progress.get("order_mode") == "adaptive":
+                reason = (progress.get("order_reasons") or {}).get(str(nxt.get("id")))
+                up_next_meta = (
+                    f"Priority for gap: {reason}" if reason else "Adaptive lesson order"
+                )
+            else:
+                up_next_meta = "Continue where you left off"
         if session.get("last_result_id"):
             path_results = "done" if path_quiz == "now" else "now"
             if progress.get("all_lessons_done"):
                 path_quiz = "done"
                 path_results = "now"
+        # C9/C10: gap path and adaptive lesson nudge override linear continue
+        try:
+            from app.modules import adaptive as adaptive_mod
+
+            first_lesson_id = None
+            first_manual_id = None
+            manual_version = None
+            for L in progress.get("lessons") or []:
+                if L.get("lesson_type") != "quiz":
+                    first_lesson_id = str(L["id"])
+                    break
+            try:
+                from app.modules import manuals as manuals_mod
+
+                mans = manuals_mod.list_manuals(session["tenant_id"])
+                if mans:
+                    first_manual_id = str(mans[0]["id"])
+                    pub = manuals_mod.latest_published_version(
+                        session["tenant_id"], mans[0]["id"]
+                    )
+                    if pub:
+                        manual_version = int(pub["version"])
+            except Exception:  # noqa: BLE001
+                pass
+            gap_path = adaptive_mod.resolve_learner_plan(
+                session["tenant_id"],
+                subject=str(session.get("subject") or ""),
+                quiz_token=token,
+                first_lesson_id=first_lesson_id,
+                first_manual_id=first_manual_id,
+                manual_version=manual_version,
+                persist_if_missing=False,
+                role_code=str(session.get("target_role") or "") or None,
+            )
+            latest = adaptive_mod.latest_graded_attempt_for_subject(
+                session["tenant_id"], str(session.get("subject") or "")
+            )
+            adaptive_next = adaptive_mod.recommend_next_lesson(
+                session["tenant_id"],
+                course_id=course["id"],
+                attempt=latest,
+                linear_next=nxt,
+            )
+            if gap_path and gap_path.get("active") and gap_path.get("first_href"):
+                done = int(gap_path.get("done_count") or 0)
+                total = int(gap_path.get("step_count") or len(gap_path.get("steps") or []))
+                up_next_title = "My learning plan"
+                up_next_href = gap_path["first_href"]
+                up_next_meta = (
+                    f"Step {done + 1} of {total}" if total else "Continue your plan"
+                )
+            elif (
+                adaptive_next
+                and adaptive_next.get("mode") == "adaptive"
+                and adaptive_next.get("lesson_id")
+            ):
+                up_next_title = str(adaptive_next.get("title") or "Gap lesson")
+                up_next_href = (
+                    f"/lessons/{adaptive_next['lesson_id']}?token={token}"
+                )
+                up_next_meta = str(
+                    adaptive_next.get("reason") or "Adaptive recommendation"
+                )
+        except Exception:  # noqa: BLE001
+            gap_path = None
+            adaptive_next = None
     return {
         "shell_course": course,
         "shell_progress": progress,
@@ -180,6 +314,8 @@ def _shell_progress(session: dict[str, Any], token: str) -> dict[str, Any]:
         "path_lessons": path_lessons,
         "path_quiz": path_quiz,
         "path_results": path_results,
+        "gap_path": gap_path,
+        "adaptive_next": adaptive_next,
     }
 
 
@@ -192,7 +328,8 @@ def _shell_ctx(
     extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     token = _ensure_token(session)
-    moodle_return = resolve_moodle_return(session)
+    lms_return = resolve_lms_return(session)
+    lms_name = str(session.get("lms_name") or "").strip() or "LMS"
     learner = str(session.get("learner_name") or "").strip()
     subject = str(session.get("subject") or "")
     if not learner or learner.isdigit() or learner == subject:
@@ -234,8 +371,11 @@ def _shell_ctx(
         "page_subtitle": page_subtitle or "",
         "last_result_id": session.get("last_result_id"),
         "ags_available": bool(session.get("ags_available")),
-        "moodle_return_url": moodle_return,
-        "moodle_return_href": f"/return-to-moodle?token={token}",
+        "lms_name": lms_name,
+        "lms_return_url": lms_return,
+        "lms_return_href": f"/return-to-lms?token={token}",
+        "moodle_return_url": lms_return,
+        "moodle_return_href": f"/return-to-lms?token={token}",
         "max_score": MAX_SCORE,
         "school_snap": snap,
         "fingerprint": launch_fingerprint(session),
@@ -319,12 +459,14 @@ def require_instructor(
     return session
 
 
+@router.get("/return-to-lms", response_class=HTMLResponse)
 @router.get("/return-to-moodle", response_class=HTMLResponse)
-async def return_to_moodle(request: Request, token: str | None = None):
+async def return_to_lms(request: Request, token: str | None = None):
     from app.quiz_routes import resolve_quiz_session
 
     session = resolve_quiz_session(request, token=token) or {}
-    target = resolve_moodle_return(session) if session else _browser_moodle_url(None)
+    lms_name = str(session.get("lms_name") or "LMS").strip() or "LMS"
+    target = resolve_lms_return(session) if session else _browser_lms_url(None)
     safe = (
         target.replace("\\", "\\\\")
         .replace("'", "\\'")
@@ -335,7 +477,7 @@ async def return_to_moodle(request: Request, token: str | None = None):
 <html lang="en"><head>
 <meta charset="utf-8"/>
 <meta http-equiv="refresh" content="0;url={safe}"/>
-<title>Returning to Moodle…</title>
+<title>Returning to {lms_name}…</title>
 <script>
 (function () {{
   var u = '{safe}';
@@ -350,8 +492,8 @@ async def return_to_moodle(request: Request, token: str | None = None):
 </script>
 </head>
 <body style="font-family:Outfit,system-ui;padding:2rem;background:#0b1220;color:#fff">
-  <p>Returning to Moodle…</p>
-  <p><a href="{safe}" target="_top" style="color:#fca311">Continue to Moodle</a></p>
+  <p>Returning to {lms_name}…</p>
+  <p><a href="{safe}" target="_top" style="color:#fca311">Continue to {lms_name}</a></p>
 </body></html>"""
     return HTMLResponse(html)
 
@@ -370,7 +512,7 @@ async def teacher_time_capsule(request: Request, token: str | None = None):
     progress_roster = []
     manuals_meta = []
     try:
-        course_row = content.get_primary_course(session["tenant_id"])
+        course_row = _bound_course(session)
         if course_row:
             progress_roster = content.lesson_completion_roster(
                 session["tenant_id"], course_id=course_row["id"]
@@ -461,11 +603,14 @@ async def launch_hub(request: Request, token: str | None = None):
         session["last_result_id"] = str(last["id"])
         request.session[SESSION_KEY] = session
 
-    course = content.get_primary_course(session["tenant_id"])
+    course = _bound_course(session)
     progress = None
     continue_href = f"/lessons?token={_ensure_token(session)}"
     continue_label = "Start lessons"
     chapter_items: list[dict[str, Any]] = []
+    gap_path = None
+    adaptive_next = None
+    token_s = _ensure_token(session)
     if course:
         progress = content.course_progress(
             session["tenant_id"],
@@ -490,18 +635,44 @@ async def launch_hub(request: Request, token: str | None = None):
                 }
             )
         if nxt and nxt.get("lesson_type") == "quiz":
-            continue_href = f"/quiz?token={_ensure_token(session)}"
+            continue_href = f"/quiz?token={token_s}"
             continue_label = "Start quiz"
         elif nxt:
-            continue_href = f"/lessons/{nxt['id']}?token={_ensure_token(session)}"
+            continue_href = f"/lessons/{nxt['id']}?token={token_s}"
             continue_label = (
                 "Continue learning"
                 if progress.get("completed_count")
                 else "Start lessons"
             )
         elif progress.get("all_lessons_done"):
-            continue_href = f"/quiz?token={_ensure_token(session)}"
+            continue_href = f"/quiz?token={token_s}"
             continue_label = "Start quiz"
+
+        shell_bits = _shell_progress(session, token_s)
+        gap_path = shell_bits.get("gap_path")
+        adaptive_next = shell_bits.get("adaptive_next")
+        if gap_path and gap_path.get("active") and gap_path.get("first_href"):
+            continue_href = gap_path["first_href"]
+            continue_label = "Continue my plan"
+        elif (
+            adaptive_next
+            and adaptive_next.get("mode") == "adaptive"
+            and adaptive_next.get("lesson_id")
+        ):
+            continue_href = f"/lessons/{adaptive_next['lesson_id']}?token={token_s}"
+            continue_label = "Recommended gap lesson"
+            # Mark adaptive lesson as "now" in chapter list
+            aid = str(adaptive_next["lesson_id"])
+            for item in chapter_items:
+                if item["id"] == aid:
+                    item["now"] = True
+                    item["adaptive"] = True
+                elif item.get("now") and item["id"] != aid:
+                    item["now"] = False
+
+    page_sub = str(session.get("class_name") or session.get("course") or "")
+    if session.get("academic_subject") and session.get("class_name"):
+        page_sub = f"{session['class_name']} · {session['academic_subject']}"
 
     return _shell(
         request,
@@ -509,7 +680,7 @@ async def launch_hub(request: Request, token: str | None = None):
         session,
         active_page="launch_hub",
         page_title="Home",
-        page_subtitle=str(session.get("course") or ""),
+        page_subtitle=page_sub,
         extra={
             "my_attempt_count": len(mine),
             "last_score": last.get("score") if last else None,
@@ -519,6 +690,10 @@ async def launch_hub(request: Request, token: str | None = None):
             "chapter_items": chapter_items,
             "continue_href": continue_href,
             "continue_label": continue_label,
+            "bound_class_name": session.get("class_name") or "",
+            "bound_subject": session.get("academic_subject") or "",
+            "gap_path": gap_path,
+            "adaptive_next": adaptive_next,
         },
     )
 
@@ -528,7 +703,7 @@ async def lessons_list(request: Request, token: str | None = None):
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
-    course = content.get_primary_course(session["tenant_id"])
+    course = _bound_course(session)
     if not course:
         return _shell(
             request,
@@ -546,6 +721,19 @@ async def lessons_list(request: Request, token: str | None = None):
         course_id=course["id"],
         subject=str(session.get("subject") or ""),
     )
+    try:
+        from app.modules import adaptive as adaptive_mod
+
+        progress = adaptive_mod.apply_dynamic_lesson_order(
+            session["tenant_id"],
+            subject=str(session.get("subject") or ""),
+            progress=progress,
+        )
+    except Exception:  # noqa: BLE001
+        progress.setdefault("order_mode", "linear")
+    token_s = _ensure_token(session)
+    priority_ids = set(progress.get("priority_ids") or [])
+    reasons = progress.get("order_reasons") or {}
     items = []
     for L in progress["lessons"]:
         lid = str(L["id"])
@@ -556,10 +744,12 @@ async def lessons_list(request: Request, token: str | None = None):
                 "position": L["position"],
                 "lesson_type": L["lesson_type"],
                 "completed": lid in progress["completed_ids"],
+                "priority": lid in priority_ids,
+                "priority_reason": reasons.get(lid) or "",
                 "href": (
-                    f"/quiz?token={_ensure_token(session)}"
+                    f"/quiz?token={token_s}"
                     if L["lesson_type"] == "quiz"
-                    else f"/lessons/{lid}?token={_ensure_token(session)}"
+                    else f"/lessons/{lid}?token={token_s}"
                 ),
             }
         )
@@ -574,13 +764,18 @@ async def lessons_list(request: Request, token: str | None = None):
             "course_row": course,
             "lesson_items": items,
             "progress": progress,
+            "order_mode": progress.get("order_mode") or "linear",
         },
     )
 
 
 @router.get("/lessons/{lesson_id}", response_class=HTMLResponse)
 async def lesson_player(
-    request: Request, lesson_id: UUID, token: str | None = None
+    request: Request,
+    lesson_id: UUID,
+    token: str | None = None,
+    loop: str | None = None,
+    from_attempt: str | None = None,
 ):
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
@@ -608,22 +803,61 @@ async def lesson_player(
         )
 
     lessons = content.list_lessons(session["tenant_id"], lesson["course_id"])
+    try:
+        from app.modules import adaptive as adaptive_mod
+
+        ordered = adaptive_mod.apply_dynamic_lesson_order(
+            session["tenant_id"],
+            subject=str(session.get("subject") or ""),
+            progress={
+                "lessons": lessons,
+                "completed_ids": content.completed_lesson_ids(
+                    session["tenant_id"],
+                    course_id=lesson["course_id"],
+                    subject=str(session.get("subject") or ""),
+                ),
+            },
+        )
+        lessons = ordered.get("lessons") or lessons
+    except Exception:  # noqa: BLE001
+        pass
     prev_l, next_l = content.neighbor_lessons(lessons, lesson_id)
     done = content.completed_lesson_ids(
         session["tenant_id"],
         course_id=lesson["course_id"],
         subject=str(session.get("subject") or ""),
     )
+    token_s = _ensure_token(session)
     next_href = None
     if next_l:
         next_href = (
-            f"/quiz?token={_ensure_token(session)}"
+            f"/quiz?token={token_s}"
             if next_l["lesson_type"] == "quiz"
-            else f"/lessons/{next_l['id']}?token={_ensure_token(session)}"
+            else f"/lessons/{next_l['id']}?token={token_s}"
         )
     prev_href = (
-        f"/lessons/{prev_l['id']}?token={_ensure_token(session)}" if prev_l else None
+        f"/lessons/{prev_l['id']}?token={token_s}" if prev_l else None
     )
+    in_loop = loop == "1" and bool(from_attempt)
+    loop_practice_href = (
+        f"/quiz?token={token_s}&practice=1&retry={from_attempt}&loop=1"
+        if in_loop
+        else ""
+    )
+    loop_graded_href = (
+        f"/quiz?token={token_s}&retry={from_attempt}&loop=1" if in_loop else ""
+    )
+    if in_loop:
+        try:
+            from app.modules import adaptive as adaptive_mod
+
+            adaptive_mod.mark_plan_step_done(
+                session["tenant_id"],
+                str(session.get("subject") or ""),
+                path_contains=f"/lessons/{lesson_id}",
+            )
+        except Exception:  # noqa: BLE001
+            pass
     return _shell(
         request,
         "lesson.html",
@@ -640,6 +874,9 @@ async def lesson_player(
             "prev_href": prev_href,
             "next_href": next_href,
             "next_is_quiz": bool(next_l and next_l.get("lesson_type") == "quiz"),
+            "remediation_loop": in_loop,
+            "loop_practice_href": loop_practice_href,
+            "loop_graded_href": loop_graded_href,
         },
     )
 
@@ -691,6 +928,24 @@ async def lesson_complete(
         except Exception as xapi_exc:  # noqa: BLE001
             print(f"xAPI lesson record failed: {xapi_exc}", flush=True)
     lessons = content.list_lessons(session["tenant_id"], lesson["course_id"])
+    try:
+        from app.modules import adaptive as adaptive_mod
+
+        ordered = adaptive_mod.apply_dynamic_lesson_order(
+            session["tenant_id"],
+            subject=subject,
+            progress={
+                "lessons": lessons,
+                "completed_ids": content.completed_lesson_ids(
+                    session["tenant_id"],
+                    course_id=lesson["course_id"],
+                    subject=subject,
+                ),
+            },
+        )
+        lessons = ordered.get("lessons") or lessons
+    except Exception:  # noqa: BLE001
+        pass
     _, next_l = content.neighbor_lessons(lessons, lesson_id)
     if next_l and next_l.get("lesson_type") == "quiz":
         return RedirectResponse(url=f"/quiz?token={qtok}", status_code=303)
@@ -736,7 +991,10 @@ async def active_quizzes(request: Request, token: str | None = None):
     rows = db.list_quiz_attempts_for_tenant(session["tenant_id"])
     if not session.get("is_instructor"):
         rows = [r for r in rows if str(r.get("subject")) == str(session.get("subject"))]
-    questions = questions_for_tenant(session.get("tenant_id"))
+    questions = questions_for_tenant(
+        session.get("tenant_id"),
+        course_id=session.get("edvidura_course_id") or None,
+    )
     return _shell(
         request,
         "active_quizzes.html",
@@ -759,6 +1017,7 @@ async def quiz_form(
     retry: str | None = None,
     practice: str | None = None,
     force: str | None = None,
+    loop: str | None = None,
 ):
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
@@ -785,7 +1044,12 @@ async def quiz_form(
             extra={"coach": coach, "practice": practice == "1"},
         )
 
-    questions = list(questions_for_tenant(session.get("tenant_id")))
+    questions = list(
+        questions_for_tenant(
+            session.get("tenant_id"),
+            course_id=session.get("edvidura_course_id") or None,
+        )
+    )
     retry_ids: list[str] = []
     if retry:
         try:
@@ -797,19 +1061,28 @@ async def quiz_form(
             if retry_ids:
                 questions = [q for q in questions if q.id in retry_ids]
     is_practice = practice == "1"
+    in_loop = loop == "1"
     return _shell(
         request,
         "quiz_session.html",
         session,
         active_page="quiz_session",
-        page_title="Practice quiz" if is_practice else "Take the quiz",
+        page_title=(
+            "Practice (remediation)"
+            if is_practice and in_loop
+            else ("Practice quiz" if is_practice else "Take the quiz")
+        ),
         page_subtitle=(
-            "Sandbox — no Moodle grade sync"
+            "Sandbox — no Moodle grade sync · then graded retry"
             if is_practice
             else (
-                f"Retry {len(questions)} missed item(s)"
-                if retry_ids
-                else "Answer each question, then submit"
+                f"Graded retry · {len(questions)} missed item(s)"
+                if retry_ids and in_loop
+                else (
+                    f"Retry {len(questions)} missed item(s)"
+                    if retry_ids
+                    else "Answer each question, then submit"
+                )
             )
         ),
         extra={
@@ -817,6 +1090,7 @@ async def quiz_form(
             "max_score": len(questions),
             "practice_mode": is_practice,
             "retry_from": retry or "",
+            "remediation_loop": in_loop,
             "coach_warn": coach.get("warn"),
         },
     )
@@ -863,17 +1137,21 @@ async def quiz_result(request: Request, attempt_id: UUID, token: str | None = No
         lookup_xapi_for_attempt,
         skill_stickers,
     )
+    from app.modules.receipts import sealed_grade_receipt
 
     session["last_result_id"] = str(attempt["id"])
     request.session[SESSION_KEY] = session
     token_s = _ensure_token(session)
-    questions = questions_for_tenant(session.get("tenant_id"))
+    questions = questions_for_tenant(
+        session.get("tenant_id"),
+        course_id=session.get("edvidura_course_id") or None,
+    )
     review = _build_review(attempt.get("answers"), questions)
     first_lesson_id = None
     first_manual_id = None
     manual_version = None
     try:
-        course = content.get_primary_course(session["tenant_id"])
+        course = _bound_course(session)
         if course:
             lessons = content.list_lessons(session["tenant_id"], course["id"])
             for L in lessons:
@@ -898,13 +1176,22 @@ async def quiz_result(request: Request, attempt_id: UUID, token: str | None = No
         first_lesson_id=first_lesson_id,
         first_manual_id=first_manual_id,
         manual_version=manual_version,
+        tenant_id=session.get("tenant_id"),
+        attempt_id=str(attempt["id"]),
     )
-    xapi_id = lookup_xapi_for_attempt(session["tenant_id"], attempt_id)
-    receipt = grade_receipt(
-        attempt=attempt,
-        xapi_statement_id=xapi_id,
-        ags_available=bool(session.get("ags_available")),
-    )
+    try:
+        receipt = sealed_grade_receipt(
+            tenant_id=session["tenant_id"],
+            attempt=attempt,
+            ags_available=bool(session.get("ags_available")),
+        )
+    except Exception:  # noqa: BLE001
+        xapi_id = lookup_xapi_for_attempt(session["tenant_id"], attempt_id)
+        receipt = grade_receipt(
+            attempt=attempt,
+            xapi_statement_id=xapi_id,
+            ags_available=bool(session.get("ags_available")),
+        )
     progress = _shell_progress(session, token_s).get("shell_progress")
     stickers = skill_stickers(
         score=int(attempt["score"]),
@@ -912,8 +1199,70 @@ async def quiz_result(request: Request, attempt_id: UUID, token: str | None = No
         progress=progress,
         grade_sent=bool(attempt.get("grade_sent")),
     )
-    competencies = competency_profile(attempt.get("answers"))
+    competencies = competency_profile(
+        attempt.get("answers"), tenant_id=session.get("tenant_id")
+    )
     failed = [r for r in review if not r.get("correct")]
+    answers = attempt.get("answers") if isinstance(attempt.get("answers"), dict) else {}
+    is_practice = answers.get("mode") == "practice"
+    loop_from = str(answers.get("retry_from") or "") or str(attempt["id"])
+    primary_review = next(
+        (r for r in failed if r.get("manual_href") or r.get("teleport_href")),
+        failed[0] if failed else None,
+    )
+    gap_path = None
+    try:
+        from app.modules import adaptive as adaptive_mod
+
+        role_code = str(session.get("target_role") or "").strip() or None
+        if role_code:
+            gap_path = adaptive_mod.build_difference_path(
+                session["tenant_id"],
+                role_code=role_code,
+                attempt=attempt,
+                quiz_token=token_s,
+                first_lesson_id=first_lesson_id,
+                first_manual_id=first_manual_id,
+                manual_version=manual_version,
+            )
+        else:
+            gap_path = adaptive_mod.build_gap_path(
+                session["tenant_id"],
+                attempt=attempt,
+                quiz_token=token_s,
+                first_lesson_id=first_lesson_id,
+                first_manual_id=first_manual_id,
+                manual_version=manual_version,
+            )
+        saved = adaptive_mod.sync_plan_after_attempt(
+            session["tenant_id"],
+            subject=str(session.get("subject") or attempt.get("subject") or ""),
+            attempt=attempt,
+            gap_path=gap_path,
+            is_practice=is_practice,
+        )
+        if saved and saved.get("steps"):
+            # Prefer persisted progress view (tokens re-applied)
+            opened = adaptive_mod.get_open_plan(
+                session["tenant_id"],
+                str(session.get("subject") or attempt.get("subject") or ""),
+                quiz_token=token_s,
+            )
+            if opened:
+                gap_path = opened
+            elif not is_practice and gap_path:
+                gap_path = {**gap_path, "persisted": True}
+    except Exception:  # noqa: BLE001
+        gap_path = None
+    skill_xapi_count = 0
+    try:
+        from app.modules.specials import count_skill_xapi_for_attempt
+
+        skill_xapi_count = count_skill_xapi_for_attempt(
+            session["tenant_id"], attempt_id
+        )
+    except Exception:  # noqa: BLE001
+        skill_xapi_count = 0
     return _shell(
         request,
         "quiz_result.html",
@@ -926,18 +1275,48 @@ async def quiz_result(request: Request, attempt_id: UUID, token: str | None = No
             "max_score": attempt["max_score"],
             "grade_sent": attempt["grade_sent"],
             "grade_error": attempt.get("grade_error"),
+            "skill_xapi_count": skill_xapi_count,
             "attempt_id": str(attempt["id"]),
             "learner_name": attempt.get("learner_name") or attempt.get("subject"),
             "review": review,
             "receipt": receipt,
             "stickers": stickers,
             "competencies": competencies,
+            "is_practice": is_practice,
+            "has_misses": bool(failed),
+            "gap_path": gap_path,
+            "loop_review_href": (
+                (gap_path or {}).get("first_href")
+                or (primary_review or {}).get("manual_href")
+                or (primary_review or {}).get("teleport_href")
+                or ""
+            ),
+            "loop_review_label": (
+                (primary_review or {}).get("manual_label")
+                or (primary_review or {}).get("teleport_label")
+                or "Review material"
+            ),
             "retry_href": (
-                f"/quiz?token={token_s}&retry={attempt['id']}"
+                f"/quiz?token={token_s}&retry={loop_from}&loop=1"
                 if failed
                 else f"/quiz?token={token_s}"
             ),
-            "practice_href": f"/quiz?token={token_s}&practice=1",
+            "practice_href": (
+                (gap_path or {}).get("practice_href")
+                or (
+                    f"/quiz?token={token_s}&practice=1&retry={loop_from}&loop=1"
+                    if failed
+                    else f"/quiz?token={token_s}&practice=1"
+                )
+            ),
+            "graded_retry_href": (
+                (gap_path or {}).get("graded_href")
+                or (
+                    f"/quiz?token={token_s}&retry={loop_from}&loop=1"
+                    if failed
+                    else f"/quiz?token={token_s}"
+                )
+            ),
         },
     )
 
@@ -950,23 +1329,27 @@ async def teacher_attempts(
     course: str | None = None,
     date_from: str | None = None,
     date_to: str | None = None,
+    ok: str | None = None,
 ):
     session = require_instructor(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
+    class_id = _default_class_id(session, class_id)
     classes = list_classes_with_roster(session["tenant_id"])
     subjects = None
     name_keys = None
     selected_class = None
+    moodle_labels: list[str] | None = None
     if class_id:
-        names, codes = class_roster_match_keys(session["tenant_id"], class_id)
-        name_keys = names
-        subjects = codes
         selected_class = next((c for c in classes if str(c["id"]) == str(class_id)), None)
+        # People live in Moodle — filter attempts by Moodle context labels
+        # bound to this class (not EdVidura-seeded roster name matching).
+        moodle_labels = class_moodle_filter_labels(session["tenant_id"], class_id)
     summary = db.quiz_attempt_class_summary(
         session["tenant_id"],
         limit=500,
         course_label=(course or "").strip() or None,
+        course_labels=moodle_labels if not (course or "").strip() else None,
         date_from=(date_from or "").strip() or None,
         date_to=(date_to or "").strip() or None,
         subjects=subjects,
@@ -985,7 +1368,41 @@ async def teacher_attempts(
             else str(L.get("best_at") or "")
         )
         learners.append(item)
-    course_row = content.get_primary_course(session["tenant_id"])
+
+    # NRPS roster awareness (Moodle people — display only)
+    nrps_roster = None
+    nrps_members: list[dict] = []
+    ctx_id = str(session.get("lti_context_id") or "").strip()
+    try:
+        from app.modules import nrps as nrps_mod
+
+        if ctx_id:
+            nrps_roster = nrps_mod.get_roster(session["tenant_id"], ctx_id)
+            if nrps_roster:
+                nrps_members = list(nrps_roster.get("members") or [])
+                names = nrps_mod.display_names_by_subject(
+                    session["tenant_id"], ctx_id
+                )
+                for L in learners:
+                    sub = str(L.get("subject") or "")
+                    if sub in names and (
+                        not L.get("learner_name")
+                        or str(L.get("learner_name")) == sub
+                    ):
+                        L["learner_name"] = names[sub]
+                        L["from_nrps"] = True
+    except Exception:  # noqa: BLE001
+        nrps_roster = None
+        nrps_members = []
+
+    # Prefer class-linked curriculum, else launch binding, else primary
+    course_row = None
+    if selected_class and selected_class.get("course_id"):
+        course_row = content.get_course(
+            session["tenant_id"], selected_class["course_id"]
+        )
+    if not course_row:
+        course_row = _bound_course(session)
     progress_roster = []
     if course_row:
         progress_roster = content.lesson_completion_roster(
@@ -996,16 +1413,26 @@ async def teacher_attempts(
             for L in learners
             if L.get("subject")
         }
-        # If filtering by class, keep progress for matching names/subjects only
-        if class_id and (subjects is not None or name_keys is not None):
-            sub_set = {str(s).lower() for s in (subjects or [])}
-            name_set = {str(n).lower() for n in (name_keys or [])}
+        # Enrich progress names from NRPS when available
+        try:
+            from app.modules import nrps as nrps_mod
+
+            if ctx_id:
+                names_map.update(
+                    nrps_mod.display_names_by_subject(session["tenant_id"], ctx_id)
+                )
+        except Exception:  # noqa: BLE001
+            pass
+        # Class filter: keep progress for learners who launched this Moodle course
+        if class_id and learners:
+            sub_set = {str(L.get("subject") or "").lower() for L in learners}
+            # Also include NRPS learners who haven't launched yet (awareness)
+            for m in nrps_members:
+                sub_set.add(str(m.get("user_id") or "").lower())
             progress_roster = [
                 p
                 for p in progress_roster
                 if str(p.get("subject") or "").lower() in sub_set
-                or str(p.get("learner_name") or p.get("subject") or "").lower() in name_set
-                or str(names_map.get(str(p.get("subject") or ""), "")).lower() in name_set
             ]
         for row in progress_roster:
             row["learner_name"] = names_map.get(row["subject"], row["subject"])
@@ -1026,7 +1453,9 @@ async def teacher_attempts(
     )
 
     radar = quiet_class_radar(summary.get("attempts") or [])
-    competency_map = class_competency_map(summary.get("attempts") or [])
+    competency_map = class_competency_map(
+        summary.get("attempts") or [], tenant_id=session.get("tenant_id")
+    )
     names_map = {
         str(L["subject"]): str(L["learner_name"])
         for L in learners
@@ -1036,6 +1465,13 @@ async def teacher_attempts(
         attempts=summary.get("attempts") or [],
         progress_roster=progress_roster,
         display_names=names_map,
+    )
+    from app.modules.ai_assessment import suggest_teacher_next_steps
+
+    ai_actions = suggest_teacher_next_steps(
+        at_risk=at_risk,
+        avg_percent=summary.get("avg_percent"),
+        course_title=(course_row or {}).get("title") or "",
     )
     return _shell(
         request,
@@ -1050,6 +1486,7 @@ async def teacher_attempts(
             "radar": radar,
             "competency_map": competency_map,
             "at_risk": at_risk,
+            "ai_actions": ai_actions,
             "learner_count": summary["learner_count"],
             "avg_percent": summary["avg_percent"],
             "pass_rate": summary["pass_rate"],
@@ -1065,8 +1502,137 @@ async def teacher_attempts(
             "filter_date_to": date_to or "",
             "selected_class_name": (selected_class or {}).get("class_name") or "",
             "filter_qs": filter_qs,
+            "nrps_available": bool(session.get("nrps_available")),
+            "nrps_roster": nrps_roster,
+            "nrps_members": nrps_members,
+            "nrps_count": int((nrps_roster or {}).get("member_count") or len(nrps_members)),
+            "nrps_fetched_at": (
+                (nrps_roster or {}).get("fetched_at").isoformat()
+                if hasattr((nrps_roster or {}).get("fetched_at"), "isoformat")
+                else str((nrps_roster or {}).get("fetched_at") or "")
+            ),
+            "ok_message": ok or "",
         },
     )
+
+
+@router.post("/teacher/roster/sync", response_class=HTMLResponse)
+async def teacher_roster_sync(request: Request, token: str | None = None):
+    """Pull Moodle course memberships via NRPS (awareness only — no accounts)."""
+    from app.modules import nrps as nrps_mod
+    from app.quiz_routes import restore_launch_from_id
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    launch_id = str(session.get("launch_id") or "").strip()
+    if not launch_id:
+        return RedirectResponse(
+            url=f"/teacher/attempts?token={tok}&ok=Relaunch+from+Moodle+first",
+            status_code=303,
+        )
+    try:
+        message_launch = restore_launch_from_id(launch_id)
+        result = nrps_mod.sync_roster_from_session(
+            session, message_launch=message_launch
+        )
+        session["nrps_available"] = True
+        request.session[SESSION_KEY] = session
+        n = int(result.get("member_count") or 0)
+        return RedirectResponse(
+            url=f"/teacher/attempts?token={tok}&ok=Roster+synced+({n}+members)",
+            status_code=303,
+        )
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/teacher/attempts?token={tok}&ok={str(exc).replace(' ', '+')}",
+            status_code=303,
+        )
+    except Exception as exc:  # noqa: BLE001
+        msg = str(exc).replace(" ", "+")[:120]
+        return RedirectResponse(
+            url=f"/teacher/attempts?token={tok}&ok=NRPS+failed:+{msg}",
+            status_code=303,
+        )
+
+
+@router.get("/receipts/verify", response_class=HTMLResponse)
+async def receipt_verify_get(
+    request: Request, token: str | None = None, seal: str | None = None
+):
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    return _shell(
+        request,
+        "receipt_verify.html",
+        session,
+        active_page="receipt_verify",
+        page_title="Verify receipt",
+        page_subtitle="Sealed learning evidence",
+        extra={"result": None, "payload_text": "", "seal_hint": seal or ""},
+    )
+
+
+@router.post("/receipts/verify", response_class=HTMLResponse)
+async def receipt_verify_post(request: Request, token: str | None = None):
+    import json
+
+    from app.modules.receipts import verify_seal
+
+    form = await request.form()
+    tok = str(form.get("quiz_token") or form.get("token") or token or "")
+    session = require_session(request, token=tok or None)
+    if isinstance(session, HTMLResponse):
+        return session
+    raw = str(form.get("payload") or "").strip()
+    result = None
+    payload_obj = None
+    err = ""
+    try:
+        payload_obj = json.loads(raw)
+        result = verify_seal(payload_obj)
+    except json.JSONDecodeError:
+        err = "Paste a JSON sealed receipt"
+    return _shell(
+        request,
+        "receipt_verify.html",
+        session,
+        active_page="receipt_verify",
+        page_title="Verify receipt",
+        page_subtitle="Sealed learning evidence",
+        extra={
+            "result": result,
+            "payload_text": raw,
+            "payload": payload_obj,
+            "error": err,
+        },
+    )
+
+
+@router.get("/quiz/result/{attempt_id}/receipt.json")
+async def quiz_result_receipt_json(
+    request: Request, attempt_id: UUID, token: str | None = None
+):
+    from app.modules.receipts import sealed_grade_receipt
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    attempt = db.get_quiz_attempt(session["tenant_id"], attempt_id)
+    if not attempt:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    is_owner = str(attempt.get("subject")) == str(session.get("subject"))
+    if not (is_owner or session.get("is_instructor")):
+        return JSONResponse({"error": "forbidden"}, status_code=403)
+    sealed = sealed_grade_receipt(
+        tenant_id=session["tenant_id"],
+        attempt=attempt,
+        ags_available=bool(session.get("ags_available")),
+    )
+    return JSONResponse(sealed)
 
 
 @router.get("/teacher/attempts.csv")
@@ -1086,20 +1652,17 @@ async def teacher_attempts_csv(
     session = require_instructor(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
-    subjects = None
-    name_keys = None
+    class_id = _default_class_id(session, class_id)
+    moodle_labels: list[str] | None = None
     if class_id:
-        names, codes = class_roster_match_keys(session["tenant_id"], class_id)
-        name_keys = names
-        subjects = codes
+        moodle_labels = class_moodle_filter_labels(session["tenant_id"], class_id)
     summary = db.quiz_attempt_class_summary(
         session["tenant_id"],
         limit=1000,
         course_label=(course or "").strip() or None,
+        course_labels=moodle_labels if not (course or "").strip() else None,
         date_from=(date_from or "").strip() or None,
         date_to=(date_to or "").strip() or None,
-        subjects=subjects,
-        name_keys=name_keys,
     )
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -1281,10 +1844,12 @@ def _safe_snapshot(tenant_id: Any) -> dict[str, Any]:
             "admins": [],
             "teachers": [],
             "classes": [],
+            "lti_bindings": [],
             "admin_count": 0,
             "teacher_count": 0,
             "class_count": 0,
             "chapter_count": 0,
+            "binding_count": 0,
             "student_count": 0,
         }
 
@@ -1307,7 +1872,58 @@ async def school_admin_home(request: Request, token: str | None = None):
             "snapshot": snap,
             "total_attempts": len(rows),
             "recorded_learners": len({str(r.get("subject")) for r in rows}),
+            "moodle_base": str(session.get("moodle_base_url") or "http://localhost:8085"),
         },
+    )
+
+
+@router.get("/school-admin/analytics", response_class=HTMLResponse)
+async def school_admin_analytics(request: Request, token: str | None = None):
+    from app.modules import analytics as analytics_mod
+    from app.settings import get_settings
+
+    session = require_school_admin(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    dash = analytics_mod.tenant_dashboard(session["tenant_id"])
+    settings = get_settings()
+    embed = analytics_mod.metabase_embed_url(
+        tenant_id=session["tenant_id"],
+        tenant_slug=str(session.get("tenant_slug") or ""),
+    )
+    return _shell(
+        request,
+        "school_admin_analytics.html",
+        session,
+        active_page="school_admin_analytics",
+        page_title="School analytics",
+        page_subtitle="Admin view · attempts + xAPI",
+        extra={
+            "dash": dash,
+            "metabase_url": settings.metabase_url,
+            "metabase_embed_url": embed,
+        },
+    )
+
+
+@router.get("/learn/analytics", response_class=HTMLResponse)
+async def learner_analytics(request: Request, token: str | None = None):
+    from app.modules import analytics as analytics_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    dash = analytics_mod.learner_dashboard(
+        session["tenant_id"], str(session.get("subject") or "")
+    )
+    return _shell(
+        request,
+        "learner_analytics.html",
+        session,
+        active_page="learner_analytics",
+        page_title="My progress",
+        page_subtitle="Your attempts and learning evidence",
+        extra={"dash": dash},
     )
 
 
@@ -1325,40 +1941,12 @@ async def school_admin_teachers(
         session,
         active_page="school_admin_teachers",
         page_title="Teachers",
-        page_subtitle="Staff for this school only",
+        page_subtitle="Profiles live in Moodle",
         extra={
             "teachers": teachers,
             "ok_message": ok,
+            "moodle_base": str(session.get("moodle_base_url") or "http://localhost:8085"),
         },
-    )
-
-
-@router.post("/school-admin/teachers", response_class=HTMLResponse)
-async def school_admin_teachers_create(
-    request: Request,
-    token: str = Form(""),
-    teacher_code: str = Form(""),
-    name: str = Form(""),
-    email: str = Form(""),
-):
-    session = require_school_admin(request, token=token or None)
-    if isinstance(session, HTMLResponse):
-        return session
-    tok = _ensure_token(session)
-    if not teacher_code.strip() or not name.strip() or not email.strip():
-        return RedirectResponse(
-            url=f"/school-admin/teachers?token={tok}&ok=Code,+name,+and+email+required",
-            status_code=303,
-        )
-    create_teacher(
-        session["tenant_id"],
-        teacher_code=teacher_code,
-        name=name,
-        email=email,
-    )
-    return RedirectResponse(
-        url=f"/school-admin/teachers?token={tok}&ok=Teacher+saved",
-        status_code=303,
     )
 
 
@@ -1370,14 +1958,21 @@ async def school_admin_classes(
     if isinstance(session, HTMLResponse):
         return session
     classes = list_classes_with_roster(session["tenant_id"])
+    courses = content.list_published_courses(session["tenant_id"])
+    bindings = list_lti_context_bindings(session["tenant_id"])
     return _shell(
         request,
         "school_admin_classes.html",
         session,
         active_page="school_admin_classes",
         page_title="Classes",
-        page_subtitle="Rosters for this school only",
-        extra={"classes": classes, "ok_message": ok},
+        page_subtitle="Rosters and Moodle course links for this school",
+        extra={
+            "classes": classes,
+            "courses": courses,
+            "bindings": bindings,
+            "ok_message": ok,
+        },
     )
 
 
@@ -1389,6 +1984,7 @@ async def school_admin_classes_create(
     class_name: str = Form(""),
     subject: str = Form(""),
     term: str = Form(""),
+    course_id: str = Form(""),
 ):
     session = require_school_admin(request, token=token or None)
     if isinstance(session, HTMLResponse):
@@ -1405,9 +2001,72 @@ async def school_admin_classes_create(
         class_name=class_name,
         subject=subject,
         term=term,
+        course_id=course_id.strip() or None,
     )
     return RedirectResponse(
         url=f"/school-admin/classes?token={tok}&ok=Class+saved",
+        status_code=303,
+    )
+
+
+@router.post("/school-admin/classes/link-course", response_class=HTMLResponse)
+async def school_admin_link_course(
+    request: Request,
+    token: str = Form(""),
+    class_id: str = Form(""),
+    course_id: str = Form(""),
+):
+    session = require_school_admin(request, token=token or None)
+    if isinstance(session, HTMLResponse):
+        return session
+    tok = _ensure_token(session)
+    if not class_id.strip():
+        return RedirectResponse(
+            url=f"/school-admin/classes?token={tok}&ok=Class+required",
+            status_code=303,
+        )
+    set_class_course(
+        session["tenant_id"],
+        class_id.strip(),
+        course_id.strip() or None,
+    )
+    return RedirectResponse(
+        url=f"/school-admin/classes?token={tok}&ok=Curriculum+linked",
+        status_code=303,
+    )
+
+
+@router.post("/school-admin/classes/bind-moodle", response_class=HTMLResponse)
+async def school_admin_bind_moodle(
+    request: Request,
+    token: str = Form(""),
+    lti_context_id: str = Form(""),
+    class_id: str = Form(""),
+    context_label: str = Form(""),
+    context_title: str = Form(""),
+):
+    session = require_school_admin(request, token=token or None)
+    if isinstance(session, HTMLResponse):
+        return session
+    tok = _ensure_token(session)
+    if not lti_context_id.strip() or not class_id.strip():
+        return RedirectResponse(
+            url=f"/school-admin/classes?token={tok}&ok=Moodle+context+id+and+class+required",
+            status_code=303,
+        )
+    classes = list_classes_with_roster(session["tenant_id"])
+    cls = next((c for c in classes if str(c["id"]) == class_id.strip()), None)
+    course_id = (cls or {}).get("course_id")
+    upsert_lti_context_binding(
+        session["tenant_id"],
+        lti_context_id=lti_context_id.strip(),
+        class_id=class_id.strip(),
+        course_id=course_id,
+        context_label=context_label,
+        context_title=context_title,
+    )
+    return RedirectResponse(
+        url=f"/school-admin/classes?token={tok}&ok=Moodle+course+bound",
         status_code=303,
     )
 
@@ -1425,8 +2084,12 @@ async def school_admin_students(request: Request, token: str | None = None):
         session,
         active_page="school_admin_students",
         page_title="Students",
-        page_subtitle="Enrolled learners in this school",
-        extra={"students": students, "classes": classes},
+        page_subtitle="Profiles live in Moodle",
+        extra={
+            "students": students,
+            "classes": classes,
+            "moodle_base": str(session.get("moodle_base_url") or "http://localhost:8085"),
+        },
     )
 
 
@@ -1736,6 +2399,11 @@ async def teacher_analytics(request: Request, token: str | None = None):
     dash = analytics_mod.tenant_dashboard(session["tenant_id"])
     from app.settings import get_settings
 
+    settings = get_settings()
+    embed = analytics_mod.metabase_embed_url(
+        tenant_id=session["tenant_id"],
+        tenant_slug=str(session.get("tenant_slug") or ""),
+    )
     return _shell(
         request,
         "teacher_analytics.html",
@@ -1743,7 +2411,11 @@ async def teacher_analytics(request: Request, token: str | None = None):
         active_page="teacher_analytics",
         page_title="Analytics",
         page_subtitle="In-app BI from attempts + xAPI",
-        extra={"dash": dash, "metabase_url": get_settings().metabase_url},
+        extra={
+            "dash": dash,
+            "metabase_url": settings.metabase_url,
+            "metabase_embed_url": embed,
+        },
     )
 
 
@@ -1862,9 +2534,70 @@ async def teacher_ai_generate(request: Request, token: str | None = None):
         page_subtitle=str(lesson.get("title") or "Generated questions"),
         extra={
             "lesson": lesson,
+            "source_title": str(lesson.get("title") or "Lesson"),
+            "source_kind": "lesson",
             "provider": result.get("provider"),
             "model": result.get("model"),
             "note": result.get("note") or "",
+            "drafts": result.get("questions") or [],
+        },
+    )
+
+
+@router.post("/teacher/ai/generate-from-pdf", response_class=HTMLResponse)
+async def teacher_ai_generate_from_pdf(
+    request: Request, token: str | None = None
+):
+    from app.modules.ai_assessment import generate_mcqs_from_document
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    try:
+        count = int(str(form.get("count") or "3"))
+    except ValueError:
+        count = 3
+    title = str(form.get("title") or "").strip()
+    upload = form.get("document")
+    if upload is None or not getattr(upload, "filename", None):
+        return RedirectResponse(
+            url=f"/teacher/ai?token={tok}&ok=Choose+a+PDF+or+text+file",
+            status_code=303,
+        )
+    fname = str(upload.filename or "upload.pdf")
+    raw = await upload.read()
+    try:
+        result = generate_mcqs_from_document(
+            raw, filename=fname, count=count, title=title
+        )
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/teacher/ai?token={tok}&ok={str(exc).replace(' ', '+')}",
+            status_code=303,
+        )
+    source_title = title or result.get("source_filename") or fname
+    note = result.get("note") or ""
+    if result.get("page_count"):
+        note = (
+            f"Extracted ~{result.get('extracted_chars')} chars "
+            f"from {result['page_count']} page(s). {note}"
+        ).strip()
+    return _shell(
+        request,
+        "teacher_ai_preview.html",
+        session,
+        active_page="teacher_ai",
+        page_title="AI quiz draft",
+        page_subtitle=str(source_title),
+        extra={
+            "lesson": None,
+            "source_title": source_title,
+            "source_kind": result.get("source_kind") or "pdf",
+            "provider": result.get("provider"),
+            "model": result.get("model"),
+            "note": note,
             "drafts": result.get("questions") or [],
         },
     )
@@ -1907,6 +2640,718 @@ async def teacher_ai_save(request: Request, token: str | None = None):
     )
 
 
+@router.get("/teacher/ai", response_class=HTMLResponse)
+async def teacher_ai_hub(
+    request: Request, token: str | None = None, ok: str | None = None
+):
+    from app.modules.ai_assessment import ai_status
+    from app.modules import skills as skills_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    course = _bound_course(session) or content.ensure_primary_course(
+        session["tenant_id"]
+    )
+    lessons = (
+        content.list_lessons(
+            session["tenant_id"], course["id"], include_unpublished=True
+        )
+        if course
+        else []
+    )
+    skill_rows: list = []
+    try:
+        skill_rows = skills_mod.ensure_default_skills(session["tenant_id"])
+    except Exception:  # noqa: BLE001
+        skill_rows = []
+    return _shell(
+        request,
+        "teacher_ai_hub.html",
+        session,
+        active_page="teacher_ai",
+        page_title="AI tools",
+        page_subtitle="Draft, simplify, grade assist — you confirm before Moodle",
+        extra={
+            "ai": ai_status(),
+            "lessons": lessons,
+            "skills": skill_rows,
+            "course_row": course,
+            "ok_message": ok or "",
+        },
+    )
+
+
+@router.get("/teacher/ai/author", response_class=HTMLResponse)
+async def teacher_ai_author_get(
+    request: Request, token: str | None = None, ok: str | None = None
+):
+    from app.modules import manuals as manuals_mod
+    from app.modules import sme as sme_mod
+    from app.modules.ai_assessment import ai_status
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    chunks = []
+    try:
+        _title, chunks, _sources = sme_mod.coach_chunks_for_tenant(
+            session["tenant_id"],
+            course_id=session.get("edvidura_course_id") or None,
+        )
+    except Exception:  # noqa: BLE001
+        chunks = []
+    mans = manuals_mod.list_manuals(session["tenant_id"], include_unpublished=True)
+    return _shell(
+        request,
+        "teacher_ai_author.html",
+        session,
+        active_page="teacher_ai",
+        page_title="Authoring assistant",
+        page_subtitle="D13 · SME-grounded drafts",
+        extra={
+            "ai": ai_status(),
+            "draft": None,
+            "prompt": "",
+            "mode": "lesson",
+            "source_count": len(chunks),
+            "manuals": mans,
+            "ok_message": ok or "",
+            "error": "",
+        },
+    )
+
+
+@router.post("/teacher/ai/author", response_class=HTMLResponse)
+async def teacher_ai_author_post(request: Request, token: str | None = None):
+    from app.modules import ai_authoring
+    from app.modules import manuals as manuals_mod
+    from app.modules import sme as sme_mod
+    from app.modules.ai_assessment import ai_status
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    prompt = str(form.get("prompt") or "").strip()
+    mode = str(form.get("mode") or "lesson").strip().lower()
+    course = _bound_course(session) or content.ensure_primary_course(
+        session["tenant_id"]
+    )
+    title, chunks, _sources = sme_mod.coach_chunks_for_tenant(
+        session["tenant_id"],
+        course_id=(course or {}).get("id"),
+    )
+    draft = None
+    err = ""
+    try:
+        draft = ai_authoring.author_assist(
+            prompt=prompt,
+            source_chunks=chunks,
+            mode=mode,
+            course_title=str((course or {}).get("title") or title or ""),
+        )
+    except ValueError as exc:
+        err = str(exc)
+    mans = manuals_mod.list_manuals(session["tenant_id"], include_unpublished=True)
+    return _shell(
+        request,
+        "teacher_ai_author.html",
+        session,
+        active_page="teacher_ai",
+        page_title="Authoring assistant",
+        page_subtitle="D13 · SME-grounded drafts",
+        extra={
+            "ai": ai_status(),
+            "draft": draft,
+            "prompt": prompt,
+            "mode": mode,
+            "source_count": len(chunks),
+            "manuals": mans,
+            "ok_message": "",
+            "error": err,
+        },
+    )
+
+
+@router.post("/teacher/ai/author/apply", response_class=HTMLResponse)
+async def teacher_ai_author_apply(request: Request, token: str | None = None):
+    from app.modules import manuals as manuals_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    mode = str(form.get("mode") or "lesson").strip().lower()
+    title = str(form.get("title") or "").strip()
+    body_md = str(form.get("body_md") or "").strip()
+    publish = str(form.get("publish") or "") in {"1", "true", "on", "yes"}
+    if not title or len(body_md) < 20:
+        return RedirectResponse(
+            url=f"/teacher/ai/author?token={tok}&ok=Title+and+body+required",
+            status_code=303,
+        )
+    if mode == "manual":
+        mid = str(form.get("manual_id") or "").strip()
+        if mid:
+            manuals_mod.add_version(
+                tenant_id=session["tenant_id"],
+                manual_id=mid,
+                body_md=body_md,
+                changelog=f"Authoring assistant: {title}",
+                subject=str(session.get("subject") or ""),
+                publish=publish,
+            )
+        else:
+            manuals_mod.create_manual(
+                tenant_id=session["tenant_id"],
+                title=title,
+                description="Drafted with SME authoring assistant",
+                body_md=body_md,
+                subject=str(session.get("subject") or ""),
+                publish=publish,
+            )
+        return RedirectResponse(
+            url=f"/teacher/manuals?token={tok}&ok=Manual+draft+saved",
+            status_code=303,
+        )
+    course = _bound_course(session) or content.ensure_primary_course(
+        session["tenant_id"]
+    )
+    content.create_lesson(
+        tenant_id=session["tenant_id"],
+        title=title,
+        body_md=body_md,
+        lesson_type="article",
+        status="published" if publish else "draft",
+        course_id=(course or {}).get("id"),
+        insert_before_quiz=True,
+    )
+    return RedirectResponse(
+        url=f"/teacher/content?token={tok}&ok=Lesson+draft+saved",
+        status_code=303,
+    )
+
+
+@router.post("/teacher/ai/remediation", response_class=HTMLResponse)
+async def teacher_ai_remediation_draft(request: Request, token: str | None = None):
+    from app.modules.ai_assessment import generate_remediation_micro_lesson
+    from app.modules import skills as skills_mod
+    from app.modules import sme as sme_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    skill_id = str(form.get("skill_id") or "").strip()
+    skills = skills_mod.ensure_default_skills(session["tenant_id"])
+    skill = next((s for s in skills if str(s.get("id")) == skill_id), None)
+    if not skill:
+        return RedirectResponse(
+            url=f"/teacher/ai?token={tok}&ok=Pick+a+skill",
+            status_code=303,
+        )
+    course = _bound_course(session) or content.ensure_primary_course(
+        session["tenant_id"]
+    )
+    excerpt = ""
+    try:
+        focus = str(skill.get("manual_focus") or "").strip()
+        for src in sme_mod.list_sources(session["tenant_id"])[:8]:
+            chunks = sme_mod.resolve_source_chunks(
+                session["tenant_id"], [src]
+            )
+            for ch in chunks:
+                if focus and focus in str(ch.get("slug") or ""):
+                    excerpt = str(ch.get("body") or "")[:2000]
+                    break
+                if not excerpt:
+                    excerpt = str(ch.get("body") or "")[:1200]
+            if focus and excerpt:
+                break
+    except Exception:  # noqa: BLE001
+        excerpt = ""
+    try:
+        draft = generate_remediation_micro_lesson(
+            skill_label=str(skill.get("label") or ""),
+            skill_code=str(skill.get("skill_code") or ""),
+            skill_description=str(skill.get("description") or ""),
+            course_title=str((course or {}).get("title") or ""),
+            source_excerpt=excerpt,
+        )
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/teacher/ai?token={tok}&ok={str(exc).replace(' ', '+')}",
+            status_code=303,
+        )
+    return _shell(
+        request,
+        "teacher_ai_remediation.html",
+        session,
+        active_page="teacher_ai",
+        page_title="Remediation draft",
+        page_subtitle=str(skill.get("label") or ""),
+        extra={
+            "skill_id": str(skill.get("id") or ""),
+            "skill_code": str(skill.get("skill_code") or ""),
+            "skill_label": str(skill.get("label") or ""),
+            "title": draft.get("title") or f"Review: {skill.get('label')}",
+            "body_md": draft.get("body_md") or "",
+            "summary": draft.get("summary") or "",
+            "provider": draft.get("provider") or "local",
+            "model": draft.get("model") or "",
+            "note": draft.get("note") or "",
+        },
+    )
+
+
+@router.post("/teacher/ai/remediation/save", response_class=HTMLResponse)
+async def teacher_ai_remediation_save(request: Request, token: str | None = None):
+    from app.modules import skills as skills_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    skill_id = str(form.get("skill_id") or "").strip()
+    title = str(form.get("title") or "").strip()
+    body_md = str(form.get("body_md") or "").strip()
+    publish = str(form.get("publish") or "") in {"1", "true", "on", "yes"}
+    if not skill_id or not title or len(body_md) < 20:
+        return RedirectResponse(
+            url=f"/teacher/ai?token={tok}&ok=Title+and+body+required",
+            status_code=303,
+        )
+    course = _bound_course(session) or content.ensure_primary_course(
+        session["tenant_id"]
+    )
+    skills = skills_mod.ensure_default_skills(session["tenant_id"])
+    skill = next((s for s in skills if str(s.get("id")) == skill_id), None)
+    if not skill:
+        return RedirectResponse(
+            url=f"/teacher/ai?token={tok}&ok=Skill+not+found",
+            status_code=303,
+        )
+    lesson = content.create_lesson(
+        tenant_id=session["tenant_id"],
+        title=title,
+        body_md=body_md,
+        lesson_type="article",
+        status="published" if publish else "draft",
+        course_id=(course or {}).get("id"),
+        insert_before_quiz=True,
+    )
+    lid = str(lesson.get("id") or "")
+    skills_mod.set_skill_remediation(
+        session["tenant_id"],
+        skill_id,
+        lesson_id=lid,
+        manual_id=str(skill.get("manual_id") or "") or None,
+        manual_focus=str(skill.get("manual_focus") or ""),
+        prefer_path="lessons",
+        teleport_label=f"Review: {skill.get('label') or title}",
+        teleport_hint="AI remediation micro-lesson — open, then practice",
+    )
+    status_word = "published" if publish else "draft"
+    return_to = str(form.get("return_to") or "").strip().lower()
+    if return_to == "dct":
+        dest = (
+            f"/teacher/dct?token={tok}"
+            f"&ok=Remediation+lesson+saved+({status_word})+and+linked"
+        )
+    else:
+        dest = (
+            f"/teacher/content?token={tok}"
+            f"&ok=Remediation+lesson+saved+({status_word})+and+linked"
+        )
+    return RedirectResponse(url=dest, status_code=303)
+
+
+@router.post("/teacher/ai/simplify", response_class=HTMLResponse)
+async def teacher_ai_simplify(request: Request, token: str | None = None):
+    from app.modules.ai_assessment import simplify_lesson_text
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    lesson_id = str(form.get("lesson_id") or "").strip()
+    level = str(form.get("level") or "simpler").strip() or "simpler"
+    lesson = (
+        content.get_lesson(
+            session["tenant_id"], lesson_id, allow_unpublished=True
+        )
+        if lesson_id
+        else None
+    )
+    if not lesson or lesson.get("lesson_type") == "quiz":
+        return RedirectResponse(
+            url=f"/teacher/ai?token={tok}&ok=Pick+a+reading+lesson",
+            status_code=303,
+        )
+    try:
+        result = simplify_lesson_text(
+            str(lesson.get("body_md") or ""),
+            title=str(lesson.get("title") or ""),
+            level=level,
+        )
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/teacher/ai?token={tok}&ok={str(exc).replace(' ', '+')}",
+            status_code=303,
+        )
+    return _shell(
+        request,
+        "teacher_ai_simplify.html",
+        session,
+        active_page="teacher_ai",
+        page_title="Simplified lesson draft",
+        page_subtitle=str(lesson.get("title") or ""),
+        extra={
+            "lesson": lesson,
+            "draft": result,
+            "provider": result.get("provider"),
+            "model": result.get("model"),
+            "note": result.get("note") or "",
+        },
+    )
+
+
+@router.post("/teacher/ai/simplify/apply", response_class=HTMLResponse)
+async def teacher_ai_simplify_apply(request: Request, token: str | None = None):
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    lesson_id = str(form.get("lesson_id") or "").strip()
+    body_md = str(form.get("body_md") or "")
+    title = str(form.get("title") or "").strip()
+    if not lesson_id or len(body_md.strip()) < 20:
+        return RedirectResponse(
+            url=f"/teacher/ai?token={tok}&ok=Nothing+to+apply",
+            status_code=303,
+        )
+    content.update_lesson(
+        tenant_id=session["tenant_id"],
+        lesson_id=lesson_id,
+        title=title or "Lesson",
+        body_md=body_md,
+    )
+    return RedirectResponse(
+        url=f"/teacher/content?token={tok}&ok=Lesson+updated+from+AI+draft",
+        status_code=303,
+    )
+
+
+@router.post("/teacher/ai/grade-assist", response_class=HTMLResponse)
+async def teacher_ai_grade_assist(request: Request, token: str | None = None):
+    from app.modules.ai_assessment import grade_open_response
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    try:
+        result = grade_open_response(
+            prompt=str(form.get("prompt") or ""),
+            rubric=str(form.get("rubric") or ""),
+            student_answer=str(form.get("student_answer") or ""),
+            max_score=int(str(form.get("max_score") or "5")),
+        )
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/teacher/ai?token={tok}&ok={str(exc).replace(' ', '+')}",
+            status_code=303,
+        )
+    return _shell(
+        request,
+        "teacher_ai_grade.html",
+        session,
+        active_page="teacher_ai",
+        page_title="Grade assist",
+        page_subtitle="Suggestion only — confirm before Moodle",
+        extra={
+            "result": result,
+            "prompt": str(form.get("prompt") or ""),
+            "student_answer": str(form.get("student_answer") or ""),
+            "rubric": str(form.get("rubric") or ""),
+        },
+    )
+
+
+@router.post("/learn/ai/hint", response_class=HTMLResponse)
+async def learner_ai_hint(request: Request, token: str | None = None):
+    from app.modules import ai_tutor
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    attempt_id = str(form.get("attempt_id") or "").strip()
+    prompt = str(form.get("prompt") or "")
+    correct_choice = str(form.get("correct_choice") or "")
+    excerpts: list[str] = []
+    course = _bound_course(session)
+    if course:
+        for L in content.list_lessons(session["tenant_id"], course["id"])[:5]:
+            body = str(L.get("body_md") or "").strip()
+            if body:
+                excerpts.append(body[:400])
+    try:
+        result = ai_tutor.hint_for_missed_question(
+            prompt=prompt,
+            correct_choice=correct_choice,
+            lesson_excerpts=excerpts,
+        )
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/quiz/result/{attempt_id}?token={tok}&ok={str(exc).replace(' ', '+')}",
+            status_code=303,
+        )
+    return _shell(
+        request,
+        "ai_hint.html",
+        session,
+        active_page="quiz_result",
+        page_title="Study hint",
+        page_subtitle="From your course",
+        extra={
+            "hint": result,
+            "prompt": prompt,
+            "attempt_id": attempt_id,
+            "back_href": (
+                f"/quiz/result/{attempt_id}?token={tok}"
+                if attempt_id
+                else f"/launch-hub?token={tok}"
+            ),
+        },
+    )
+
+
+@router.get("/learn/gap", response_class=HTMLResponse)
+async def learner_gap_path(
+    request: Request, token: str | None = None, role: str | None = None
+):
+    from app.modules import adaptive as adaptive_mod
+    from app.modules import skills as skills_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    token_s = _ensure_token(session)
+    role_q = (role or "").strip().lower()
+    if role_q:
+        session["target_role"] = role_q
+        token_s = _persist_session(request, session)
+    elif "target_role" not in session:
+        session["target_role"] = ""
+
+    # Rebuild shell progress after possible role change
+    shell_bits = _shell_progress(session, token_s)
+    gap_path = shell_bits.get("gap_path") or {
+        "active": False,
+        "steps": [],
+        "skills": [],
+    }
+    # If role selected but open plan is stale / inactive, derive + persist
+    wanted = str(session.get("target_role") or "").strip().lower()
+    if wanted and (
+        not gap_path.get("active")
+        or str(gap_path.get("role_code") or "").lower() != wanted
+    ):
+        try:
+            progress = shell_bits.get("shell_progress") or {}
+            first_lesson_id = None
+            first_manual_id = None
+            manual_version = None
+            for L in progress.get("lessons") or []:
+                if L.get("lesson_type") != "quiz":
+                    first_lesson_id = str(L["id"])
+                    break
+            try:
+                from app.modules import manuals as manuals_mod
+
+                mans = manuals_mod.list_manuals(session["tenant_id"])
+                if mans:
+                    first_manual_id = str(mans[0]["id"])
+                    pub = manuals_mod.latest_published_version(
+                        session["tenant_id"], mans[0]["id"]
+                    )
+                    if pub:
+                        manual_version = int(pub["version"])
+            except Exception:  # noqa: BLE001
+                pass
+            gap_path = adaptive_mod.resolve_learner_plan(
+                session["tenant_id"],
+                subject=str(session.get("subject") or ""),
+                quiz_token=token_s,
+                first_lesson_id=first_lesson_id,
+                first_manual_id=first_manual_id,
+                manual_version=manual_version,
+                persist_if_missing=True,
+                role_code=wanted,
+            )
+        except Exception:  # noqa: BLE001
+            pass
+    roles = []
+    try:
+        roles = skills_mod.ensure_default_roles(session["tenant_id"])
+    except Exception:  # noqa: BLE001
+        roles = []
+    mode = str((gap_path or {}).get("mode") or "gap")
+    subtitle = (
+        "Difference training · role gaps"
+        if mode == "difference"
+        else "PLE · close skill gaps"
+    )
+    return _shell(
+        request,
+        "gap_path.html",
+        session,
+        active_page="gap_path",
+        page_title="My learning plan",
+        page_subtitle=subtitle,
+        extra={
+            "gap_path": gap_path,
+            "adaptive_next": shell_bits.get("adaptive_next"),
+            "roles": roles,
+            "target_role": wanted,
+        },
+    )
+
+
+@router.post("/learn/gap/role", response_class=HTMLResponse)
+async def learner_gap_set_role(request: Request, token: str | None = None):
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or form.get("token") or token or _ensure_token(session))
+    role = str(form.get("role_code") or "").strip().lower()
+    session["target_role"] = role
+    tok = _persist_session(request, session)
+    q = f"/learn/gap?token={tok}"
+    if role:
+        q += f"&role={role}"
+    return RedirectResponse(url=q, status_code=303)
+
+
+@router.post("/learn/gap/step", response_class=HTMLResponse)
+async def learner_gap_step_done(request: Request, token: str | None = None):
+    """Mark a PLE plan step done (explicit checkbox on gap page)."""
+    from app.modules import adaptive as adaptive_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or form.get("token") or token or _ensure_token(session))
+    step_key = str(form.get("step_key") or "").strip()
+    if step_key:
+        try:
+            adaptive_mod.mark_plan_step_done(
+                session["tenant_id"],
+                str(session.get("subject") or ""),
+                step_key=step_key,
+            )
+        except Exception:  # noqa: BLE001
+            pass
+    return RedirectResponse(
+        url=f"/learn/gap?token={tok}",
+        status_code=303,
+    )
+
+
+@router.get("/learn/coach", response_class=HTMLResponse)
+async def learner_coach_get(request: Request, token: str | None = None):
+    from app.modules.ai_assessment import ai_status
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    source_count = 0
+    try:
+        from app.modules import sme as sme_mod
+
+        sources = sme_mod.list_sources(session["tenant_id"])
+        source_count = len(sources)
+        if not sources:
+            title, chunks, sources = sme_mod.coach_chunks_for_tenant(
+                session["tenant_id"],
+                course_id=session.get("edvidura_course_id") or None,
+            )
+            source_count = len(sources) or (1 if chunks else 0)
+            del title
+    except Exception:  # noqa: BLE001
+        source_count = 0
+    return _shell(
+        request,
+        "study_coach.html",
+        session,
+        active_page="study_coach",
+        page_title="Study coach",
+        page_subtitle=str(session.get("class_name") or session.get("course") or ""),
+        extra={
+            "ai": ai_status(),
+            "answer": None,
+            "question": "",
+            "source_count": source_count,
+        },
+    )
+
+
+@router.post("/learn/coach", response_class=HTMLResponse)
+async def learner_coach_post(request: Request, token: str | None = None):
+    from app.modules import ai_tutor
+    from app.modules.ai_assessment import ai_status
+
+    form = await request.form()
+    tok = str(form.get("token") or form.get("quiz_token") or token or "")
+    session = require_session(request, token=tok or None)
+    if isinstance(session, HTMLResponse):
+        return session
+    question = str(form.get("question") or "").strip()
+    course_title, chunks = ai_tutor.curriculum_chunks_for_session(
+        session["tenant_id"],
+        session.get("edvidura_course_id") or None,
+        list_lessons_fn=content.list_lessons,
+        get_bound_course_fn=content.get_bound_course,
+    )
+    answer = None
+    err = ""
+    try:
+        answer = ai_tutor.study_coach_answer(
+            question=question,
+            curriculum_chunks=chunks,
+            course_title=course_title,
+        )
+    except ValueError as exc:
+        err = str(exc)
+    return _shell(
+        request,
+        "study_coach.html",
+        session,
+        active_page="study_coach",
+        page_title="Study coach",
+        page_subtitle=course_title or str(session.get("course") or ""),
+        extra={
+            "ai": ai_status(),
+            "answer": answer,
+            "question": question,
+            "error": err,
+            "source_count": len(chunks),
+        },
+    )
+
+
 # —— Versioned manuals (Slice B) ——
 
 
@@ -1936,6 +3381,8 @@ async def manual_read(
     token: str | None = None,
     v: int | None = None,
     focus: str | None = None,
+    loop: str | None = None,
+    from_attempt: str | None = None,
 ):
     from app.modules import manuals as manuals_mod
 
@@ -1980,6 +3427,29 @@ async def manual_read(
         )
     focus_slug = (focus or "").strip().lstrip("#")
     focus_label = focus_slug.replace("-", " ").title() if focus_slug else ""
+    token_s = _ensure_token(session)
+    in_loop = loop == "1" and bool(from_attempt)
+    loop_practice_href = (
+        f"/quiz?token={token_s}&practice=1&retry={from_attempt}&loop=1"
+        if in_loop
+        else f"/quiz?token={token_s}&practice=1"
+    )
+    loop_graded_href = (
+        f"/quiz?token={token_s}&retry={from_attempt}&loop=1"
+        if in_loop
+        else f"/quiz?token={token_s}"
+    )
+    if in_loop:
+        try:
+            from app.modules import adaptive as adaptive_mod
+
+            adaptive_mod.mark_plan_step_done(
+                session["tenant_id"],
+                str(session.get("subject") or ""),
+                path_contains=f"/manuals/{manual_id}",
+            )
+        except Exception:  # noqa: BLE001
+            pass
     try:
         from app.modules import xapi as xapi_mod
 
@@ -2006,8 +3476,655 @@ async def manual_read(
             "version": version,
             "versions": versions,
             "body_html": manuals_mod.render_body(str(version.get("body_md") or "")),
+            "toc": manuals_mod.toc_from_body(str(version.get("body_md") or "")),
+            "share_path": (
+                manuals_mod.reader_share_path(
+                    tenant_id=session["tenant_id"],
+                    manual_id=manual_id,
+                    version=int(version["version"]),
+                    focus=focus_slug,
+                )
+                if session.get("is_instructor")
+                else ""
+            ),
             "focus": focus_slug,
             "focus_label": focus_label,
+            "remediation_loop": in_loop,
+            "loop_practice_href": loop_practice_href,
+            "loop_graded_href": loop_graded_href,
+        },
+    )
+
+
+@router.get("/read/manuals/{manual_id}", response_class=HTMLResponse)
+async def manual_standalone_read(
+    request: Request,
+    manual_id: UUID,
+    tid: UUID,
+    sig: str,
+    v: int | None = None,
+    focus: str | None = None,
+):
+    """PeBL standalone reader — HMAC-signed, no LTI session required."""
+    from app.modules import manuals as manuals_mod
+
+    version_n = int(v or 0)
+    if version_n <= 0 or not manuals_mod.verify_reader_token(
+        token=sig,
+        tenant_id=tid,
+        manual_id=manual_id,
+        version=version_n,
+    ):
+        return HTMLResponse(
+            "<!doctype html><p>Invalid or expired eBook link.</p>",
+            status_code=403,
+        )
+    manual = manuals_mod.get_manual(tid, manual_id)
+    version = manuals_mod.get_version(tid, manual_id=manual_id, version=version_n)
+    if not manual or not version or not version.get("is_published"):
+        return HTMLResponse(
+            "<!doctype html><p>Manual not available.</p>",
+            status_code=404,
+        )
+    focus_slug = (focus or "").strip().lstrip("#")
+    body_md = str(version.get("body_md") or "")
+    return _TEMPLATES.TemplateResponse(
+        "ebook_standalone.html",
+        {
+            "request": request,
+            "manual": manual,
+            "version": version,
+            "body_html": manuals_mod.render_body(body_md),
+            "toc": manuals_mod.toc_from_body(body_md),
+            "focus": focus_slug,
+            "focus_label": focus_slug.replace("-", " ").title() if focus_slug else "",
+        },
+    )
+
+
+@router.get("/teacher/sme", response_class=HTMLResponse)
+async def teacher_sme_sources(
+    request: Request, token: str | None = None, ok: str | None = None
+):
+    from app.modules import manuals as manuals_mod
+    from app.modules import sme as sme_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    tid = session["tenant_id"]
+    try:
+        sources = sme_mod.list_sources(tid)
+    except Exception:  # noqa: BLE001
+        sources = []
+    course = _bound_course(session) or content.ensure_primary_course(tid)
+    lessons = (
+        [
+            L
+            for L in content.list_lessons(tid, course["id"], include_unpublished=True)
+            if L.get("lesson_type") != "quiz"
+        ]
+        if course
+        else []
+    )
+    mans = manuals_mod.list_manuals(tid, include_unpublished=True)
+    man_versions: dict[str, list] = {}
+    for m in mans:
+        man_versions[str(m["id"])] = manuals_mod.list_versions(tid, m["id"])
+    return _shell(
+        request,
+        "teacher_sme.html",
+        session,
+        active_page="teacher_sme",
+        page_title="SME sources",
+        page_subtitle="Approved manuals & lessons for the study coach",
+        extra={
+            "sources": sources,
+            "lessons": lessons,
+            "manuals": mans,
+            "manual_versions": man_versions,
+            "ok_message": ok or "",
+        },
+    )
+
+
+@router.post("/teacher/sme/manual", response_class=HTMLResponse)
+async def teacher_sme_add_manual(request: Request, token: str | None = None):
+    from app.modules import sme as sme_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    pin_raw = str(form.get("pin_version") or "").strip()
+    pin = int(pin_raw) if pin_raw.isdigit() else None
+    try:
+        sme_mod.add_manual_source(
+            session["tenant_id"],
+            manual_id=str(form.get("manual_id") or ""),
+            pin_version=pin,
+            focus_slug=str(form.get("focus_slug") or ""),
+            label=str(form.get("label") or ""),
+        )
+    except ValueError as exc:
+        msg = str(exc).replace(" ", "+")
+        return RedirectResponse(
+            url=f"/teacher/sme?token={tok}&ok={msg}", status_code=303
+        )
+    return RedirectResponse(
+        url=f"/teacher/sme?token={tok}&ok=Manual+source+added", status_code=303
+    )
+
+
+@router.post("/teacher/sme/lesson", response_class=HTMLResponse)
+async def teacher_sme_add_lesson(request: Request, token: str | None = None):
+    from app.modules import sme as sme_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    try:
+        sme_mod.add_lesson_source(
+            session["tenant_id"],
+            lesson_id=str(form.get("lesson_id") or ""),
+            label=str(form.get("label") or ""),
+        )
+    except ValueError as exc:
+        msg = str(exc).replace(" ", "+")
+        return RedirectResponse(
+            url=f"/teacher/sme?token={tok}&ok={msg}", status_code=303
+        )
+    return RedirectResponse(
+        url=f"/teacher/sme?token={tok}&ok=Lesson+source+added", status_code=303
+    )
+
+
+@router.post("/teacher/sme/{source_id}/archive", response_class=HTMLResponse)
+async def teacher_sme_archive(
+    request: Request, source_id: UUID, token: str | None = None
+):
+    from app.modules import sme as sme_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    sme_mod.archive_source(session["tenant_id"], source_id)
+    return RedirectResponse(
+        url=f"/teacher/sme?token={tok}&ok=Source+removed", status_code=303
+    )
+
+
+@router.post("/teacher/sme/ensure-defaults", response_class=HTMLResponse)
+async def teacher_sme_ensure_defaults(
+    request: Request, token: str | None = None
+):
+    from app.modules import sme as sme_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    course = _bound_course(session) or content.ensure_primary_course(
+        session["tenant_id"]
+    )
+    sme_mod.ensure_default_sources(
+        session["tenant_id"],
+        course_id=(course or {}).get("id"),
+    )
+    return RedirectResponse(
+        url=f"/teacher/sme?token={tok}&ok=Defaults+loaded", status_code=303
+    )
+
+
+@router.get("/teacher/skills", response_class=HTMLResponse)
+async def teacher_skills(
+    request: Request, token: str | None = None, ok: str | None = None
+):
+    from app.modules import manuals as manuals_mod
+    from app.modules import skills as skills_mod
+    from app.modules.quiz import get_primary_quiz, list_quiz_question_rows
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    tid = session["tenant_id"]
+    try:
+        skill_rows = skills_mod.ensure_default_skills(tid)
+    except Exception:  # noqa: BLE001
+        skill_rows = []
+    try:
+        roles = skills_mod.ensure_default_roles(tid)
+    except Exception:  # noqa: BLE001
+        roles = []
+    course = _bound_course(session) or content.ensure_primary_course(tid)
+    lessons = (
+        content.list_lessons(tid, course["id"], include_unpublished=True)
+        if course
+        else []
+    )
+    reading = [L for L in lessons if L.get("lesson_type") != "quiz"]
+    mans = manuals_mod.list_manuals(tid, include_unpublished=True)
+    quiz = get_primary_quiz(tid)
+    questions = list_quiz_question_rows(tid, quiz["id"]) if quiz else []
+    linked = {
+        qk: s["skill_code"]
+        for s in skill_rows
+        for qk in (s.get("question_keys") or [])
+    }
+    try:
+        from app.modules.skills import framework as fw
+
+        framework_imports = fw.list_framework_imports(tid, limit=10)
+        to_proposals = fw.list_to_proposals(tid, status="pending", limit=50)
+    except Exception:  # noqa: BLE001
+        framework_imports = []
+        to_proposals = []
+    return _shell(
+        request,
+        "teacher_skills.html",
+        session,
+        active_page="teacher_skills",
+        page_title="Skills registry",
+        page_subtitle="Competencies → quiz items → remediation · D23 roles · D08 import",
+        extra={
+            "skills": skill_rows,
+            "roles": roles,
+            "lessons": reading,
+            "manuals": mans,
+            "questions": questions,
+            "linked_questions": linked,
+            "ok_message": ok or "",
+            "framework_imports": framework_imports,
+            "to_proposals": to_proposals,
+        },
+    )
+
+
+@router.post("/teacher/skills/new", response_class=HTMLResponse)
+async def teacher_skills_new(request: Request, token: str | None = None):
+    from app.modules import skills as skills_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    try:
+        skills_mod.create_skill(
+            session["tenant_id"],
+            skill_code=str(form.get("skill_code") or ""),
+            label=str(form.get("label") or ""),
+            description=str(form.get("description") or ""),
+        )
+    except ValueError as exc:
+        msg = str(exc).replace(" ", "+")
+        return RedirectResponse(
+            url=f"/teacher/skills?token={tok}&ok={msg}", status_code=303
+        )
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok=Skill+saved", status_code=303
+    )
+
+
+@router.post("/teacher/skills/{skill_id}/link", response_class=HTMLResponse)
+async def teacher_skills_link(
+    request: Request, skill_id: UUID, token: str | None = None
+):
+    from app.modules import skills as skills_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    qk = str(form.get("question_key") or "").strip()
+    try:
+        skills_mod.link_question_to_skill(
+            session["tenant_id"], question_key=qk, skill_id=skill_id
+        )
+    except ValueError as exc:
+        msg = str(exc).replace(" ", "+")
+        return RedirectResponse(
+            url=f"/teacher/skills?token={tok}&ok={msg}", status_code=303
+        )
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok=Question+linked", status_code=303
+    )
+
+
+@router.post("/teacher/skills/{skill_id}/remediation", response_class=HTMLResponse)
+async def teacher_skills_remediation(
+    request: Request, skill_id: UUID, token: str | None = None
+):
+    from app.modules import skills as skills_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    lesson_id = str(form.get("lesson_id") or "").strip() or None
+    manual_id = str(form.get("manual_id") or "").strip() or None
+    skills_mod.set_skill_remediation(
+        session["tenant_id"],
+        skill_id,
+        lesson_id=lesson_id,
+        manual_id=manual_id,
+        manual_focus=str(form.get("manual_focus") or ""),
+        prefer_path=str(form.get("prefer_path") or "manuals"),
+        teleport_label=str(form.get("teleport_label") or ""),
+        teleport_hint=str(form.get("teleport_hint") or ""),
+    )
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok=Remediation+updated", status_code=303
+    )
+
+
+@router.post("/teacher/skills/ensure-defaults", response_class=HTMLResponse)
+async def teacher_skills_ensure_defaults(
+    request: Request, token: str | None = None
+):
+    from app.modules import manuals as manuals_mod
+    from app.modules import skills as skills_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    tid = session["tenant_id"]
+    skills_mod.ensure_default_skills(tid)
+    skills_mod.ensure_default_roles(tid)
+    mans = manuals_mod.list_manuals(tid)
+    if mans:
+        skills_mod.bind_default_manual(tid, mans[0]["id"])
+    course = _bound_course(session) or content.ensure_primary_course(tid)
+    if course:
+        lessons = content.list_lessons(tid, course["id"])
+        for L in lessons:
+            if L.get("lesson_type") != "quiz":
+                skills_mod.bind_default_lesson(tid, L["id"])
+                break
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok=Defaults+ready", status_code=303
+    )
+
+
+@router.post("/teacher/skills/roles/ensure", response_class=HTMLResponse)
+async def teacher_roles_ensure(request: Request, token: str | None = None):
+    from app.modules import skills as skills_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    skills_mod.ensure_default_skills(session["tenant_id"])
+    skills_mod.ensure_default_roles(session["tenant_id"])
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok=Role+pack+ready", status_code=303
+    )
+
+
+@router.post("/teacher/skills/roles/new", response_class=HTMLResponse)
+async def teacher_roles_new(request: Request, token: str | None = None):
+    from app.modules import skills as skills_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    try:
+        skills_mod.create_role_profile(
+            session["tenant_id"],
+            role_code=str(form.get("role_code") or ""),
+            label=str(form.get("label") or ""),
+            description=str(form.get("description") or ""),
+        )
+    except ValueError as exc:
+        msg = str(exc).replace(" ", "+")
+        return RedirectResponse(
+            url=f"/teacher/skills?token={tok}&ok={msg}", status_code=303
+        )
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok=Role+saved", status_code=303
+    )
+
+
+@router.post("/teacher/skills/roles/{role_id}/skills", response_class=HTMLResponse)
+async def teacher_roles_set_skills(
+    request: Request, role_id: UUID, token: str | None = None
+):
+    from app.modules import skills as skills_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    raw = form.getlist("skill_ids") if hasattr(form, "getlist") else []
+    skill_ids = [str(x).strip() for x in raw if str(x).strip()]
+    skills_mod.set_role_skills(session["tenant_id"], role_id, skill_ids)
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok=Role+skills+updated", status_code=303
+    )
+
+
+@router.post("/teacher/skills/framework/import", response_class=HTMLResponse)
+async def teacher_skills_framework_import(
+    request: Request, token: str | None = None
+):
+    from app.modules.skills import framework as fw
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    upload = form.get("file")
+    label = str(form.get("source_label") or "").strip() or "teacher upload"
+    if upload is None or not getattr(upload, "filename", None):
+        return RedirectResponse(
+            url=f"/teacher/skills?token={tok}&ok=Choose+a+JSON+or+CSV+file",
+            status_code=303,
+        )
+    raw = await upload.read()
+    name = str(upload.filename or "").lower()
+    try:
+        if name.endswith(".csv"):
+            specs = fw.parse_framework_csv(raw)
+            fmt = "csv"
+        else:
+            import json as _json
+
+            specs = fw.parse_framework_json(_json.loads(raw.decode("utf-8-sig")))
+            fmt = "json"
+        row = fw.create_framework_import(
+            session["tenant_id"],
+            specs=specs,
+            source_label=label,
+            format=fmt,
+        )
+        msg = f"Import+draft+{row['skill_count']}+skills"
+    except Exception as exc:  # noqa: BLE001
+        msg = str(exc).replace(" ", "+")[:80]
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok={msg}", status_code=303
+    )
+
+
+@router.post(
+    "/teacher/skills/framework/{import_id}/approve", response_class=HTMLResponse
+)
+async def teacher_skills_framework_approve(
+    request: Request, import_id: UUID, token: str | None = None
+):
+    from app.modules.skills import framework as fw
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    try:
+        result = fw.approve_framework_import(
+            session["tenant_id"],
+            import_id,
+            reviewed_by=str(session.get("name") or "teacher"),
+        )
+        msg = f"Approved+{result.get('skills_upserted', 0)}+skills"
+    except Exception as exc:  # noqa: BLE001
+        msg = str(exc).replace(" ", "+")[:80]
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok={msg}", status_code=303
+    )
+
+
+@router.post(
+    "/teacher/skills/to-proposals/{proposal_id}/approve",
+    response_class=HTMLResponse,
+)
+async def teacher_to_proposal_approve(
+    request: Request, proposal_id: UUID, token: str | None = None
+):
+    from app.modules.skills import framework as fw
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    fw.approve_to_proposal(session["tenant_id"], proposal_id)
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok=TO+mapping+approved", status_code=303
+    )
+
+
+@router.post(
+    "/teacher/skills/to-proposals/{proposal_id}/reject",
+    response_class=HTMLResponse,
+)
+async def teacher_to_proposal_reject(
+    request: Request, proposal_id: UUID, token: str | None = None
+):
+    from app.modules.skills import framework as fw
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    fw.reject_to_proposal(session["tenant_id"], proposal_id)
+    return RedirectResponse(
+        url=f"/teacher/skills?token={tok}&ok=TO+mapping+rejected", status_code=303
+    )
+
+
+@router.get("/teacher/dct", response_class=HTMLResponse)
+async def teacher_dct_planner(
+    request: Request, token: str | None = None, ok: str | None = None
+):
+    from app.modules import adaptive as adaptive_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    pack = adaptive_mod.dct_planner_pack(session["tenant_id"])
+    return _shell(
+        request,
+        "teacher_dct.html",
+        session,
+        active_page="teacher_dct",
+        page_title="DCT lesson planner",
+        page_subtitle="Skills missing remediation lessons → generate pack",
+        extra={
+            "missing": pack.get("missing") or [],
+            "covered": pack.get("covered") or [],
+            "missing_count": pack.get("missing_count") or 0,
+            "covered_count": pack.get("covered_count") or 0,
+            "ok_message": ok or "",
+        },
+    )
+
+
+@router.post("/teacher/dct/generate", response_class=HTMLResponse)
+async def teacher_dct_generate(request: Request, token: str | None = None):
+    """Draft a remediation micro-lesson for one skill (reuse AI remediation)."""
+    from app.modules.ai_assessment import generate_remediation_micro_lesson
+    from app.modules import skills as skills_mod
+    from app.modules import sme as sme_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    skill_id = str(form.get("skill_id") or "").strip()
+    skills = skills_mod.ensure_default_skills(session["tenant_id"])
+    skill = next((s for s in skills if str(s.get("id")) == skill_id), None)
+    if not skill:
+        return RedirectResponse(
+            url=f"/teacher/dct?token={tok}&ok=Pick+a+skill",
+            status_code=303,
+        )
+    course = _bound_course(session) or content.ensure_primary_course(
+        session["tenant_id"]
+    )
+    excerpt = ""
+    try:
+        focus = str(skill.get("manual_focus") or "").strip()
+        for src in sme_mod.list_sources(session["tenant_id"])[:8]:
+            chunks = sme_mod.resolve_source_chunks(
+                session["tenant_id"], [src]
+            )
+            for ch in chunks:
+                if focus and focus in str(ch.get("slug") or ""):
+                    excerpt = str(ch.get("body") or "")[:2000]
+                    break
+                if not excerpt:
+                    excerpt = str(ch.get("body") or "")[:1200]
+            if focus and excerpt:
+                break
+    except Exception:  # noqa: BLE001
+        excerpt = ""
+    try:
+        draft = generate_remediation_micro_lesson(
+            skill_label=str(skill.get("label") or ""),
+            skill_code=str(skill.get("skill_code") or ""),
+            skill_description=str(skill.get("description") or ""),
+            course_title=str((course or {}).get("title") or ""),
+            source_excerpt=excerpt,
+        )
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/teacher/dct?token={tok}&ok={str(exc).replace(' ', '+')}",
+            status_code=303,
+        )
+    return _shell(
+        request,
+        "teacher_ai_remediation.html",
+        session,
+        active_page="teacher_dct",
+        page_title="DCT remediation draft",
+        page_subtitle=str(skill.get("label") or ""),
+        extra={
+            "skill_id": str(skill.get("id") or ""),
+            "skill_code": str(skill.get("skill_code") or ""),
+            "skill_label": str(skill.get("label") or ""),
+            "title": draft.get("title") or f"Review: {skill.get('label')}",
+            "body_md": draft.get("body_md") or "",
+            "summary": draft.get("summary") or "",
+            "provider": draft.get("provider") or "local",
+            "model": draft.get("model") or "",
+            "note": draft.get("note") or "",
+            "return_to": "dct",
         },
     )
 
@@ -2075,6 +4192,82 @@ async def teacher_manual_new(request: Request, token: str | None = None):
         )
     return RedirectResponse(
         url=f"/teacher/manuals?token={tok}&ok=Manual+created",
+        status_code=303,
+    )
+
+
+@router.post("/teacher/manuals/from-pdf", response_class=HTMLResponse)
+async def teacher_manual_from_pdf(
+    request: Request, token: str | None = None
+):
+    """D10: PDF/text upload → versioned manual (no quiz generation)."""
+    from app.modules import manuals as manuals_mod
+    from app.modules.ai_assessment import extract_text_from_bytes
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    upload = form.get("document")
+    title = str(form.get("title") or "").strip()
+    description = str(form.get("description") or "").strip()
+    publish = str(form.get("publish") or "1") != "0"
+    manual_id = str(form.get("manual_id") or "").strip()
+    if upload is None or not getattr(upload, "filename", None):
+        return RedirectResponse(
+            url=f"/teacher/manuals?token={tok}&ok=Choose+a+PDF+or+text+file",
+            status_code=303,
+        )
+    fname = str(upload.filename or "upload.pdf")
+    data = await upload.read()
+    try:
+        extracted = extract_text_from_bytes(data, filename=fname)
+        body = str(extracted.get("text") or "").strip()
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/teacher/manuals?token={tok}&ok={str(exc).replace(' ', '+')}",
+            status_code=303,
+        )
+    if not body:
+        return RedirectResponse(
+            url=f"/teacher/manuals?token={tok}&ok=No+text+extracted",
+            status_code=303,
+        )
+    # Cap stored body for pilot manuals
+    if len(body) > 120_000:
+        body = body[:120_000] + "\n\n…(truncated)"
+    if not title:
+        title = Path(fname).stem.replace("_", " ").replace("-", " ").strip() or "Imported manual"
+    try:
+        if manual_id:
+            manuals_mod.add_version(
+                tenant_id=session["tenant_id"],
+                manual_id=manual_id,
+                body_md=body,
+                changelog=f"Imported from {fname}",
+                subject=str(session.get("subject") or ""),
+                publish=publish,
+            )
+            msg = "Version+from+PDF+added"
+        else:
+            manuals_mod.create_manual(
+                tenant_id=session["tenant_id"],
+                title=title,
+                description=description or f"Imported from {fname}",
+                body_md=body,
+                subject=str(session.get("subject") or ""),
+                publish=publish,
+            )
+            msg = "Manual+from+PDF+created"
+    except ValueError as exc:
+        msg = str(exc).replace(" ", "+")
+        return RedirectResponse(
+            url=f"/teacher/manuals?token={tok}&ok={msg}",
+            status_code=303,
+        )
+    return RedirectResponse(
+        url=f"/teacher/manuals?token={tok}&ok={msg}",
         status_code=303,
     )
 

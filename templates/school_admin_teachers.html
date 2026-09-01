@@ -3,42 +3,41 @@
 <section class="welcome">
   <p class="welcome-kicker">School admin</p>
   <h2 class="welcome-title">Teachers</h2>
-  <p class="welcome-lede">Staff for <strong>{{ tenant_name }}</strong> only.</p>
+  <p class="welcome-lede">
+    Teacher accounts are created in <strong>Moodle</strong>, not EdVidura.
+    When a teacher opens this tool via LTI, EdVidura uses their Moodle role and course — no separate EdVidura login.
+  </p>
+  <div class="welcome-actions">
+    <a class="btn primary" href="{{ moodle_base }}/admin/user.php" target="_top" rel="noopener">Open Moodle users</a>
+    <a class="btn secondary" href="/school-admin/classes?token={{ quiz_token }}">Link classes &amp; content</a>
+  </div>
 </section>
 
-{% if ok_message %}
-<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
-{% endif %}
+<section class="panel">
+  <h2>How it works</h2>
+  <ol class="meta" style="line-height:1.7;padding-left:1.25rem">
+    <li>In Moodle: create the teacher, enroll them in the course.</li>
+    <li>In EdVidura: bind that Moodle course to a class + curriculum (Classes).</li>
+    <li>Teacher launches EdVidura from Moodle → sees that class’s content and results.</li>
+  </ol>
+</section>
 
-<div class="teach-grid">
-  <section class="panel">
-    <h2>Add teacher</h2>
-    <form method="post" action="/school-admin/teachers" class="teach-form">
-      <input type="hidden" name="token" value="{{ quiz_token }}"/>
-      <label>Code <input name="teacher_code" required placeholder="TCH-04"/></label>
-      <label>Name <input name="name" required placeholder="Full name"/></label>
-      <label>Email <input name="email" type="email" required placeholder="teacher@school.test"/></label>
-      <button type="submit" class="btn primary">Save teacher</button>
-    </form>
-  </section>
-  <section class="panel">
-    <h2>Directory</h2>
-    {% if teachers %}
-    <table>
-      <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
-      <tbody>
-      {% for t in teachers %}
-        <tr>
-          <td><code>{{ t.teacher_code }}</code></td>
-          <td>{{ t.name }}</td>
-          <td class="meta">{{ t.email }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <div class="empty"><p>No teachers yet.</p></div>
-    {% endif %}
-  </section>
-</div>
+{% if teachers %}
+<section class="panel">
+  <h2>Demo directory (optional seed)</h2>
+  <p class="meta">Local demo data only — not the live Moodle directory. Production people live in Moodle.</p>
+  <table>
+    <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
+    <tbody>
+    {% for t in teachers %}
+      <tr>
+        <td><code>{{ t.teacher_code }}</code></td>
+        <td>{{ t.name }}</td>
+        <td class="meta">{{ t.email }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · Depth demo (approval)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;650&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --ink: #14242c;
+      --mute: #5f717c;
+      --line: #ddd5c6;
+      --paper: #f4f0e7;
+      --surface: #fffcf7;
+      --teal: #2a9d8f;
+      --teal-mid: #34a99a;
+      --teal-deep: #1f7a70;
+      --slate: #183342;
+      --slate-deep: #0f2430;
+      --gold: #d4b04a;
+      --font-brand: "Syne", sans-serif;
+      --font-display: "Fraunces", Georgia, serif;
+      --font: "Outfit", sans-serif;
+      --side: 256px;
+      --shadow: 0 1px 2px rgba(20,36,44,.04), 0 10px 28px rgba(20,36,44,.07);
+      --shadow-soft: 0 8px 24px rgba(20,36,44,.06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--ink);
+      background: #d9d2c4;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    .banner {
+      position: sticky; top: 0; z-index: 30;
+      display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between;
+      padding: .65rem 1rem; background: #0e1c24; color: #f3efe6;
+      font-size: .86rem; font-weight: 600;
+    }
+    .banner strong { color: var(--gold); }
+    .roles { display: flex; gap: .35rem; }
+    .roles button {
+      border: 1px solid rgba(255,255,255,.22); background: transparent; color: #fff;
+      border-radius: 999px; padding: .3rem .75rem; font: inherit; font-weight: 650; cursor: pointer;
+    }
+    .roles button.on { background: var(--teal); border-color: var(--teal); }
+
+    .shell {
+      display: flex; min-height: calc(100vh - 48px);
+      max-width: 1100px; margin: 0 auto;
+      background: var(--paper);
+      box-shadow: 0 16px 48px rgba(20,36,44,.12);
+    }
+
+    .sidebar {
+      width: var(--side); flex-shrink: 0; color: #c2d1d8;
+      display: flex; flex-direction: column;
+      background:
+        radial-gradient(320px 180px at 0% 0%, rgba(42,157,143,.28), transparent 60%),
+        radial-gradient(280px 200px at 100% 100%, rgba(212,176,74,.14), transparent 55%),
+        linear-gradient(175deg, var(--slate), var(--slate-deep));
+    }
+    .brand {
+      display: flex; align-items: center; gap: .7rem;
+      padding: 1.2rem 1.05rem 1rem;
+    }
+    .mark {
+      width: 38px; height: 38px; border-radius: 11px;
+      display: grid; place-items: center;
+      background: linear-gradient(150deg, var(--teal-mid), var(--teal-deep));
+      color: #fff; font-family: var(--font-brand); font-weight: 800;
+      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+    }
+    .bname {
+      font-family: var(--font-brand); font-weight: 800; color: #fff;
+      font-size: 1.05rem; letter-spacing: -.02em;
+    }
+    .bname span { color: var(--gold); }
+    .btag { font-size: .7rem; color: #8498a3; }
+
+    .ctx {
+      margin: 0 .9rem .75rem;
+      padding: .85rem .9rem;
+      border-radius: 14px;
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .ctx label {
+      display: block; font-size: .6rem; font-weight: 700;
+      letter-spacing: .11em; text-transform: uppercase; color: #7a8f9a;
+      margin-bottom: .3rem;
+    }
+    .ctx .course { color: #f2f6f8; font-weight: 700; font-size: .92rem; }
+    .ctx .school { color: #93a7b1; font-size: .78rem; margin-top: .15rem; }
+    .prog {
+      margin-top: .7rem; height: 5px; border-radius: 99px;
+      background: rgba(255,255,255,.1); overflow: hidden;
+    }
+    .prog i {
+      display: block; height: 100%; width: 66%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--gold));
+    }
+    .prog-n {
+      display: flex; justify-content: space-between;
+      margin-top: .4rem; font-size: .72rem; color: #8fa3ad;
+    }
+    .prog-n strong { color: #e8f1ef; font-weight: 700; }
+
+    nav { flex: 1; padding: .35rem .7rem 0; }
+    .sec {
+      margin: .75rem .5rem .3rem;
+      font-size: .6rem; font-weight: 700; letter-spacing: .11em;
+      text-transform: uppercase; color: #7a8f9a;
+    }
+    .sec, .nav-x { display: none; }
+    body.role-student .sec-learn { display: block; }
+    body.role-teacher .sec-learn,
+    body.role-teacher .sec-teach,
+    body.role-teacher .nav-teach { display: block; }
+    body.role-admin .sec-learn,
+    body.role-admin .sec-admin,
+    body.role-admin .nav-admin { display: block; }
+
+    a.link {
+      display: block; padding: .58rem .7rem; margin: .1rem 0;
+      border-radius: 10px; color: #c5d4dc; text-decoration: none;
+      font-size: .9rem; font-weight: 500;
+    }
+    a.link:hover { background: rgba(255,255,255,.07); color: #fff; }
+    a.link.on {
+      background: linear-gradient(90deg, rgba(42,157,143,.35), rgba(42,157,143,.1));
+      color: #fff; font-weight: 700;
+      box-shadow: inset 3px 0 0 var(--teal);
+    }
+
+    .foot {
+      padding: .9rem 1rem 1.05rem;
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.15);
+    }
+    .who { display: flex; gap: .6rem; align-items: center; }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: grid; place-items: center;
+      background: linear-gradient(145deg, #3bb5a5, #1a5f58);
+      color: #fff; font-weight: 800; font-size: .75rem;
+      font-family: var(--font-brand);
+    }
+    .uname { color: #fff; font-weight: 700; font-size: .88rem; }
+    .urole { color: var(--gold); font-size: .72rem; font-weight: 700; }
+    .back {
+      display: block; margin-top: .7rem; text-align: center; text-decoration: none;
+      padding: .5rem; border-radius: 10px;
+      border: 1px solid rgba(42,157,143,.45);
+      background: rgba(42,157,143,.12);
+      color: #d5ebe6; font-size: .82rem; font-weight: 650;
+    }
+
+    .content {
+      flex: 1; min-width: 0; display: flex; flex-direction: column;
+      background:
+        radial-gradient(640px 300px at 100% 0%, rgba(42,157,143,.12), transparent 55%),
+        radial-gradient(480px 260px at 0% 100%, rgba(212,176,74,.08), transparent 50%),
+        var(--paper);
+    }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .8rem 1.4rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(244,240,231,.9);
+      backdrop-filter: blur(8px);
+    }
+    .ptitle {
+      margin: 0; font-family: var(--font-brand); font-weight: 800;
+      font-size: 1.05rem; letter-spacing: -.015em;
+    }
+    .moodle {
+      font-size: .82rem; font-weight: 650; color: var(--mute); text-decoration: none;
+      padding: .4rem .75rem; border-radius: 999px; border: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .moodle:hover { border-color: var(--teal); color: var(--teal-deep); }
+
+    .main { padding: 1.4rem 1.4rem 2.4rem; max-width: 700px; }
+    .screen { display: none; }
+    .screen.on { display: block; }
+
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1.4rem 1.35rem 1.45rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute; inset: 0 auto 0 0; width: 4px;
+      background: linear-gradient(180deg, var(--teal), var(--gold));
+      border-radius: 18px 0 0 18px;
+    }
+    .kicker {
+      margin: 0 0 .4rem;
+      font-size: .7rem; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--teal-deep);
+    }
+    .title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-weight: 650;
+      font-size: clamp(1.85rem, 3.8vw, 2.3rem);
+      letter-spacing: -.03em;
+      line-height: 1.1;
+    }
+    .lede {
+      margin: .6rem 0 0;
+      color: var(--mute);
+      font-size: 1rem;
+      max-width: 34rem;
+    }
+
+    .cta-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.15rem; }
+    .cta {
+      display: inline-flex; align-items: center;
+      padding: .72rem 1.2rem; border-radius: 999px;
+      background: linear-gradient(135deg, var(--teal-mid), var(--teal-deep));
+      color: #fff; font-weight: 700; font-size: .92rem;
+      text-decoration: none; border: 0;
+      box-shadow: 0 8px 20px rgba(42,157,143,.32);
+    }
+    .cta:hover { color: #fff; filter: brightness(1.05); }
+    .cta.ghost {
+      background: var(--surface);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+    .cta.ghost:hover { border-color: var(--teal); color: var(--teal-deep); }
+
+    .board {
+      display: grid; grid-template-columns: 1.4fr .9fr; gap: .85rem;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.05rem 1.1rem;
+      box-shadow: var(--shadow-soft);
+    }
+    .panel h3 {
+      margin: 0 0 .75rem;
+      font-family: var(--font-brand);
+      font-size: .88rem;
+      font-weight: 800;
+    }
+
+    .row {
+      display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+      padding: .7rem .65rem;
+      margin: 0 -.15rem .35rem;
+      border-radius: 11px;
+      text-decoration: none; color: inherit;
+      border: 1px solid transparent;
+    }
+    .row:hover { background: rgba(42,157,143,.05); border-color: rgba(42,157,143,.2); }
+    .row.now {
+      background: rgba(212,176,74,.12);
+      border-color: rgba(212,176,74,.35);
+    }
+    .row-title { font-weight: 650; font-size: .92rem; }
+    .row-meta { font-size: .78rem; color: var(--mute); margin-top: .1rem; }
+    .pill {
+      font-size: .72rem; font-weight: 700;
+      padding: .2rem .55rem; border-radius: 999px;
+      background: rgba(20,36,44,.06); color: var(--mute);
+      white-space: nowrap;
+    }
+    .pill.teal { background: rgba(42,157,143,.16); color: var(--teal-deep); }
+    .pill.gold { background: rgba(212,176,74,.28); color: #7a5c12; }
+
+    .score {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      letter-spacing: -.03em;
+      line-height: 1;
+    }
+    .score-label { font-size: .78rem; color: var(--mute); margin-top: .35rem; }
+    .hint {
+      margin-top: .85rem; padding: .65rem .75rem;
+      border-radius: 11px;
+      background: rgba(20,36,44,.03);
+      border: 1px solid var(--line);
+      font-size: .84rem; color: var(--mute);
+    }
+    .hint strong { color: var(--ink); }
+
+    .q {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem 1.05rem;
+      margin-bottom: .7rem;
+      box-shadow: var(--shadow-soft);
+    }
+    .qn { font-weight: 650; margin-bottom: .55rem; }
+    .opts { display: grid; gap: .3rem; }
+    .opts label {
+      display: flex; gap: .55rem; align-items: center;
+      padding: .55rem .65rem; border-radius: 10px;
+      border: 1px solid var(--line); cursor: pointer; font-size: .9rem;
+    }
+    .opts label:hover { border-color: var(--teal); background: rgba(42,157,143,.04); }
+    .opts input { accent-color: var(--teal-deep); }
+
+    .role-home { display: none; }
+    body.role-student .home-student,
+    body.role-teacher .home-teacher,
+    body.role-admin .home-admin { display: block; }
+
+    @media (max-width: 860px) {
+      .shell { flex-direction: column; }
+      .sidebar { width: 100%; }
+      .board { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body class="role-student">
+  <div class="banner">
+    <div><strong>Demo only</strong> — depth without clutter. Not applied live yet.</div>
+    <div class="roles">
+      <button type="button" class="on" data-role="student">Student</button>
+      <button type="button" data-role="teacher">Teacher</button>
+      <button type="button" data-role="admin">Admin</button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark">EV</div>
+        <div>
+          <div class="bname">Ed<span>Vidura</span></div>
+          <div class="btag">Inside Moodle</div>
+        </div>
+      </div>
+
+      <div class="ctx">
+        <label>Now learning</label>
+        <div class="course">Algebra I</div>
+        <div class="school">Riverside High</div>
+        <div class="prog" aria-hidden="true"><i></i></div>
+        <div class="prog-n"><span>Progress</span><strong>2 / 3</strong></div>
+      </div>
+
+      <nav>
+        <div class="sec sec-learn">Learn</div>
+        <a class="link on" href="#home" data-screen="home">Home</a>
+        <a class="link" href="#lessons" data-screen="lessons">Lessons</a>
+        <a class="link" href="#quiz" data-screen="quiz">Quiz</a>
+        <a class="link" href="#results" data-screen="results">My results</a>
+        <div class="sec sec-teach">Teach</div>
+        <a class="link nav-x nav-teach" href="#upload" data-screen="upload">Upload content</a>
+        <a class="link nav-x nav-teach" href="#class" data-screen="class">Class results</a>
+        <div class="sec sec-admin">School</div>
+        <a class="link nav-x nav-admin" href="#teachers" data-screen="teachers">Teachers</a>
+        <a class="link nav-x nav-admin" href="#classes" data-screen="classes">Classes</a>
+        <a class="link nav-x nav-admin" href="#students" data-screen="students">Students</a>
+      </nav>
+
+      <div class="foot">
+        <div class="who">
+          <div class="avatar" id="avatar">AN</div>
+          <div>
+            <div class="uname" id="uname">Alice Nguyen</div>
+            <div class="urole" id="urole">Student</div>
+          </div>
+        </div>
+        <a class="back" href="#">← Back to Moodle</a>
+      </div>
+    </aside>
+
+    <div class="content">
+      <header class="topbar">
+        <h1 class="ptitle" id="ptitle">Home</h1>
+        <a class="moodle" href="#">← Moodle</a>
+      </header>
+      <main class="main">
+
+        <section class="screen on" id="home">
+          <div class="role-home home-student">
+            <div class="hero">
+              <p class="kicker">Algebra I · Riverside High</p>
+              <h2 class="title">Hi, Alice</h2>
+              <p class="lede">Lessons are done. Take the chapter quiz when you’re ready.</p>
+              <div class="cta-row">
+                <a class="cta" href="#quiz" data-screen="quiz">Start quiz</a>
+                <a class="cta ghost" href="#lessons" data-screen="lessons">Browse lessons</a>
+              </div>
+            </div>
+            <div class="board">
+              <div class="panel">
+                <h3>This chapter</h3>
+                <a class="row" href="#lessons" data-screen="lessons">
+                  <div>
+                    <div class="row-title">Linear equations</div>
+                    <div class="row-meta">Reading</div>
+                  </div>
+                  <span class="pill teal">Done</span>
+                </a>
+                <a class="row" href="#lessons" data-screen="lessons">
+                  <div>
+                    <div class="row-title">Slope &amp; intercept</div>
+                    <div class="row-meta">Video</div>
+                  </div>
+                  <span class="pill teal">Done</span>
+                </a>
+                <a class="row now" href="#quiz" data-screen="quiz">
+                  <div>
+                    <div class="row-title">Chapter check</div>
+                    <div class="row-meta">Quiz · up next</div>
+                  </div>
+                  <span class="pill gold">Next</span>
+                </a>
+              </div>
+              <div class="panel">
+                <h3>Last score</h3>
+                <div class="score">2 / 3</div>
+                <div class="score-label">Practice attempt</div>
+                <div class="hint"><strong>Tip:</strong> Review slope before retrying.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="role-home home-teacher">
+            <div class="hero">
+              <p class="kicker">Period 2 · Algebra I</p>
+              <h2 class="title">Hi, Priya</h2>
+              <p class="lede">18 of 24 learners have attempted the quiz.</p>
+              <div class="cta-row">
+                <a class="cta" href="#class" data-screen="class">Class results</a>
+                <a class="cta ghost" href="#upload" data-screen="upload">Upload content</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="role-home home-admin">
+            <div class="hero">
+              <p class="kicker">Riverside High</p>
+              <h2 class="title">Hi, Admin</h2>
+              <p class="lede">Teachers, classes, and students for this school.</p>
+              <div class="cta-row">
+                <a class="cta" href="#teachers" data-screen="teachers">Teachers</a>
+                <a class="cta ghost" href="#classes" data-screen="classes">Classes</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="lessons">
+          <div class="hero">
+            <p class="kicker">Course</p>
+            <h2 class="title">Lessons</h2>
+            <p class="lede">Finish each item, then take the quiz.</p>
+          </div>
+          <div class="panel">
+            <a class="row" href="#"><div><div class="row-title">1. Linear equations</div><div class="row-meta">Reading</div></div><span class="pill teal">Done</span></a>
+            <a class="row" href="#"><div><div class="row-title">2. Slope &amp; intercept</div><div class="row-meta">Video</div></div><span class="pill teal">Done</span></a>
+            <a class="row now" href="#quiz" data-screen="quiz"><div><div class="row-title">3. Chapter check</div><div class="row-meta">Quiz</div></div><span class="pill gold">Next</span></a>
+          </div>
+        </section>
+
+        <section class="screen" id="quiz">
+          <div class="hero">
+            <p class="kicker">Assessment</p>
+            <h2 class="title">Quiz</h2>
+            <p class="lede">Three questions. Best score can sync to Moodle.</p>
+          </div>
+          <div class="q">
+            <div class="qn">1. Slope of y = 2x + 3?</div>
+            <div class="opts">
+              <label><input type="radio" name="q1"/> 2</label>
+              <label><input type="radio" name="q1"/> 3</label>
+              <label><input type="radio" name="q1"/> 5</label>
+            </div>
+          </div>
+          <div class="q">
+            <div class="qn">2. Point on y = x?</div>
+            <div class="opts">
+              <label><input type="radio" name="q2"/> (2, 3)</label>
+              <label><input type="radio" name="q2"/> (4, 4)</label>
+              <label><input type="radio" name="q2"/> (0, 1)</label>
+            </div>
+          </div>
+          <div class="cta-row">
+            <a class="cta" href="#results" data-screen="results">Submit</a>
+            <a class="cta ghost" href="#lessons" data-screen="lessons">Lessons</a>
+          </div>
+        </section>
+
+        <section class="screen" id="results">
+          <div class="hero">
+            <p class="kicker">Results</p>
+            <h2 class="title">My results</h2>
+            <p class="lede">Latest attempt for Chapter check.</p>
+            <div class="cta-row">
+              <a class="cta" href="#quiz" data-screen="quiz">Try again</a>
+              <a class="cta ghost" href="#lessons" data-screen="lessons">Review lessons</a>
+            </div>
+          </div>
+          <div class="board">
+            <div class="panel">
+              <h3>Breakdown</h3>
+              <div class="row"><div class="row-title">Q1 Slope</div><span class="pill teal">Correct</span></div>
+              <div class="row"><div class="row-title">Q2 Point</div><span class="pill teal">Correct</span></div>
+              <div class="row now"><div class="row-title">Q3 Intercept</div><span class="pill gold">Missed</span></div>
+            </div>
+            <div class="panel">
+              <h3>Score</h3>
+              <div class="score">2 / 3</div>
+              <div class="score-label">Practice attempt</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="upload">
+          <div class="hero"><p class="kicker">Teach</p><h2 class="title">Upload content</h2><p class="lede">Add a lesson or quiz question for this school.</p></div>
+        </section>
+        <section class="screen" id="class">
+          <div class="hero"><p class="kicker">Teach</p><h2 class="title">Class results</h2></div>
+          <div class="panel">
+            <div class="row"><div class="row-title">Alice Nguyen</div><span class="pill">2 / 3</span></div>
+            <div class="row"><div class="row-title">Bob Okonkwo</div><span class="pill teal">3 / 3</span></div>
+          </div>
+        </section>
+        <section class="screen" id="teachers">
+          <div class="hero"><p class="kicker">School</p><h2 class="title">Teachers</h2><p class="lede">Directory and add teacher.</p></div>
+        </section>
+        <section class="screen" id="classes">
+          <div class="hero"><p class="kicker">School</p><h2 class="title">Classes</h2><p class="lede">Rosters for this school.</p></div>
+        </section>
+        <section class="screen" id="students">
+          <div class="hero"><p class="kicker">School</p><h2 class="title">Students</h2><p class="lede">Enrolled learners.</p></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const titles = {
+      home:'Home', lessons:'Lessons', quiz:'Quiz', results:'My results',
+      upload:'Upload content', class:'Class results',
+      teachers:'Teachers', classes:'Classes', students:'Students'
+    };
+    const people = {
+      student:['Alice Nguyen','Student','AN'],
+      teacher:['Priya Shah','Teacher','PS'],
+      admin:['Riverside Admin','School admin','RA']
+    };
+    function go(name) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.toggle('on', el.id === name));
+      document.querySelectorAll('a.link').forEach(a => a.classList.toggle('on', a.dataset.screen === name));
+      document.getElementById('ptitle').textContent = titles[name] || 'EdVidura';
+    }
+    document.querySelectorAll('[data-screen]').forEach(el => {
+      el.addEventListener('click', e => { e.preventDefault(); go(el.dataset.screen); });
+    });
+    document.querySelectorAll('[data-role]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-role]').forEach(b => b.classList.toggle('on', b === btn));
+        const role = btn.dataset.role;
+        document.body.className = 'role-' + role;
+        document.getElementById('uname').textContent = people[role][0];
+        document.getElementById('urole').textContent = people[role][1];
+        document.getElementById('avatar').textContent = people[role][2];
+        go('home');
+      });
+    });
+  </script>
+</body>
+</html>

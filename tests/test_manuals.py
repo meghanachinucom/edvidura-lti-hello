@@ -58,3 +58,34 @@ def test_manual_version_publish_flow():
     manuals.publish_version(tenant_id=TENANT_A_ID, manual_id=mid, version=2)
     latest2 = manuals.latest_published_version(TENANT_A_ID, mid)
     assert int(latest2["version"]) == 2
+
+
+def test_toc_from_body_and_reader_seal():
+    from app.modules.manuals import (
+        reader_share_path,
+        toc_from_body,
+        verify_reader_token,
+    )
+
+    toc = toc_from_body(
+        "## Intro\n\nHello\n\n## Solve for x\n\nIsolate the variable.\n"
+    )
+    slugs = {c["slug"] for c in toc}
+    assert "intro" in slugs or "solve-for-x" in slugs
+    assert any(c["title"] == "Solve for x" for c in toc)
+
+    tid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    mid = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    path = reader_share_path(tenant_id=tid, manual_id=mid, version=2, focus="intro")
+    assert path.startswith(f"/read/manuals/{mid}?")
+    assert "sig=" in path and "tid=" in path and "v=2" in path
+    # Extract sig
+    from urllib.parse import parse_qs, urlparse
+
+    qs = parse_qs(urlparse(path).query)
+    assert verify_reader_token(
+        token=qs["sig"][0], tenant_id=tid, manual_id=mid, version=2
+    )
+    assert not verify_reader_token(
+        token="0.deadbeef", tenant_id=tid, manual_id=mid, version=2
+    )

@@ -57,6 +57,14 @@
       {% endif %}
     </div>
   </div>
+  {% if metabase_embed_url %}
+  <iframe
+    title="Metabase embedded dashboard"
+    src="{{ metabase_embed_url }}"
+    style="width:100%;min-height:420px;border:0;border-radius:8px;margin-bottom:1rem;background:#fff"
+    allowtransparency
+  ></iframe>
+  {% endif %}
   {% if dash.attempt_count %}
   <div class="chart-frame chart-frame-wide">
     <canvas id="chart-daily" aria-label="Attempts and average score over 30 days"></canvas>

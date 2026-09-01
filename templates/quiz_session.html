@@ -1,7 +1,9 @@
 {% extends "base_shell.html" %}
 {% block content %}
 {% if practice_mode %}
-<div class="banner-note info">Practice lane — scores save here and to xAPI, but <strong>not</strong> to Moodle.</div>
+<div class="banner-note info">Practice lane — scores save here and to xAPI, but <strong>not</strong> to Moodle.{% if remediation_loop %} After this, take the <strong>graded retry</strong>.{% endif %}</div>
+{% elif remediation_loop %}
+<div class="banner-note ok">Graded remediation retry — missed items only; can sync to Moodle.</div>
 {% elif coach_warn %}
 <div class="banner-note info">Ghost coach notes open lessons — you chose to continue anyway.</div>
 {% endif %}

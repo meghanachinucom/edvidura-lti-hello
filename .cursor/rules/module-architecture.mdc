@@ -1,0 +1,61 @@
+---
+description: Module-wise architecture — domain logic in app.modules, thin routes
+alwaysApply: true
+---
+
+# Module-wise architecture
+
+EdVidura keeps **domain logic in reusable modules**, not in FastAPI route files or templates.
+
+## Layers
+
+| Layer | Location | Allowed |
+|-------|----------|---------|
+| Domain | `app/modules/<name>/` | Business rules, DB queries under RLS, pure helpers |
+| HTTP | `app/*_routes.py`, `app/api/` | Auth/session, parse form/query, call modules, return HTML/JSON |
+| Infra | `app/db.py`, `app/settings.py` | Connections, `SET LOCAL app.tenant_id`, config |
+| UI | `templates/`, `app/static/` | Presentation only — no SQL or business rules |
+
+## Rules
+
+1. **New feature domain code** goes in `app/modules/<domain>/` (`service.py` + `__init__.py` public exports). Prefer an existing module over a new one when the responsibility matches.
+2. **Routes stay thin**: validate input → call `app.modules.*` → map result to response. Do not embed SQL or grading/progress/tenant rules in routes.
+3. **Import domain from modules**: `from app.modules.content import …` — not from route modules. Legacy shims (`app.content`, `app.tenancy`, …) are OK for compatibility only; do not grow them.
+4. **Tenant isolation**: any tenant-owned read/write uses `db.tenant_connection` / module helpers that set `app.tenant_id`. Never trust client-supplied `tenant_id`.
+5. **New domain tables**: migration + RLS via `db/rls_template.sql`; grant `edvidura_app`; add CI migration step if tests need the table.
+6. **Update the map** in `docs/MODULES.md` and `app/modules/README.md` when adding a module.
+
+## Existing modules
+
+- `tenancy` — LTI → tenant, context, tool conf  
+- `content` — courses, lessons, progress, authoring  
+- `quiz` — question bank, grading  
+- `school` — classes, curriculum links, LTI context→class bindings (people in Moodle)  
+- `manuals` — versioned technical manuals / PeBL eBook (TOC, signed standalone reader)
+- `events` — EVENT_ENVELOPE_V1 outbox + D17 webhook drain  
+- `ai_assessment` — MCQs, simplify, grade assist, suggestions; E04 OpenAI / local HTTP  
+- `ai_tutor` — student hints + study coach (citations / retention stance)
+- `ai_authoring` — D13 teacher SME authoring assistant (separate from learner coach)
+- `skills` — C8 competency registry; D23 role matrices; D08 framework import / TO review
+- `adaptive` — C9/C10 adaptive next + gap/difference training paths + persisted PLE plans + DCT order/planner
+- `sme` — C13 SME source registry (approved manuals/lessons for study coach)
+- `nrps` — LTI Advantage NRPS Moodle roster cache (awareness only)
+- `receipts` — HMAC-sealed grade receipts for attempt evidence
+- `xapi` — statements including D15 per-skill competency assessments; middleware store/promote/list + LRS tiers
+- `analytics` — tenant + learner dashboards; optional Metabase signed embeds
+- `tla` — D06/D07/D16 TLA-shaped catalogue / experiences / profiles (read adapters)
+- `isolation` — RLS proof helpers for tests/ops  
+
+## Examples
+
+```python
+# ❌ BAD — domain SQL inside a route
+@router.post("/teacher/lessons/new")
+async def teacher_lesson_new(...):
+    with db.tenant_connection(tid) as conn:
+        conn.execute("INSERT INTO lessons ...")
+
+# ✅ GOOD — route delegates to module
+from app.modules import content
+content.create_lesson(tenant_id=tid, title=title, body_md=body_md)
+```

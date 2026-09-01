@@ -18,10 +18,10 @@
   <main class="ob">
     <header class="ob-hero">
       <p class="ob-kicker">Connect · about 3 minutes</p>
-      <h1>Connect your school’s Moodle</h1>
+      <h1>Connect your school’s LMS</h1>
       <p class="ob-lede">
-        Name the school, paste one URL into Moodle, activate the tool, launch once.
-        No Client ID copy-paste required.
+        Name the school, register EdVidura as an LTI 1.3 tool (Moodle one-click or Canvas manual key), launch once.
+        No Client ID copy-paste required for Moodle Dynamic Registration.
       </p>
     </header>
 
@@ -165,8 +165,34 @@
     </section>
 
     <details class="ob-panel advanced">
-      <summary>Advanced — manual Client ID setup</summary>
-      <p class="ob-help">Only if Dynamic Registration isn’t available on your Moodle.</p>
+      <summary>Canvas — LTI 1.3 Developer Key checklist</summary>
+      <p class="ob-help">
+        Canvas usually uses a <strong>manual Developer Key</strong> (Moodle dynreg is preferred for Moodle).
+        Step-by-step: repo file <code>docs/CANVAS.md</code>.
+      </p>
+      <ol class="ob-help" style="line-height:1.7;padding-left:1.25rem">
+        <li>Admin → Developer Keys → <strong>+ Developer Key → + LTI Key</strong></li>
+        <li>Paste EdVidura OIDC login, launch, and JWKS URLs (listed below)</li>
+        <li>Enable Assignment and Grade Services + Names and Role Provisioning</li>
+        <li>Save key → copy <strong>Client ID</strong> → Advanced → <strong>Save LMS link</strong> (issuer = Canvas base URL)</li>
+        <li>Add app to a course by Client ID → launch once</li>
+      </ol>
+      <ul class="ob-urls">
+        {% for item in tool_urls %}
+        <li>
+          <div>
+            <strong>{{ item.label }}</strong>
+            <code class="ob-url" data-copy="{{ item.url }}">{{ item.url }}</code>
+          </div>
+          <button type="button" class="ob-copy" data-copy="{{ item.url }}">Copy</button>
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+
+    <details class="ob-panel advanced">
+      <summary>Advanced — manual Client ID setup (any LTI LMS)</summary>
+      <p class="ob-help">Use for Moodle without dynreg, or Canvas / Open edX. Issuer = LMS base URL.</p>
       <ul class="ob-urls">
         {% for item in tool_urls %}
         <li>
@@ -194,10 +220,10 @@
             {% endfor %}
           </select>
         </label>
-        <label class="ob-field"><span>Moodle base URL</span><input name="issuer" required value="{{ default_issuer }}"/></label>
+        <label class="ob-field"><span>LMS base URL (issuer)</span><input name="issuer" required value="{{ default_issuer }}" placeholder="https://school.instructure.com"/></label>
         <label class="ob-field"><span>Client ID</span><input name="client_id" required/></label>
-        <label class="ob-field"><span>Deployment ID</span><input name="deployment_ids" value="1"/></label>
-        <button type="submit" class="ob-btn" {% if not tenants %}disabled{% endif %}>Save Moodle link</button>
+        <label class="ob-field"><span>Deployment ID</span><input name="deployment_ids" value="1" placeholder="1 or Canvas deployment id"/></label>
+        <button type="submit" class="ob-btn" {% if not tenants %}disabled{% endif %}>Save LMS link</button>
       </form>
     </details>
   </main>

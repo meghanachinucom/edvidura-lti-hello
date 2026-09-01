@@ -10,6 +10,7 @@ Implement **one phase at a time**.
 | **4** | RLS on invites / snapshots / tokens + non-bypass DB role | **Done** |
 | **5** | Shared launch cache (Postgres) for multi-instance | **Done** |
 | **6** | Rate limits, backups, monitoring | **Done** |
+| **7** | Class & subject learning path | **Done** |
 
 ## Phase 1 (done)
 
@@ -57,3 +58,26 @@ Landed SaaS modules and HTTP wiring in git:
 - Backup scripts: `scripts/backup_postgres.ps1` / `.sh`
 - Optional Sentry via `SENTRY_DSN`
 - Health exposes `environment`, `version`, `rate_limit`
+
+## Phase 7 (done)
+
+Class & subject learning path (Moodle course → EdVidura class + curriculum):
+
+- `lti_context_bindings` + `classes.course_id` (`db/migration_lti_context_bindings.sql`)
+- Launch resolves `context.id` → class/subject/course; session carries `class_id`, `edvidura_course_id`
+- Student hub / lessons / quiz path use bound curriculum (not always primary course)
+- Teacher results default to the launch-bound class roster
+- School admin: link curriculum to class + bind Moodle context id
+- Seed binds local Moodle context `5` → Algebra Period 1
+- Tests: `tests/test_lti_context_bindings.py`
+
+### People vs content (product rule)
+
+- **Moodle** creates all user profiles (teachers, students, enrollments, passwords).
+- **EdVidura** does not create people accounts. It uses LTI launch identity (`sub`, name, roles) and maps Moodle courses → classes/curriculum so content is dynamic per launch.
+- School admin in EdVidura manages **classes + Moodle bindings**, not directories.
+
+### AI
+
+See [AI.md](AI.md). Enable with `AI_ENABLED=1` + `OPENAI_API_KEY` (local heuristics work without a key).
+

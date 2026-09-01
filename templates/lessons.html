@@ -7,6 +7,8 @@
     <p>
       {% if is_instructor %}
       Students work through these in order. Add more from Upload.
+      {% elif order_mode == 'adaptive' %}
+      Your path is reordered for open skill gaps (author order is unchanged).
       {% else %}
       Open each lesson, mark it complete, then take the quiz when you’re ready.
       {% endif %}
@@ -16,6 +18,9 @@
       <a class="btn light" href="/teacher/content?token={{ quiz_token }}">Upload content</a>
       {% endif %}
       <a class="btn ghost-w" href="/quiz?token={{ quiz_token }}">Go to quiz</a>
+      {% if not is_instructor %}
+      <a class="btn ghost-w" href="/learn/gap?token={{ quiz_token }}">My plan</a>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -24,16 +29,19 @@
 <div class="stats">
   <div class="stat"><div class="stat-ico i1">▦</div><div><b>{{ progress.completed_count }}/{{ progress.total_count }}</b><span>Complete</span></div></div>
   <div class="stat"><div class="stat-ico i2">◎</div><div><b>{{ progress.percent }}%</b><span>Progress</span></div></div>
+  {% if order_mode == 'adaptive' %}
+  <div class="stat"><div class="stat-ico i3">◆</div><div><b>Adaptive</b><span>Gap-first order</span></div></div>
+  {% endif %}
 </div>
 {% endif %}
 
 <div class="card">
   <div class="card-h">
-    <h2>Course path</h2>
+    <h2>{% if order_mode == 'adaptive' %}Your adaptive path{% else %}Course path{% endif %}</h2>
     <a href="/quiz?token={{ quiz_token }}">Quiz</a>
   </div>
   {% for item in lesson_items %}
-  <a class="course-item {% if not item.completed and loop.first %}now{% elif item.completed %}{% elif loop.index0 == progress.completed_count|default(0) %}now{% endif %}" href="{{ item.href }}">
+  <a class="course-item {% if item.priority and not item.completed %}now{% elif not item.completed and loop.first %}now{% elif item.completed %}{% elif loop.index0 == progress.completed_count|default(0) %}now{% endif %}" href="{{ item.href }}">
     <div class="thumb {% if loop.index % 3 == 1 %}t1{% elif loop.index % 3 == 2 %}t2{% else %}t3{% endif %}">{{ '%02d'|format(item.position) }}</div>
     <div>
       <div class="ci-title">{{ item.title }}</div>
@@ -41,11 +49,13 @@
         {% if item.lesson_type == 'video' %}Video
         {% elif item.lesson_type == 'quiz' %}Quiz
         {% else %}Reading{% endif %}
+        {% if item.priority and item.priority_reason %} · gap: {{ item.priority_reason }}{% endif %}
         {% if item.completed %} · completed{% endif %}
       </div>
       <div class="bar"><i style="--w: {% if item.completed %}100{% else %}0{% endif %}%"></i></div>
     </div>
     {% if item.completed %}<span class="badge ok">Done</span>
+    {% elif item.priority %}<span class="badge warn">Priority</span>
     {% else %}<span class="badge warn">Open</span>{% endif %}
   </a>
   {% else %}

@@ -62,7 +62,11 @@
     <div class="actions">
       <a class="btn light" href="{{ continue_href }}">{{ continue_label }}</a>
       <a class="btn ghost-w" href="/lessons?token={{ quiz_token }}">View lessons</a>
+      {% if gap_path and gap_path.active %}
+      <a class="btn ghost-w" href="/learn/gap?token={{ quiz_token }}">Gap training</a>
+      {% else %}
       <a class="btn ghost-w" href="/quiz?token={{ quiz_token }}&practice=1">Practice lane</a>
+      {% endif %}
     </div>
   </div>
   <div class="ring-box">
@@ -96,10 +100,11 @@
         <div class="thumb {% if loop.index % 3 == 1 %}t1{% elif loop.index % 3 == 2 %}t2{% else %}t3{% endif %}">{{ loop.index }}</div>
         <div>
           <div class="ci-title">{{ L.title }}</div>
-          <div class="ci-meta">{{ L.lesson_type | capitalize }}{% if L.done %} · completed{% elif L.now %} · up next{% endif %}</div>
+          <div class="ci-meta">{{ L.lesson_type | capitalize }}{% if L.adaptive %} · gap recommended{% elif L.done %} · completed{% elif L.now %} · up next{% endif %}</div>
           <div class="bar"><i style="--w: {% if L.done %}100{% else %}0{% endif %}%"></i></div>
         </div>
         {% if L.done %}<span class="badge ok">Done</span>
+        {% elif L.adaptive %}<span class="badge warn">Gap</span>
         {% elif L.now %}<span class="badge warn">Next</span>
         {% else %}<span class="badge">Open</span>{% endif %}
       </a>
@@ -113,7 +118,11 @@
     <ul class="feed">
       <li><span class="dot"></span><div><strong>Lessons</strong> work through the chapter<time>Step 1</time></div></li>
       <li><span class="dot teal"></span><div><strong>Quiz</strong> check understanding{% if ags_available %} · syncs to Moodle{% endif %}<time>Step 2</time></div></li>
+      {% if gap_path and gap_path.active %}
+      <li><span class="dot amber"></span><div><strong>Gap training</strong> close weak skills then retry<a class="link" href="/learn/gap?token={{ quiz_token }}">Open</a><time>C10</time></div></li>
+      {% else %}
       <li><span class="dot amber"></span><div><strong>My results</strong> review score &amp; retry<time>Step 3</time></div></li>
+      {% endif %}
     </ul>
   </div>
 </div>

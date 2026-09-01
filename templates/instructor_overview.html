@@ -1,5 +1,9 @@
 {% extends "base_shell.html" %}
 {% block content %}
+{% if ok_message %}
+<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
+{% endif %}
+
 <div class="insight-row insight-row-4">
   <div class="insight">
     <span class="insight-k">Attempts</span>
@@ -22,7 +26,15 @@
 <section class="panel">
   <div class="panel-head">
     <h2>Filters</h2>
-    <a class="btn secondary" href="/teacher/attempts.csv?token={{ quiz_token }}{{ filter_qs }}">Export CSV</a>
+    <div class="actions">
+      <form method="post" action="/teacher/roster/sync" style="display:inline">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <button type="submit" class="btn secondary" title="Pull Moodle memberships via NRPS">
+          Sync Moodle roster{% if nrps_count %} ({{ nrps_count }}){% endif %}
+        </button>
+      </form>
+      <a class="btn secondary" href="/teacher/attempts.csv?token={{ quiz_token }}{{ filter_qs }}">Export CSV</a>
+    </div>
   </div>
   <form method="get" action="/teacher/attempts" class="teach-form filter-row">
     <input type="hidden" name="token" value="{{ quiz_token }}"/>
@@ -54,7 +66,36 @@
     </div>
   </form>
   {% if selected_class_name %}
-  <p class="meta">Showing roster match for <strong>{{ selected_class_name }}</strong> (by learner name / email / code).</p>
+  <p class="meta">Filtered by Moodle-bound class <strong>{{ selected_class_name }}</strong> (course labels from LTI context).</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Moodle roster (NRPS)</h2>
+    <span class="meta">Awareness only — people stay in Moodle</span>
+  </div>
+  {% if nrps_members %}
+  <p class="meta">{{ nrps_count }} member{{ 's' if nrps_count != 1 else '' }}{% if nrps_fetched_at %} · synced {{ nrps_fetched_at }}{% endif %}</p>
+  <ul class="q-list">
+    {% for m in nrps_members[:40] %}
+    <li>
+      <strong>{{ m.name }}</strong>
+      <span class="meta"> · <code>{{ m.user_id }}</code>
+        {% if m.is_instructor %}· instructor{% endif %}
+        {% if m.email %}· {{ m.email }}{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if nrps_members|length > 40 %}<p class="meta">Showing first 40.</p>{% endif %}
+  {% else %}
+  <p class="lede">
+    No roster cached yet.
+    {% if nrps_available %}Click <strong>Sync Moodle roster</strong> above.
+    {% else %}Enable Names and Role Provisioning on the Moodle external tool, relaunch as teacher, then sync.
+    {% endif %}
+  </p>
   {% endif %}
 </section>
 
@@ -81,6 +122,25 @@
   <p class="meta">No at-risk signals for this filter yet.</p>
   {% endif %}
 </section>
+
+{% if ai_actions and ai_actions.actions %}
+<section class="panel">
+  <div class="panel-head">
+    <h2>AI next steps</h2>
+    <span class="meta">{{ ai_actions.provider }} · suggestions for you to act on</span>
+  </div>
+  <ul class="at-risk-list">
+    {% for a in ai_actions.actions %}
+    <li>
+      <strong>{{ a.title }}</strong>
+      <span class="meta">{{ a.urgency }}</span>
+      <p>{{ a.detail }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if ai_actions.note %}<p class="banner-note info">{{ ai_actions.note }}</p>{% endif %}
+</section>
+{% endif %}
 
 <section class="panel">
   <div class="panel-head">

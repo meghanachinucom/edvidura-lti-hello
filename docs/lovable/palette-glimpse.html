@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · Spark glimpse</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650;9..144,700&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="./shell.css?v=spark"/>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">EV<span class="mark-spark"></span></div>
+        <div class="brand-text">
+          <div class="brand-name">Ed<span>Vidura</span></div>
+          <div class="brand-tag">Learning inside Moodle</div>
+        </div>
+      </div>
+      <div class="sidebar-context">
+        <span class="context-label">Course</span>
+        <div class="context-value">Algebra I</div>
+        <span class="context-label" style="margin-top:0.45rem">School</span>
+        <div class="context-value">Riverside High</div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Learn</div>
+        <ul class="nav-list">
+          <li><a class="nav-link active" href="#">Home</a></li>
+          <li><a class="nav-link" href="#">Lessons</a></li>
+          <li><a class="nav-link" href="#">Take the quiz</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="user-name">Alice Nguyen</div>
+        <div class="user-role">Student</div>
+        <a class="btn-back-moodle sidebar-back" href="#">← Back to Moodle</a>
+      </div>
+    </aside>
+    <div class="content">
+      <header class="topbar">
+        <div class="topbar-left"><h1 class="page-title">Home</h1></div>
+        <div class="topbar-right"><a class="btn-back-moodle" href="#">← Back to Moodle</a></div>
+      </header>
+      <main class="main">
+        <section class="welcome welcome-spark">
+          <div class="welcome-copy">
+            <p class="welcome-kicker"><span class="spark-dot"></span> Algebra I · Riverside High</p>
+            <h2 class="welcome-title">Hi, Alice</h2>
+            <p class="welcome-lede">Your next spark is waiting in <strong>Algebra I</strong>. One lesson at a time — private to your school.</p>
+            <div class="welcome-actions">
+              <a class="btn primary btn-lg btn-spark" href="#"><span>Continue learning</span><span class="btn-shine"></span></a>
+              <a class="btn secondary" href="#">Browse lessons</a>
+            </div>
+          </div>
+          <div class="spark-stage" aria-hidden="true">
+            <svg class="spark-svg" viewBox="0 0 280 240" fill="none">
+              <defs>
+                <linearGradient id="pathGlow" x1="20" y1="200" x2="250" y2="40" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#2a9d8f"/><stop offset="0.55" stop-color="#3bb5a5"/><stop offset="1" stop-color="#e2b84c"/>
+                </linearGradient>
+                <radialGradient id="orbGlow" cx="0.5" cy="0.5" r="0.5">
+                  <stop stop-color="#fff6d0"/><stop offset="0.35" stop-color="#e2b84c" stop-opacity="0.95"/><stop offset="1" stop-color="#e2b84c" stop-opacity="0"/>
+                </radialGradient>
+                <filter id="softBlur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6"/></filter>
+              </defs>
+              <path class="spark-path" d="M28 198 C 70 170, 90 150, 118 128 S 170 90, 198 72 S 240 48, 252 36" stroke="url(#pathGlow)" stroke-width="3" stroke-linecap="round"/>
+              <circle class="node n1" cx="28" cy="198" r="7" fill="#2a9d8f"/>
+              <circle class="node n2" cx="118" cy="128" r="6" fill="#3bb5a5"/>
+              <circle class="node n3" cx="198" cy="72" r="6" fill="#c9a84a"/>
+              <circle class="spark-orb" cx="252" cy="36" r="28" fill="url(#orbGlow)" filter="url(#softBlur)"/>
+              <circle class="spark-core" cx="252" cy="36" r="8" fill="#fff8e0"/>
+              <g class="spark-rays" stroke="#e2b84c" stroke-width="2" stroke-linecap="round">
+                <line x1="252" y1="10" x2="252" y2="2"/><line x1="272" y1="36" x2="280" y2="36"/>
+                <line x1="268" y1="20" x2="274" y2="14"/><line x1="236" y1="20" x2="230" y2="14"/>
+              </g>
+            </svg>
+            <p class="spark-caption">2 of 3 lessons lit</p>
+          </div>
+        </section>
+        <div class="progress-block">
+          <div class="progress-head"><span>Lesson progress</span><span>2/3</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:66%"></div></div>
+        </div>
+        <div class="insight-row">
+          <div class="insight"><span class="insight-k">Your attempts</span><span class="insight-v">1</span></div>
+          <div class="insight"><span class="insight-k">Last score</span><span class="insight-v">2/3</span></div>
+          <div class="insight"><span class="insight-k">Moodle grades</span><span class="insight-v insight-v-sm">Synced</span></div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,86 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Learn · my progress</p>
+  <h2 class="welcome-title">Your learning snapshot</h2>
+  <p class="welcome-lede">
+    Attempts and evidence for this launch identity — Moodle still owns the official gradebook.
+  </p>
+</section>
+
+<div class="insight-row insight-row-4">
+  <div class="insight">
+    <span class="insight-k">Attempts</span>
+    <span class="insight-v">{{ dash.attempt_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Avg score</span>
+    <span class="insight-v">{% if dash.avg_percent is not none %}{{ dash.avg_percent }}%{% else %}—{% endif %}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Best</span>
+    <span class="insight-v">{% if dash.best_percent is not none %}{{ dash.best_percent }}%{% else %}—{% endif %}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">xAPI</span>
+    <span class="insight-v">{{ dash.xapi_count }}</span>
+  </div>
+</div>
+
+<div class="insight-row insight-row-4">
+  <div class="insight">
+    <span class="insight-k">Passed (≥60%)</span>
+    <span class="insight-v">{{ dash.pass_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Below pass</span>
+    <span class="insight-v">{{ dash.fail_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Lessons done</span>
+    <span class="insight-v">{{ dash.lesson_completions }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Actions</span>
+    <span class="insight-v" style="font-size:0.95rem">
+      <a class="link" href="/learn/gap?token={{ quiz_token }}">My plan</a>
+    </span>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Recent attempts</h2>
+  </div>
+  {% if dash.recent %}
+  <table>
+    <thead><tr><th>When</th><th>Score</th><th>Course</th><th>Moodle</th><th></th></tr></thead>
+    <tbody>
+    {% for r in dash.recent %}
+      <tr>
+        <td class="meta">{{ r.created_at[:16] }}</td>
+        <td>{{ r.score }}/{{ r.max_score }} ({{ r.percent }}%)</td>
+        <td>{{ r.course_label or '—' }}</td>
+        <td>{% if r.grade_sent %}<span class="ok">Synced</span>{% else %}<span class="meta">Local</span>{% endif %}</td>
+        <td><a class="link" href="/quiz/result/{{ r.id }}?token={{ quiz_token }}">Open</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="lede">No attempts yet — take the quiz to see progress here.</p>
+  <a class="btn primary" href="/quiz?token={{ quiz_token }}">Take quiz</a>
+  {% endif %}
+</section>
+
+{% if dash.skill_verbs %}
+<section class="panel">
+  <h2>Your xAPI verbs</h2>
+  <p class="meta">
+    {% for v in dash.skill_verbs %}
+      {{ v.label }} ({{ v.count }}){% if not loop.last %} · {% endif %}
+    {% endfor %}
+  </p>
+</section>
+{% endif %}
+{% endblock %}

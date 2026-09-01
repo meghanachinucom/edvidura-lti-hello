@@ -1,0 +1,64 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">SME study coach</p>
+  <h2 class="welcome-title">Ask about approved sources</h2>
+  <p class="welcome-lede">
+    Answers stay grounded in version-pinned manuals and lessons your teacher approved.
+    {% if ai %}Mode: <strong>{{ ai.provider }}</strong>{% endif %}
+    {% if source_count %}<span class="meta"> · {{ source_count }} source chunk{{ 's' if source_count != 1 else '' }}</span>{% endif %}
+  </p>
+  <p class="meta">Retention: turns are <strong>not stored</strong> (stateless coach). Official grades stay in your LMS.</p>
+</section>
+
+{% if error %}<p class="banner ok">{{ error }}</p>{% endif %}
+
+<section class="panel">
+  <form method="post" action="/learn/coach" class="teach-form">
+    <input type="hidden" name="token" value="{{ quiz_token }}"/>
+    <label>Your question
+      <textarea name="question" rows="3" required placeholder="What is a variable?">{{ question }}</textarea>
+    </label>
+    <button type="submit" class="btn primary">Ask</button>
+  </form>
+</section>
+
+{% if answer %}
+<section class="panel">
+  <h2>Answer</h2>
+  <p>{{ answer.answer }}</p>
+  {% if answer.citation_links %}
+  <h3 class="meta" style="margin-top:1rem">Citations</h3>
+  <ul class="cite-list">
+    {% for c in answer.citation_links %}
+    <li class="cite-card">
+      <div class="cite-head">
+        {% if c.href %}
+        <a class="link" href="{{ c.href }}{% if quiz_token %}{% if '?' in c.href %}&{% else %}?{% endif %}token={{ quiz_token }}{% endif %}">{{ c.title }}</a>
+        {% else %}
+        <strong>{{ c.title }}</strong>
+        {% endif %}
+        {% if c.kind %}<span class="badge">{{ c.kind }}{% if c.version %} · v{{ c.version }}{% endif %}</span>{% endif %}
+      </div>
+      {% if c.excerpt %}<p class="meta cite-excerpt">{{ c.excerpt }}</p>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% elif answer.citations %}
+  <p class="meta">From: {% for c in answer.citations %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+  {% endif %}
+  {% if answer.grounded is defined and not answer.grounded %}
+  <p class="banner-note info">
+    Not found in approved SME sources{% if answer.refusal_reason %} ({{ answer.refusal_reason }}){% endif %}.
+  </p>
+  {% endif %}
+  {% if answer.note %}<p class="banner-note info">{{ answer.note }}</p>{% endif %}
+  {% if answer.practice_hint %}
+  <div class="actions" style="margin-top:1rem">
+    <a class="btn primary" href="/quiz?token={{ quiz_token }}&practice=1">Practice related quiz</a>
+    <a class="btn secondary" href="/learn/gap?token={{ quiz_token }}">Open my plan</a>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

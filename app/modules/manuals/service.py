@@ -236,3 +236,105 @@ def publish_version(
 
 def render_body(body_md: str) -> str:
     return body_md_to_html(body_md)
+
+
+def toc_from_body(body_md: str) -> list[dict[str, str]]:
+    """
+    PeBL-ish chapter TOC from ## headings.
+
+    Returns [{slug, title}] — same slugs as heading ids in render_body.
+    """
+    from app.modules.sme.service import split_manual_sections
+
+    sections = split_manual_sections(body_md)
+    return [
+        {"slug": str(s.get("slug") or ""), "title": str(s.get("title") or "")}
+        for s in sections
+        if s.get("slug") and s.get("title")
+    ]
+
+
+def _reader_signing_key() -> bytes:
+    from app.settings import get_settings
+
+    s = get_settings()
+    raw = (
+        getattr(s, "receipt_signing_key", "")
+        or s.session_secret
+        or "dev-only-change-me"
+    )
+    return str(raw).encode("utf-8")
+
+
+def seal_reader_token(
+    *,
+    tenant_id: UUID | str,
+    manual_id: UUID | str,
+    version: int,
+    exp_hours: int = 72,
+) -> str:
+    """HMAC token for standalone eBook read links (no LTI session)."""
+    import hashlib
+    import hmac
+    import time
+
+    exp = int(time.time()) + max(1, int(exp_hours)) * 3600
+    payload = f"{tenant_id}|{manual_id}|{int(version)}|{exp}"
+    dig = hmac.new(_reader_signing_key(), payload.encode("utf-8"), hashlib.sha256).hexdigest()
+    return f"{exp}.{dig}"
+
+
+def verify_reader_token(
+    *,
+    token: str,
+    tenant_id: UUID | str,
+    manual_id: UUID | str,
+    version: int,
+) -> bool:
+    import hashlib
+    import hmac
+    import time
+
+    raw = (token or "").strip()
+    if "." not in raw:
+        return False
+    exp_s, dig = raw.split(".", 1)
+    try:
+        exp = int(exp_s)
+    except ValueError:
+        return False
+    if exp < int(time.time()):
+        return False
+    payload = f"{tenant_id}|{manual_id}|{int(version)}|{exp}"
+    expected = hmac.new(
+        _reader_signing_key(), payload.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(dig.lower(), expected.lower())
+
+
+def reader_share_path(
+    *,
+    tenant_id: UUID | str,
+    manual_id: UUID | str,
+    version: int,
+    focus: str = "",
+    exp_hours: int = 72,
+) -> str:
+    """Relative URL for standalone PeBL reader."""
+    from urllib.parse import urlencode
+
+    sig = seal_reader_token(
+        tenant_id=tenant_id,
+        manual_id=manual_id,
+        version=version,
+        exp_hours=exp_hours,
+    )
+    q = {
+        "tid": str(tenant_id),
+        "v": int(version),
+        "sig": sig,
+    }
+    focus_s = (focus or "").strip().lstrip("#")
+    if focus_s:
+        q["focus"] = focus_s
+    return f"/read/manuals/{manual_id}?{urlencode(q)}"

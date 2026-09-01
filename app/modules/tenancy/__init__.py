@@ -11,6 +11,11 @@ from app.modules.tenancy.context import (
     with_tenant,
 )
 from app.modules.tenancy.names import display_name_from_launch, greeting_first_name
+from app.modules.tenancy.lms import (
+    default_lms_home,
+    default_lms_return_url,
+    detect_lms_name,
+)
 from app.modules.tenancy.resolve import ResolvedTenant, resolve_platform
 from app.modules.tenancy.tool_conf import build_tool_conf_from_db
 
@@ -29,4 +34,7 @@ __all__ = [
     "with_tenant",
     "display_name_from_launch",
     "greeting_first_name",
+    "detect_lms_name",
+    "default_lms_home",
+    "default_lms_return_url",
 ]

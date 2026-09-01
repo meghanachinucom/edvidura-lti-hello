@@ -17,7 +17,11 @@ Moodle appends `openid_configuration` + `registration_token`.
 
 ## Fallback
 
-Expand **Advanced — manual Client ID setup** on `/onboard` (old four-URL flow).
+Expand **Advanced — manual Client ID setup** on `/onboard` (works for Moodle, Canvas, Open edX).
+
+## Canvas
+
+See [CANVAS.md](CANVAS.md). Onboard also has a **Canvas Developer Key checklist**. Summary: create LTI Developer Key → register issuer + Client ID + Deployment ID → launch from a course.
 
 ## Local demo
 

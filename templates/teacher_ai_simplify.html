@@ -1,0 +1,20 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">AI · {{ provider }} / {{ model }}</p>
+  <h2 class="welcome-title">Simplified draft</h2>
+  <p class="welcome-lede">{{ draft.summary or 'Review before applying to the lesson.' }}</p>
+</section>
+{% if note %}<p class="banner-note info">{{ note }}</p>{% endif %}
+
+<form method="post" action="/teacher/ai/simplify/apply" class="teach-form">
+  <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+  <input type="hidden" name="lesson_id" value="{{ lesson.id }}"/>
+  <label>Title <input name="title" value="{{ draft.title or lesson.title }}"/></label>
+  <label>Body <textarea name="body_md" rows="16">{{ draft.body_md }}</textarea></label>
+  <div class="cta-row">
+    <button type="submit" class="btn primary">Apply to lesson</button>
+    <a class="btn secondary" href="/teacher/ai?token={{ quiz_token }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

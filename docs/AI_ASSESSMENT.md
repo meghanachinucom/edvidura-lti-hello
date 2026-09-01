@@ -1,20 +1,30 @@
 # AI assessment (slice)
 
-Generate draft multiple-choice questions from a lesson body. Teachers review and save into the tenant quiz bank.
+See **[AI.md](AI.md)** for the full feature list and how to enable OpenAI.
+
+## Flows
+
+| Flow | Input | Output |
+|------|--------|--------|
+| Lesson → MCQ | Reading lesson `body_md` | Draft MCQs → teacher saves to quiz bank |
+| PDF/text → MCQ | Upload `.pdf` / `.txt` / `.md` | Extract text → same draft preview |
+| Grade assist | Prompt + rubric + answer | Suggested score + copy text (**no AGS**) |
+| Simplify | Lesson body | Draft rewrite → teacher applies |
 
 ## Module
 
-`app.modules.ai_assessment`
+`app.modules.ai_assessment` (+ `app.modules.ai_tutor` for students)
 
 | Mode | When | Behavior |
 |------|------|----------|
-| **local** (default) | No key, or `AI_ENABLED` off | Heuristic MCQs from lesson sentences — works offline |
+| **local** (default) | No key, or `AI_ENABLED` off | Heuristics — works offline |
 | **openai** | `AI_ENABLED=1` + `OPENAI_API_KEY` | Chat Completions JSON; falls back to local on error |
+
+PDF extraction uses **pypdf** (`pip install pypdf`). Scanned image-only PDFs need OCR elsewhere — paste text or use a text PDF.
 
 ## Env
 
 ```env
-# Optional — local generator works without these
 AI_ENABLED=1
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o-mini
@@ -22,14 +32,11 @@ OPENAI_MODEL=gpt-4o-mini
 
 ## Teacher UI
 
-1. Teach → Upload content  
-2. On a reading lesson with enough text → **AI quiz**  
-3. Preview → select → **Save selected** → school quiz bank  
+- Teach → **AI tools** (`/teacher/ai`) — PDF→MCQ + grade assist
+- Upload content → **AI quiz** / **Simplify**
+- Class results → AI next steps
 
-Routes: `POST /teacher/ai/generate`, `POST /teacher/ai/save`.
+## Safety
 
-## Non-goals (this slice)
-
-- Auto-grading open responses  
-- PDF → questions pipeline  
-- Student-facing chatbot  
+- Grade assist never calls Moodle AGS (`moodle_passback: false`)
+- Teacher copies suggestion into the LMS gradebook manually

@@ -4,7 +4,7 @@ Implemented in `app.modules.specials` and wired into the Shiko shell.
 
 | # | Feature | Where |
 |---|---------|--------|
-| 1 | Grade with receipts | Result page evidence card (attempt id, AGS, xAPI id) |
+| 1 | Grade with receipts | Sealed HMAC evidence card + download/verify |
 | 2 | Wrong-answer teleport | Missed items link to lessons/manuals |
 | 3 | Quiet class radar | Class results — item fail rates (no leaderboard) |
 | 4 | Launch fingerprint | Strip under navbar |

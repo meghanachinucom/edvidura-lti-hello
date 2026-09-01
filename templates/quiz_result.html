@@ -25,9 +25,58 @@
   <div class="stat"><div class="stat-ico i4">↻</div><div><b>Retry</b><span>Missed only</span></div></div>
 </div>
 
+{% if has_misses %}
+<section class="panel remediation-loop">
+  <div class="panel-head">
+    <h2>{% if gap_path and gap_path.active %}{% if gap_path.mode == 'difference' %}{% if gap_path.persisted %}Difference plan saved{% else %}Difference training path{% endif %}{% elif gap_path.persisted %}Learning plan saved{% else %}Gap training path{% endif %}{% else %}Closed remediation loop{% endif %}</h2>
+    <span class="meta">{% if gap_path and gap_path.mode == 'difference' %}D23 · {% elif gap_path and gap_path.persisted %}PLE · {% endif %}Miss → review → practice → graded</span>
+  </div>
+  {% if is_practice %}
+  <p class="lede">Practice done. Next: <strong>graded retry</strong> of the missed items (can sync to Moodle).</p>
+  <div class="actions" style="margin-top:0.75rem">
+    <a class="btn primary btn-lg" href="{{ graded_retry_href }}">Graded retry</a>
+    {% if loop_review_href %}
+    <a class="btn secondary" href="{{ loop_review_href }}">Re-open review</a>
+    {% endif %}
+  </div>
+  {% elif gap_path and gap_path.active %}
+  <ol class="loop-steps" style="line-height:1.7;padding-left:1.25rem;margin:0.5rem 0 0">
+    {% for step in gap_path.steps %}
+    <li>
+      <a class="link" href="{{ step.href }}">{{ step.label }}</a>
+      {% if step.meta %}<span class="meta"> — {{ step.meta }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  <div class="actions" style="margin-top:1rem">
+    <a class="btn primary" href="{{ gap_path.first_href }}">1 · Start gap path</a>
+    <a class="btn secondary" href="{{ gap_path.practice_href }}">Practice</a>
+    <a class="btn secondary" href="{{ gap_path.graded_href }}">Graded retry</a>
+    <a class="btn secondary" href="/learn/gap?token={{ quiz_token }}">Full gap page</a>
+  </div>
+  {% else %}
+  <ol class="loop-steps" style="line-height:1.7;padding-left:1.25rem;margin:0.5rem 0 0">
+    <li><strong>Review</strong> — open the pinned lesson or manual section for a missed skill.</li>
+    <li><strong>Practice</strong> — sandbox quiz on missed items (no Moodle sync).</li>
+    <li><strong>Graded retry</strong> — same missed items, score can sync to Moodle.</li>
+  </ol>
+  <div class="actions" style="margin-top:1rem">
+    {% if loop_review_href %}
+    <a class="btn primary" href="{{ loop_review_href }}">1 · {{ loop_review_label }}</a>
+    {% endif %}
+    <a class="btn secondary" href="{{ practice_href }}">2 · Practice lane</a>
+    <a class="btn secondary" href="{{ graded_retry_href }}">3 · Graded retry</a>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
 {% if receipt %}
 <div class="card receipt-card">
-  <div class="card-h"><h2>Grade receipt</h2><span class="badge">Evidence</span></div>
+  <div class="card-h">
+    <h2>Grade receipt</h2>
+    {% if receipt.sealed %}<span class="badge ok">Sealed</span>{% else %}<span class="badge">Evidence</span>{% endif %}
+  </div>
   <dl class="kv receipt-kv">
     <dt>Attempt</dt><dd><code>{{ receipt.attempt_id }}</code></dd>
     <dt>Score</dt><dd>{{ receipt.score }}/{{ receipt.max_score }} ({{ receipt.percent }}%)</dd>
@@ -35,9 +84,20 @@
     <dd>{% if receipt.practice %}Skipped (practice){% elif receipt.grade_sent %}Synced{% elif receipt.ags_available %}Pending / not synced{% else %}AGS off on launch{% endif %}</dd>
     <dt>xAPI statement</dt>
     <dd>{% if receipt.xapi_statement_id %}<code>{{ receipt.xapi_statement_id }}</code>{% else %}—{% endif %}</dd>
+    {% if skill_xapi_count %}
+    <dt>Skill xAPI</dt>
+    <dd>{{ skill_xapi_count }} competency statement{% if skill_xapi_count != 1 %}s{% endif %}</dd>
+    {% endif %}
     <dt>Issued</dt><dd class="meta">{{ receipt.issued_at }}</dd>
+    {% if receipt.seal %}
+    <dt>Seal (HMAC)</dt><dd><code class="meta">{{ receipt.seal[:24] }}…</code></dd>
+    {% endif %}
   </dl>
-  <p class="lede" style="margin:0.75rem 0 0">Moodle owns the official grade; EdVidura keeps the learning story.</p>
+  <p class="lede" style="margin:0.75rem 0 0">Moodle owns the official grade; EdVidura keeps the sealed learning story.</p>
+  <div class="actions" style="margin-top:0.75rem">
+    <a class="btn secondary" href="/quiz/result/{{ attempt_id }}/receipt.json?token={{ quiz_token }}">Download sealed JSON</a>
+    <a class="btn secondary" href="/receipts/verify?token={{ quiz_token }}">Verify a seal</a>
+  </div>
 </div>
 {% endif %}
 
@@ -79,10 +139,25 @@
             <span class="meta">{{ item.teleport_hint }}</span>
           </div>
           {% endif %}
+          {% if not item.correct %}
+          <form method="post" action="/learn/ai/hint" style="margin-top:0.4rem">
+            <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+            <input type="hidden" name="attempt_id" value="{{ attempt_id }}"/>
+            <input type="hidden" name="prompt" value="{{ item.prompt }}"/>
+            <input type="hidden" name="correct_choice" value="{{ item.correct_choice or '' }}"/>
+            <button type="submit" class="btn secondary">AI hint</button>
+          </form>
+          {% endif %}
           {% if item.manual_href %}
           <div class="teleport">
             <a class="link" href="{{ item.manual_href }}">{{ item.manual_label or "Pinned manual section" }} →</a>
             <span class="meta">Version-pinned · then practice → graded retry</span>
+          </div>
+          {% endif %}
+          {% if item.practice_loop_href and not item.correct %}
+          <div class="teleport">
+            <a class="link" href="{{ item.practice_loop_href }}">Practice this skill →</a>
+            <a class="link" href="{{ item.graded_loop_href }}">Graded retry →</a>
           </div>
           {% endif %}
         </div>
@@ -98,12 +173,18 @@
     <div class="card-h"><h2>Next step</h2></div>
     <p class="lede" style="margin:0">
       {% if score == max_score %}Nice work — full marks.
+      {% elif is_practice %}Finish the loop with a graded retry.
       {% elif score == 0 %}Open the pinned manual or lesson, practice, then graded retry.
       {% else %}Miss → manual section → practice lane → graded retry.{% endif %}
     </p>
     <div class="actions" style="margin-top:1rem">
+      {% if is_practice and has_misses %}
+      <a class="btn primary" href="{{ graded_retry_href }}">Graded retry</a>
+      {% else %}
       <a class="btn primary" href="{{ retry_href }}">Retry missed</a>
       <a class="btn secondary" href="{{ practice_href }}">Practice lane</a>
+      {% endif %}
+      <a class="btn secondary" href="/learn/coach?token={{ quiz_token }}">Study coach</a>
       <a class="btn secondary" href="/lessons?token={{ quiz_token }}">Lessons</a>
     </div>
   </div>

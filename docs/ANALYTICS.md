@@ -1,48 +1,51 @@
-# Analytics / BI
+# Analytics / BI (D18)
 
-EdVidura keeps **Moodle AGS as gradebook SoR**. Analytics uses quiz attempts + xAPI.
+EdVidura keeps **Moodle AGS as gradebook SoR**. Analytics uses quiz attempts + xAPI under tenant RLS.
 
-## In-app (teachers)
+## Role dashboards
 
-| Route | What |
-|-------|------|
-| `/teacher/analytics` | KPI cards, 30-day attempts, xAPI verb counts |
-| `/teacher/analytics.json` | Same payload as JSON |
-| `/teacher/analytics.csv` | Flat attempt export |
+| Role | Route | Source |
+|------|-------|--------|
+| **Learner** | `/learn/analytics` | `learner_dashboard(tenant, subject)` |
+| **Teacher** | `/teacher/analytics` (+ `.json` / `.csv`) | `tenant_dashboard` |
+| **School admin** | `/school-admin/analytics` | same tenant roll-up |
 
 Module: `app.modules.analytics`.
 
-## Metabase (optional)
+## Metabase
 
 ```bash
 cd db
 docker compose --profile bi up -d
 ```
 
-Apply BI role + views (once):
+Apply BI views (via `scripts/apply_migrations.py` — includes `migration_bi_xapi_tiers.sql` for tier columns).
 
-```bash
-Get-Content db/migration_bi_views.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
-Get-Content db/migration_xapi_tiers.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
-```
-
-Open http://localhost:3001 — complete Metabase setup, then add a Postgres database:
+Open http://localhost:3001 — add Postgres:
 
 | Field | Value |
 |-------|--------|
-| Host | `db` (same compose network) |
+| Host | `db` |
 | Port | `5432` |
 | Database | `edvidura` |
 | User | `edvidura_bi` |
 | Password | `edvidura_bi` |
 
-This role is **read-only** and `BYPASSRLS` so Metabase can see all tenants — **always filter dashboards by `tenant_id` / `tenant_slug`**. Treat as the reporting “replica” for local demos (a physical streaming replica can replace it later).
+**Always filter by `tenant_id` / `tenant_slug`.** Role `edvidura_bi` bypasses RLS for reporting.
 
-Useful views: `bi_quiz_attempts`, `bi_xapi_statements`, `bi_xapi_daily`, `bi_lesson_progress`, `bi_tenant_kpis`.
+Views: `bi_quiz_attempts`, `bi_xapi_statements` (includes `tier`), `bi_xapi_daily`, `bi_lesson_progress`, `bi_tenant_kpis`.
 
-Teacher Analytics also links to `METABASE_URL` when set.
+### Signed embed (optional)
+
+```env
+METABASE_URL=http://localhost:3001
+METABASE_SECRET_KEY=...          # from Metabase Admin → Embedding
+METABASE_EMBED_DASHBOARD_ID=1    # published dashboard id
+```
+
+When set, teacher + school-admin Analytics show a static embed iframe (`metabase_embed_url`) with optional `tenant_id` / `tenant_slug` locked params. Otherwise the pages link out to Metabase.
 
 ## Related
 
-- [`docs/XAPI.md`](XAPI.md) — statement store / optional LRS
-- Class results still has radar, competency map, at-risk coach
+- [XAPI.md](XAPI.md) — statement store / middleware API / LRS
+- Class results — radar, competency map, at-risk

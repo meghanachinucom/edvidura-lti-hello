@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · Interesting UX demo (approval)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;650;700&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --slate: #163445;
+      --slate-deep: #0c1f2a;
+      --paper: #f3efe6;
+      --surface: #fffcf7;
+      --teal: #2a9d8f;
+      --teal-bright: #3ecfbe;
+      --teal-deep: #1f7f74;
+      --ink: #122029;
+      --mute: #5a6d78;
+      --line: #ddd4c5;
+      --gold: #e2b84c;
+      --coral: #e07a5f;
+      --font-brand: "Syne", sans-serif;
+      --font-display: "Fraunces", Georgia, serif;
+      --font: "Outfit", sans-serif;
+      --sidebar-w: 268px;
+      --radius: 16px;
+      --shadow: 0 1px 2px rgba(18,32,41,.04), 0 14px 36px rgba(18,32,41,.07);
+      --ease: cubic-bezier(.22,1,.36,1);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); color: var(--ink); background: #ddd6c8; }
+    .banner {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between;
+      padding: 0.7rem 1rem; background: #0c1a22; color: #f4f0e8; font-size: 0.88rem; font-weight: 600;
+    }
+    .banner strong { color: var(--gold); }
+    .roles { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .roles button {
+      border: 1px solid rgba(255,255,255,.22); background: transparent; color: #fff;
+      border-radius: 999px; padding: 0.35rem 0.85rem; cursor: pointer; font: inherit; font-weight: 650;
+      transition: background .2s var(--ease), transform .2s var(--ease);
+    }
+    .roles button:hover { transform: translateY(-1px); }
+    .roles button.on { background: var(--teal); border-color: var(--teal); }
+
+    .shell {
+      display: flex; min-height: calc(100vh - 52px); max-width: 1180px; margin: 0 auto;
+      background: var(--paper); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0; color: #c8d7de; display: flex; flex-direction: column;
+      background:
+        radial-gradient(380px 200px at 10% 0%, rgba(62,207,190,.28), transparent 55%),
+        radial-gradient(320px 240px at 100% 100%, rgba(226,184,76,.16), transparent 50%),
+        linear-gradient(175deg, var(--slate), var(--slate-deep));
+      position: relative;
+    }
+    .sidebar::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .35;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    }
+    .brand, .side-stack, nav, .foot { position: relative; z-index: 1; }
+    .brand { display: flex; gap: 0.75rem; align-items: center; padding: 1.2rem 1.05rem 0.9rem; }
+    .mark {
+      width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center;
+      background: linear-gradient(145deg, var(--teal-bright), var(--teal-deep)); color: #fff;
+      font-family: var(--font-brand); font-weight: 800; box-shadow: 0 8px 22px rgba(42,157,143,.4);
+      animation: markGlow 3.5s ease-in-out infinite;
+    }
+    @keyframes markGlow {
+      0%,100% { box-shadow: 0 8px 22px rgba(42,157,143,.35); }
+      50% { box-shadow: 0 8px 28px rgba(226,184,76,.45), 0 0 0 1px rgba(255,255,255,.12); }
+    }
+    .bname { font-family: var(--font-brand); font-weight: 800; color: #fff; font-size: 1.12rem; letter-spacing: -.02em; }
+    .bname span { color: var(--gold); }
+    .btag { font-size: 0.72rem; color: #8fa3ad; }
+
+    .side-stack { padding: 0 0.85rem; display: grid; gap: 0.6rem; }
+    .card {
+      padding: 0.9rem; border-radius: 14px;
+      background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(6px);
+    }
+    .card small {
+      display: block; font-size: 0.62rem; letter-spacing: .12em; text-transform: uppercase;
+      color: #7f93a0; margin-bottom: 0.35rem; font-weight: 700;
+    }
+    .course { font-size: 1rem; font-weight: 700; color: #f2f6f8; }
+    .school { margin-top: 0.15rem; font-size: 0.8rem; color: #9bb0ba; }
+    .ring-wrap { display: flex; gap: 0.85rem; align-items: center; margin-top: 0.75rem; }
+    .ring {
+      --p: 66; width: 54px; height: 54px; border-radius: 50%; flex-shrink: 0;
+      background: conic-gradient(var(--teal-bright) calc(var(--p) * 1%), rgba(255,255,255,.12) 0);
+      display: grid; place-items: center; animation: ringIn .9s var(--ease) both;
+    }
+    .ring::before {
+      content: attr(data-p); width: 40px; height: 40px; border-radius: 50%;
+      background: #0e2430; display: grid; place-items: center;
+      font-size: 0.72rem; font-weight: 800; color: #fff;
+    }
+    @keyframes ringIn { from { transform: scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
+    .ring-copy { font-size: 0.8rem; color: #9bb0ba; line-height: 1.35; }
+    .ring-copy strong { display: block; color: #fff; font-size: 0.9rem; margin-bottom: 0.1rem; }
+
+    .streak {
+      display: flex; gap: 0.35rem; margin-top: 0.7rem;
+    }
+    .streak i {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(255,255,255,.12); display: block;
+    }
+    .streak i.on {
+      background: var(--gold);
+      box-shadow: 0 0 10px rgba(226,184,76,.7);
+      animation: pop .4s var(--ease) both;
+    }
+    .streak i.on:nth-child(2) { animation-delay: .05s; }
+    .streak i.on:nth-child(3) { animation-delay: .1s; }
+    .streak i.on:nth-child(4) { animation-delay: .15s; }
+    @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+
+    .next-what { font-weight: 700; color: #fff; font-size: 0.95rem; }
+    .next-meta { margin-top: 0.15rem; font-size: 0.78rem; color: #9bb0ba; }
+    .side-cta {
+      display: inline-flex; margin-top: 0.7rem; text-decoration: none; font-weight: 700; font-size: 0.8rem;
+      color: #122029; background: linear-gradient(135deg, #f0d078, var(--gold));
+      padding: 0.42rem 0.85rem; border-radius: 999px;
+      box-shadow: 0 6px 16px rgba(226,184,76,.35);
+      transition: transform .2s var(--ease);
+    }
+    .side-cta:hover { transform: translateY(-2px); color: #122029; }
+
+    .role-fill { display: none; }
+    body.role-student .fill-student { display: block; }
+    body.role-teacher .fill-teacher { display: block; }
+    body.role-admin .fill-admin { display: block; }
+
+    nav { flex: 1; padding: 0.85rem 0.7rem 0.4rem; }
+    .sec {
+      margin: 0.45rem 0.55rem 0.4rem; font-size: 0.64rem; letter-spacing: .12em;
+      text-transform: uppercase; color: #7f93a0; font-weight: 700;
+    }
+    .sec, .nav-teach, .nav-admin { display: none; }
+    body.role-student .sec-learn { display: block; }
+    body.role-teacher .sec-learn, body.role-teacher .sec-teach, body.role-teacher .nav-teach { display: block; }
+    body.role-admin .sec-learn, body.role-admin .sec-admin, body.role-admin .nav-admin { display: block; }
+
+    a.link {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.7rem 0.75rem; margin: 0.16rem 0; border-radius: 12px;
+      color: #c5d4dc; text-decoration: none; font-weight: 600; font-size: 0.94rem;
+      transition: background .2s var(--ease), transform .2s var(--ease), color .2s;
+    }
+    a.link .ico {
+      width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
+      background: rgba(255,255,255,.07); font-size: 0.9rem; flex-shrink: 0;
+      transition: background .2s, transform .25s var(--ease);
+    }
+    a.link:hover { background: rgba(255,255,255,.08); color: #fff; transform: translateX(3px); }
+    a.link:hover .ico { transform: scale(1.08); }
+    a.link.on {
+      background: linear-gradient(90deg, rgba(42,157,143,.42), rgba(42,157,143,.1));
+      color: #fff; box-shadow: inset 3px 0 0 var(--teal-bright);
+    }
+    a.link.on .ico { background: rgba(42,157,143,.5); }
+
+    .foot { padding: 0.85rem 0.95rem 1.1rem; border-top: 1px solid rgba(255,255,255,.08); }
+    .who { display: flex; gap: 0.65rem; align-items: center; }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+      background: linear-gradient(145deg, #3bb5a5, #1a5f58); color: #fff;
+      font-weight: 800; font-size: 0.78rem; font-family: var(--font-brand);
+    }
+    .uname { color: #fff; font-weight: 700; font-size: 0.9rem; }
+    .urole { color: var(--gold); font-size: 0.74rem; font-weight: 700; }
+    .back {
+      display: flex; margin-top: 0.75rem; justify-content: center; text-decoration: none;
+      padding: 0.55rem; border-radius: 11px; border: 1px solid rgba(42,157,143,.45);
+      color: #d7efe9; font-weight: 650; font-size: 0.84rem; background: rgba(42,157,143,.12);
+    }
+
+    .content {
+      flex: 1; min-width: 0; display: flex; flex-direction: column;
+      background:
+        radial-gradient(700px 380px at 90% -10%, rgba(42,157,143,.16), transparent 50%),
+        radial-gradient(520px 300px at 0% 80%, rgba(226,184,76,.1), transparent 45%),
+        var(--paper);
+    }
+    .topbar {
+      min-height: 62px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0.7rem 1.4rem; border-bottom: 1px solid var(--line); background: rgba(243,239,230,.88);
+      backdrop-filter: blur(10px);
+    }
+    .ptitle { margin: 0; font-family: var(--font-brand); font-weight: 800; font-size: 1.12rem; letter-spacing: -.02em; }
+    .main { padding: 1.35rem 1.45rem 2.6rem; max-width: 820px; }
+    .screen { display: none; }
+    .screen.on { display: block; animation: rise .45s var(--ease) both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .hero {
+      position: relative; overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line); border-radius: 20px;
+      padding: 1.5rem 1.4rem 1.55rem; box-shadow: var(--shadow); margin-bottom: 1rem;
+    }
+    .hero::before {
+      content: ""; position: absolute; inset: -20% 40% auto -10%; height: 160%;
+      background: radial-gradient(circle, rgba(42,157,143,.14), transparent 60%);
+      animation: drift 8s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    @keyframes drift { from { transform: translate(0,0); } to { transform: translate(8%, 4%); } }
+    .hero-inner { position: relative; z-index: 1; }
+    .kicker {
+      margin: 0 0 0.4rem; font-size: 0.72rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--teal-deep); font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .kicker .pulse {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--gold);
+      box-shadow: 0 0 0 0 rgba(226,184,76,.5);
+      animation: pulse 1.8s ease-out infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(226,184,76,.55); }
+      70% { box-shadow: 0 0 0 10px rgba(226,184,76,0); }
+      100% { box-shadow: 0 0 0 0 rgba(226,184,76,0); }
+    }
+    .title {
+      margin: 0; font-family: var(--font-display); font-weight: 650;
+      font-size: clamp(1.95rem, 4vw, 2.6rem); letter-spacing: -.03em; line-height: 1.05;
+    }
+    .lede { margin: 0.65rem 0 0; color: var(--mute); max-width: 36rem; font-size: 1.02rem; line-height: 1.45; }
+
+    .orbit {
+      display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 1rem; align-items: center; margin-top: 1.2rem;
+    }
+    .continue-card {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      padding: 1.05rem 1.1rem; border-radius: 16px;
+      border: 1px solid rgba(42,157,143,.3);
+      background: linear-gradient(145deg, rgba(42,157,143,.12), rgba(226,184,76,.1));
+      position: relative; overflow: hidden;
+    }
+    .continue-card::after {
+      content: ""; position: absolute; top: -30%; right: -15%; width: 120px; height: 120px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(226,184,76,.35), transparent 70%);
+      animation: orbBreathe 3s ease-in-out infinite;
+    }
+    @keyframes orbBreathe { 0%,100% { transform: scale(1); opacity: .7; } 50% { transform: scale(1.15); opacity: 1; } }
+    .continue-tag { font-size: 0.68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--teal-deep); font-weight: 700; }
+    .continue-name { font-weight: 750; font-size: 1.12rem; position: relative; z-index: 1; }
+    .continue-meta { color: var(--mute); font-size: 0.86rem; position: relative; z-index: 1; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+      text-decoration: none; font-weight: 700; border-radius: 999px; padding: 0.78rem 1.25rem;
+      border: 0; cursor: pointer; font: inherit; position: relative; overflow: hidden;
+      transition: transform .2s var(--ease), box-shadow .2s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--teal-bright), var(--teal-deep)); color: #fff;
+      box-shadow: 0 10px 24px rgba(42,157,143,.38); margin-top: 0.75rem; align-self: flex-start;
+      z-index: 1;
+    }
+    .btn.primary::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.4) 50%, transparent 60%);
+      transform: translateX(-120%); animation: shine 3s ease-in-out infinite;
+    }
+    @keyframes shine { 0%,60% { transform: translateX(-120%); } 80%,100% { transform: translateX(120%); } }
+    .btn.secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+
+    .path-viz {
+      display: flex; flex-direction: column; gap: 0.55rem; padding: 0.2rem 0.2rem 0.2rem 0.4rem;
+    }
+    .path-node {
+      display: grid; grid-template-columns: 28px 1fr; gap: 0.55rem; align-items: center;
+      opacity: 0; animation: nodeIn .5s var(--ease) forwards;
+    }
+    .path-node:nth-child(1) { animation-delay: .1s; }
+    .path-node:nth-child(2) { animation-delay: .22s; }
+    .path-node:nth-child(3) { animation-delay: .34s; }
+    @keyframes nodeIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
+    .node-dot {
+      width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 0.72rem; font-weight: 800; background: rgba(18,32,41,.06); color: var(--mute);
+      border: 2px solid var(--line);
+    }
+    .path-node.done .node-dot { background: rgba(42,157,143,.18); color: var(--teal-deep); border-color: var(--teal); }
+    .path-node.now .node-dot {
+      background: var(--gold); color: #122029; border-color: var(--gold);
+      box-shadow: 0 0 0 4px rgba(226,184,76,.25); animation: nodePulse 1.6s ease-in-out infinite;
+    }
+    @keyframes nodePulse { 0%,100% { box-shadow: 0 0 0 4px rgba(226,184,76,.2); } 50% { box-shadow: 0 0 0 8px rgba(226,184,76,.08); } }
+    .node-label { font-weight: 650; font-size: 0.88rem; }
+    .node-sub { font-size: 0.75rem; color: var(--mute); }
+
+    .rail { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 0.9rem; }
+    .block {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 1.1rem; box-shadow: var(--shadow);
+    }
+    .block h3 { margin: 0 0 0.8rem; font-family: var(--font-brand); font-size: 0.95rem; font-weight: 800; }
+    .lesson-card {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 0.85rem; align-items: center;
+      padding: 0.9rem 1rem; margin: 0 0 0.55rem; border-radius: 14px;
+      border: 1px solid var(--line); background: #fff; text-decoration: none; color: inherit;
+      transition: border-color .2s, transform .2s var(--ease), box-shadow .2s;
+      cursor: pointer;
+    }
+    .lesson-card:hover { border-color: var(--teal); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .lesson-card.done { background: rgba(42,157,143,.05); }
+    .lesson-card.now {
+      border-color: rgba(226,184,76,.55);
+      background: linear-gradient(135deg, rgba(226,184,76,.12), rgba(42,157,143,.06));
+    }
+    .lc-num {
+      width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center;
+      font-family: var(--font-brand); font-weight: 800; font-size: 0.9rem;
+      background: rgba(18,32,41,.05); color: var(--mute);
+    }
+    .lesson-card.done .lc-num { background: rgba(42,157,143,.18); color: var(--teal-deep); }
+    .lesson-card.now .lc-num { background: var(--gold); color: #122029; }
+    .lc-title { font-weight: 700; font-size: 0.95rem; }
+    .lc-meta { font-size: 0.8rem; color: var(--mute); margin-top: 0.12rem; }
+    .lc-go { font-weight: 700; color: var(--teal-deep); font-size: 0.85rem; }
+
+    .score-big { font-family: var(--font-display); font-size: 2.5rem; letter-spacing: -.03em; line-height: 1; }
+    .score-sub { margin-top: 0.35rem; color: var(--mute); font-size: 0.88rem; }
+    .tip {
+      margin-top: 0.7rem; padding: 0.65rem 0.75rem; border-radius: 12px;
+      background: rgba(18,32,41,.03); border: 1px solid var(--line);
+      font-size: 0.86rem; color: var(--mute);
+    }
+    .tip strong { color: var(--ink); }
+
+    .q-card {
+      border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.05rem;
+      background: var(--surface); margin-bottom: 0.7rem; box-shadow: var(--shadow);
+      transition: border-color .2s;
+    }
+    .q-card:focus-within { border-color: var(--teal); }
+    .qn { font-weight: 700; margin-bottom: 0.65rem; }
+    .opts { display: grid; gap: 0.4rem; }
+    .opts label {
+      display: flex; gap: 0.6rem; align-items: center; padding: 0.65rem 0.75rem;
+      border-radius: 12px; border: 1px solid var(--line); cursor: pointer; font-size: 0.92rem;
+      transition: border-color .15s, background .15s, transform .15s;
+    }
+    .opts label:hover { border-color: var(--teal); background: rgba(42,157,143,.05); transform: translateX(2px); }
+    .opts input { accent-color: var(--teal); }
+
+    .celebrate {
+      text-align: center; padding: 1.4rem 1rem 0.5rem;
+    }
+    .celebrate .burst {
+      width: 72px; height: 72px; margin: 0 auto 0.85rem; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff8e0, var(--gold) 45%, transparent 70%);
+      animation: burst 1.2s var(--ease) both;
+      box-shadow: 0 0 40px rgba(226,184,76,.45);
+    }
+    @keyframes burst { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 1rem; }
+    .note { margin: 1rem 0 0; color: var(--mute); font-size: 0.86rem; }
+
+    .stat-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .stat-tile {
+      padding: 0.75rem; border-radius: 12px; background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .stat-tile b { display: block; font-size: 1.25rem; color: #fff; font-weight: 800; }
+    .stat-tile span { font-size: 0.7rem; color: #8fa3ad; font-weight: 600; }
+
+    @media (max-width: 900px) {
+      .shell { flex-direction: column; }
+      .sidebar { width: 100%; }
+      .orbit, .rail { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body class="role-student">
+  <div class="banner">
+    <div><strong>Demo only</strong> — more interesting UI/UX. Not applied to the live app yet.</div>
+    <div class="roles">
+      <button type="button" class="on" data-role="student">Student</button>
+      <button type="button" data-role="teacher">Teacher</button>
+      <button type="button" data-role="admin">School admin</button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark">EV</div>
+        <div>
+          <div class="bname">Ed<span>Vidura</span></div>
+          <div class="btag">Learning that moves</div>
+        </div>
+      </div>
+
+      <div class="side-stack">
+        <div class="card">
+          <small>Now learning</small>
+          <div class="course">Algebra I</div>
+          <div class="school">Riverside High</div>
+          <div class="ring-wrap fill-student role-fill">
+            <div class="ring" style="--p:66" data-p="66%"></div>
+            <div class="ring-copy"><strong>2 of 3 lit</strong>Keep the streak going</div>
+          </div>
+          <div class="streak fill-student role-fill" aria-label="4 day streak">
+            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i>
+          </div>
+          <div class="role-fill fill-teacher" style="margin-top:0.7rem">
+            <div class="stat-tiles">
+              <div class="stat-tile"><b>18</b><span>attempted</span></div>
+              <div class="stat-tile"><b>71%</b><span>class avg</span></div>
+            </div>
+          </div>
+          <div class="role-fill fill-admin" style="margin-top:0.7rem">
+            <div class="stat-tiles">
+              <div class="stat-tile"><b>12</b><span>teachers</span></div>
+              <div class="stat-tile"><b>184</b><span>students</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card role-fill fill-student">
+          <small>Up next</small>
+          <div class="next-what">Chapter check quiz</div>
+          <div class="next-meta">~5 min · after Slope &amp; intercept</div>
+          <a class="side-cta" href="#quiz" data-screen="quiz">Jump in →</a>
+        </div>
+      </div>
+
+      <nav>
+        <div class="sec sec-learn">Learn</div>
+        <a class="link on" href="#home" data-screen="home"><span class="ico">⌂</span> Home</a>
+        <a class="link" href="#lessons" data-screen="lessons"><span class="ico">≡</span> Lessons</a>
+        <a class="link" href="#quiz" data-screen="quiz"><span class="ico">?</span> Quiz</a>
+        <a class="link" href="#results" data-screen="results"><span class="ico">★</span> My results</a>
+        <div class="sec sec-teach">Teach</div>
+        <a class="link nav-teach" href="#upload" data-screen="upload"><span class="ico">↑</span> Upload content</a>
+        <a class="link nav-teach" href="#class" data-screen="class"><span class="ico">▦</span> Class results</a>
+        <div class="sec sec-admin">School</div>
+        <a class="link nav-admin" href="#teachers" data-screen="teachers"><span class="ico">▣</span> Teachers</a>
+        <a class="link nav-admin" href="#classes" data-screen="classes"><span class="ico">▤</span> Classes</a>
+        <a class="link nav-admin" href="#students" data-screen="students"><span class="ico">☰</span> Students</a>
+      </nav>
+
+      <div class="foot">
+        <div class="who">
+          <div class="avatar" id="avatar">AN</div>
+          <div>
+            <div class="uname" id="uname">Alice Nguyen</div>
+            <div class="urole" id="urole">Student</div>
+          </div>
+        </div>
+        <a class="back" href="#">← Back to Moodle</a>
+      </div>
+    </aside>
+
+    <div class="content">
+      <header class="topbar">
+        <h1 class="ptitle" id="ptitle">Home</h1>
+        <a class="btn secondary" href="#" style="padding:0.45rem 0.9rem;font-size:0.84rem">← Moodle</a>
+      </header>
+      <main class="main">
+
+        <section class="screen on" id="home">
+          <div class="home-student role-panel">
+            <div class="hero">
+              <div class="hero-inner">
+                <p class="kicker"><span class="pulse"></span> Algebra I · Riverside</p>
+                <h2 class="title">Hi, Alice</h2>
+                <p class="lede">Your chapter is almost lit. One quiz stands between you and done.</p>
+                <div class="orbit">
+                  <div class="continue-card">
+                    <div class="continue-tag">Continue</div>
+                    <div class="continue-name">Chapter check quiz</div>
+                    <div class="continue-meta">3 questions · best score can sync to Moodle</div>
+                    <a class="btn primary" href="#quiz" data-screen="quiz">Start quiz →</a>
+                  </div>
+                  <div class="path-viz">
+                    <div class="path-node done">
+                      <div class="node-dot">✓</div>
+                      <div><div class="node-label">Lessons</div><div class="node-sub">2 complete</div></div>
+                    </div>
+                    <div class="path-node now">
+                      <div class="node-dot">2</div>
+                      <div><div class="node-label">Quiz</div><div class="node-sub">You’re here</div></div>
+                    </div>
+                    <div class="path-node">
+                      <div class="node-dot">3</div>
+                      <div><div class="node-label">Results</div><div class="node-sub">Score + tips</div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="rail">
+              <div class="block">
+                <h3>This chapter</h3>
+                <a class="lesson-card done" href="#lessons" data-screen="lessons">
+                  <div class="lc-num">✓</div>
+                  <div><div class="lc-title">Linear equations</div><div class="lc-meta">Reading · done</div></div>
+                  <span class="lc-go">Review</span>
+                </a>
+                <a class="lesson-card done" href="#lessons" data-screen="lessons">
+                  <div class="lc-num">✓</div>
+                  <div><div class="lc-title">Slope &amp; intercept</div><div class="lc-meta">Video · done</div></div>
+                  <span class="lc-go">Review</span>
+                </a>
+                <a class="lesson-card now" href="#quiz" data-screen="quiz">
+                  <div class="lc-num">3</div>
+                  <div><div class="lc-title">Chapter check</div><div class="lc-meta">Quiz · up next</div></div>
+                  <span class="lc-go">Go →</span>
+                </a>
+              </div>
+              <div class="block">
+                <h3>Last spark</h3>
+                <div class="score-big">2 / 3</div>
+                <div class="score-sub">Practice attempt</div>
+                <div class="tip"><strong>Tip:</strong> Revisit slope before you retry.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-teacher role-panel" hidden>
+            <div class="hero">
+              <div class="hero-inner">
+                <p class="kicker"><span class="pulse"></span> Period 2 · Algebra I</p>
+                <h2 class="title">Hi, Priya</h2>
+                <p class="lede">18 of 24 learners have jumped into the chapter quiz.</p>
+                <div class="actions">
+                  <a class="btn primary" href="#class" data-screen="class">View class results</a>
+                  <a class="btn secondary" href="#upload" data-screen="upload">Upload content</a>
+                </div>
+              </div>
+            </div>
+            <div class="rail">
+              <div class="block">
+                <h3>Needs a nudge</h3>
+                <a class="lesson-card now" href="#class" data-screen="class">
+                  <div class="lc-num">!</div>
+                  <div><div class="lc-title">4 not started</div><div class="lc-meta">Still waiting on the quiz</div></div>
+                  <span class="lc-go">See →</span>
+                </a>
+                <a class="lesson-card" href="#class" data-screen="class">
+                  <div class="lc-num">%</div>
+                  <div><div class="lc-title">Avg 71%</div><div class="lc-meta">Below your 80% target</div></div>
+                  <span class="lc-go">Open</span>
+                </a>
+              </div>
+              <div class="block">
+                <h3>Quick move</h3>
+                <div class="tip"><strong>Upload</strong> a short slope review, then recheck scores.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-admin role-panel" hidden>
+            <div class="hero">
+              <div class="hero-inner">
+                <p class="kicker"><span class="pulse"></span> Riverside High</p>
+                <h2 class="title">Hi, Admin</h2>
+                <p class="lede">Your school directory — teachers, classes, students — in a few taps.</p>
+                <div class="actions">
+                  <a class="btn primary" href="#teachers" data-screen="teachers">Manage teachers</a>
+                  <a class="btn secondary" href="#classes" data-screen="classes">View classes</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="note">Same short nav — motion, path, streak, and clearer cards make it feel alive.</p>
+        </section>
+
+        <section class="screen" id="lessons">
+          <div class="hero">
+            <div class="hero-inner">
+              <p class="kicker"><span class="pulse"></span> Course path</p>
+              <h2 class="title">Lessons</h2>
+              <p class="lede">Finish the path, then take the quiz. Cards show exactly where you are.</p>
+            </div>
+          </div>
+          <a class="lesson-card done" href="#"><div class="lc-num">✓</div><div><div class="lc-title">1. Linear equations</div><div class="lc-meta">Reading · ~8 min</div></div><span class="lc-go">Open</span></a>
+          <a class="lesson-card done" href="#"><div class="lc-num">✓</div><div><div class="lc-title">2. Slope &amp; intercept</div><div class="lc-meta">Video · ~6 min</div></div><span class="lc-go">Open</span></a>
+          <a class="lesson-card now" href="#quiz" data-screen="quiz"><div class="lc-num">3</div><div><div class="lc-title">3. Chapter check</div><div class="lc-meta">Quiz · ready</div></div><span class="lc-go">Go →</span></a>
+        </section>
+
+        <section class="screen" id="quiz">
+          <div class="hero">
+            <div class="hero-inner">
+              <p class="kicker"><span class="pulse"></span> Assessment</p>
+              <h2 class="title">Quiz</h2>
+              <p class="lede">Three quick checks. Pick an answer — hover for a little lift.</p>
+            </div>
+          </div>
+          <div class="q-card">
+            <div class="qn">1. What is the slope of y = 2x + 3?</div>
+            <div class="opts">
+              <label><input type="radio" name="q1"/> 2</label>
+              <label><input type="radio" name="q1"/> 3</label>
+              <label><input type="radio" name="q1"/> 5</label>
+            </div>
+          </div>
+          <div class="q-card">
+            <div class="qn">2. Which point lies on y = x?</div>
+            <div class="opts">
+              <label><input type="radio" name="q2"/> (2, 3)</label>
+              <label><input type="radio" name="q2"/> (4, 4)</label>
+              <label><input type="radio" name="q2"/> (0, 1)</label>
+            </div>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="#results" data-screen="results">Submit quiz</a>
+            <a class="btn secondary" href="#lessons" data-screen="lessons">Back to lessons</a>
+          </div>
+        </section>
+
+        <section class="screen" id="results">
+          <div class="hero">
+            <div class="hero-inner celebrate">
+              <div class="burst" aria-hidden="true"></div>
+              <p class="kicker" style="justify-content:center">Results</p>
+              <h2 class="title">Almost there</h2>
+              <p class="lede" style="margin-left:auto;margin-right:auto">You scored <strong>2 / 3</strong>. One miss on intercept — retry when ready.</p>
+              <div class="actions" style="justify-content:center">
+                <a class="btn primary" href="#quiz" data-screen="quiz">Try again</a>
+                <a class="btn secondary" href="#lessons" data-screen="lessons">Review lessons</a>
+              </div>
+            </div>
+          </div>
+          <div class="rail">
+            <div class="block">
+              <h3>Breakdown</h3>
+              <a class="lesson-card done" href="#"><div class="lc-num">✓</div><div><div class="lc-title">Q1 Slope</div><div class="lc-meta">Correct</div></div></a>
+              <a class="lesson-card done" href="#"><div class="lc-num">✓</div><div><div class="lc-title">Q2 Point on line</div><div class="lc-meta">Correct</div></div></a>
+              <a class="lesson-card now" href="#"><div class="lc-num">×</div><div><div class="lc-title">Q3 Intercept</div><div class="lc-meta">Missed</div></div></a>
+            </div>
+            <div class="block">
+              <h3>Next spark</h3>
+              <div class="tip">Re-open <strong>Slope &amp; intercept</strong>, then retake — best score counts.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="upload"><div class="block"><h3>Upload content</h3><p class="lede" style="margin:0">Teacher — add a lesson or quiz question for this school.</p></div></section>
+        <section class="screen" id="class"><div class="block"><h3>Class results</h3><p class="lede" style="margin:0">Alice 2/3 · Bob 3/3 · …</p></div></section>
+        <section class="screen" id="teachers"><div class="block"><h3>Teachers</h3><p class="lede" style="margin:0">School admin directory.</p></div></section>
+        <section class="screen" id="classes"><div class="block"><h3>Classes</h3><p class="lede" style="margin:0">Rosters for this school.</p></div></section>
+        <section class="screen" id="students"><div class="block"><h3>Students</h3><p class="lede" style="margin:0">Enrolled learners.</p></div></section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const titles = {
+      home: 'Home', lessons: 'Lessons', quiz: 'Quiz', results: 'My results',
+      upload: 'Upload content', class: 'Class results',
+      teachers: 'Teachers', classes: 'Classes', students: 'Students'
+    };
+    const people = {
+      student: ['Alice Nguyen', 'Student', 'AN'],
+      teacher: ['Priya Shah', 'Teacher', 'PS'],
+      admin: ['Riverside Admin', 'School admin', 'RA']
+    };
+    function syncHomePanels(role) {
+      document.querySelectorAll('.role-panel').forEach(el => {
+        const show =
+          (role === 'student' && el.classList.contains('home-student')) ||
+          (role === 'teacher' && el.classList.contains('home-teacher')) ||
+          (role === 'admin' && el.classList.contains('home-admin'));
+        el.hidden = !show;
+      });
+    }
+    function go(name) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.toggle('on', el.id === name));
+      document.querySelectorAll('a.link').forEach(a => a.classList.toggle('on', a.dataset.screen === name));
+      document.getElementById('ptitle').textContent = titles[name] || 'EdVidura';
+    }
+    document.querySelectorAll('[data-screen]').forEach(el => {
+      el.addEventListener('click', e => { e.preventDefault(); go(el.dataset.screen); });
+    });
+    document.querySelectorAll('[data-role]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-role]').forEach(b => b.classList.toggle('on', b === btn));
+        const role = btn.dataset.role;
+        document.body.className = 'role-' + role;
+        document.getElementById('uname').textContent = people[role][0];
+        document.getElementById('urole').textContent = people[role][1];
+        document.getElementById('avatar').textContent = people[role][2];
+        syncHomePanels(role);
+        go('home');
+      });
+    });
+    syncHomePanels('student');
+  </script>
+</body>
+</html>

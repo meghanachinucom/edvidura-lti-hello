@@ -205,6 +205,172 @@ def tenant_dashboard(tenant_id: UUID | str) -> dict[str, Any]:
     }
 
 
+def learner_dashboard(
+    tenant_id: UUID | str, subject: str
+) -> dict[str, Any]:
+    """Personal analytics for the logged-in learner (RLS + subject filter)."""
+    sub = (subject or "").strip()
+    if not sub:
+        return {
+            "subject": "",
+            "attempt_count": 0,
+            "avg_percent": None,
+            "best_percent": None,
+            "pass_count": 0,
+            "fail_count": 0,
+            "xapi_count": 0,
+            "lesson_completions": 0,
+            "recent": [],
+            "skill_verbs": [],
+        }
+    with db.tenant_connection(tenant_id) as conn:
+        stats = conn.execute(
+            """
+            SELECT
+                COUNT(*)::int AS attempt_count,
+                COALESCE(ROUND(AVG(
+                    CASE WHEN max_score > 0
+                        THEN 100.0 * score / max_score END
+                )), 0)::int AS avg_percent,
+                COALESCE(MAX(
+                    CASE WHEN max_score > 0
+                        THEN ROUND(100.0 * score / max_score)::int ELSE 0 END
+                ), 0)::int AS best_percent,
+                COALESCE(SUM(
+                    CASE WHEN max_score > 0 AND score::float / max_score >= 0.6
+                        THEN 1 ELSE 0 END
+                ), 0)::int AS pass_count
+            FROM quiz_attempts
+            WHERE subject = %s
+            """,
+            (sub,),
+        ).fetchone()
+        recent = conn.execute(
+            """
+            SELECT id, score, max_score, grade_sent, course_label, created_at,
+                   CASE WHEN max_score > 0
+                        THEN ROUND(100.0 * score / max_score)::int
+                        ELSE 0 END AS percent
+            FROM quiz_attempts
+            WHERE subject = %s
+            ORDER BY created_at DESC
+            LIMIT 8
+            """,
+            (sub,),
+        ).fetchall()
+        xapi_n = conn.execute(
+            """
+            SELECT COUNT(*)::int AS n FROM xapi_statements
+            WHERE actor_sub = %s
+            """,
+            (sub,),
+        ).fetchone()
+        lessons = conn.execute(
+            """
+            SELECT COUNT(*)::int AS n FROM lesson_progress
+            WHERE subject = %s
+            """,
+            (sub,),
+        ).fetchone()
+        verbs = conn.execute(
+            """
+            SELECT verb_id, COUNT(*)::int AS n
+            FROM xapi_statements
+            WHERE actor_sub = %s
+            GROUP BY verb_id
+            ORDER BY n DESC
+            LIMIT 8
+            """,
+            (sub,),
+        ).fetchall()
+
+    a = dict(stats or {})
+    attempts = int(a.get("attempt_count") or 0)
+    passes = int(a.get("pass_count") or 0)
+    return {
+        "subject": sub,
+        "attempt_count": attempts,
+        "avg_percent": int(a.get("avg_percent") or 0) if attempts else None,
+        "best_percent": int(a.get("best_percent") or 0) if attempts else None,
+        "pass_count": passes,
+        "fail_count": max(attempts - passes, 0),
+        "xapi_count": int((xapi_n or {}).get("n") or 0),
+        "lesson_completions": int((lessons or {}).get("n") or 0),
+        "recent": [
+            {
+                "id": str(r["id"]),
+                "score": int(r["score"]),
+                "max_score": int(r["max_score"]),
+                "percent": int(r["percent"]),
+                "grade_sent": bool(r["grade_sent"]),
+                "course_label": str(r.get("course_label") or ""),
+                "created_at": (
+                    r["created_at"].isoformat()
+                    if hasattr(r.get("created_at"), "isoformat")
+                    else str(r.get("created_at") or "")
+                ),
+            }
+            for r in recent
+        ],
+        "skill_verbs": [
+            {
+                "verb_id": r["verb_id"],
+                "label": _short_verb(str(r["verb_id"])),
+                "count": int(r["n"]),
+            }
+            for r in verbs
+        ],
+    }
+
+
+def metabase_embed_url(
+    *,
+    tenant_id: UUID | str | None = None,
+    tenant_slug: str | None = None,
+    resource: str = "dashboard",
+    resource_id: int | None = None,
+    minutes: int = 60,
+) -> str | None:
+    """
+    Signed Metabase static embed URL when METABASE_SECRET_KEY + dashboard id set.
+
+    Returns None when not configured (UI falls back to external link).
+    """
+    import time
+
+    import jwt
+
+    from app.settings import get_settings
+
+    s = get_settings()
+    secret = (getattr(s, "metabase_secret_key", "") or "").strip()
+    base = (s.metabase_url or "").rstrip("/")
+    rid = resource_id if resource_id is not None else getattr(
+        s, "metabase_embed_dashboard_id", 0
+    )
+    try:
+        rid_i = int(rid or 0)
+    except (TypeError, ValueError):
+        rid_i = 0
+    if not secret or not base or rid_i <= 0:
+        return None
+    kind = "dashboard" if resource != "question" else "question"
+    params: dict[str, Any] = {}
+    if tenant_id:
+        params["tenant_id"] = [str(tenant_id)]
+    if tenant_slug:
+        params["tenant_slug"] = [str(tenant_slug)]
+    payload = {
+        "resource": {kind: rid_i},
+        "params": params,
+        "exp": int(time.time()) + max(60, int(minutes) * 60),
+    }
+    token = jwt.encode(payload, secret, algorithm="HS256")
+    if isinstance(token, bytes):
+        token = token.decode("utf-8")
+    return f"{base}/embed/{kind}/{token}#bordered=true&titled=true"
+
+
 def export_rows(tenant_id: UUID | str, *, limit: int = 500) -> list[dict[str, Any]]:
     """Flat attempt rows for CSV / Metabase-style export."""
     lim = max(1, min(int(limit), 5000))

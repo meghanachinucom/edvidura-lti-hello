@@ -15,6 +15,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DB = ROOT / "db"
 
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(ROOT / ".env", override=False)
+except ImportError:
+    pass
+
 # Single source of truth — keep CI / Railway in sync via this list.
 MIGRATIONS = [
     "init.sql",
@@ -34,6 +41,14 @@ MIGRATIONS = [
     "migration_lti_dynreg.sql",
     "migration_rls_capability_tables.sql",
     "migration_shared_cache.sql",
+    "migration_lti_context_bindings.sql",
+    "migration_skills_registry.sql",
+    "migration_sme_sources.sql",
+    "migration_nrps_rosters.sql",
+    "migration_learner_plans.sql",
+    "migration_role_skills.sql",
+    "migration_bi_xapi_tiers.sql",
+    "migration_skill_framework_imports.sql",
 ]
 
 # Postgres SQLSTATE values that mean "already applied" / safe to continue.

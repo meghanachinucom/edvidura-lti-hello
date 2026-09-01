@@ -12,8 +12,13 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app import db
 from app.api.admin_tenants import router as admin_tenants_router
+from app.api.ai import router as ai_api_router
+from app.api.events import router as events_api_router
 from app.api.institution import router as institution_router
+from app.api.skills import router as skills_api_router
 from app.api.student import router as student_router
+from app.api.tla import router as tla_api_router
+from app.api.xapi import router as xapi_api_router
 from app.launch_cache import LAUNCH_CACHE
 from app.logconfig import configure_logging
 from app.logging_middleware import StructuredLoggingMiddleware
@@ -68,6 +73,11 @@ app.include_router(lti_register_router)
 app.include_router(shell_router)
 app.include_router(institution_router)
 app.include_router(student_router)
+app.include_router(xapi_api_router)
+app.include_router(skills_api_router)
+app.include_router(tla_api_router)
+app.include_router(events_api_router)
+app.include_router(ai_api_router)
 app.include_router(quiz_router)
 
 _STATIC = Path(__file__).resolve().parent / "static"
@@ -344,8 +354,11 @@ async def lti_launch(request: Request):
 
         context = launch_data.get(
             "https://purl.imsglobal.org/spec/lti/claim/context", {}
-        )
-        course = context.get("title") or context.get("label") or context.get("id") or "—"
+        ) or {}
+        context_title = str(context.get("title") or "").strip()
+        context_label = str(context.get("label") or "").strip()
+        lti_context_id = str(context.get("id") or "").strip()
+        course = context_title or context_label or lti_context_id or "—"
 
         # Bind request-scoped TenantContext; persist under RLS
         tctx = TenantContext(
@@ -365,6 +378,7 @@ async def lti_launch(request: Request):
                     "deployment_id": deployment_id,
                     "name": name,
                     "tenant_slug": tenant.slug,
+                    "lti_context_id": lti_context_id,
                 },
             )
         try:
@@ -373,15 +387,19 @@ async def lti_launch(request: Request):
             print(f"Warning: could not update last_launch_at: {exc}", flush=True)
 
         is_instructor = "Instructor" in role_text or "Administrator" in role_text
-        try:
-            from app.modules.school import find_school_admin
+        # School admin = Moodle Administrator role. People profiles live in Moodle;
+        # EdVidura does not create teacher/student accounts.
+        is_school_admin = "Administrator" in role_text
+        if not is_school_admin:
+            try:
+                from app.modules.school import find_school_admin
 
-            admin_row = find_school_admin(
-                tenant.tenant_id, email=email, name=str(name)
-            )
-        except Exception:  # noqa: BLE001
-            admin_row = None
-        is_school_admin = bool(admin_row) or "Administrator" in role_text
+                admin_row = find_school_admin(
+                    tenant.tenant_id, email=email, name=str(name)
+                )
+                is_school_admin = bool(admin_row)
+            except Exception:  # noqa: BLE001
+                pass
         is_deep_link = False
         try:
             is_deep_link = bool(message_launch.is_deep_link_launch())
@@ -397,15 +415,39 @@ async def lti_launch(request: Request):
         launch_pres = launch_data.get(
             "https://purl.imsglobal.org/spec/lti/claim/launch_presentation"
         ) or {}
+        from app.modules.tenancy import (
+            default_lms_return_url,
+            detect_lms_name,
+        )
+
+        lms_name = detect_lms_name(iss)
         moodle_return = str(launch_pres.get("return_url") or "").strip()
-        if not moodle_return and iss:
-            ctx_id = context.get("id")
-            if ctx_id and str(ctx_id).isdigit():
-                moodle_return = f"{iss}/course/view.php?id={ctx_id}"
-            else:
-                moodle_return = f"{iss}/my/"
+        if not moodle_return:
+            moodle_return = default_lms_return_url(
+                iss,
+                context_id=lti_context_id,
+                lms_name=lms_name,
+            )
         if not moodle_return:
             moodle_return = "http://localhost:8085/my/"
+
+        # Phase 7: LMS context → EdVidura class + subject curriculum
+        binding = None
+        if lti_context_id:
+            try:
+                from app.modules.school import resolve_lti_context_binding
+
+                binding = resolve_lti_context_binding(
+                    tenant.tenant_id,
+                    lti_context_id=lti_context_id,
+                    context_label=context_label,
+                    context_title=context_title,
+                    auto_bind=True,
+                )
+            except Exception as exc:  # noqa: BLE001
+                print(f"Warning: LTI context binding failed: {exc}", flush=True)
+                binding = None
+
         quiz_ctx = {
             "launch_id": message_launch.get_launch_id(),
             "tenant_id": str(tenant.tenant_id),
@@ -421,15 +463,34 @@ async def lti_launch(request: Request):
             "is_school_admin": is_school_admin,
             "is_deep_link": is_deep_link,
             "course": str(course),
+            "lti_context_id": lti_context_id,
+            "class_id": (binding or {}).get("class_id") or "",
+            "class_code": (binding or {}).get("class_code") or "",
+            "class_name": (binding or {}).get("class_name") or "",
+            "academic_subject": (binding or {}).get("subject") or "",
+            "edvidura_course_id": (binding or {}).get("course_id") or "",
             "launch_event_id": str(event["id"]),
             "ags_available": ags_available,
             "ags_scopes": ags_scopes,
             "ags_has_lineitem": bool(ags_claim.get("lineitem")),
             "ags_has_lineitems": bool(ags_claim.get("lineitems")),
+            "nrps_available": False,
             "client_id": client_id,
+            "lms_name": lms_name,
+            "lms_return_url": moodle_return,
+            "lms_base_url": iss or "http://localhost:8085",
+            # Aliases kept for older templates / helpers
             "moodle_return_url": moodle_return,
             "moodle_base_url": iss or "http://localhost:8085",
         }
+        try:
+            from app.modules import nrps as nrps_mod
+
+            quiz_ctx["nrps_available"] = bool(
+                message_launch.has_nrps()
+            ) or nrps_mod.has_nrps_on_launch(launch_data)
+        except Exception:  # noqa: BLE001
+            quiz_ctx["nrps_available"] = False
         # Keep launch JWT body in memory and Postgres (survives uvicorn --reload)
         launch_id = message_launch.get_launch_id()
         LAUNCH_CACHE.set(launch_id, launch_data, exp=3600)

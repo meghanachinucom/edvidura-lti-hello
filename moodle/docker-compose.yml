@@ -35,6 +35,9 @@ services:
       MOODLE_EMAIL: admin@example.com
       MOODLE_SITE_FULLNAME: EdVidura Dev Moodle
       MOODLE_SITE_SHORTNAME: EdVidura
+      # Used by polish_demo.php when re-applied
+      EDVIDURA_MOODLE_FULLNAME: EdVidura Dev Moodle
+      EDVIDURA_MOODLE_SHORTNAME: EdVidura
     volumes:
       - moodledata:/var/www/moodledata
       - moodlehtml:/var/www/html

@@ -1,0 +1,92 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">School admin · analytics</p>
+  <h2 class="welcome-title">School analytics</h2>
+  <p class="welcome-lede">
+    Tenant roll-up of attempts, Moodle sync, and xAPI. Official grades stay in Moodle.
+  </p>
+</section>
+
+<div class="insight-row insight-row-4">
+  <div class="insight">
+    <span class="insight-k">Attempts</span>
+    <span class="insight-v">{{ dash.attempt_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Learners</span>
+    <span class="insight-v">{{ dash.learner_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Avg score</span>
+    <span class="insight-v">{% if dash.avg_percent is not none %}{{ dash.avg_percent }}%{% else %}—{% endif %}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Pass rate</span>
+    <span class="insight-v">{% if dash.pass_rate is not none %}{{ dash.pass_rate }}%{% else %}—{% endif %}</span>
+  </div>
+</div>
+
+<div class="insight-row insight-row-4">
+  <div class="insight">
+    <span class="insight-k">Moodle synced</span>
+    <span class="insight-v">{{ dash.synced_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">xAPI</span>
+    <span class="insight-v">{{ dash.xapi_count }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Lesson completions</span>
+    <span class="insight-v">{{ dash.lesson_completions }}</span>
+  </div>
+  <div class="insight">
+    <span class="insight-k">Unsynced</span>
+    <span class="insight-v">{{ dash.unsynced_count }}</span>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Exports &amp; BI</h2>
+    <div class="actions">
+      <a class="btn secondary" href="/teacher/analytics?token={{ quiz_token }}">Teacher charts</a>
+      {% if metabase_url %}
+      <a class="btn secondary" href="{{ metabase_url }}" target="_blank" rel="noopener">Open Metabase</a>
+      {% endif %}
+    </div>
+  </div>
+  {% if metabase_embed_url %}
+  <iframe
+    title="Metabase school dashboard"
+    src="{{ metabase_embed_url }}"
+    style="width:100%;min-height:480px;border:0;border-radius:8px;background:#fff"
+    allowtransparency
+  ></iframe>
+  {% else %}
+  <p class="meta">
+    Set <code>METABASE_SECRET_KEY</code> and <code>METABASE_EMBED_DASHBOARD_ID</code> for a signed embed.
+    Until then, use the Metabase link or teacher Analytics charts.
+  </p>
+  {% endif %}
+</section>
+
+{% if dash.top_learners %}
+<section class="panel">
+  <h2>Top learners (by attempts)</h2>
+  <table>
+    <thead><tr><th>Learner</th><th>Attempts</th><th>Avg</th><th>Best</th></tr></thead>
+    <tbody>
+    {% for L in dash.top_learners %}
+      <tr>
+        <td>{{ L.label }}</td>
+        <td>{{ L.attempts }}</td>
+        <td>{{ L.avg_percent }}%</td>
+        <td>{{ L.best_percent }}%</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

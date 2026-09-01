@@ -10,8 +10,6 @@
 
 Open [`palette-glimpse.html`](palette-glimpse.html) (or http://127.0.0.1:8765/palette-glimpse.html if the static server is running).
 
-**Current design:** Scholar Calm LMS shell — slate sidebar, paper reading area, teal CTAs (not the old cinematic dark UI).
-
-## Live app
+**Current design (live):** Full-width Shiko top navbar with Learn / Teach / School / Account dropdowns (`shell.css?v=shiko5`). No left sidebar.
 
 Hard-refresh after Moodle launch so `/static/css/shell.css` reloads.

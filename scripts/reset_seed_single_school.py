@@ -20,13 +20,15 @@ from dotenv import load_dotenv
 load_dotenv(ROOT / ".env", override=True)
 
 from app import db  # noqa: E402
-from app.tenancy import TENANT_A_ID  # noqa: E402
+from app.tenancy import TENANT_A_ID, TENANT_B_ID  # noqa: E402
 
 TENANT_ID = TENANT_A_ID  # aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
 INST_ID = "11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 COURSE_MATH = "cccccccc-cccc-cccc-cccc-cccccccccccc"
 COURSE_SCI = "dddddddd-dddd-dddd-dddd-dddddddddddd"
 COURSE_ENG = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
+# Isolation peer (Tenant B) — distinct from Riverside English course id
+COURSE_B = "ffffffff-ffff-ffff-ffff-ffffffffffff"
 QUIZ_MATH = "aa11aa11-aa11-aa11-aa11-aa11aa11aa11"
 QUIZ_SCI = "bb22bb22-bb22-bb22-bb22-bb22bb22bb22"
 
@@ -38,6 +40,15 @@ TRUNCATE TABLE
     quizzes,
     lessons,
     courses,
+    skill_remediation,
+    skill_items,
+    role_skill_requirements,
+    role_profiles,
+    skills,
+    sme_sources,
+    learner_plans,
+    lti_context_rosters,
+    lti_context_bindings,
     class_enrollments,
     class_teachers,
     classes,
@@ -88,21 +99,21 @@ def _exec_owner(sql: str, params: tuple | list | None = None):
 
 
 def reset() -> None:
-    print("Wiping all tenants / school / LTI / attempts data…")
+    print("Wiping all tenants / school / LTI / attempts data...")
     _super_exec(TRUNCATE_SQL)
     print("  done.")
 
 
 def seed() -> None:
     issuer = os.getenv("MOODLE_ISSUER", "http://localhost:8085").rstrip("/")
-    client_id = os.getenv("MOODLE_CLIENT_ID", "2HXWneHjMgBHNNl").strip()
+    client_id = os.getenv("MOODLE_CLIENT_ID", "ib0qN8mQMZO2GKi").strip()
     deployments = [
         d.strip()
-        for d in os.getenv("MOODLE_DEPLOYMENT_IDS", "1").split(",")
+        for d in os.getenv("MOODLE_DEPLOYMENT_IDS", "1,5").split(",")
         if d.strip()
-    ] or ["1"]
+    ] or ["1", "5"]
 
-    print("Seeding Riverside High (single school)…")
+    print("Seeding Riverside High (single school)...")
     _exec_owner(
         """
         INSERT INTO tenants (id, slug, name, status)
@@ -208,6 +219,7 @@ def seed() -> None:
             "lead": "TCH-01",
             "assist": "TCH-02",
             "roster": ["STU-01", "STU-02", "STU-03", "STU-04"],
+            "course_id": COURSE_MATH,
         },
         {
             "code": "RHS-MATH-P3",
@@ -217,6 +229,7 @@ def seed() -> None:
             "lead": "TCH-02",
             "assist": "TCH-01",
             "roster": ["STU-05", "STU-06", "STU-07", "STU-08"],
+            "course_id": COURSE_MATH,
         },
         {
             "code": "RHS-SCI-P2",
@@ -226,6 +239,7 @@ def seed() -> None:
             "lead": "TCH-03",
             "assist": None,
             "roster": ["STU-01", "STU-05", "STU-09", "STU-10"],
+            "course_id": COURSE_SCI,
         },
         {
             "code": "RHS-ENG-A",
@@ -235,6 +249,7 @@ def seed() -> None:
             "lead": "TCH-04",
             "assist": "TCH-03",
             "roster": ["STU-02", "STU-06", "STU-11", "STU-12"],
+            "course_id": COURSE_ENG,
         },
         {
             "code": "RHS-HIST-B",
@@ -244,14 +259,17 @@ def seed() -> None:
             "lead": "TCH-04",
             "assist": None,
             "roster": ["STU-03", "STU-07", "STU-09", "STU-11"],
+            "course_id": None,
         },
     ]
+    class_ids: dict[str, str] = {}
     for cls in classes:
         row = _exec_tenant(
             TENANT_ID,
             """
             INSERT INTO classes (
-                tenant_id, institution_id, class_code, class_name, subject, term, status
+                tenant_id, institution_id, class_code, class_name, subject, term,
+                status
             )
             VALUES (%s, %s, %s, %s, %s, %s, 'active')
             RETURNING id
@@ -266,6 +284,7 @@ def seed() -> None:
             ),
         ).fetchone()
         cid = str(row["id"])
+        class_ids[cls["code"]] = cid
         _exec_tenant(
             TENANT_ID,
             """
@@ -451,6 +470,46 @@ def seed() -> None:
             )
         print(f"  Course       {title}  ({len(chapters)} lessons)")
 
+    # Link classes → curriculum (after courses exist for FK)
+    for cls in classes:
+        if not cls.get("course_id"):
+            continue
+        _exec_tenant(
+            TENANT_ID,
+            "UPDATE classes SET course_id = %s WHERE id = %s",
+            (cls["course_id"], class_ids[cls["code"]]),
+        )
+        print(f"  Class->course {cls['code']} -> {cls['course_id'][:8]}...")
+
+    # Demo Moodle context binding (local Demo course id=5 → Algebra Period 1)
+    moodle_ctx = os.getenv("SEED_MOODLE_CONTEXT_ID", "5").strip()
+    if moodle_ctx and "RHS-MATH-P1" in class_ids:
+        _exec_tenant(
+            TENANT_ID,
+            """
+            INSERT INTO lti_context_bindings (
+                tenant_id, lti_context_id, class_id, course_id,
+                context_label, context_title, updated_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, now())
+            ON CONFLICT (tenant_id, lti_context_id) DO UPDATE
+              SET class_id = EXCLUDED.class_id,
+                  course_id = EXCLUDED.course_id,
+                  context_label = EXCLUDED.context_label,
+                  context_title = EXCLUDED.context_title,
+                  updated_at = now()
+            """,
+            (
+                TENANT_ID,
+                moodle_ctx,
+                class_ids["RHS-MATH-P1"],
+                COURSE_MATH,
+                "RHS-MATH-P1",
+                "Algebra I — Period 1",
+            ),
+        )
+        print(f"  LTI bind     Moodle context {moodle_ctx} -> RHS-MATH-P1 / Algebra I")
+
     # Grades / quiz attempts for several students
     grades = [
         ("stu-alice", "Alice Nguyen", "Algebra I", 3, 3, True),
@@ -509,16 +568,178 @@ def seed() -> None:
             )
     print("  Progress     sample lesson completions")
 
+    _seed_skills_and_handbook()
+    _seed_isolation_peer()
+
     print()
-    print("Done. Single school ready:")
+    print("Done. Pilot school ready:")
     print("  Tenant slug : riverside")
     print("  Admin       : Alex Morgan <admin@riverside.test>")
     print(f"  Moodle LTI  : {issuer} / {client_id}")
+    print("  Moodle bind : context 5 -> Algebra Period 1")
+    print("  Skills      : Algebra competencies + handbook remediation")
+    print("  SME coach   : handbook + lesson sources registered")
+    print("  Isolation   : tenant-b peer seeded (not for demo launch)")
     print("  Launch from Moodle -> EdVidura should open Riverside High.")
 
 
+def _seed_skills_and_handbook() -> None:
+    """C8 skills registry + versioned handbook for remediation loop."""
+    from app.modules import manuals as manuals_mod
+    from app.modules import skills as skills_mod
+
+    handbook_body = """## Solve for x
+
+Isolate the variable. For 2x + 3 = 11, subtract 3, then divide by 2 → x = 4.
+
+## Variables
+
+A variable stands for an unknown value. Use letters like x or y in expressions.
+
+## Linear equations
+
+Balance both sides of the equation. Whatever you do to one side, do to the other.
+
+## Gradebook sync
+
+Official scores live in the Moodle gradebook via AGS. Practice attempts skip grade sync.
+"""
+    manual = manuals_mod.create_manual(
+        tenant_id=TENANT_ID,
+        title="Algebra I study handbook",
+        description="Pinned sections for skill remediation",
+        body_md=handbook_body,
+        subject="seed",
+        publish=True,
+    )
+    mid = str(manual["id"])
+    print(f"  Manual       Algebra handbook ({mid[:8]}…)")
+
+    # First reading lesson for prefer_path=lessons
+    lesson_id = None
+    with db.tenant_connection(TENANT_ID) as conn:
+        row = conn.execute(
+            """
+            SELECT id FROM lessons
+            WHERE course_id = %s::uuid AND lesson_type <> 'quiz'
+            ORDER BY position
+            LIMIT 1
+            """,
+            (COURSE_MATH,),
+        ).fetchone()
+        if row:
+            lesson_id = str(row["id"])
+
+    riverside_pack = (
+        {
+            "skill_code": "solve_linear",
+            "label": "Solve linear equations",
+            "description": "Isolate the variable and check both sides.",
+            "question_keys": ("q1", "q3"),
+            "manual_focus": "solve-for-x",
+            "prefer_path": "lessons",
+            "lesson_id": lesson_id,
+            "manual_id": mid,
+            "teleport_label": "Review: solving for x",
+            "teleport_hint": "Re-read linear equations, then practice this skill",
+            "position": 1,
+        },
+        {
+            "skill_code": "variables",
+            "label": "Variables",
+            "description": "What a variable stands for in an expression.",
+            "question_keys": ("q2",),
+            "manual_focus": "variables",
+            "prefer_path": "manuals",
+            "lesson_id": lesson_id,
+            "manual_id": mid,
+            "teleport_label": "Review: variables",
+            "teleport_hint": "Open the pinned handbook section, then practice",
+            "position": 2,
+        },
+    )
+    skills_mod.upsert_skill_pack(TENANT_ID, riverside_pack)
+    print(f"  Skills       {len(riverside_pack)} Algebra competencies linked to q1–q3")
+
+    roles = skills_mod.ensure_default_roles(TENANT_ID)
+    print(f"  Roles        {len(roles)} difference-training profiles")
+
+    from app.modules import sme as sme_mod
+
+    sme_mod.add_manual_source(
+        TENANT_ID,
+        manual_id=mid,
+        pin_version=1,
+        label="Algebra I study handbook",
+    )
+    sme_mod.add_manual_source(
+        TENANT_ID,
+        manual_id=mid,
+        pin_version=1,
+        focus_slug="variables",
+        label="Handbook · Variables",
+    )
+    if lesson_id:
+        sme_mod.add_lesson_source(
+            TENANT_ID, lesson_id=lesson_id, label="Welcome to Algebra I"
+        )
+    print("  SME sources  handbook (pinned v1) + variables focus + first lesson")
+
+
+def _seed_isolation_peer() -> None:
+    """Minimal Tenant B so RLS isolation proofs still pass after single-school seed."""
+    _exec_owner(
+        """
+        INSERT INTO tenants (id, slug, name, status)
+        VALUES (%s::uuid, 'lakeside-peer', 'Lakeside Peer (isolation)', 'active')
+        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, status = 'active'
+        """,
+        (TENANT_B_ID,),
+    )
+    _exec_tenant(
+        TENANT_B_ID,
+        """
+        INSERT INTO courses (id, tenant_id, slug, title, description, status)
+        VALUES (%s::uuid, %s::uuid, 'lakeside-peer', 'Lakeside Peer Course',
+                'Isolation proof only — not for Moodle demo.', 'published')
+        ON CONFLICT (id) DO UPDATE SET status = 'published', title = EXCLUDED.title
+        """,
+        (COURSE_B, TENANT_B_ID),
+    )
+    with db.tenant_connection(TENANT_B_ID) as conn:
+        exists = conn.execute(
+            "SELECT 1 FROM lessons WHERE course_id = %s::uuid LIMIT 1",
+            (COURSE_B,),
+        ).fetchone()
+        if not exists:
+            conn.execute(
+                """
+                INSERT INTO lessons (
+                    tenant_id, course_id, slug, title, position,
+                    lesson_type, body_md, status
+                )
+                VALUES (
+                    %s::uuid, %s::uuid, 'peer-welcome', 'Peer welcome', 1,
+                    'article',
+                    'Tenant B only. Riverside must never see this body.',
+                    'published'
+                )
+                """,
+                (TENANT_B_ID, COURSE_B),
+            )
+    print("  Isolation    tenant-b peer course + lesson")
+
+
 def summarize() -> None:
-    with db.connect() as conn:
+    """Count rows as DB owner so RLS does not zero-out tenant tables."""
+    import psycopg
+    from psycopg.rows import dict_row
+
+    owner_url = os.getenv(
+        "DATABASE_OWNER_URL",
+        "postgresql://edvidura:edvidura@127.0.0.1:5433/edvidura",
+    ).strip()
+    with psycopg.connect(owner_url, row_factory=dict_row) as conn:
         print("--- counts ---")
         for label, sql in [
             ("tenants", "SELECT COUNT(*) AS n FROM tenants"),
@@ -529,6 +750,7 @@ def summarize() -> None:
             ("courses", "SELECT COUNT(*) AS n FROM courses"),
             ("lessons", "SELECT COUNT(*) AS n FROM lessons"),
             ("attempts", "SELECT COUNT(*) AS n FROM quiz_attempts"),
+            ("bindings", "SELECT COUNT(*) AS n FROM lti_context_bindings"),
             ("platforms", "SELECT COUNT(*) AS n FROM lti_platforms"),
         ]:
             n = conn.execute(sql).fetchone()["n"]

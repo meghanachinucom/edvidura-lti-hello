@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · Top nav demo (approval)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --orange: #ff6a00;
+      --orange-2: #ff7a1a;
+      --orange-deep: #e85e00;
+      --blue: #3f4de0;
+      --blue-deep: #343fc9;
+      --ink: #1f1c3d;
+      --mute: #6e7191;
+      --nav: #4a4d68;
+      --paper: #f6f5f2;
+      --surface: #ffffff;
+      --line: #ebe8e1;
+      --font: "Urbanist", system-ui, sans-serif;
+      --radius-btn: 8px;
+      --shadow: 0 10px 30px rgba(31, 28, 61, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html {
+      height: 100%;
+      width: 100%;
+    }
+    body {
+      margin: 0; font-family: var(--font); color: var(--ink);
+      background: var(--paper); line-height: 1.55; -webkit-font-smoothing: antialiased;
+      min-height: 100%;
+      min-height: 100dvh;
+      width: 100%;
+      display: flex; flex-direction: column;
+      overflow-x: hidden;
+    }
+    .banner {
+      position: sticky; top: 0; z-index: 60;
+      display: flex; flex-wrap: wrap; gap: .7rem; align-items: center; justify-content: space-between;
+      padding: .55rem clamp(.75rem, 2vw, 1.25rem); background: #1f1c3d; color: #f6f5f2;
+      font-size: .82rem; font-weight: 600; flex-shrink: 0; width: 100%;
+    }
+    .banner strong { color: #ffb07a; }
+    .roles { display: flex; gap: .3rem; flex-wrap: wrap; }
+    .roles button {
+      border: 1px solid rgba(255,255,255,.22); background: transparent; color: #fff;
+      border-radius: 999px; padding: .28rem .75rem; font: inherit; font-weight: 700; cursor: pointer;
+    }
+    .roles button.on { background: var(--orange); border-color: var(--orange); }
+
+    .frame {
+      flex: 1 1 auto; width: 100%; min-height: 0;
+      display: flex; flex-direction: column;
+      background: var(--paper);
+      position: relative; overflow-x: hidden;
+    }
+    .frame::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .4; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+
+    /* —— Top bar (was sidebar) —— */
+    .topnav {
+      position: relative; z-index: 2; flex-shrink: 0;
+      display: flex; flex-wrap: wrap; align-items: center; gap: .55rem .85rem;
+      padding: .75rem clamp(.85rem, 2.5vw, 2rem);
+      background: linear-gradient(180deg, #2a2750, #1f1c3d);
+      color: #c5c8e0;
+      width: 100%;
+    }
+    .brand {
+      display: flex; align-items: center; gap: .6rem; text-decoration: none; flex-shrink: 0;
+    }
+    .mark {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: linear-gradient(145deg, #ff8a33, var(--orange));
+      color: #fff; display: grid; place-items: center; font-weight: 800; font-size: .85rem;
+      box-shadow: 0 8px 18px rgba(255,106,0,.35);
+    }
+    .bname { font-weight: 800; font-size: 1.15rem; letter-spacing: -.03em; line-height: 1.1; }
+    .bname .ed { color: var(--orange); }
+    .bname .vid { color: #fff; }
+    .btag { font-size: .68rem; color: #9aa0c4; font-weight: 600; }
+
+    .ctx-chip {
+      display: none; /* filled via JS visibility by role if needed */
+      align-items: center; gap: .5rem;
+      padding: .4rem .75rem; border-radius: 999px;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
+      font-size: .8rem; font-weight: 700; color: #e8eaf8;
+    }
+    .ctx-chip em { font-style: normal; color: #9aa0c4; font-weight: 600; margin-right: .25rem; }
+
+    .nav-links {
+      display: flex; flex-wrap: wrap; align-items: center; gap: .25rem;
+      flex: 1 1 auto; min-width: 0; justify-content: flex-start;
+    }
+    .nav-links a {
+      text-decoration: none; color: #c5c8e0; font-weight: 700; font-size: .88rem;
+      padding: .45rem .8rem; border-radius: 999px; white-space: nowrap;
+      align-items: center;
+    }
+    .nav-links a:hover { background: rgba(255,255,255,.08); color: #fff; }
+    .nav-links a.on {
+      background: var(--orange); color: #fff;
+      box-shadow: 0 8px 18px rgba(255,106,0,.3);
+    }
+    /* role-flexible items */
+    .nav-links .nav-teach,
+    .nav-links .nav-admin,
+    .nav-links .nav-student-only { display: none; }
+    body.role-student .nav-links .nav-student-only { display: inline-flex; }
+    body.role-teacher .nav-links .nav-teach { display: inline-flex; }
+    body.role-admin .nav-links .nav-admin { display: inline-flex; }
+    /* everyone sees learn basics */
+    body.role-teacher .nav-links .nav-student-only,
+    body.role-admin .nav-links .nav-student-only { display: inline-flex; }
+
+    .top-right {
+      display: flex; align-items: center; gap: .65rem; margin-left: auto; flex-shrink: 0;
+    }
+    .who { text-align: right; line-height: 1.2; }
+    .uname { color: #fff; font-weight: 800; font-size: .88rem; }
+    .urole { color: #ffb07a; font-size: .72rem; font-weight: 700; }
+    .moodle {
+      text-decoration: none; font-weight: 800; font-size: .8rem; color: #fff;
+      background: var(--blue); padding: .48rem .9rem; border-radius: 999px;
+      box-shadow: 0 8px 18px rgba(63,77,224,.28); white-space: nowrap;
+    }
+
+    .subbar {
+      position: relative; z-index: 2; flex-shrink: 0;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem;
+      padding: .55rem clamp(.85rem, 2.5vw, 2rem);
+      background: rgba(255,255,255,.7); border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(6px);
+      width: 100%;
+    }
+    .ptitle { margin: 0; font-weight: 800; font-size: 1.05rem; letter-spacing: -.02em; }
+    .course-pill {
+      font-size: .8rem; font-weight: 700; color: var(--nav);
+      padding: .3rem .7rem; border-radius: 999px; background: #fff; border: 1px solid var(--line);
+    }
+    .course-pill strong { color: var(--ink); }
+
+    .main {
+      position: relative; z-index: 1; flex: 1 1 auto;
+      width: 100%;
+      min-height: 0;
+      padding: clamp(1rem, 2.5vw, 1.75rem) clamp(.85rem, 3vw, 2.75rem) clamp(1.5rem, 4vw, 2.75rem);
+      max-width: none;
+      display: flex; flex-direction: column;
+    }
+    .screen { display: none; width: 100%; flex: 1; }
+    .screen.on { display: block; animation: fade .4s ease both; }
+    @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .hero {
+      display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+      gap: clamp(1rem, 3vw, 2rem); align-items: center;
+      margin-bottom: 1.25rem; width: 100%;
+    }
+    .hero-copy { position: relative; }
+    .squiggle {
+      position: absolute; left: -2px; top: -10px; width: 52px; height: 24px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 28' fill='none'%3E%3Cpath d='M3 16 C 14 2, 24 26, 35 8 S 56 22, 67 6' stroke='%23ff6a00' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
+    }
+    .kicker {
+      margin: 0 0 .4rem; font-size: .72rem; font-weight: 800; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--blue);
+    }
+    .title {
+      margin: 0; font-weight: 800; font-size: clamp(1.85rem, 3.6vw, 2.45rem);
+      letter-spacing: -.035em; line-height: 1.12;
+    }
+    .title .mark-word { position: relative; display: inline-block; }
+    .title .mark-word svg {
+      position: absolute; left: -8%; width: 116%; height: 130%; top: -12%;
+      overflow: visible; pointer-events: none;
+    }
+    .lede {
+      margin: .65rem 0 0; color: var(--mute); font-size: 1rem; font-weight: 500; max-width: 30rem;
+    }
+    .cta-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.1rem; }
+    .cta {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .75rem 1.2rem;
+      background: linear-gradient(180deg, var(--orange-2), var(--orange) 70%, var(--orange-deep));
+      color: #fff; font-weight: 800; font-size: .94rem; text-decoration: none;
+      border-radius: var(--radius-btn); border: 0;
+      box-shadow: 0 12px 24px rgba(255,106,0,.3);
+    }
+    .cta:hover { color: #fff; filter: brightness(1.04); }
+    .cta.ghost {
+      background: transparent; color: var(--blue); border: 2px solid var(--blue); box-shadow: none;
+    }
+
+    .hero-visual { position: relative; min-height: 240px; display: grid; place-items: center; }
+    .brush { position: absolute; border-radius: 40% 60% 55% 45%; background: var(--blue); }
+    .brush.t { width: 58%; height: 44%; top: 0; right: 0; transform: rotate(16deg); }
+    .brush.b { width: 50%; height: 40%; bottom: 2%; left: 0; transform: rotate(-10deg); }
+    .photo-frame {
+      position: relative; z-index: 1; width: min(100%, 250px); aspect-ratio: 4/5;
+      border-radius: 999px; background: #fff; padding: 8px; box-shadow: var(--shadow);
+    }
+    .photo-inner {
+      width: 100%; height: 100%; border-radius: 999px;
+      background: linear-gradient(160deg, #ffe0c2, #ff9a4a 45%, #ff6a00);
+      display: grid; place-items: center; text-align: center; color: #fff;
+    }
+    .photo-stat { font-weight: 800; font-size: 2.4rem; letter-spacing: -.04em; line-height: 1; }
+    .photo-sub { margin-top: .25rem; font-weight: 700; }
+    .float {
+      position: absolute; z-index: 2; width: 42px; height: 42px; border-radius: 50%;
+      background: #fff; display: grid; place-items: center; font-size: 1.1rem;
+      box-shadow: 0 8px 18px rgba(31,28,61,.12);
+    }
+    .float.a { top: 10%; left: 8%; }
+    .float.b { bottom: 12%; right: 6%; }
+
+    .board {
+      display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .85fr);
+      gap: .9rem; width: 100%;
+      align-items: stretch;
+    }
+    .card {
+      background: var(--surface); border-radius: 16px; padding: 1.1rem 1.15rem;
+      box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,.03);
+      height: 100%;
+    }
+    .card h3 { margin: 0 0 .85rem; font-weight: 800; font-size: 1.05rem; }
+    .row {
+      display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+      padding: .75rem .65rem; margin: 0 -.1rem .3rem; border-radius: 12px;
+      text-decoration: none; color: inherit; border: 1px solid transparent;
+    }
+    .row:hover { background: #faf9f6; border-color: var(--line); }
+    .row.now { background: #fff6ef; border-color: #ffd7b8; }
+    .row-title { font-weight: 750; font-size: .94rem; }
+    .row-meta { color: var(--mute); font-size: .8rem; margin-top: .1rem; font-weight: 500; }
+    .pill {
+      font-size: .72rem; font-weight: 800; padding: .26rem .65rem; border-radius: 999px;
+      background: #ecebff; color: var(--blue-deep);
+    }
+    .pill.ok { background: #e8f8ef; color: #1f7a5c; }
+    .pill.next { background: #ffe8d4; color: var(--orange-deep); }
+    .score { font-weight: 800; font-size: 2.2rem; letter-spacing: -.03em; line-height: 1; }
+    .score-label { color: var(--mute); font-weight: 500; margin-top: .3rem; font-size: .86rem; }
+    .hint {
+      margin-top: .8rem; padding: .65rem .75rem; border-radius: 12px;
+      background: #fff6ef; border: 1px dashed #ffc48a; color: var(--mute); font-size: .86rem;
+    }
+    .hint strong { color: var(--ink); }
+
+    .q {
+      background: var(--surface); border-radius: 16px; padding: 1rem 1.1rem;
+      margin-bottom: .65rem; box-shadow: var(--shadow);
+    }
+    .qn { font-weight: 750; margin-bottom: .5rem; }
+    .opts { display: grid; gap: .35rem; }
+    .opts label {
+      display: flex; gap: .55rem; align-items: center; padding: .6rem .7rem;
+      border-radius: 10px; border: 1px solid var(--line); cursor: pointer; font-weight: 600;
+    }
+    .opts label:hover { border-color: var(--orange); background: #fff8f3; }
+    .opts input { accent-color: var(--orange); }
+
+    .role-home { display: none; }
+    body.role-student .home-student,
+    body.role-teacher .home-teacher,
+    body.role-admin .home-admin { display: block; }
+
+    /* Mobile / tablet */
+    .menu-toggle {
+      display: none; border: 1px solid rgba(255,255,255,.25); background: transparent;
+      color: #fff; border-radius: 10px; padding: .4rem .7rem; font: inherit; font-weight: 700;
+      cursor: pointer; flex-shrink: 0;
+    }
+    @media (max-width: 1100px) {
+      .nav-links a { padding: .4rem .65rem; font-size: .82rem; }
+    }
+    @media (max-width: 960px) {
+      .hero { grid-template-columns: 1fr; gap: 1.25rem; }
+      .hero-visual { min-height: 200px; max-width: min(280px, 70vw); margin: 0 auto; width: 100%; }
+      .board { grid-template-columns: 1fr; }
+      .lede { max-width: none; }
+    }
+    @media (max-width: 860px) {
+      .menu-toggle { display: inline-flex; align-items: center; order: 2; margin-left: auto; }
+      .top-right { order: 3; margin-left: 0; }
+      .top-right .who { display: none; }
+      .moodle { padding: .42rem .7rem; font-size: .74rem; }
+      .nav-links {
+        display: none; width: 100%; order: 5; flex: 1 1 100%;
+        padding-top: .55rem; margin-top: .15rem;
+        border-top: 1px solid rgba(255,255,255,.1);
+        gap: .35rem;
+      }
+      .topnav.open .nav-links { display: flex; }
+      .nav-links a {
+        flex: 1 1 calc(50% - .35rem); text-align: center; justify-content: center;
+        background: rgba(255,255,255,.06);
+      }
+      .title { font-size: clamp(1.55rem, 6vw, 2rem); }
+      .course-pill { font-size: .74rem; max-width: 100%; }
+      .subbar { flex-direction: column; align-items: flex-start; }
+      .cta-row { flex-direction: column; align-items: stretch; }
+      .cta, .cta.ghost { justify-content: center; text-align: center; }
+      .row { flex-wrap: wrap; }
+    }
+    @media (max-width: 480px) {
+      .banner { font-size: .75rem; gap: .45rem; }
+      .banner > div:first-child { flex: 1 1 100%; }
+      .roles { width: 100%; }
+      .roles button { flex: 1; padding: .3rem .45rem; font-size: .76rem; text-align: center; }
+      .bname { font-size: 1rem; }
+      .btag { display: none; }
+      .mark { width: 34px; height: 34px; font-size: .78rem; }
+      .photo-frame { width: min(100%, 190px); }
+      .photo-stat { font-size: 2rem; }
+      .card { padding: .95rem 1rem; border-radius: 14px; }
+      .nav-links a { flex: 1 1 100%; }
+      .main { padding-bottom: 2rem; }
+    }
+  </style>
+</head>
+<body class="role-student">
+  <div class="banner">
+    <div><strong>Demo only</strong> — top nav, role-flexible menus. Not applied live yet.</div>
+    <div class="roles">
+      <button type="button" class="on" data-role="student">Student</button>
+      <button type="button" data-role="teacher">Teacher</button>
+      <button type="button" data-role="admin">Admin</button>
+    </div>
+  </div>
+
+  <div class="frame">
+    <header class="topnav" id="topnav">
+      <a class="brand" href="#home" data-screen="home">
+        <div class="mark">EV</div>
+        <div>
+          <div class="bname"><span class="ed">Ed</span><span class="vid">Vidura</span></div>
+          <div class="btag">Inside Moodle</div>
+        </div>
+      </a>
+
+      <button class="menu-toggle" type="button" id="menuToggle" aria-label="Menu">Menu</button>
+
+      <nav class="nav-links" id="navLinks" aria-label="Main">
+        <!-- Shared learning path -->
+        <a class="on nav-student-only" href="#home" data-screen="home">Home</a>
+        <a class="nav-student-only" href="#lessons" data-screen="lessons">Lessons</a>
+        <a class="nav-student-only" href="#quiz" data-screen="quiz">Quiz</a>
+        <a class="nav-student-only" href="#results" data-screen="results">My results</a>
+
+        <!-- Teacher extras -->
+        <a class="nav-teach" href="#upload" data-screen="upload">Upload</a>
+        <a class="nav-teach" href="#class" data-screen="class">Class results</a>
+
+        <!-- Admin extras -->
+        <a class="nav-admin" href="#teachers" data-screen="teachers">Teachers</a>
+        <a class="nav-admin" href="#classes" data-screen="classes">Classes</a>
+        <a class="nav-admin" href="#students" data-screen="students">Students</a>
+      </nav>
+
+      <div class="top-right">
+        <div class="who">
+          <div class="uname" id="uname">Alice Nguyen</div>
+          <div class="urole" id="urole">Student</div>
+        </div>
+        <a class="moodle" href="#">← Moodle</a>
+      </div>
+    </header>
+
+    <div class="subbar">
+      <h1 class="ptitle" id="ptitle">Home</h1>
+      <div class="course-pill" id="coursePill"><em style="font-style:normal;color:var(--mute)">Course · </em><strong>Algebra I</strong> · Riverside High</div>
+    </div>
+
+    <main class="main">
+      <section class="screen on" id="home">
+        <div class="role-home home-student">
+          <div class="hero">
+            <div class="hero-copy">
+              <div class="squiggle" aria-hidden="true"></div>
+              <p class="kicker">Student · Algebra I</p>
+              <h2 class="title">Continue your learning <span class="mark-word">journey<svg viewBox="0 0 200 60" fill="none"><path d="M8 30 C 20 8, 50 4, 100 12 S 170 8, 192 28 S 160 52, 100 48 S 20 52, 8 30" stroke="#ff6a00" stroke-width="3.5" stroke-linecap="round"/></svg></span></h2>
+              <p class="lede">Hi, Alice — two lessons done. Quiz is next.</p>
+              <div class="cta-row">
+                <a class="cta" href="#quiz" data-screen="quiz">Continue learning →</a>
+                <a class="cta ghost" href="#lessons" data-screen="lessons">Browse lessons</a>
+              </div>
+            </div>
+            <div class="hero-visual" aria-hidden="true">
+              <div class="brush t"></div><div class="brush b"></div>
+              <div class="float a">💡</div><div class="float b">📘</div>
+              <div class="photo-frame"><div class="photo-inner"><div><div class="photo-stat">66%</div><div class="photo-sub">complete</div></div></div></div>
+            </div>
+          </div>
+          <div class="board">
+            <div class="card">
+              <h3>This chapter</h3>
+              <a class="row" href="#lessons" data-screen="lessons"><div><div class="row-title">Linear equations</div><div class="row-meta">Reading</div></div><span class="pill ok">Done</span></a>
+              <a class="row" href="#lessons" data-screen="lessons"><div><div class="row-title">Slope &amp; intercept</div><div class="row-meta">Video</div></div><span class="pill ok">Done</span></a>
+              <a class="row now" href="#quiz" data-screen="quiz"><div><div class="row-title">Chapter check</div><div class="row-meta">Quiz</div></div><span class="pill next">Next</span></a>
+            </div>
+            <div class="card">
+              <h3>Last score</h3>
+              <div class="score">2 / 3</div>
+              <div class="score-label">Practice attempt</div>
+              <div class="hint"><strong>Tip:</strong> Review slope before retrying.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="role-home home-teacher">
+          <div class="hero">
+            <div class="hero-copy">
+              <p class="kicker">Teacher · Period 2</p>
+              <h2 class="title">Guide the class <span class="mark-word">journey<svg viewBox="0 0 200 60" fill="none"><path d="M8 30 C 20 8, 50 4, 100 12 S 170 8, 192 28 S 160 52, 100 48 S 20 52, 8 30" stroke="#ff6a00" stroke-width="3.5" stroke-linecap="round"/></svg></span></h2>
+              <p class="lede">Hi, Priya — 18 of 24 learners attempted the quiz. Top nav shows Upload + Class results.</p>
+              <div class="cta-row">
+                <a class="cta" href="#class" data-screen="class">Class results →</a>
+                <a class="cta ghost" href="#upload" data-screen="upload">Upload content</a>
+              </div>
+            </div>
+            <div class="hero-visual" aria-hidden="true">
+              <div class="brush t"></div><div class="brush b"></div>
+              <div class="photo-frame"><div class="photo-inner"><div><div class="photo-stat">75%</div><div class="photo-sub">attempted</div></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="role-home home-admin">
+          <div class="hero">
+            <div class="hero-copy">
+              <p class="kicker">School admin · Riverside</p>
+              <h2 class="title">School <span class="mark-word">directory<svg viewBox="0 0 200 60" fill="none"><path d="M8 30 C 20 8, 50 4, 100 12 S 170 8, 192 28 S 160 52, 100 48 S 20 52, 8 30" stroke="#ff6a00" stroke-width="3.5" stroke-linecap="round"/></svg></span></h2>
+              <p class="lede">Top nav adds Teachers, Classes, Students — still keeps the learning path.</p>
+              <div class="cta-row">
+                <a class="cta" href="#teachers" data-screen="teachers">Teachers →</a>
+                <a class="cta ghost" href="#classes" data-screen="classes">Classes</a>
+              </div>
+            </div>
+            <div class="hero-visual" aria-hidden="true">
+              <div class="brush t"></div><div class="brush b"></div>
+              <div class="photo-frame"><div class="photo-inner"><div><div class="photo-stat">184</div><div class="photo-sub">students</div></div></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="lessons">
+        <div class="card">
+          <h3>Lessons</h3>
+          <a class="row" href="#"><div><div class="row-title">1. Linear equations</div><div class="row-meta">Reading</div></div><span class="pill ok">Done</span></a>
+          <a class="row" href="#"><div><div class="row-title">2. Slope &amp; intercept</div><div class="row-meta">Video</div></div><span class="pill ok">Done</span></a>
+          <a class="row now" href="#quiz" data-screen="quiz"><div><div class="row-title">3. Chapter check</div><div class="row-meta">Quiz</div></div><span class="pill next">Next</span></a>
+        </div>
+      </section>
+
+      <section class="screen" id="quiz">
+        <h2 class="title" style="font-size:1.85rem;margin:0 0 .9rem">Quiz</h2>
+        <div class="q">
+          <div class="qn">1. Slope of y = 2x + 3?</div>
+          <div class="opts">
+            <label><input type="radio" name="q1"/> 2</label>
+            <label><input type="radio" name="q1"/> 3</label>
+            <label><input type="radio" name="q1"/> 5</label>
+          </div>
+        </div>
+        <div class="q">
+          <div class="qn">2. Point on y = x?</div>
+          <div class="opts">
+            <label><input type="radio" name="q2"/> (2, 3)</label>
+            <label><input type="radio" name="q2"/> (4, 4)</label>
+            <label><input type="radio" name="q2"/> (0, 1)</label>
+          </div>
+        </div>
+        <div class="cta-row">
+          <a class="cta" href="#results" data-screen="results">Submit →</a>
+          <a class="cta ghost" href="#lessons" data-screen="lessons">Lessons</a>
+        </div>
+      </section>
+
+      <section class="screen" id="results">
+        <div class="board">
+          <div class="card">
+            <h3>My results</h3>
+            <div class="score">2 / 3</div>
+            <div class="score-label">Latest attempt</div>
+            <div class="cta-row">
+              <a class="cta" href="#quiz" data-screen="quiz">Try again →</a>
+              <a class="cta ghost" href="#lessons" data-screen="lessons">Review</a>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Breakdown</h3>
+            <div class="row"><div class="row-title">Q1 Slope</div><span class="pill ok">Correct</span></div>
+            <div class="row"><div class="row-title">Q2 Point</div><span class="pill ok">Correct</span></div>
+            <div class="row now"><div class="row-title">Q3 Intercept</div><span class="pill next">Missed</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="upload">
+        <div class="card"><h3>Upload content</h3><p class="lede" style="margin:0">Teacher — add a lesson or quiz question.</p></div>
+      </section>
+      <section class="screen" id="class">
+        <div class="card">
+          <h3>Class results</h3>
+          <div class="row"><div class="row-title">Alice Nguyen</div><span class="pill next">2/3</span></div>
+          <div class="row"><div class="row-title">Bob Okonkwo</div><span class="pill ok">3/3</span></div>
+        </div>
+      </section>
+      <section class="screen" id="teachers">
+        <div class="card"><h3>Teachers</h3><p class="lede" style="margin:0">School admin directory.</p></div>
+      </section>
+      <section class="screen" id="classes">
+        <div class="card"><h3>Classes</h3><p class="lede" style="margin:0">Rosters for this school.</p></div>
+      </section>
+      <section class="screen" id="students">
+        <div class="card"><h3>Students</h3><p class="lede" style="margin:0">Enrolled learners.</p></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const titles = {
+      home:'Home', lessons:'Lessons', quiz:'Quiz', results:'My results',
+      upload:'Upload content', class:'Class results',
+      teachers:'Teachers', classes:'Classes', students:'Students'
+    };
+    const people = {
+      student:['Alice Nguyen','Student'],
+      teacher:['Priya Shah','Teacher'],
+      admin:['Riverside Admin','School admin']
+    };
+    function go(name) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.toggle('on', el.id === name));
+      document.querySelectorAll('.nav-links a').forEach(a => a.classList.toggle('on', a.dataset.screen === name));
+      document.getElementById('ptitle').textContent = titles[name] || 'EdVidura';
+      document.getElementById('topnav').classList.remove('open');
+    }
+    document.querySelectorAll('[data-screen]').forEach(el => {
+      el.addEventListener('click', e => { e.preventDefault(); go(el.dataset.screen); });
+    });
+    document.getElementById('menuToggle').addEventListener('click', () => {
+      document.getElementById('topnav').classList.toggle('open');
+    });
+    document.querySelectorAll('[data-role]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-role]').forEach(b => b.classList.toggle('on', b === btn));
+        const role = btn.dataset.role;
+        document.body.className = 'role-' + role;
+        document.getElementById('uname').textContent = people[role][0];
+        document.getElementById('urole').textContent = people[role][1];
+        go('home');
+      });
+    });
+  </script>
+</body>
+</html>

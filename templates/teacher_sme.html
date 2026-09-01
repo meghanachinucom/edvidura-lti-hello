@@ -1,0 +1,93 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Teach · C13</p>
+  <h2 class="welcome-title">SME sources</h2>
+  <p class="welcome-lede">
+    Approve version-pinned manuals and lessons the study coach may cite.
+  </p>
+</section>
+
+{% if ok_message %}
+<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
+{% endif %}
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Bootstrap</h2>
+    <form method="post" action="/teacher/sme/ensure-defaults">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <button type="submit" class="btn secondary">Load published manuals + lessons</button>
+    </form>
+  </div>
+  <p class="meta">Only runs when the registry is empty.</p>
+</section>
+
+<section class="panel">
+  <h2>Add manual (version-pinned)</h2>
+  <form method="post" action="/teacher/sme/manual" class="teach-form">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>Manual
+      <select name="manual_id" required>
+        <option value="">— pick —</option>
+        {% for m in manuals %}
+        <option value="{{ m.id }}">{{ m.title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Pin version (blank = latest published)
+      <input name="pin_version" type="number" min="1" placeholder="1"/>
+    </label>
+    <label>Focus slug (optional ## heading)
+      <input name="focus_slug" placeholder="solve-for-x"/>
+    </label>
+    <label>Label
+      <input name="label" placeholder="Optional display name"/>
+    </label>
+    <button type="submit" class="btn primary">Add manual source</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Add lesson</h2>
+  <form method="post" action="/teacher/sme/lesson" class="teach-form">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>Lesson
+      <select name="lesson_id" required>
+        <option value="">— pick —</option>
+        {% for L in lessons %}
+        <option value="{{ L.id }}">{{ L.title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Label
+      <input name="label" placeholder="Optional"/>
+    </label>
+    <button type="submit" class="btn primary">Add lesson source</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Active sources</h2>
+  {% if sources %}
+  <ul class="q-list">
+    {% for s in sources %}
+    <li>
+      <strong>{{ s.label }}</strong>
+      <span class="meta">
+        · {{ s.source_kind }}
+        {% if s.pin_version %}· v{{ s.pin_version }}{% endif %}
+        {% if s.focus_slug %}· focus <code>{{ s.focus_slug }}</code>{% endif %}
+      </span>
+      <form method="post" action="/teacher/sme/{{ s.id }}/archive" style="display:inline;margin-left:0.5rem">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <button type="submit" class="btn secondary">Remove</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="lede">None yet — load defaults or add a manual/lesson above.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -92,6 +92,17 @@ def get_primary_course(tenant_id: UUID | str) -> dict[str, Any] | None:
     return courses[0] if courses else None
 
 
+def get_bound_course(
+    tenant_id: UUID | str, course_id: UUID | str | None
+) -> dict[str, Any] | None:
+    """Prefer an explicit course id from LTI class binding; else primary."""
+    if course_id:
+        row = get_course(tenant_id, course_id)
+        if row:
+            return row
+    return get_primary_course(tenant_id)
+
+
 def get_course(tenant_id: UUID | str, course_id: UUID | str) -> dict[str, Any] | None:
     with db.tenant_connection(tenant_id) as conn:
         row = conn.execute(
@@ -493,34 +504,64 @@ def create_lesson(
     lesson_type: str = "article",
     video_url: str = "",
     status: str = "published",
+    course_id: UUID | str | None = None,
+    insert_before_quiz: bool = False,
 ) -> dict[str, Any]:
     if lesson_type not in {"article", "video", "quiz"}:
         lesson_type = "article"
     if status not in {"draft", "published", "archived"}:
         status = "published"
-    course = ensure_primary_course(tenant_id)
+    if course_id:
+        course = get_course(tenant_id, course_id) or ensure_primary_course(tenant_id)
+    else:
+        course = ensure_primary_course(tenant_id)
     tid = str(tenant_id)
+    cid = str(course["id"])
     base_slug = _slugify(title)
     with db.tenant_connection(tid) as conn:
-        pos_row = conn.execute(
-            "SELECT COALESCE(MAX(position), 0) + 1 AS n FROM lessons WHERE course_id = %s",
-            (str(course["id"]),),
-        ).fetchone()
-        position = int(pos_row["n"])
+        if insert_before_quiz and lesson_type != "quiz":
+            qpos = conn.execute(
+                """
+                SELECT MIN(position) AS n FROM lessons
+                WHERE course_id = %s AND lesson_type = 'quiz'
+                """,
+                (cid,),
+            ).fetchone()
+            if qpos and qpos["n"] is not None:
+                position = int(qpos["n"])
+                conn.execute(
+                    """
+                    UPDATE lessons SET position = position + 1
+                    WHERE course_id = %s AND position >= %s
+                    """,
+                    (cid, position),
+                )
+            else:
+                pos_row = conn.execute(
+                    "SELECT COALESCE(MAX(position), 0) + 1 AS n FROM lessons WHERE course_id = %s",
+                    (cid,),
+                ).fetchone()
+                position = int(pos_row["n"])
+        else:
+            pos_row = conn.execute(
+                "SELECT COALESCE(MAX(position), 0) + 1 AS n FROM lessons WHERE course_id = %s",
+                (cid,),
+            ).fetchone()
+            position = int(pos_row["n"])
         slug = base_slug
         # Avoid slug collisions
         for i in range(0, 50):
             candidate = slug if i == 0 else f"{base_slug}-{i+1}"
             clash = conn.execute(
                 "SELECT 1 FROM lessons WHERE course_id = %s AND slug = %s",
-                (str(course["id"]), candidate),
+                (cid, candidate),
             ).fetchone()
             if not clash:
                 slug = candidate
                 break
         quiz_id = None
         if lesson_type == "quiz":
-            quiz = ensure_primary_quiz(tid, course_id=str(course["id"]))
+            quiz = ensure_primary_quiz(tid, course_id=cid)
             quiz_id = quiz["id"]
         row = conn.execute(
             """
@@ -534,7 +575,7 @@ def create_lesson(
             """,
             (
                 tid,
-                str(course["id"]),
+                cid,
                 slug,
                 title.strip(),
                 position,

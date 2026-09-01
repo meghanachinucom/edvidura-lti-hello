@@ -15,6 +15,7 @@ from app.modules.xapi.builder import (
     build_lesson_completed_statement,
     build_quiz_attempt_statement,
     build_resource_experienced_statement,
+    build_skill_assessed_statement,
 )
 from app.settings import get_settings
 
@@ -119,6 +120,51 @@ def record_resource_experienced(
         send_lrs=send_lrs,
         promote_on_valid=True,
     )
+
+
+def record_skill_assessments(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    attempt_id: UUID | str,
+    answers: Any = None,
+    homepage: str | None = None,
+    send_lrs: bool = True,
+) -> list[dict[str, Any]]:
+    """D15: emit one competency statement per skill profile row for an attempt."""
+    from app.modules.specials import competency_profile
+
+    settings = get_settings()
+    rows = competency_profile(answers, tenant_id=tenant_id)
+    stored: list[dict[str, Any]] = []
+    for row in rows:
+        if int(row.get("total") or 0) <= 0:
+            continue
+        statement = build_skill_assessed_statement(
+            tenant_id=tenant_id,
+            subject=subject,
+            learner_name=learner_name,
+            skill_code=str(row.get("id") or ""),
+            skill_label=str(row.get("label") or row.get("id") or ""),
+            status=str(row.get("status") or "unknown"),
+            percent=row.get("percent"),
+            attempt_id=attempt_id,
+            homepage=homepage or settings.xapi_actor_homepage,
+            activity_base=settings.app_base_url,
+        )
+        stored.append(
+            _store_and_maybe_send(
+                tenant_id=tenant_id,
+                statement=statement,
+                actor_sub=subject,
+                attempt_id=attempt_id,
+                source_event_id=None,
+                send_lrs=send_lrs,
+                promote_on_valid=True,
+            )
+        )
+    return stored
 
 
 def _store_and_maybe_send(
@@ -335,35 +381,143 @@ def retry_failed_lrs(
     return {"retried": len(rows), "sent": ok_n, "failed": fail_n}
 
 
-def list_statements(
-    tenant_id: UUID | str, *, limit: int = 50, tier: str | None = None
-) -> list[dict[str, Any]]:
+_ALLOWED_TIERS = frozenset({"noisy", "transactional", "authoritative"})
+
+
+def store_raw_statement(
+    *,
+    tenant_id: UUID | str,
+    statement: dict[str, Any],
+    attempt_id: UUID | str | None = None,
+    actor_sub: str | None = None,
+    send_lrs: bool = False,
+    promote_on_valid: bool = True,
+) -> dict[str, Any]:
+    """
+    Middleware ingest: store a client-supplied xAPI statement under RLS.
+
+    Does not touch Moodle grades (AGS remains SoR).
+    """
+    from uuid import uuid4
+
+    if not isinstance(statement, dict):
+        raise ValueError("statement must be an object")
+    stmt = dict(statement)
+    if not stmt.get("id"):
+        stmt["id"] = str(uuid4())
+    sub = (actor_sub or "").strip()
+    if not sub:
+        account = (stmt.get("actor") or {}).get("account") or {}
+        sub = str(account.get("name") or "").strip()
+    if not sub:
+        raise ValueError("actor_sub required (or actor.account.name)")
+    aid = attempt_id
+    if not aid:
+        ext = ((stmt.get("context") or {}).get("extensions") or {})
+        aid = ext.get("https://edvidura.local/xapi/extensions/attempt_id")
+    return _store_and_maybe_send(
+        tenant_id=tenant_id,
+        statement=stmt,
+        actor_sub=sub,
+        attempt_id=aid,
+        source_event_id=None,
+        send_lrs=send_lrs,
+        promote_on_valid=promote_on_valid,
+    )
+
+
+def promote_tier(
+    tenant_id: UUID | str,
+    statement_id: str,
+    *,
+    tier: str,
+    send_lrs: bool = False,
+) -> dict[str, Any] | None:
+    """Manually set statement tier; optionally forward to LRS → authoritative."""
+    target = (tier or "").strip().lower()
+    if target not in _ALLOWED_TIERS:
+        raise ValueError("tier must be noisy, transactional, or authoritative")
+    sid = str(statement_id or "").strip()
+    if not sid:
+        raise ValueError("statement_id required")
+
     with db.tenant_connection(tenant_id) as conn:
-        if tier:
-            rows = conn.execute(
-                """
-                SELECT id, statement_id, verb_id, actor_sub, object_id,
-                       statement, sent_to_lrs, lrs_error, created_at, attempt_id,
-                       tier, lrs_attempts, promoted_at
-                FROM xapi_statements
-                WHERE tier = %s
-                ORDER BY created_at DESC
-                LIMIT %s
-                """,
-                (tier, limit),
-            ).fetchall()
+        row = conn.execute(
+            """
+            SELECT statement_id, statement, tier, sent_to_lrs
+            FROM xapi_statements
+            WHERE statement_id = %s
+            """,
+            (sid,),
+        ).fetchone()
+    if not row:
+        return None
+
+    if send_lrs or target == "authoritative":
+        stmt = row["statement"]
+        if isinstance(stmt, str):
+            stmt = json.loads(stmt)
+        ok, err, attempts = forward_to_lrs(stmt, retries=3)
+        _mark_lrs(
+            tenant_id=tenant_id,
+            statement_id=sid,
+            sent=ok,
+            error=err,
+            attempts=attempts,
+        )
+        if ok:
+            _set_tier(tenant_id, sid, "authoritative")
+            target = "authoritative"
+        elif target == "authoritative" and not ok:
+            # Keep requested intent but stay at transactional if LRS failed
+            _set_tier(tenant_id, sid, "transactional")
+            target = "transactional"
         else:
-            rows = conn.execute(
-                """
-                SELECT id, statement_id, verb_id, actor_sub, object_id,
-                       statement, sent_to_lrs, lrs_error, created_at, attempt_id,
-                       tier, lrs_attempts, promoted_at
-                FROM xapi_statements
-                ORDER BY created_at DESC
-                LIMIT %s
-                """,
-                (limit,),
-            ).fetchall()
+            _set_tier(tenant_id, sid, target)
+    else:
+        _set_tier(tenant_id, sid, target)
+
+    rows = list_statements(tenant_id, limit=1, statement_id=sid)
+    return rows[0] if rows else {"statement_id": sid, "tier": target}
+
+
+def list_statements(
+    tenant_id: UUID | str,
+    *,
+    limit: int = 50,
+    tier: str | None = None,
+    attempt_id: UUID | str | None = None,
+    subject: str | None = None,
+    statement_id: str | None = None,
+) -> list[dict[str, Any]]:
+    lim = max(1, min(int(limit), 500))
+    clauses: list[str] = []
+    params: list[Any] = []
+    if tier:
+        clauses.append("tier = %s")
+        params.append(tier)
+    if attempt_id:
+        clauses.append("attempt_id = %s")
+        params.append(str(attempt_id))
+    if subject:
+        clauses.append("actor_sub = %s")
+        params.append(str(subject).strip())
+    if statement_id:
+        clauses.append("statement_id = %s")
+        params.append(str(statement_id).strip())
+    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    params.append(lim)
+    sql = f"""
+        SELECT id, statement_id, verb_id, actor_sub, object_id,
+               statement, sent_to_lrs, lrs_error, created_at, attempt_id,
+               tier, lrs_attempts, promoted_at
+        FROM xapi_statements
+        {where}
+        ORDER BY created_at DESC
+        LIMIT %s
+    """
+    with db.tenant_connection(tenant_id) as conn:
+        rows = conn.execute(sql, tuple(params)).fetchall()
         return [dict(r) for r in rows]
 
 

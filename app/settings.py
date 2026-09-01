@@ -31,6 +31,16 @@ class Settings:
     ai_enabled: bool = False
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
+    # E04: auto | openai | local_http — OpenAI-compatible local inference.
+    ai_provider: str = "auto"
+    ai_force_local: bool = False
+    local_ai_base_url: str = ""
+    local_ai_api_key: str = ""
+    local_ai_model: str = "local-model"
+    # D17: cross-org webhook drain for EVENT_ENVELOPE_V1 outbox.
+    event_pipeline_enabled: bool = False
+    event_webhook_url: str = ""
+    event_webhook_secret: str = ""
     # Keycloak ops identity (optional). When disabled, X-Admin-Key still works.
     keycloak_enabled: bool = False
     keycloak_url: str = ""
@@ -39,10 +49,17 @@ class Settings:
     keycloak_client_secret: str = ""
     # Metabase BI URL (optional link from teacher analytics).
     metabase_url: str = ""
+    # Static embed signing (optional). When set with dashboard id → iframe.
+    metabase_secret_key: str = ""
+    metabase_embed_dashboard_id: int = 0
     # Phase 6 ops
     rate_limit_enabled: bool = True
     sentry_dsn: str = ""
     sentry_traces_sample_rate: float = 0.0
+    # HMAC key for sealed grade receipts (falls back to session_secret).
+    receipt_signing_key: str = ""
+    # D01: if true, coach may persist turns later; default false = stateless.
+    coach_store_turns: bool = False
 
     @property
     def is_production(self) -> bool:
@@ -63,6 +80,13 @@ class Settings:
         if self.private_key_pem_env.strip():
             return True
         return self.private_key_path.exists()
+
+
+def _safe_int(raw: str | None, default: int = 0) -> int:
+    try:
+        return int((raw or "").strip() or default)
+    except ValueError:
+        return default
 
 
 def get_settings() -> Settings:
@@ -111,6 +135,23 @@ def get_settings() -> Settings:
         openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
         openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
         or "gpt-4o-mini",
+        ai_provider=(
+            os.getenv("AI_PROVIDER", "auto").strip().lower() or "auto"
+        ),
+        ai_force_local=os.getenv("AI_FORCE_LOCAL", "").strip().lower()
+        in {"1", "true", "yes", "on"},
+        local_ai_base_url=os.getenv("LOCAL_AI_BASE_URL", "").strip().rstrip(
+            "/"
+        ),
+        local_ai_api_key=os.getenv("LOCAL_AI_API_KEY", "").strip(),
+        local_ai_model=os.getenv("LOCAL_AI_MODEL", "local-model").strip()
+        or "local-model",
+        event_pipeline_enabled=os.getenv("EVENT_PIPELINE_ENABLED", "")
+        .strip()
+        .lower()
+        in {"1", "true", "yes", "on"},
+        event_webhook_url=os.getenv("EVENT_WEBHOOK_URL", "").strip(),
+        event_webhook_secret=os.getenv("EVENT_WEBHOOK_SECRET", "").strip(),
         keycloak_enabled=os.getenv("KEYCLOAK_ENABLED", "").strip().lower()
         in {"1", "true", "yes", "on"},
         keycloak_url=os.getenv("KEYCLOAK_URL", "http://localhost:8087").rstrip(
@@ -126,7 +167,14 @@ def get_settings() -> Settings:
         metabase_url=os.getenv("METABASE_URL", "http://localhost:3001").rstrip(
             "/"
         ),
+        metabase_secret_key=os.getenv("METABASE_SECRET_KEY", "").strip(),
+        metabase_embed_dashboard_id=_safe_int(
+            os.getenv("METABASE_EMBED_DASHBOARD_ID", "0"), 0
+        ),
         rate_limit_enabled=rate_limit_enabled,
         sentry_dsn=os.getenv("SENTRY_DSN", "").strip(),
         sentry_traces_sample_rate=max(0.0, min(1.0, traces)),
+        receipt_signing_key=os.getenv("RECEIPT_SIGNING_KEY", "").strip(),
+        coach_store_turns=os.getenv("COACH_STORE_TURNS", "").strip().lower()
+        in {"1", "true", "yes", "on"},
     )

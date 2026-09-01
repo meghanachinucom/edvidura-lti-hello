@@ -60,6 +60,73 @@ def test_lesson_completed_statement():
     assert str(lid) in stmt["object"]["id"]
 
 
+def test_skill_assessed_statement_mastered():
+    from app.modules.xapi import build_skill_assessed_statement
+
+    aid = uuid4()
+    stmt = build_skill_assessed_statement(
+        tenant_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        subject="user-1",
+        learner_name="Alice",
+        skill_code="solve_linear",
+        skill_label="Solve linear",
+        status="strong",
+        percent=100,
+        attempt_id=aid,
+    )
+    assert stmt["verb"]["id"] == verbs.VERB_MASTERED
+    assert stmt["result"]["success"] is True
+    ext = stmt["context"]["extensions"]
+    assert ext["https://edvidura.local/xapi/extensions/skill_code"] == "solve_linear"
+    assert ext["https://edvidura.local/xapi/extensions/skill_status"] == "strong"
+    assert str(aid) in ext.values()
+    assert "/xapi/activities/skill/solve-linear" in stmt["object"]["id"]
+
+
+def test_skill_assessed_statement_weak():
+    from app.modules.xapi import build_skill_assessed_statement
+
+    stmt = build_skill_assessed_statement(
+        tenant_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        subject="user-1",
+        learner_name="",
+        skill_code="gradebook_sync",
+        skill_label="Gradebook",
+        status="weak",
+        percent=0,
+        attempt_id=uuid4(),
+    )
+    assert stmt["verb"]["id"] == verbs.VERB_FAILED
+    assert stmt["result"]["success"] is False
+
+
+def test_store_raw_statement_requires_actor():
+    from app.modules.xapi import store_raw_statement
+
+    try:
+        store_raw_statement(
+            tenant_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            statement={"verb": {"id": "http://adlnet.gov/expapi/verbs/experienced"}},
+        )
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert "actor" in str(exc).lower() or "actor_sub" in str(exc).lower()
+
+
+def test_promote_tier_rejects_bad_tier():
+    from app.modules.xapi import promote_tier
+
+    try:
+        promote_tier(
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "sid",
+            tier="gold",
+        )
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert "tier" in str(exc).lower()
+
+
 def _db_ok() -> bool:
     os.environ.setdefault(
         "DATABASE_URL",

@@ -1,0 +1,19 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Study hint · {{ hint.provider }}</p>
+  <h2 class="welcome-title">Try this</h2>
+  <p class="welcome-lede">{{ hint.review_focus or 'Review, then practice.' }}</p>
+</section>
+
+<section class="panel">
+  <p class="meta">Question</p>
+  <p>{{ prompt }}</p>
+  <p style="margin-top:1rem">{{ hint.hint }}</p>
+  {% if hint.note %}<p class="banner-note info">{{ hint.note }}</p>{% endif %}
+  <div class="actions" style="margin-top:1rem">
+    <a class="btn primary" href="{{ back_href }}">Back to result</a>
+    <a class="btn secondary" href="/learn/coach?token={{ quiz_token }}">Ask study coach</a>
+  </div>
+</section>
+{% endblock %}

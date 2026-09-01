@@ -267,7 +267,10 @@ async def quiz_submit(
     try:
         form = await request.form()
         practice_mode = str(form.get("practice_mode") or "") == "1"
-        all_questions = questions_for_tenant(session.get("tenant_id"))
+        all_questions = questions_for_tenant(
+            session.get("tenant_id"),
+            course_id=session.get("edvidura_course_id") or None,
+        )
         form_keys = set(form.keys())
         questions = tuple(q for q in all_questions if q.id in form_keys)
         if not questions:
@@ -318,7 +321,7 @@ async def quiz_submit(
             print(f"Outbox enqueue failed (attempt saved): {outbox_exc}", flush=True)
 
         try:
-            from app.modules.xapi import record_quiz_attempt
+            from app.modules.xapi import record_quiz_attempt, record_skill_assessments
 
             record_quiz_attempt(
                 tenant_id=session["tenant_id"],
@@ -328,6 +331,13 @@ async def quiz_submit(
                 score=score,
                 max_score=max_score,
                 course_label=str(session.get("course") or ""),
+            )
+            record_skill_assessments(
+                tenant_id=session["tenant_id"],
+                subject=str(session["subject"]),
+                learner_name=str(session.get("learner_name") or ""),
+                attempt_id=attempt["id"],
+                answers=answers_payload,
             )
         except Exception as xapi_exc:  # noqa: BLE001
             print(f"xAPI record failed (attempt saved): {xapi_exc}", flush=True)

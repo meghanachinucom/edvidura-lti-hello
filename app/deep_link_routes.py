@@ -36,6 +36,12 @@ def _ensure_token(session: dict[str, Any]) -> str:
     return token
 
 
+def _bound_course(session: dict[str, Any]):
+    return content.get_bound_course(
+        session["tenant_id"], session.get("edvidura_course_id") or None
+    )
+
+
 @router.get("/lti/deep-link", response_class=HTMLResponse)
 async def deep_link_picker(request: Request, token: str | None = None):
     session = require_quiz_session(request, token=token)
@@ -47,7 +53,7 @@ async def deep_link_picker(request: Request, token: str | None = None):
         )
     tok = _ensure_token(session)
     request.session[SESSION_KEY] = session
-    course = content.get_primary_course(session["tenant_id"])
+    course = _bound_course(session)
     lessons = (
         content.list_lessons(session["tenant_id"], course["id"]) if course else []
     )
@@ -58,6 +64,15 @@ async def deep_link_picker(request: Request, token: str | None = None):
         manuals = manuals_mod.list_manuals(session["tenant_id"])
     except Exception:  # noqa: BLE001
         manuals = []
+    ai_suggestions = None
+    try:
+        from app.modules.ai_assessment import suggest_deeplink_activities
+
+        ai_suggestions = suggest_deeplink_activities(
+            lessons, course_title=str((course or {}).get("title") or "")
+        )
+    except Exception:  # noqa: BLE001
+        ai_suggestions = None
     return _TEMPLATES.TemplateResponse(
         request,
         "deep_link_picker.html",
@@ -66,6 +81,7 @@ async def deep_link_picker(request: Request, token: str | None = None):
             "tenant_name": session.get("tenant_name") or session.get("tenant_slug"),
             "lessons": lessons,
             "manuals": manuals,
+            "ai_suggestions": ai_suggestions,
             "app_base": get_settings().app_base_url,
         },
     )

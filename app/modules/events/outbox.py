@@ -1,12 +1,20 @@
-"""Event outbox producer — EVENT_ENVELOPE_V1."""
+"""Event outbox producer / drain — EVENT_ENVELOPE_V1 (+ D17 webhook)."""
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
 
+import httpx
+
 from app import db
+from app.settings import get_settings
+
+logger = logging.getLogger("edvidura.events")
 
 
 def build_envelope(
@@ -33,6 +41,25 @@ def build_envelope(
         "tenant_id": tid,
         "subject": subject,
         "payload": payload or {},
+    }
+
+
+def row_to_envelope(row: dict[str, Any]) -> dict[str, Any]:
+    payload = row.get("payload") or {}
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    occurred = row.get("occurred_at")
+    if hasattr(occurred, "isoformat"):
+        occurred_at = occurred.isoformat().replace("+00:00", "Z")
+    else:
+        occurred_at = str(occurred or "")
+    return {
+        "event_id": str(row["event_id"]),
+        "event_type": str(row["event_type"]),
+        "occurred_at": occurred_at,
+        "tenant_id": str(row["tenant_id"]),
+        "subject": row.get("subject"),
+        "payload": payload if isinstance(payload, dict) else {},
     }
 
 
@@ -106,7 +133,7 @@ def mark_published(
                 SET publish_error = %s
                 WHERE id = %s
                 """,
-                (error, str(outbox_id)),
+                (error[:2000], str(outbox_id)),
             )
         else:
             conn.execute(
@@ -119,19 +146,73 @@ def mark_published(
             )
 
 
+def sign_webhook_body(body: bytes | str, secret: str) -> str:
+    raw = body if isinstance(body, bytes) else body.encode("utf-8")
+    digest = hmac.new(secret.encode("utf-8"), raw, hashlib.sha256).hexdigest()
+    return f"sha256={digest}"
+
+
+def deliver_webhook(envelope: dict[str, Any]) -> tuple[bool, str | None]:
+    """
+    POST EVENT_ENVELOPE_V1 to EVENT_WEBHOOK_URL when pipeline enabled.
+
+    Returns (ok, error). When pipeline disabled or URL empty → local sink (ok).
+    """
+    settings = get_settings()
+    if not settings.event_pipeline_enabled:
+        return True, None
+    url = (settings.event_webhook_url or "").strip()
+    if not url:
+        return True, None
+    body = json.dumps(envelope, separators=(",", ":"), default=str)
+    headers = {"Content-Type": "application/json"}
+    secret = (settings.event_webhook_secret or "").strip()
+    if secret:
+        headers["X-EdVidura-Signature"] = sign_webhook_body(body, secret)
+    try:
+        resp = httpx.post(url, content=body, headers=headers, timeout=30.0)
+        resp.raise_for_status()
+        return True, None
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("outbox webhook failed: %s", exc)
+        return False, str(exc)[:500]
+
+
 def drain_tenant(
     tenant_id: UUID | str, *, limit: int = 50
 ) -> dict[str, Any]:
-    """Mark pending events published (local sink — no external bus yet)."""
+    """Deliver pending envelopes (webhook when configured) then mark published."""
+    settings = get_settings()
     pending = list_pending_for_tenant(tenant_id, limit=limit)
     done = 0
+    failed = 0
+    drained_ids: list[str] = []
+    errors: list[dict[str, str]] = []
+    mode = "local"
+    if settings.event_pipeline_enabled and settings.event_webhook_url:
+        mode = "webhook"
     for row in pending:
-        mark_published(tenant_id=tenant_id, outbox_id=row["id"])
-        done += 1
+        envelope = row_to_envelope(row)
+        ok, err = deliver_webhook(envelope)
+        if ok:
+            mark_published(tenant_id=tenant_id, outbox_id=row["id"])
+            done += 1
+            drained_ids.append(str(row["event_id"]))
+        else:
+            mark_published(
+                tenant_id=tenant_id, outbox_id=row["id"], error=err or "deliver failed"
+            )
+            failed += 1
+            errors.append(
+                {"event_id": str(row["event_id"]), "error": err or "deliver failed"}
+            )
     return {
         "tenant_id": str(tenant_id),
+        "mode": mode,
         "drained": done,
-        "event_ids": [str(r["event_id"]) for r in pending],
+        "failed": failed,
+        "event_ids": drained_ids,
+        "errors": errors,
     }
 
 

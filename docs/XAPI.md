@@ -4,42 +4,42 @@ EdVidura emits **xAPI 1.0.3 statements** for learning analytics. **Moodle AGS re
 
 ## Module
 
-`app.modules.xapi` — pure builders + RLS-backed store + optional LRS forward.
+`app.modules.xapi` — pure builders + RLS-backed store + optional LRS forward + middleware helpers.
 
 | Trigger | Verb | Notes |
 |---------|------|--------|
-| Quiz submit | `passed` / `failed` (≥60% scaled) | Includes score raw/max/scaled; `attempt_id` in context extensions |
-| Lesson complete (non-quiz) | `completed` | Activity id includes lesson UUID |
+| Quiz submit | `passed` / `failed` (≥60% scaled) | Includes score; `attempt_id` in extensions |
+| Skill profile (quiz) | `mastered` / `failed` / `attempted` | D15 competency statements per skill |
+| Lesson complete | `completed` | Activity id includes lesson UUID |
+| Manual open | `experienced` | Resource activity |
 
 Actor uses LTI `account` (`homePage` + `name` = LMS `sub`), not email.
 
-## Storage
-
-Table `xapi_statements` (tenant RLS). Apply:
-
-```bash
-Get-Content db/migration_xapi_statements.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
-```
-
-## Local tiers (fuller xAPI)
-
-Apply:
-
-```bash
-Get-Content db/migration_xapi_tiers.sql | docker exec -i db-db-1 psql -U edvidura -d edvidura -v ON_ERROR_STOP=1
-```
+## Tiers (one DB)
 
 | Tier | Meaning |
 |------|---------|
-| `noisy` | Stored but not yet validated |
-| `transactional` | Validated statement (default after write) |
-| `authoritative` | Successfully forwarded to external LRS |
+| `noisy` | Stored but not validated |
+| `transactional` | Valid statement (default after successful shape check) |
+| `authoritative` | Forwarded to external LRS (or manually promoted after LRS success) |
 
-LRS forward uses **retry (3 attempts)** with backoff. Re-send failures:
+## Middleware API (ops)
 
-`POST /dev/xapi/retry-lrs/{tenant_id}` with `X-Admin-Key` or Keycloak Bearer.
+Ops auth: `X-Admin-Key` or Keycloak Bearer (`OpsAuth`).
 
-List with optional `?tier=transactional`.
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/api/v1/xapi/statements` | Ingest one statement (`tenant_id` + `statement`) |
+| `POST` | `/api/v1/xapi/statements/batch` | Up to 50 statements |
+| `GET` | `/api/v1/xapi/statements?tenant_id=&tier=&attempt_id=&subject=` | List + tier counts |
+| `POST` | `/api/v1/xapi/statements/{id}/promote?tenant_id=` | Set tier; optional `send_lrs` |
+| `POST` | `/api/v1/xapi/retry-lrs?tenant_id=` | Re-send failed LRS posts |
+
+Domain: `store_raw_statement`, `promote_tier`, `list_statements`, `retry_failed_lrs`.
+
+Dev-only mirrors (404 in production): `GET /dev/xapi/statements/{tenant_id}`, `POST /dev/xapi/retry-lrs/{tenant_id}`.
+
+## Config
 
 ```env
 XAPI_LRS_ENDPOINT=https://your-lrs.example/xAPI
@@ -48,12 +48,8 @@ XAPI_LRS_SECRET=...
 XAPI_ACTOR_HOMEPAGE=http://localhost:8085
 ```
 
-Endpoint may be the statements URL or the LRS root (tool appends `/statements`).
+Empty endpoint = local store only (tiers still apply).
 
-## Dev API
+## Outbox
 
-`GET /dev/xapi/statements/{tenant_id}` with header `X-Admin-Key`.
-
-## Outbox relationship
-
-Quiz submit still enqueues `quiz.attempt.submitted` on the event outbox. xAPI is recorded **in parallel** on the request path (not as an outbox consumer yet). Later: drain worker can map envelopes → statements for replay.
+Quiz submit still enqueues `quiz.attempt.submitted`. xAPI is recorded **in parallel** on the request path (not yet an outbox consumer).

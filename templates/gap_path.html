@@ -1,0 +1,103 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">{% if gap_path and gap_path.mode == 'difference' %}Difference training · D23{% else %}Personal learning plan · PLE{% endif %}</p>
+  <h2 class="welcome-title">{% if gap_path and gap_path.mode == 'difference' %}Close role skill gaps{% else %}Close your skill gaps{% endif %}</h2>
+  <p class="welcome-lede">
+    {% if gap_path and gap_path.mode == 'difference' %}
+    Path from your target role’s required skills minus what you already demonstrated.
+    {% else %}
+    Your saved path from the last graded attempt. Mark steps done as you go —
+    Home Continue points at the next open step.
+    {% endif %}
+  </p>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Target role</h2>
+    <span class="meta">Optional · difference training</span>
+  </div>
+  <form method="post" action="/learn/gap/role" class="teach-form filter-row">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>Role
+      <select name="role_code">
+        <option value="">— attempt gaps only —</option>
+        {% for r in roles or [] %}
+        <option value="{{ r.role_code }}" {% if target_role == r.role_code %}selected{% endif %}>
+          {{ r.label }} ({{ r.skill_codes|length }} skills)
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn secondary">Apply role</button>
+  </form>
+</section>
+
+{% if gap_path and gap_path.active %}
+<section class="panel">
+  <div class="panel-head">
+    <h2>{% if gap_path.mode == 'difference' %}Difference path{% else %}Your plan{% endif %}</h2>
+    <span class="meta">
+      {% if gap_path.persisted %}Saved · {% endif %}
+      {% if gap_path.role_code %}<code>{{ gap_path.role_code }}</code> · {% endif %}
+      {{ gap_path.done_count or 0 }}/{{ gap_path.step_count or gap_path.steps|length }} steps
+      {% if gap_path.progress_pct is defined %} · {{ gap_path.progress_pct }}%{% endif %}
+    </span>
+  </div>
+  {% if gap_path.skills %}
+  <p class="meta">
+    {% if gap_path.mode == 'difference' %}Role gaps:{% else %}Weak / developing:{% endif %}
+    {% for s in gap_path.skills %}
+      <strong>{{ s.label }}</strong>{% if s.percent is not none %} ({{ s.percent }}%){% endif %}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  </p>
+  {% endif %}
+  <ol class="loop-steps" style="line-height:1.8;padding-left:1.25rem">
+    {% for step in gap_path.steps %}
+    <li>
+      {% if step.done %}<span class="badge ok">Done</span>{% endif %}
+      <a class="link" href="{{ step.href }}">{{ step.n }}. {{ step.label }}</a>
+      {% if step.meta %}<span class="meta"> — {{ step.meta }}</span>{% endif %}
+      {% if gap_path.persisted and not step.done and step.key %}
+      <form method="post" action="/learn/gap/step" style="display:inline;margin-left:0.5rem">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <input type="hidden" name="step_key" value="{{ step.key }}"/>
+        <button type="submit" class="btn secondary" style="padding:0.15rem 0.5rem;font-size:0.85rem">Mark done</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  <div class="actions" style="margin-top:1rem">
+    {% if gap_path.first_href %}
+    <a class="btn primary" href="{{ gap_path.first_href }}">Continue next step</a>
+    {% endif %}
+    {% if gap_path.practice_href %}
+    <a class="btn secondary" href="{{ gap_path.practice_href }}">Jump to practice</a>
+    {% endif %}
+    {% if gap_path.graded_href %}
+    <a class="btn secondary" href="{{ gap_path.graded_href }}">Jump to graded retry</a>
+    {% endif %}
+  </div>
+</section>
+{% else %}
+<section class="panel">
+  <p class="lede">No open plan — take the quiz (or finish lessons first). A miss saves a training path here. Pick a target role above for difference training.</p>
+  <div class="actions">
+    <a class="btn primary" href="/quiz?token={{ quiz_token }}">Take quiz</a>
+    <a class="btn secondary" href="/lessons?token={{ quiz_token }}">Lessons</a>
+  </div>
+</section>
+{% endif %}
+
+{% if adaptive_next and adaptive_next.mode == 'adaptive' %}
+<section class="panel">
+  <h2>Adaptive next (C9)</h2>
+  <p class="lede">{{ adaptive_next.reason }}</p>
+  <a class="btn secondary" href="/lessons/{{ adaptive_next.lesson_id }}?token={{ quiz_token }}">
+    Open {{ adaptive_next.title }}
+  </a>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<div class="banner-note info">
+  <strong>Not sent to Moodle.</strong> {{ result.disclaimer }}
+  {% if result.moodle_passback is defined and result.moodle_passback %}
+  <!-- guard: passback must stay false -->
+  {% endif %}
+</div>
+
+<section class="welcome">
+  <p class="welcome-kicker">AI grade assist · {{ result.provider }}</p>
+  <h2 class="welcome-title">Suggested {{ result.score }}/{{ result.max_score }}</h2>
+  <p class="welcome-lede">Adjust below, then copy into Moodle’s gradebook if you agree.</p>
+</section>
+
+<section class="panel">
+  <form class="teach-form" id="grade-assist-form" onsubmit="return false;">
+    <label>Score
+      <input type="number" id="ga-score" name="score" value="{{ result.score }}" min="0" max="{{ result.max_score }}"/>
+      <span class="meta"> / {{ result.max_score }}</span>
+    </label>
+    <label>Confidence
+      <input type="text" id="ga-confidence" value="{{ result.confidence }}" readonly/>
+    </label>
+    <label>Feedback
+      <textarea id="ga-feedback" rows="4">{{ result.feedback }}</textarea>
+    </label>
+    {% if result.strengths %}
+    <p><strong>Strengths</strong></p>
+    <ul>{% for s in result.strengths %}<li>{{ s }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if result.improvements %}
+    <p><strong>Improvements</strong></p>
+    <ul>{% for s in result.improvements %}<li>{{ s }}</li>{% endfor %}</ul>
+    {% endif %}
+    <label>Copy for Moodle
+      <textarea id="ga-copy" rows="6">{{ result.copy_text }}</textarea>
+    </label>
+    <div class="actions">
+      <button type="button" class="btn primary" id="ga-copy-btn">Copy suggestion</button>
+      <a class="btn secondary" href="/teacher/ai?token={{ quiz_token }}">Back to AI tools</a>
+    </div>
+    <p class="meta" id="ga-copy-status" hidden>Copied — paste into Moodle when ready.</p>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Your inputs</h2>
+  <p class="meta"><strong>Q:</strong> {{ prompt }}</p>
+  <p class="meta"><strong>Answer:</strong> {{ student_answer }}</p>
+  {% if rubric %}<p class="meta"><strong>Rubric:</strong> {{ rubric }}</p>{% endif %}
+</section>
+
+<script>
+(function () {
+  var btn = document.getElementById('ga-copy-btn');
+  var status = document.getElementById('ga-copy-status');
+  var scoreEl = document.getElementById('ga-score');
+  var feedbackEl = document.getElementById('ga-feedback');
+  var confEl = document.getElementById('ga-confidence');
+  var copyEl = document.getElementById('ga-copy');
+  var maxScore = {{ result.max_score | int }};
+  function rebuild() {
+    var score = scoreEl.value;
+    var feedback = feedbackEl.value;
+    var conf = confEl.value;
+    copyEl.value =
+      'Score: ' + score + '/' + maxScore + '\n' +
+      'Confidence: ' + conf + '\n' +
+      'Feedback: ' + feedback + '\n\n' +
+      '— EdVidura AI suggestion only. Not sent to Moodle. ' +
+      'Teacher enters the official grade in the LMS.';
+  }
+  scoreEl.addEventListener('input', rebuild);
+  feedbackEl.addEventListener('input', rebuild);
+  btn.addEventListener('click', function () {
+    rebuild();
+    var text = copyEl.value;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        status.hidden = false;
+      }).catch(function () {
+        copyEl.select();
+        status.hidden = false;
+        status.textContent = 'Select the text and copy (Ctrl+C).';
+      });
+    } else {
+      copyEl.select();
+      status.hidden = false;
+      status.textContent = 'Select the text and copy (Ctrl+C).';
+    }
+  });
+})();
+</script>
+{% endblock %}

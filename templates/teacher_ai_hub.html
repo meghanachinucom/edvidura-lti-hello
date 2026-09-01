@@ -1,0 +1,132 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Teach · AI</p>
+  <h2 class="welcome-title">AI tools</h2>
+  <p class="welcome-lede">
+    Draft quizzes, remediation micro-lessons, simplify lessons, and get grade suggestions.
+    You always review — nothing is sent to Moodle automatically.
+  </p>
+</section>
+
+{% if ok_message %}
+<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
+{% endif %}
+
+<section class="panel">
+  <h2>AI access</h2>
+  <p class="meta">
+    Mode: <strong>{{ ai.provider }}</strong> · model <code>{{ ai.model }}</code>
+  </p>
+  {% if ai.openai_ready %}
+  <p class="banner-note ok">Remote LLM is connected ({{ ai.provider }}).</p>
+  {% else %}
+  <p class="banner-note info">{{ ai.how_to_enable }}</p>
+  <ol class="meta" style="line-height:1.7;padding-left:1.25rem">
+    <li>Cloud: <code>AI_ENABLED=1</code> + <code>OPENAI_API_KEY</code> ([keys](https://platform.openai.com/api-keys))</li>
+    <li>Local (E04): <code>LOCAL_AI_BASE_URL=http://127.0.0.1:11434/v1</code> + optional <code>AI_FORCE_LOCAL=1</code></li>
+    <li>Restart the EdVidura app. Heuristics still work without a remote LLM.</li>
+  </ol>
+  {% endif %}
+</section>
+
+<div class="teach-grid">
+  <section class="panel">
+    <h2>PDF / text → MCQ draft</h2>
+    <p class="meta">Extract text, draft questions, then you pick what to save.</p>
+    <form method="post" action="/teacher/ai/generate-from-pdf" enctype="multipart/form-data" class="teach-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <label>File (PDF, .txt, or .md)
+        <input type="file" name="document" accept=".pdf,.txt,.md,.markdown,application/pdf,text/plain" required/>
+      </label>
+      <label>Title (optional)
+        <input name="title" placeholder="Unit handbook"/>
+      </label>
+      <label>How many
+        <select name="count">
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </label>
+      <button type="submit" class="btn primary">Draft from file</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Remediation micro-lesson (DCT)</h2>
+    <p class="meta">Draft a short lesson for a weak skill, then link it for adaptive paths.</p>
+    <form method="post" action="/teacher/ai/remediation" class="teach-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <label>Skill
+        <select name="skill_id" required>
+          <option value="">— pick skill —</option>
+          {% for s in skills %}
+          <option value="{{ s.id }}">{{ s.label }} ({{ s.skill_code }})</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="btn primary">Draft micro-lesson</button>
+    </form>
+    {% if not skills %}
+    <p class="meta">No skills yet — load defaults on <a href="/teacher/skills?token={{ quiz_token }}">Skills</a>.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Simplify a lesson</h2>
+    <form method="post" action="/teacher/ai/simplify" class="teach-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <label>Lesson
+        <select name="lesson_id" required>
+          <option value="">— pick reading —</option>
+          {% for L in lessons %}
+          {% if L.lesson_type != 'quiz' %}
+          <option value="{{ L.id }}">{{ L.title }}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+      </label>
+      <label>Level
+        <select name="level">
+          <option value="simpler">Simpler</option>
+          <option value="grade-6">About grade 6</option>
+          <option value="concise">More concise</option>
+        </select>
+      </label>
+      <button type="submit" class="btn primary">Draft rewrite</button>
+    </form>
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Open-response grade assist</h2>
+  <p class="banner-note info">
+    Suggestions are <strong>never</strong> sent to Moodle. Copy and enter the official score in the LMS yourself.
+  </p>
+  <form method="post" action="/teacher/ai/grade-assist" class="teach-form">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>Question <textarea name="prompt" rows="2" required placeholder="What is…?"></textarea></label>
+    <label>Rubric <textarea name="rubric" rows="2" placeholder="Accuracy, clarity, completeness…"></textarea></label>
+    <label>Student answer <textarea name="student_answer" rows="4" required></textarea></label>
+    <label>Max score <input name="max_score" type="number" value="5" min="1" max="20"/></label>
+    <button type="submit" class="btn primary">Suggest score</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>SME authoring assistant (D13)</h2>
+  <p class="meta">Chat-style drafts from approved SME sources — separate from the learner study coach.</p>
+  <a class="btn primary" href="/teacher/ai/author?token={{ quiz_token }}">Open authoring assistant</a>
+</section>
+
+<section class="panel">
+  <h2>Also available</h2>
+  <ul class="meta" style="line-height:1.8">
+    <li><a href="/teacher/content?token={{ quiz_token }}">Upload content</a> → <strong>AI quiz</strong> from a reading lesson</li>
+    <li><a href="/teacher/skills?token={{ quiz_token }}">Skills</a> → competency registry for DCT paths</li>
+    <li><a href="/teacher/attempts?token={{ quiz_token }}">Class results</a> → AI next-step suggestions</li>
+    <li>Deep Linking launch → AI activity suggestions for Moodle</li>
+  </ul>
+</section>
+{% endblock %}

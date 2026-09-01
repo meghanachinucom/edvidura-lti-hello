@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura UI export · preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="./shell.css"/>
+  <style>
+    .export-banner {
+      position: sticky; top: 0; z-index: 40;
+      padding: 0.65rem 1rem;
+      background: #fca311; color: #000;
+      font-family: Outfit, sans-serif; font-weight: 700; font-size: 0.88rem;
+      display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between;
+    }
+    .export-banner a { color: #000; font-weight: 800; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="export-banner">
+    <span>EdVidura current UI export — open in Lovable via <code>docs/lovable/EdVidura_Current_UI_Lovable_Prompt.md</code></span>
+    <span>
+      Role:
+      <button type="button" id="role-student" class="btn primary" style="padding:0.35rem 0.7rem;font-size:0.8rem">Student</button>
+      <button type="button" id="role-instructor" class="btn secondary" style="padding:0.35rem 0.7rem;font-size:0.8rem">Teacher</button>
+      <button type="button" id="role-admin" class="btn secondary" style="padding:0.35rem 0.7rem;font-size:0.8rem">School admin</button>
+    </span>
+  </div>
+
+  <div class="shell">
+    <aside class="brand-panel" id="sidebar">
+      <div class="orbit" aria-hidden="true"></div>
+      <div class="brand-panel-top">
+        <p class="visual-kicker">Learning check</p>
+        <h2 class="brand-hero">Ed<span>Vidura</span></h2>
+        <p class="visual-meta">Algebra I · Riverside High</p>
+      </div>
+      <nav class="brand-nav">
+        <div class="nav-section">Learn</div>
+        <ul class="nav-list">
+          <li><a class="nav-link active" data-screen="home" href="#home"><span class="nav-num">01</span> Home</a></li>
+          <li><a class="nav-link" data-screen="lessons" href="#lessons"><span class="nav-num">02</span> Lessons</a></li>
+          <li><a class="nav-link" data-screen="attempts" href="#attempts"><span class="nav-num">03</span> My attempts</a></li>
+          <li><a class="nav-link" data-screen="quiz" href="#quiz"><span class="nav-num">04</span> Take the quiz</a></li>
+          <li><a class="nav-link" data-screen="result" href="#result"><span class="nav-num">05</span> Latest result</a></li>
+        </ul>
+        <div class="nav-section admin-only" hidden>School admin</div>
+        <ul class="nav-list admin-only" hidden>
+          <li><a class="nav-link" data-screen="admin" href="#admin"><span class="nav-num">A1</span> Dashboard</a></li>
+          <li><a class="nav-link" data-screen="admin-teachers" href="#admin-teachers"><span class="nav-num">A2</span> Teachers</a></li>
+          <li><a class="nav-link" data-screen="admin-classes" href="#admin-classes"><span class="nav-num">A3</span> Classes</a></li>
+          <li><a class="nav-link" data-screen="admin-students" href="#admin-students"><span class="nav-num">A4</span> Students</a></li>
+        </ul>
+        <div class="nav-section instructor-only" hidden>Teach</div>
+        <ul class="nav-list instructor-only" hidden>
+          <li><a class="nav-link" data-screen="upload" href="#upload"><span class="nav-num">06</span> Upload content</a></li>
+          <li><a class="nav-link" data-screen="class" href="#class"><span class="nav-num">07</span> Class results</a></li>
+        </ul>
+      </nav>
+      <div class="brand-panel-foot">
+        <div class="user-name" id="user-name">Alice Nguyen</div>
+        <div class="user-role" id="user-role">Student</div>
+        <a class="btn-back-moodle sidebar-back" href="#">← Back to Moodle</a>
+      </div>
+    </aside>
+
+    <div class="content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-toggle" id="menu-toggle" type="button" aria-label="Menu">☰</button>
+          <div>
+            <h1 class="page-title" id="page-title">Home</h1>
+            <p class="page-subtitle">Riverside High · Algebra I</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a class="btn-back-moodle" href="#">← Back to Moodle</a>
+        </div>
+      </header>
+      <main class="main">
+        <section class="screen active" id="screen-home">
+          <section class="welcome" data-mark="01">
+            <p class="welcome-kicker">Algebra I</p>
+            <h2 class="welcome-title">Hi, Alice</h2>
+            <p class="welcome-lede">You’re in <strong>Riverside High</strong>. Work through <strong>Algebra I</strong> — lessons stay private to this institution — then take the quiz.</p>
+            <div class="welcome-actions">
+              <a class="btn primary btn-lg" data-screen="lessons" href="#lessons">Continue learning</a>
+              <a class="btn secondary" data-screen="lessons" href="#lessons">All lessons</a>
+              <a class="btn secondary" data-screen="attempts" href="#attempts">My attempts</a>
+            </div>
+          </section>
+          <div class="progress-block">
+            <div class="progress-head"><span>Lesson progress</span><span>2/3</span></div>
+            <div class="progress-track"><div class="progress-fill" style="width:66%"></div></div>
+          </div>
+          <div class="insight-row">
+            <div class="insight"><span class="insight-k">Your attempts</span><span class="insight-v">1</span></div>
+            <div class="insight"><span class="insight-k">Last score</span><span class="insight-v">2/3</span></div>
+            <div class="insight"><span class="insight-k">Gradebook sync</span><span class="insight-v insight-v-sm">On</span></div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-lessons">
+          <section class="welcome" data-mark="02">
+            <p class="welcome-kicker">Algebra I</p>
+            <h2 class="welcome-title">Lessons</h2>
+            <p class="welcome-lede">Read each lesson, then take the quiz. Your progress stays in this school only.</p>
+          </section>
+          <ol class="lesson-list">
+            <li class="lesson-item done"><a href="#"><span class="lesson-pos">01</span><span class="lesson-body"><span class="lesson-title">Linear equations</span><span class="lesson-type">Reading · Done</span></span><span class="lesson-go">→</span></a></li>
+            <li class="lesson-item done"><a href="#"><span class="lesson-pos">02</span><span class="lesson-body"><span class="lesson-title">Slope &amp; intercept</span><span class="lesson-type">Video · Done</span></span><span class="lesson-go">→</span></a></li>
+            <li class="lesson-item"><a data-screen="quiz" href="#quiz"><span class="lesson-pos">03</span><span class="lesson-body"><span class="lesson-title">Chapter check</span><span class="lesson-type">Quiz</span></span><span class="lesson-go">→</span></a></li>
+          </ol>
+        </section>
+
+        <section class="screen" id="screen-quiz">
+          <div class="quiz-meta"><span>3 questions</span><span>·</span><span>Score will sync to Moodle</span></div>
+          <form class="quiz-form" onsubmit="event.preventDefault(); go('result')">
+            <fieldset class="q">
+              <legend>Question 1 of 3</legend>
+              <p class="q-prompt">What is the slope of y = 2x + 1?</p>
+              <label class="choice"><input type="radio" name="q1" checked/><span>2</span></label>
+              <label class="choice"><input type="radio" name="q1"/><span>1</span></label>
+              <label class="choice"><input type="radio" name="q1"/><span>−2</span></label>
+            </fieldset>
+            <div class="actions sticky-actions">
+              <button type="submit" class="primary btn-lg">Submit answers</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="screen" id="screen-result">
+          <section class="result-hero">
+            <p class="welcome-kicker">Attempt complete</p>
+            <div class="score-value">2 <span class="score-max">/ 3</span></div>
+            <p class="result-copy">Partial credit. You can retake anytime.</p>
+            <p class="meta">Alice Nguyen · Algebra I</p>
+          </section>
+          <div class="banner ok">Score sent to the Moodle gradebook.</div>
+          <div class="actions">
+            <a class="btn primary" data-screen="quiz" href="#quiz">Try again</a>
+            <a class="btn secondary" data-screen="attempts" href="#attempts">My attempts</a>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-attempts">
+          <section class="panel">
+            <h2>My attempts</h2>
+            <table>
+              <thead><tr><th>When</th><th>Score</th><th>Moodle</th></tr></thead>
+              <tbody>
+                <tr><td>Today</td><td>2/3</td><td class="ok">Sent</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="screen" id="screen-admin">
+          <section class="welcome" data-mark="SA">
+            <p class="welcome-kicker">School admin · this school only</p>
+            <h2 class="welcome-title">Hi, Riverside</h2>
+            <p class="welcome-lede">You’re running <strong>Riverside High</strong>. Manage teachers, classes, and students.</p>
+            <div class="welcome-actions">
+              <a class="btn primary btn-lg" data-screen="admin-teachers" href="#admin-teachers">Teachers</a>
+              <a class="btn secondary" data-screen="admin-classes" href="#admin-classes">Classes</a>
+              <a class="btn secondary" data-screen="admin-students" href="#admin-students">Students</a>
+            </div>
+          </section>
+          <div class="insight-row insight-row-4">
+            <div class="insight"><span class="insight-k">Teachers</span><span class="insight-v">2</span></div>
+            <div class="insight"><span class="insight-k">Classes</span><span class="insight-v">3</span></div>
+            <div class="insight"><span class="insight-k">Students</span><span class="insight-v">3</span></div>
+            <div class="insight"><span class="insight-k">Quiz attempts</span><span class="insight-v">1</span></div>
+          </div>
+          <section class="panel">
+            <h2>School admins</h2>
+            <table>
+              <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
+              <tbody><tr><td><code>ADM-R01</code></td><td>Riverside School Admin</td><td class="meta">admin@riverside.test</td></tr></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="screen" id="screen-admin-teachers">
+          <section class="welcome welcome-compact" data-mark="T">
+            <p class="welcome-kicker">School admin</p>
+            <h2 class="welcome-title">Teachers</h2>
+          </section>
+          <div class="teach-grid">
+            <section class="panel">
+              <h2>Add teacher</h2>
+              <form class="teach-form" onsubmit="event.preventDefault()">
+                <label>Code <input placeholder="TCH-04"/></label>
+                <label>Name <input placeholder="Full name"/></label>
+                <label>Email <input placeholder="teacher@school.test"/></label>
+                <button type="submit" class="btn primary">Save teacher</button>
+              </form>
+            </section>
+            <section class="panel">
+              <h2>Directory</h2>
+              <table>
+                <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
+                <tbody>
+                  <tr><td><code>TCH-01</code></td><td>Priya Shah</td><td class="meta">priya.sharma@riverside.test</td></tr>
+                  <tr><td><code>TCH-02</code></td><td>James Cole</td><td class="meta">james.cole@riverside.test</td></tr>
+                </tbody>
+              </table>
+            </section>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-admin-classes">
+          <section class="welcome welcome-compact" data-mark="C">
+            <p class="welcome-kicker">School admin</p>
+            <h2 class="welcome-title">Classes</h2>
+          </section>
+          <section class="panel">
+            <div class="class-block">
+              <h3>Algebra Period 1 <span class="meta">(ALG-101)</span></h3>
+              <p class="meta">Algebra · 2026 Fall</p>
+              <p><strong>Teachers:</strong> Priya Shah (lead)</p>
+              <p><strong>Students:</strong> Alice Nguyen, Bob Okonkwo, Carol Patel</p>
+            </div>
+          </section>
+        </section>
+
+        <section class="screen" id="screen-admin-students">
+          <section class="welcome welcome-compact" data-mark="S">
+            <p class="welcome-kicker">School admin</p>
+            <h2 class="welcome-title">Students</h2>
+          </section>
+          <section class="panel">
+            <table>
+              <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
+              <tbody>
+                <tr><td><code>STU-A1</code></td><td>Alice Nguyen</td><td class="meta">alice.nguyen@riverside.test</td></tr>
+                <tr><td><code>STU-A2</code></td><td>Bob Okonkwo</td><td class="meta">bob.okonkwo@riverside.test</td></tr>
+                <tr><td><code>STU-A3</code></td><td>Carol Patel</td><td class="meta">carol.patel@riverside.test</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="screen" id="screen-upload">
+          <section class="welcome welcome-compact" data-mark="06">
+            <p class="welcome-kicker">Teach · this school only</p>
+            <h2 class="welcome-title">Upload content</h2>
+            <p class="welcome-lede">Add lessons and quiz questions for <strong>Riverside High</strong>.</p>
+          </section>
+          <div class="teach-grid">
+            <section class="panel">
+              <h2>Add a lesson</h2>
+              <form class="teach-form" onsubmit="event.preventDefault()">
+                <label>Title <input value="Systems of equations"/></label>
+                <label>Lesson text <textarea rows="4">Students will learn…</textarea></label>
+                <button type="submit" class="btn primary">Save lesson</button>
+              </form>
+            </section>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-class">
+          <section class="panel">
+            <h2>Class results</h2>
+            <table>
+              <thead><tr><th>Learner</th><th>Score</th><th>Sync</th></tr></thead>
+              <tbody>
+                <tr><td>Alice Nguyen</td><td>2/3</td><td class="ok">Sent</td></tr>
+                <tr><td>Ben Ortiz</td><td>3/3</td><td class="ok">Sent</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const titles = {
+      home: 'Home', lessons: 'Lessons', quiz: 'Take the quiz', result: 'Latest result',
+      attempts: 'My attempts', upload: 'Upload content', class: 'Class results',
+      admin: 'School admin', 'admin-teachers': 'Teachers', 'admin-classes': 'Classes',
+      'admin-students': 'Students'
+    };
+    function go(name) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.toggle('active', el.id === 'screen-' + name));
+      document.querySelectorAll('.nav-link').forEach(a => a.classList.toggle('active', a.dataset.screen === name));
+      document.getElementById('page-title').textContent = titles[name] || 'EdVidura';
+      history.replaceState(null, '', '#' + name);
+      document.getElementById('sidebar')?.classList.remove('open');
+    }
+    document.querySelectorAll('[data-screen]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const name = el.getAttribute('data-screen');
+        if (!name) return;
+        e.preventDefault();
+        go(name);
+      });
+    });
+    document.getElementById('menu-toggle')?.addEventListener('click', () => {
+      document.getElementById('sidebar')?.classList.toggle('open');
+    });
+    function setRole(role) {
+      const teacher = role === 'teacher';
+      const admin = role === 'admin';
+      document.querySelectorAll('.instructor-only').forEach(el => { el.hidden = !teacher; });
+      document.querySelectorAll('.admin-only').forEach(el => { el.hidden = !admin; });
+      if (admin) {
+        document.getElementById('user-name').textContent = 'Riverside Admin';
+        document.getElementById('user-role').textContent = 'School admin';
+      } else if (teacher) {
+        document.getElementById('user-name').textContent = 'Priya Shah';
+        document.getElementById('user-role').textContent = 'Instructor';
+      } else {
+        document.getElementById('user-name').textContent = 'Alice Nguyen';
+        document.getElementById('user-role').textContent = 'Student';
+      }
+    }
+    document.getElementById('role-student')?.addEventListener('click', () => setRole('student'));
+    document.getElementById('role-instructor')?.addEventListener('click', () => setRole('teacher'));
+    document.getElementById('role-admin')?.addEventListener('click', () => { setRole('admin'); go('admin'); });
+    const hash = (location.hash || '#home').slice(1);
+    if (titles[hash]) go(hash);
+  </script>
+</body>
+</html>

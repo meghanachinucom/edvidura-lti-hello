@@ -29,6 +29,36 @@
   </form>
 </section>
 
+<section class="panel">
+  <h2>Import from PDF / text (D10)</h2>
+  <p class="meta">Extracts text into a new versioned manual (or adds a version to an existing one). No quiz generation.</p>
+  <form method="post" action="/teacher/manuals/from-pdf" enctype="multipart/form-data" class="teach-form">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>File
+      <input type="file" name="document" accept=".pdf,.txt,.md,.markdown,application/pdf,text/plain" required/>
+    </label>
+    <label>Title (optional — defaults from filename)
+      <input name="title" placeholder="Imported handbook"/>
+    </label>
+    <label>Description <input name="description" placeholder="Optional"/></label>
+    <label>Add as version to existing
+      <select name="manual_id">
+        <option value="">— create new manual —</option>
+        {% for m in manuals %}
+        <option value="{{ m.id }}">{{ m.title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Publish?
+      <select name="publish">
+        <option value="1">Yes</option>
+        <option value="0">Draft</option>
+      </select>
+    </label>
+    <button type="submit" class="btn primary">Import</button>
+  </form>
+</section>
+
 {% for m in manuals %}
 <section class="panel">
   <div class="panel-head">

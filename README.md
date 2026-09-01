@@ -90,7 +90,7 @@ Contracts: `docs/decisions/DEC-006.md`, `docs/TENANT_RESOLUTION.md`, `docs/EVENT
 
 **Deploy to Railway:** see [`docs/RAILWAY.md`](docs/RAILWAY.md) (`Dockerfile`, `railway.toml`, `LTI_PRIVATE_KEY_PEM`).
 
-Pilot scripts: `docs/DEMO_SCRIPT.md`, AGS: `docs/AGS_CHECKLIST.md`, backups: `docs/BACKUP.md`.
+Pilot runbook: [docs/PILOT.md](docs/PILOT.md). Demo: docs/DEMO_SCRIPT.md. AGS: docs/AGS_CHECKLIST.md. Backups: docs/BACKUP.md.
 
 If the DB already existed before newer slices, also apply:
 

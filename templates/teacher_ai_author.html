@@ -1,0 +1,82 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Teach · D13 authoring assistant</p>
+  <h2 class="welcome-title">SME authoring assistant</h2>
+  <p class="welcome-lede">
+    Draft lessons, manual chapters, or MCQ text from <strong>approved SME sources</strong>.
+    Separate from the learner study coach — you always review before publishing.
+  </p>
+</section>
+
+{% if error %}<p class="banner ok">{{ error }}</p>{% endif %}
+{% if ok_message %}<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>{% endif %}
+
+<section class="panel">
+  <form method="post" action="/teacher/ai/author" class="teach-form">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>What should we draft?
+      <textarea name="prompt" rows="3" required placeholder="Write a short lesson on isolating variables using the handbook">{{ prompt }}</textarea>
+    </label>
+    <label>Mode
+      <select name="mode">
+        <option value="lesson" {% if mode == 'lesson' %}selected{% endif %}>Lesson</option>
+        <option value="manual" {% if mode == 'manual' %}selected{% endif %}>Manual chapter</option>
+        <option value="mcq" {% if mode == 'mcq' %}selected{% endif %}>MCQ draft (markdown)</option>
+      </select>
+    </label>
+    <button type="submit" class="btn primary">Draft from SME sources</button>
+  </form>
+  <p class="meta">Sources: {{ source_count }} chunk{{ 's' if source_count != 1 else '' }} · provider {{ ai.provider if ai else 'local' }}</p>
+</section>
+
+{% if draft %}
+<section class="panel">
+  <h2>Draft preview</h2>
+  {% if draft.summary %}<p class="banner-note info">{{ draft.summary }}</p>{% endif %}
+  {% if draft.citation_links %}
+  <p class="meta">Grounded in:
+    {% for c in draft.citation_links %}
+      {% if c.href %}<a class="link" href="{{ c.href }}{% if '?' in c.href %}&{% else %}?{% endif %}token={{ quiz_token }}">{{ c.title }}</a>{% else %}{{ c.title }}{% endif %}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  </p>
+  {% endif %}
+  {% if not draft.grounded %}
+  <p class="banner-note info">Not fully grounded — edit carefully before save.</p>
+  {% endif %}
+
+  {% if draft.draft_md and draft.mode in ['lesson', 'manual'] %}
+  <form method="post" action="/teacher/ai/author/apply" class="teach-form">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <input type="hidden" name="mode" value="{{ draft.mode }}"/>
+    <label>Title
+      <input name="title" value="{{ draft.title }}" required/>
+    </label>
+    <label>Body (Markdown)
+      <textarea name="body_md" rows="14" required>{{ draft.draft_md }}</textarea>
+    </label>
+    {% if draft.mode == 'manual' %}
+    <label>Save as
+      <select name="manual_id">
+        <option value="">— new manual —</option>
+        {% for m in manuals %}
+        <option value="{{ m.id }}">Add version to {{ m.title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="ai-pick"><input type="checkbox" name="publish" value="1"/> Publish immediately</label>
+    {% else %}
+    <label class="ai-pick"><input type="checkbox" name="publish" value="1"/> Publish lesson immediately</label>
+    {% endif %}
+    <div class="actions">
+      <button type="submit" class="btn primary">Save draft</button>
+      <a class="btn secondary" href="/teacher/ai?token={{ quiz_token }}">AI tools</a>
+    </div>
+  </form>
+  {% else %}
+  <pre class="meta" style="white-space:pre-wrap">{{ draft.draft_md }}</pre>
+  <p class="meta">Copy MCQ markdown into your quiz authoring flow, or switch mode to lesson/manual to save.</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

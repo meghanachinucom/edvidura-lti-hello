@@ -178,6 +178,80 @@ def build_resource_experienced_statement(
     }
 
 
+def build_skill_assessed_statement(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    skill_code: str,
+    skill_label: str,
+    status: str,
+    percent: int | None = None,
+    attempt_id: UUID | str | None = None,
+    homepage: str = "http://localhost:8085",
+    activity_base: str = "http://localhost:8000",
+    statement_id: UUID | str | None = None,
+) -> dict[str, Any]:
+    """D15: one competency assessment statement per skill on a quiz attempt."""
+    sid = str(statement_id or uuid4())
+    code = (skill_code or "").strip() or "skill"
+    st = (status or "unknown").strip().lower()
+    success = st in {"strong", "mastered"}
+    if success:
+        verb_id = verbs.VERB_MASTERED
+        display = "mastered"
+    elif st in {"weak", "developing", "untested", "unknown"}:
+        verb_id = verbs.VERB_FAILED if st == "weak" else verbs.VERB_ATTEMPTED
+        display = verbs.VERB_DISPLAY.get(verb_id, "attempted")
+    else:
+        verb_id = verbs.VERB_ATTEMPTED
+        display = "attempted"
+    result: dict[str, Any] = {
+        "success": success,
+        "completion": st not in {"untested", "unknown"},
+    }
+    if percent is not None:
+        result["score"] = {
+            "scaled": round(max(0, min(100, int(percent))) / 100.0, 4),
+            "raw": int(percent),
+            "min": 0,
+            "max": 100,
+        }
+    extensions: dict[str, Any] = {
+        "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
+        "https://edvidura.local/xapi/extensions/skill_code": code,
+        "https://edvidura.local/xapi/extensions/skill_status": st,
+    }
+    if attempt_id:
+        extensions["https://edvidura.local/xapi/extensions/attempt_id"] = str(
+            attempt_id
+        )
+    return {
+        "id": sid,
+        "actor": build_actor(
+            subject=subject, learner_name=learner_name, homepage=homepage
+        ),
+        "verb": {
+            "id": verb_id,
+            "display": {"en-US": display},
+        },
+        "object": {
+            "objectType": "Activity",
+            "id": f"{activity_base.rstrip('/')}/xapi/activities/skill/{_slug(code)}",
+            "definition": {
+                "name": {"en-US": skill_label or code},
+                "type": "http://adlnet.gov/expapi/activities/cmi.interaction",
+            },
+        },
+        "result": result,
+        "context": {
+            "platform": "EdVidura",
+            "extensions": extensions,
+        },
+        "timestamp": _iso_now(),
+    }
+
+
 def _slug(text: str) -> str:
     import re
 

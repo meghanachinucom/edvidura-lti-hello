@@ -16,5 +16,6 @@ python-dotenv>=1.0.0
 psycopg[binary]>=3.1.0
 pydantic[email]>=2.0.0
 pytest>=8.0.0
+pypdf>=4.0.0
 # Optional monitoring (enable with SENTRY_DSN)
 sentry-sdk[fastapi]>=2.0.0

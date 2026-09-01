@@ -1,0 +1,199 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Teach · C8</p>
+  <h2 class="welcome-title">Skills registry</h2>
+  <p class="welcome-lede">
+    Map quiz items to competencies and set the miss → review → practice → graded retry path.
+  </p>
+</section>
+
+{% if ok_message %}
+<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
+{% endif %}
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Starter pack</h2>
+    <form method="post" action="/teacher/skills/ensure-defaults">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <button type="submit" class="btn secondary">Load defaults + bind lesson/manual</button>
+    </form>
+  </div>
+  <p class="meta">Creates the built-in competency set and role pack if this school has none yet.</p>
+  <p class="meta"><a class="link" href="/teacher/dct?token={{ quiz_token }}">DCT lesson planner</a> — generate remediation for skills missing a lesson.</p>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Role skill matrices (D23)</h2>
+    <form method="post" action="/teacher/skills/roles/ensure">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <button type="submit" class="btn secondary">Load default roles</button>
+    </form>
+  </div>
+  <p class="meta">Target roles drive difference training on the learner My plan page.</p>
+  <form method="post" action="/teacher/skills/roles/new" class="teach-form">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>Code <input name="role_code" placeholder="technician" required/></label>
+    <label>Label <input name="label" placeholder="Technician" required/></label>
+    <label>Description <input name="description" placeholder="Optional"/></label>
+    <button type="submit" class="btn primary">Add role</button>
+  </form>
+  {% for r in roles or [] %}
+  <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--line, #e5e1d8)">
+    <p><strong>{{ r.label }}</strong> <code class="meta">{{ r.role_code }}</code></p>
+    {% if r.description %}<p class="meta">{{ r.description }}</p>{% endif %}
+    <form method="post" action="/teacher/skills/roles/{{ r.id }}/skills" class="teach-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <fieldset>
+        <legend class="meta">Required skills</legend>
+        {% for s in skills %}
+        <label class="ai-pick">
+          <input type="checkbox" name="skill_ids" value="{{ s.id }}"
+            {% if s.skill_code in (r.skill_codes or []) %}checked{% endif %}/>
+          {{ s.label }} <code>{{ s.skill_code }}</code>
+        </label>
+        {% endfor %}
+      </fieldset>
+      <button type="submit" class="btn secondary">Save role skills</button>
+    </form>
+  </div>
+  {% else %}
+  <p class="lede">No roles yet — load defaults or add one.</p>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  <h2>Framework import (D08)</h2>
+  <p class="meta">Upload IEEE-style CSV/JSON. Review the draft, then approve to upsert skills and queue TO→skill mappings.</p>
+  <form method="post" action="/teacher/skills/framework/import" enctype="multipart/form-data" class="teach-form">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>Label <input name="source_label" placeholder="IEEE pack Spring"/></label>
+    <label>File <input type="file" name="file" accept=".json,.csv,application/json,text/csv" required/></label>
+    <button type="submit" class="btn primary">Upload draft</button>
+  </form>
+  {% if framework_imports %}
+  <ul class="meta" style="margin-top:1rem;line-height:1.7">
+    {% for imp in framework_imports %}
+    <li>
+      <code>{{ imp.id[:8] }}…</code> · {{ imp.source_label }} · {{ imp.skill_count }} skills · <strong>{{ imp.status }}</strong>
+      {% if imp.status == 'pending_review' %}
+      <form method="post" action="/teacher/skills/framework/{{ imp.id }}/approve" style="display:inline">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <button type="submit" class="btn secondary">Approve</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if to_proposals %}
+  <h3 style="margin-top:1.25rem">TO → skill proposals</h3>
+  <ul class="meta" style="line-height:1.7">
+    {% for p in to_proposals %}
+    <li>
+      <code>{{ p.to_code }}</code> → <code>{{ p.skill_code }}</code>
+      {% if p.to_label %} · {{ p.to_label }}{% endif %}
+      <form method="post" action="/teacher/skills/to-proposals/{{ p.id }}/approve" style="display:inline">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <button type="submit" class="btn secondary">Approve</button>
+      </form>
+      <form method="post" action="/teacher/skills/to-proposals/{{ p.id }}/reject" style="display:inline">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <button type="submit" class="btn secondary">Reject</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Add skill</h2>
+  <form method="post" action="/teacher/skills/new" class="teach-form">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>Code
+      <input name="skill_code" placeholder="solve_linear" required/>
+    </label>
+    <label>Label
+      <input name="label" placeholder="Solve linear equations" required/>
+    </label>
+    <label>Description
+      <input name="description" placeholder="Optional"/>
+    </label>
+    <button type="submit" class="btn primary">Save skill</button>
+  </form>
+</section>
+
+{% for s in skills %}
+<section class="panel">
+  <div class="panel-head">
+    <h2>{{ s.label }}</h2>
+    <span class="meta"><code>{{ s.skill_code }}</code></span>
+  </div>
+  {% if s.description %}<p class="lede">{{ s.description }}</p>{% endif %}
+  <p class="meta">
+    Linked: {% if s.question_keys %}{{ s.question_keys | join(', ') }}{% else %}none{% endif %}
+    · Path: {{ s.prefer_path or 'manuals' }}
+    {% if s.manual_focus %}· Focus: <code>{{ s.manual_focus }}</code>{% endif %}
+  </p>
+
+  <form method="post" action="/teacher/skills/{{ s.id }}/link" class="teach-form filter-row">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>Link question
+      <select name="question_key" required>
+        <option value="">— pick —</option>
+        {% for q in questions %}
+        <option value="{{ q.question_key }}">
+          {{ q.question_key }} — {{ q.prompt[:60] }}{% if q.prompt|length > 60 %}…{% endif %}
+          {% if linked_questions.get(q.question_key) %} ({{ linked_questions[q.question_key] }}){% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn secondary">Link</button>
+  </form>
+
+  <form method="post" action="/teacher/skills/{{ s.id }}/remediation" class="teach-form" style="margin-top:0.75rem">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label>Prefer path
+      <select name="prefer_path">
+        <option value="lessons" {% if s.prefer_path == 'lessons' %}selected{% endif %}>Lesson</option>
+        <option value="manuals" {% if (s.prefer_path or 'manuals') == 'manuals' %}selected{% endif %}>Manual</option>
+      </select>
+    </label>
+    <label>Lesson
+      <select name="lesson_id">
+        <option value="">— none —</option>
+        {% for L in lessons %}
+        <option value="{{ L.id }}" {% if s.lesson_id == (L.id ~ '') %}selected{% endif %}>{{ L.title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Manual
+      <select name="manual_id">
+        <option value="">— none —</option>
+        {% for m in manuals %}
+        <option value="{{ m.id }}" {% if s.manual_id == (m.id ~ '') %}selected{% endif %}>{{ m.title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Manual focus (heading slug)
+      <input name="manual_focus" value="{{ s.manual_focus or '' }}" placeholder="solve-for-x"/>
+    </label>
+    <label>Teleport label
+      <input name="teleport_label" value="{{ s.teleport_label or '' }}" placeholder="Review: …"/>
+    </label>
+    <label>Hint
+      <input name="teleport_hint" value="{{ s.teleport_hint or '' }}" placeholder="Then practice, then graded retry"/>
+    </label>
+    <button type="submit" class="btn primary">Save remediation</button>
+  </form>
+</section>
+{% else %}
+<section class="panel">
+  <p class="lede">No skills yet. Load defaults or add one above.</p>
+</section>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{ manual.title }} · EdVidura eBook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/shell.css?v=ebook1"/>
+</head>
+<body class="role-student ebook-standalone">
+  <a class="skip-link" href="#manual-body">Skip to content</a>
+  <header class="ebook-standalone-bar">
+    <span class="bname">EdVidura</span>
+    <span class="meta">{{ manual.title }} · v{{ version.version }}</span>
+  </header>
+  <main class="shell" style="max-width:1100px;margin:0 auto;padding:1rem 1.25rem 3rem">
+    {% if focus %}
+    <div class="banner-note info" role="status">Pinned section: <strong>{{ focus_label }}</strong></div>
+    {% endif %}
+    <div class="ebook-layout">
+      {% if toc %}
+      <nav class="ebook-toc" aria-label="Chapters">
+        <h1 class="ebook-toc-title">Chapters</h1>
+        <ol>
+          {% for ch in toc %}
+          <li><a href="#{{ ch.slug }}">{{ ch.title }}</a></li>
+          {% endfor %}
+        </ol>
+      </nav>
+      {% endif %}
+      <div class="ebook-main">
+        <h1 class="welcome-title">{{ manual.title }}</h1>
+        {% if body_html %}
+        <div class="lesson-prose" id="manual-body" tabindex="-1">{{ body_html | safe }}</div>
+        {% endif %}
+        <p class="meta">Standalone read path · signed link · grades stay in your LMS.</p>
+      </div>
+    </div>
+  </main>
+  {% if focus %}
+  <script>
+  (function () {
+    var id = {{ focus | tojson }};
+    var el = id && document.getElementById(id);
+    if (el) { el.classList.add("manual-focus"); el.scrollIntoView({behavior:"smooth", block:"start"}); }
+  })();
+  </script>
+  {% endif %}
+</body>
+</html>

@@ -62,55 +62,97 @@ def enrichment_for_review(
     first_lesson_id: str | None = None,
     first_manual_id: str | None = None,
     manual_version: int | None = None,
+    tenant_id: UUID | str | None = None,
+    attempt_id: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Attach wrong-answer teleport + manual focus deep-links."""
+    """Attach wrong-answer teleport + manual focus + remediation loop links."""
+    skill_rem_by_q: dict[str, dict[str, Any]] = {}
+    if tenant_id:
+        try:
+            from app.modules import skills as skills_mod
+
+            skills_mod.ensure_default_skills(tenant_id)
+            for item in review:
+                qid = str(item.get("question_id") or "")
+                rem = skills_mod.remediation_for_question(tenant_id, qid)
+                if rem:
+                    skill_rem_by_q[qid] = rem
+        except Exception:  # noqa: BLE001
+            skill_rem_by_q = {}
+
     out: list[dict[str, Any]] = []
     for item in review:
         row = dict(item)
         qid = str(item.get("question_id") or "")
-        rem = REMEDIATION.get(qid)
+        rem = skill_rem_by_q.get(qid) or REMEDIATION.get(qid)
         if not item.get("correct") and rem:
             focus = rem.get("manual_focus") or ""
+            path = rem.get("path") or "lessons"
+            lesson_id = rem.get("lesson_id") or first_lesson_id
+            manual_id = rem.get("manual_id") or first_manual_id
             href = f"/lessons?token={quiz_token}"
-            if rem["path"] == "manuals":
-                if first_manual_id:
-                    href = f"/manuals/{first_manual_id}?token={quiz_token}"
+            if path == "manuals":
+                if manual_id:
+                    href = f"/manuals/{manual_id}?token={quiz_token}"
                     if manual_version is not None:
                         href += f"&v={manual_version}"
                     if focus:
                         href += f"&focus={focus}"
+                    if attempt_id:
+                        href += f"&loop=1&from_attempt={attempt_id}"
                 else:
                     href = f"/manuals?token={quiz_token}"
-            elif first_lesson_id and rem["path"] == "lessons":
-                href = f"/lessons/{first_lesson_id}?token={quiz_token}"
-                if focus:
-                    # Still offer manuals loop when a focus exists
-                    if first_manual_id:
-                        row["manual_href"] = (
-                            f"/manuals/{first_manual_id}?token={quiz_token}"
-                            + (f"&v={manual_version}" if manual_version else "")
-                            + f"&focus={focus}"
-                        )
-                        row["manual_label"] = f"Manual: {rem['label'].replace('Review: ', '')}"
-            row["teleport_label"] = rem["label"]
-            row["teleport_hint"] = rem["lesson_hint"]
+            elif lesson_id:
+                href = f"/lessons/{lesson_id}?token={quiz_token}"
+                if attempt_id:
+                    href += f"&loop=1&from_attempt={attempt_id}"
+                if focus and manual_id:
+                    row["manual_href"] = (
+                        f"/manuals/{manual_id}?token={quiz_token}"
+                        + (f"&v={manual_version}" if manual_version else "")
+                        + f"&focus={focus}"
+                        + (f"&loop=1&from_attempt={attempt_id}" if attempt_id else "")
+                    )
+                    row["manual_label"] = (
+                        f"Manual: {str(rem.get('label') or '').replace('Review: ', '')}"
+                    )
+            row["teleport_label"] = rem.get("label") or "Review"
+            row["teleport_hint"] = rem.get("lesson_hint") or ""
             row["teleport_href"] = href
             row["competency_id"] = rem.get("competency") or ""
             row["manual_focus"] = focus
-            if rem["path"] == "manuals" and first_manual_id and focus:
+            if path == "manuals" and manual_id and focus:
                 row["manual_href"] = href
                 row["manual_label"] = "Open pinned manual section"
+            # Closed loop CTAs
+            if attempt_id:
+                row["practice_loop_href"] = (
+                    f"/quiz?token={quiz_token}&practice=1&retry={attempt_id}&loop=1"
+                )
+                row["graded_loop_href"] = (
+                    f"/quiz?token={quiz_token}&retry={attempt_id}&loop=1"
+                )
         out.append(row)
     return out
 
 
-def competency_profile(answers: Any) -> list[dict[str, Any]]:
+def competency_profile(
+    answers: Any, *, tenant_id: UUID | str | None = None
+) -> list[dict[str, Any]]:
     """Per-attempt competency strengths from answer detail."""
     detail: dict[str, Any] = {}
     if isinstance(answers, dict) and isinstance(answers.get("detail"), dict):
         detail = answers["detail"]
+    catalog = COMPETENCIES
+    if tenant_id:
+        try:
+            from app.modules import skills as skills_mod
+
+            catalog = skills_mod.competency_catalog(tenant_id) or COMPETENCIES
+        except Exception:  # noqa: BLE001
+            catalog = COMPETENCIES
     profiles: list[dict[str, Any]] = []
-    for cid, meta in COMPETENCIES.items():
+    for cid, meta in catalog.items():
         correct = 0
         total = 0
         for qid in meta["questions"]:
@@ -139,21 +181,33 @@ def competency_profile(answers: Any) -> list[dict[str, Any]]:
     return profiles
 
 
-def class_competency_map(attempts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def class_competency_map(
+    attempts: list[dict[str, Any]], *, tenant_id: UUID | str | None = None
+) -> list[dict[str, Any]]:
     """Aggregate competency weakness across attempts (teacher view)."""
+    catalog = COMPETENCIES
+    if tenant_id:
+        try:
+            from app.modules import skills as skills_mod
+
+            catalog = skills_mod.competency_catalog(tenant_id) or COMPETENCIES
+        except Exception:  # noqa: BLE001
+            catalog = COMPETENCIES
     tallies: dict[str, dict[str, int]] = {
-        cid: {"correct": 0, "total": 0} for cid in COMPETENCIES
+        cid: {"correct": 0, "total": 0} for cid in catalog
     }
     for a in attempts:
-        for row in competency_profile(a.get("answers")):
+        for row in competency_profile(a.get("answers"), tenant_id=tenant_id):
             if row["total"] == 0:
                 continue
+            if row["id"] not in tallies:
+                tallies[row["id"]] = {"correct": 0, "total": 0}
             t = tallies[row["id"]]
             t["correct"] += int(row["correct"])
             t["total"] += int(row["total"])
     out: list[dict[str, Any]] = []
-    for cid, meta in COMPETENCIES.items():
-        t = tallies[cid]
+    for cid, meta in catalog.items():
+        t = tallies.get(cid) or {"correct": 0, "total": 0}
         total = t["total"]
         pct = round(100 * t["correct"] / total) if total else None
         status = (
@@ -294,8 +348,20 @@ def grade_receipt(
 def lookup_xapi_for_attempt(
     tenant_id: UUID | str, attempt_id: UUID | str
 ) -> str | None:
+    """Prefer the quiz assessment statement; fall back to any attempt-linked row."""
     try:
         with db.tenant_connection(tenant_id) as conn:
+            row = conn.execute(
+                """
+                SELECT statement_id FROM xapi_statements
+                WHERE attempt_id = %s
+                  AND COALESCE(statement->'object'->>'id', '') LIKE %s
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (str(attempt_id), "%/xapi/activities/quiz%"),
+            ).fetchone()
+            if row:
+                return str(row["statement_id"])
             row = conn.execute(
                 """
                 SELECT statement_id FROM xapi_statements
@@ -307,6 +373,25 @@ def lookup_xapi_for_attempt(
             return str(row["statement_id"]) if row else None
     except Exception:  # noqa: BLE001
         return None
+
+
+def count_skill_xapi_for_attempt(
+    tenant_id: UUID | str, attempt_id: UUID | str
+) -> int:
+    """D15: how many competency statements were stored for this attempt."""
+    try:
+        with db.tenant_connection(tenant_id) as conn:
+            row = conn.execute(
+                """
+                SELECT COUNT(*)::int AS n FROM xapi_statements
+                WHERE attempt_id = %s
+                  AND COALESCE(statement->'object'->>'id', '') LIKE %s
+                """,
+                (str(attempt_id), "%/xapi/activities/skill/%"),
+            ).fetchone()
+            return int((row or {}).get("n") or 0)
+    except Exception:  # noqa: BLE001
+        return 0
 
 
 def quiet_class_radar(attempts: list[dict[str, Any]]) -> dict[str, Any]:

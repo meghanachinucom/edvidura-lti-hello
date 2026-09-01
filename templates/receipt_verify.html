@@ -1,0 +1,41 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<section class="welcome">
+  <p class="welcome-kicker">Sealed receipts</p>
+  <h2 class="welcome-title">Verify learning evidence</h2>
+  <p class="welcome-lede">
+    Paste a sealed JSON receipt. EdVidura checks the HMAC without changing Moodle grades.
+  </p>
+</section>
+
+{% if error %}<p class="banner">{{ error }}</p>{% endif %}
+
+{% if result %}
+<div class="banner-note {% if result.ok %}ok{% else %}info{% endif %}">
+  {% if result.ok %}<strong>Valid seal.</strong> {{ result.reason }}
+  {% else %}<strong>Invalid.</strong> {{ result.reason }}
+  {% endif %}
+</div>
+{% if payload %}
+<section class="panel">
+  <h2>Payload</h2>
+  <dl class="kv">
+    <dt>Attempt</dt><dd><code>{{ payload.attempt_id }}</code></dd>
+    <dt>Learner</dt><dd>{{ payload.learner_name or payload.subject }}</dd>
+    <dt>Score</dt><dd>{{ payload.score }}/{{ payload.max_score }} ({{ payload.percent }}%)</dd>
+    <dt>Issued</dt><dd class="meta">{{ payload.issued_at }}</dd>
+  </dl>
+</section>
+{% endif %}
+{% endif %}
+
+<section class="panel">
+  <form method="post" action="/receipts/verify" class="teach-form">
+    <input type="hidden" name="token" value="{{ quiz_token }}"/>
+    <label>Sealed receipt JSON
+      <textarea name="payload" rows="12" required placeholder='{"attempt_id":"...","seal":"..."}'>{{ payload_text }}</textarea>
+    </label>
+    <button type="submit" class="btn primary">Verify</button>
+  </form>
+</section>
+{% endblock %}

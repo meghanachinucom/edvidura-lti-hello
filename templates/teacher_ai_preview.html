@@ -4,7 +4,9 @@
   <p class="welcome-kicker">Teach · AI draft · {{ provider }} / {{ model }}</p>
   <h2 class="welcome-title">Review generated questions</h2>
   <p class="welcome-lede">
-    From lesson <strong>{{ lesson.title }}</strong>. Select what to save into this school’s quiz bank.
+    From {% if source_kind == 'pdf' %}PDF{% elif source_kind == 'text' %}text file{% else %}lesson{% endif %}
+    <strong>{{ source_title or (lesson.title if lesson else 'document') }}</strong>.
+    Select what to save into this school’s quiz bank.
     {% if note %}<span class="meta">{{ note }}</span>{% endif %}
   </p>
 </section>
@@ -30,11 +32,12 @@
   {% endfor %}
   <div class="actions">
     <button type="submit" class="btn primary">Save selected</button>
-    <a class="btn secondary" href="/teacher/content?token={{ quiz_token }}">Cancel</a>
+    <a class="btn secondary" href="/teacher/ai?token={{ quiz_token }}">Cancel</a>
+    <a class="btn secondary" href="/teacher/content?token={{ quiz_token }}">Upload content</a>
   </div>
 </form>
 {% else %}
 <p class="meta">No drafts produced.</p>
-<a class="btn secondary" href="/teacher/content?token={{ quiz_token }}">Back</a>
+<a class="btn secondary" href="/teacher/ai?token={{ quiz_token }}">Back</a>
 {% endif %}
 {% endblock %}

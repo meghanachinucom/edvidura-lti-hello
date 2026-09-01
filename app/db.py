@@ -199,6 +199,7 @@ def list_quiz_attempts_for_tenant(
     *,
     limit: int = 200,
     course_label: str | None = None,
+    course_labels: set[str] | list[str] | None = None,
     date_from: str | None = None,
     date_to: str | None = None,
     subjects: set[str] | list[str] | None = None,
@@ -206,9 +207,23 @@ def list_quiz_attempts_for_tenant(
 ) -> list[dict[str, Any]]:
     clauses = ["TRUE"]
     params: list[Any] = []
-    if course_label:
+    label_needles: list[str] = []
+    if course_label and str(course_label).strip():
+        label_needles.append(str(course_label).strip())
+    if course_labels:
+        for lab in course_labels:
+            s = str(lab or "").strip()
+            if s and s not in label_needles:
+                label_needles.append(s)
+    if len(label_needles) == 1:
         clauses.append("course_label ILIKE %s")
-        params.append(f"%{course_label.strip()}%")
+        params.append(f"%{label_needles[0]}%")
+    elif len(label_needles) > 1:
+        parts = []
+        for lab in label_needles:
+            parts.append("course_label ILIKE %s")
+            params.append(f"%{lab}%")
+        clauses.append("(" + " OR ".join(parts) + ")")
     if date_from:
         clauses.append("created_at::date >= %s::date")
         params.append(date_from.strip())
@@ -248,6 +263,7 @@ def quiz_attempt_class_summary(
     *,
     limit: int = 200,
     course_label: str | None = None,
+    course_labels: set[str] | list[str] | None = None,
     date_from: str | None = None,
     date_to: str | None = None,
     subjects: set[str] | list[str] | None = None,
@@ -258,6 +274,7 @@ def quiz_attempt_class_summary(
         tenant_id,
         limit=limit,
         course_label=course_label,
+        course_labels=course_labels,
         date_from=date_from,
         date_to=date_to,
         subjects=subjects,

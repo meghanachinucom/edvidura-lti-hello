@@ -116,10 +116,13 @@ def test_manual_loop_enrichment():
         quiz_token="tok",
         first_manual_id="mmmmmmmm-mmmm-mmmm-mmmm-mmmmmmmmmmmm",
         manual_version=2,
+        attempt_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     )
     assert "focus=gradebook-sync" in review[0]["teleport_href"]
     assert "&v=2" in review[0]["teleport_href"]
     assert review[0]["competency_id"] == "gradebook_sync"
+    assert "practice=1" in review[0]["practice_loop_href"]
+    assert "loop=1" in review[0]["graded_loop_href"]
 
 
 def test_at_risk_learners():

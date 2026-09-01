@@ -15,8 +15,9 @@
 
 {% if ai %}
 <p class="banner-note info">
-  AI quiz: <strong>{{ ai.provider }}</strong> ({{ ai.model }})
-  — use <em>AI quiz</em> on a reading lesson to draft MCQs.
+  AI: <strong>{{ ai.provider }}</strong> ({{ ai.model }})
+  — <a href="/teacher/ai?token={{ quiz_token }}">AI tools</a>
+  · use <em>AI quiz</em> / <em>Simplify</em> on a reading lesson.
 </p>
 {% endif %}
 
@@ -115,6 +116,11 @@
           <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
           <input type="hidden" name="count" value="3"/>
           <button type="submit" class="btn secondary" title="Generate MCQs from lesson text">AI quiz</button>
+        </form>
+        <form method="post" action="/teacher/ai/simplify">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
+          <button type="submit" class="btn secondary" title="Rewrite at a simpler level">Simplify</button>
         </form>
         {% endif %}
         {% if (L.status or 'published') == 'published' %}

@@ -1,45 +1,72 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<article class="lesson-player">
+<a class="skip-link" href="#manual-body">Skip to manual content</a>
+
+<article class="ebook-reader" aria-label="Technical manual">
   <section class="welcome">
-    <p class="welcome-kicker">Manual · v{{ version.version }}{% if version.is_published %} · published{% endif %}</p>
+    <p class="welcome-kicker">eBook · v{{ version.version }}{% if version.is_published %} · published{% endif %}</p>
     <h2 class="welcome-title">{{ manual.title }}</h2>
     {% if version.changelog %}<p class="welcome-lede">{{ version.changelog }}</p>{% endif %}
   </section>
 
-  {% if focus %}
-  <div class="banner-note info focus-banner" id="focus-banner">
+  {% if focus or remediation_loop %}
+  <div class="banner-note info focus-banner" id="focus-banner" role="status">
+    {% if focus %}
     Jumping to pinned section: <strong>{{ focus_label }}</strong>
     <span class="meta"> · version {{ version.version }}</span>
+    {% else %}
+    Remediation loop — review, then practice, then graded retry
+    {% endif %}
     {% if quiz_token %}
     <div class="actions" style="margin-top:0.65rem">
-      <a class="btn secondary" href="/quiz?token={{ quiz_token }}&practice=1">Practice this skill</a>
-      <a class="btn primary" href="/quiz?token={{ quiz_token }}">Graded retry</a>
+      <a class="btn secondary" href="{{ loop_practice_href }}">2 · Practice this skill</a>
+      <a class="btn primary" href="{{ loop_graded_href }}">3 · Graded retry</a>
     </div>
     {% endif %}
   </div>
   {% endif %}
 
-  {% if body_html %}
-  <div class="lesson-prose">
-    {{ body_html | safe }}
-  </div>
-  {% endif %}
+  <div class="ebook-layout">
+    {% if toc %}
+    <nav class="ebook-toc" aria-label="Chapter table of contents">
+      <h2 class="ebook-toc-title">Chapters</h2>
+      <ol>
+        {% for ch in toc %}
+        <li><a href="#{{ ch.slug }}" class="{% if focus == ch.slug %}on{% endif %}">{{ ch.title }}</a></li>
+        {% endfor %}
+      </ol>
+      {% if share_path %}
+      <p class="meta" style="margin-top:0.75rem">
+        Standalone link (signed, time-limited):
+        <code class="meta" style="word-break:break-all">{{ share_path }}</code>
+      </p>
+      {% endif %}
+    </nav>
+    {% endif %}
 
-  <section class="panel">
-    <h2>Version history</h2>
-    <ul class="q-list">
-      {% for v in versions %}
-      <li>
-        <a class="link" href="/manuals/{{ manual.id }}?token={{ quiz_token }}&v={{ v.version }}{% if focus %}&focus={{ focus }}{% endif %}">
-          v{{ v.version }}{% if v.is_published %} · published{% else %} · draft{% endif %}
-        </a>
-        {% if v.changelog %}<div class="meta">{{ v.changelog }}</div>{% endif %}
-      </li>
-      {% endfor %}
-    </ul>
-    <p><a class="btn secondary" href="/manuals?token={{ quiz_token }}">All manuals</a></p>
-  </section>
+    <div class="ebook-main">
+      {% if body_html %}
+      <div class="lesson-prose" id="manual-body" tabindex="-1">
+        {{ body_html | safe }}
+      </div>
+      {% endif %}
+
+      <section class="panel">
+        <h2>Version history</h2>
+        <ul class="q-list">
+          {% for v in versions %}
+          <li>
+            <a class="link" href="/manuals/{{ manual.id }}?token={{ quiz_token }}&v={{ v.version }}{% if focus %}&focus={{ focus }}{% endif %}">
+              v{{ v.version }}{% if v.is_published %} · published{% else %} · draft{% endif %}
+            </a>
+            {% if v.changelog %}<div class="meta">{{ v.changelog }}</div>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        <p><a class="btn secondary" href="/manuals?token={{ quiz_token }}">All manuals</a></p>
+      </section>
+    </div>
+  </div>
 </article>
 {% if focus %}
 <script>

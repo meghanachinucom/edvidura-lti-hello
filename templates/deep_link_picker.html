@@ -47,6 +47,28 @@
       </div>
     </section>
 
+    {% if ai_suggestions and ai_suggestions.suggestions %}
+    <section class="ob-panel">
+      <h2>AI suggests</h2>
+      <p style="opacity:.8;font-size:.9rem;margin:0 0 .75rem">{{ ai_suggestions.provider }} — pick one to add to Moodle</p>
+      <div class="pick-grid">
+        {% for s in ai_suggestions.suggestions %}
+        <form method="post" action="/lti/deep-link/submit">
+          <input type="hidden" name="token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="item_type" value="lesson"/>
+          <input type="hidden" name="item_id" value="{{ s.lesson_id }}"/>
+          <input type="hidden" name="title" value="{{ s.title }}"/>
+          <div>
+            <strong>{{ s.title }}</strong>
+            <span>{{ s.reason }}</span>
+          </div>
+          <button class="ob-btn" type="submit">Add</button>
+        </form>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
     {% if lessons %}
     <section class="ob-panel">
       <h2>Lessons</h2>

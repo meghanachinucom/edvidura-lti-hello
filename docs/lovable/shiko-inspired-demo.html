@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · Shiko-inspired demo (approval)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    /* Inspired by modern LMS dashboard kits (Shiko-like): clean cards, soft gray canvas, indigo accent.
+       Original layout — not a copy of ThemeForest assets. */
+    :root {
+      --bg: #f3f5f9;
+      --surface: #ffffff;
+      --ink: #1c2434;
+      --mute: #6b7289;
+      --line: #e6e9f0;
+      --indigo: #5b5ce2;
+      --indigo-deep: #4546c9;
+      --indigo-soft: rgba(91, 92, 226, 0.1);
+      --teal: #14b8a6;
+      --coral: #f97366;
+      --amber: #f59e0b;
+      --sidebar: #111827;
+      --sidebar-2: #1f2937;
+      --font: "Plus Jakarta Sans", system-ui, sans-serif;
+      --side: 260px;
+      --radius: 16px;
+      --shadow: 0 1px 2px rgba(17, 24, 39, 0.04), 0 8px 24px rgba(17, 24, 39, 0.06);
+      --ease: cubic-bezier(.22, 1, .36, 1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: var(--font); color: var(--ink);
+      background: #dfe3ec; line-height: 1.5; -webkit-font-smoothing: antialiased;
+    }
+    .banner {
+      position: sticky; top: 0; z-index: 40;
+      display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between;
+      padding: .65rem 1rem; background: #0b1220; color: #eef2ff;
+      font-size: .85rem; font-weight: 600;
+    }
+    .banner strong { color: #a5b4fc; }
+    .roles { display: flex; gap: .35rem; }
+    .roles button {
+      border: 1px solid rgba(255,255,255,.2); background: transparent; color: #fff;
+      border-radius: 999px; padding: .3rem .8rem; font: inherit; font-weight: 650; cursor: pointer;
+    }
+    .roles button.on { background: var(--indigo); border-color: var(--indigo); }
+
+    .shell {
+      display: flex; min-height: calc(100vh - 48px); max-width: 1200px; margin: 0 auto;
+      background: var(--bg); box-shadow: 0 20px 50px rgba(17,24,39,.12); overflow: hidden;
+    }
+
+    /* —— Sidebar (dark LMS) —— */
+    .sidebar {
+      width: var(--side); flex-shrink: 0; color: #9ca3af;
+      background: linear-gradient(180deg, var(--sidebar), #0b1220);
+      display: flex; flex-direction: column; padding: 1.1rem .85rem 1rem;
+    }
+    .brand {
+      display: flex; align-items: center; gap: .7rem;
+      padding: .35rem .55rem 1.15rem;
+    }
+    .mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #818cf8, var(--indigo));
+      color: #fff; display: grid; place-items: center;
+      font-weight: 800; font-size: .85rem;
+      box-shadow: 0 8px 20px rgba(91,92,226,.4);
+    }
+    .bname { color: #fff; font-weight: 800; font-size: 1.05rem; letter-spacing: -.02em; }
+    .btag { font-size: .7rem; color: #6b7280; }
+
+    .search {
+      display: flex; align-items: center; gap: .5rem;
+      margin: 0 .35rem .9rem; padding: .65rem .75rem;
+      border-radius: 12px; background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.06); color: #6b7280; font-size: .82rem;
+    }
+    .search span { opacity: .7; }
+
+    .sec {
+      margin: .55rem .55rem .35rem; font-size: .65rem; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase; color: #4b5563;
+    }
+    .sec, .nav-x { display: none; }
+    body.role-student .sec-learn { display: block; }
+    body.role-teacher .sec-learn, body.role-teacher .sec-teach, body.role-teacher .nav-teach { display: block; }
+    body.role-admin .sec-learn, body.role-admin .sec-admin, body.role-admin .nav-admin { display: block; }
+
+    nav { flex: 1; }
+    a.link {
+      display: flex; align-items: center; gap: .7rem;
+      padding: .7rem .8rem; margin: .12rem 0; border-radius: 12px;
+      color: #9ca3af; text-decoration: none; font-weight: 600; font-size: .9rem;
+      transition: background .2s, color .2s, transform .2s var(--ease);
+    }
+    a.link .ico {
+      width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+      background: rgba(255,255,255,.05); font-size: .95rem; flex-shrink: 0;
+    }
+    a.link:hover { background: rgba(255,255,255,.05); color: #e5e7eb; transform: translateX(2px); }
+    a.link.on {
+      background: var(--indigo); color: #fff;
+      box-shadow: 0 8px 20px rgba(91,92,226,.35);
+    }
+    a.link.on .ico { background: rgba(255,255,255,.18); }
+
+    .foot {
+      margin-top: .5rem; padding: .85rem .7rem .2rem;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+    .who { display: flex; gap: .65rem; align-items: center; }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      color: #fff; display: grid; place-items: center; font-weight: 800; font-size: .78rem;
+    }
+    .uname { color: #fff; font-weight: 700; font-size: .88rem; }
+    .urole { color: #9ca3af; font-size: .72rem; font-weight: 600; }
+    .back {
+      display: block; margin-top: .75rem; text-align: center; text-decoration: none;
+      padding: .55rem; border-radius: 12px; border: 1px solid rgba(255,255,255,.1);
+      color: #d1d5db; font-size: .8rem; font-weight: 650;
+    }
+
+    /* —— Main —— */
+    .content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      padding: 1rem 1.4rem; background: rgba(243,245,249,.85); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .top-left h1 {
+      margin: 0; font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em;
+    }
+    .top-left p { margin: .15rem 0 0; color: var(--mute); font-size: .84rem; }
+    .top-right { display: flex; align-items: center; gap: .55rem; }
+    .icon-btn {
+      width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line);
+      background: var(--surface); display: grid; place-items: center; color: var(--mute);
+      text-decoration: none; font-size: 1rem;
+    }
+    .chip {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .45rem .85rem; border-radius: 999px; border: 1px solid var(--line);
+      background: var(--surface); font-size: .8rem; font-weight: 650; color: var(--mute);
+      text-decoration: none;
+    }
+
+    .main { padding: 1.25rem 1.4rem 2.2rem; }
+    .screen { display: none; }
+    .screen.on { display: block; animation: fadeUp .4s var(--ease) both; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* Stats row */
+    .stats {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .85rem;
+      margin-bottom: 1rem;
+    }
+    .stat {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 1rem 1.05rem; box-shadow: var(--shadow);
+      display: flex; gap: .85rem; align-items: center;
+      opacity: 0; animation: fadeUp .45s var(--ease) forwards;
+    }
+    .stat:nth-child(1) { animation-delay: .05s; }
+    .stat:nth-child(2) { animation-delay: .1s; }
+    .stat:nth-child(3) { animation-delay: .15s; }
+    .stat:nth-child(4) { animation-delay: .2s; }
+    .stat-ico {
+      width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .stat-ico.i1 { background: var(--indigo-soft); color: var(--indigo); }
+    .stat-ico.i2 { background: rgba(20,184,166,.12); color: var(--teal); }
+    .stat-ico.i3 { background: rgba(245,158,11,.14); color: #d97706; }
+    .stat-ico.i4 { background: rgba(249,115,102,.12); color: var(--coral); }
+    .stat b { display: block; font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+    .stat span { font-size: .75rem; color: var(--mute); font-weight: 600; }
+
+    .grid-2 {
+      display: grid; grid-template-columns: 1.35fr .95fr; gap: .9rem;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 1.15rem 1.2rem; box-shadow: var(--shadow);
+    }
+    .card-h {
+      display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+      margin-bottom: 1rem;
+    }
+    .card-h h2 { margin: 0; font-size: 1rem; font-weight: 800; letter-spacing: -.01em; }
+    .card-h a { font-size: .8rem; font-weight: 700; color: var(--indigo); text-decoration: none; }
+
+    /* Welcome banner */
+    .welcome {
+      display: grid; grid-template-columns: 1.2fr .8fr; gap: 1rem; align-items: center;
+      background: linear-gradient(135deg, #5b5ce2 0%, #7c7ef0 45%, #6366f1 100%);
+      color: #fff; border-radius: 20px; padding: 1.4rem 1.45rem;
+      box-shadow: 0 16px 36px rgba(91,92,226,.3);
+      margin-bottom: 1rem; position: relative; overflow: hidden;
+    }
+    .welcome::after {
+      content: ""; position: absolute; right: -40px; top: -40px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: rgba(255,255,255,.12);
+    }
+    .welcome::before {
+      content: ""; position: absolute; right: 40px; bottom: -50px;
+      width: 120px; height: 120px; border-radius: 50%;
+      background: rgba(255,255,255,.08);
+    }
+    .welcome-k { margin: 0 0 .35rem; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+    .welcome h2 { margin: 0; font-size: clamp(1.5rem, 3vw, 1.9rem); font-weight: 800; letter-spacing: -.03em; position: relative; z-index: 1; }
+    .welcome p { margin: .45rem 0 0; opacity: .9; font-size: .95rem; max-width: 28rem; position: relative; z-index: 1; }
+    .welcome .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; position: relative; z-index: 1; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: .7rem 1.15rem; border-radius: 999px; font-weight: 700; font-size: .88rem;
+      text-decoration: none; border: 0; cursor: pointer; font: inherit;
+      transition: transform .2s var(--ease);
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn.light { background: #fff; color: var(--indigo-deep); }
+    .btn.ghost-w { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+    .btn.primary { background: var(--indigo); color: #fff; box-shadow: 0 8px 18px rgba(91,92,226,.3); }
+    .btn.secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+
+    /* Progress ring widget */
+    .ring-box { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; padding: .5rem 0; }
+    .ring {
+      --p: 66;
+      width: 132px; height: 132px; border-radius: 50%;
+      background: conic-gradient(var(--indigo) calc(var(--p) * 1%), #eef0f6 0);
+      display: grid; place-items: center;
+      animation: ringSpin .9s var(--ease) both;
+    }
+    @keyframes ringSpin { from { filter: blur(2px); opacity: .5; transform: scale(.92); } to { filter: none; opacity: 1; transform: none; } }
+    .ring::before {
+      content: ""; width: 100px; height: 100px; border-radius: 50%; background: #fff;
+    }
+    .ring-label {
+      position: absolute; text-align: center; font-weight: 800; font-size: 1.35rem; letter-spacing: -.02em;
+    }
+    .ring-wrap { position: relative; display: grid; place-items: center; }
+    .ring-meta { text-align: center; color: var(--mute); font-size: .84rem; font-weight: 600; }
+    .ring-meta strong { display: block; color: var(--ink); font-size: .95rem; margin-bottom: .15rem; }
+
+    /* Course / lesson list cards */
+    .course-item {
+      display: grid; grid-template-columns: 52px 1fr auto; gap: .85rem; align-items: center;
+      padding: .85rem; margin-bottom: .55rem; border-radius: 14px;
+      border: 1px solid var(--line); background: #fafbff;
+      text-decoration: none; color: inherit;
+      transition: border-color .2s, box-shadow .2s, transform .2s var(--ease);
+      opacity: 0; animation: fadeUp .4s var(--ease) forwards;
+    }
+    .course-item:nth-child(1) { animation-delay: .05s; }
+    .course-item:nth-child(2) { animation-delay: .1s; }
+    .course-item:nth-child(3) { animation-delay: .15s; }
+    .course-item:hover { border-color: #c7c9f5; box-shadow: var(--shadow); transform: translateY(-2px); }
+    .course-item.now { border-color: #c7c9f5; background: linear-gradient(135deg, #f5f5ff, #fff); }
+    .thumb {
+      width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center;
+      font-weight: 800; color: #fff; font-size: .95rem;
+    }
+    .thumb.t1 { background: linear-gradient(135deg, #818cf8, #5b5ce2); }
+    .thumb.t2 { background: linear-gradient(135deg, #2dd4bf, #0d9488); }
+    .thumb.t3 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+    .ci-title { font-weight: 750; font-size: .92rem; }
+    .ci-meta { font-size: .78rem; color: var(--mute); margin-top: .15rem; }
+    .bar {
+      height: 6px; border-radius: 99px; background: #eef0f6; overflow: hidden; margin-top: .45rem; max-width: 140px;
+    }
+    .bar i {
+      display: block; height: 100%; border-radius: inherit;
+      background: linear-gradient(90deg, var(--indigo), #818cf8);
+      width: 0; animation: barFill 1s var(--ease) .2s forwards;
+    }
+    @keyframes barFill { to { width: var(--w, 66%); } }
+    .badge {
+      font-size: .72rem; font-weight: 750; padding: .28rem .6rem; border-radius: 999px;
+      background: var(--indigo-soft); color: var(--indigo-deep); white-space: nowrap;
+    }
+    .badge.ok { background: rgba(20,184,166,.12); color: #0f766e; }
+    .badge.warn { background: rgba(245,158,11,.15); color: #b45309; }
+
+    /* Activity feed */
+    .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; }
+    .feed li {
+      display: grid; grid-template-columns: 10px 1fr; gap: .7rem; align-items: start;
+      font-size: .86rem;
+    }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%; margin-top: .35rem;
+      background: var(--indigo); box-shadow: 0 0 0 4px var(--indigo-soft);
+    }
+    .dot.teal { background: var(--teal); box-shadow: 0 0 0 4px rgba(20,184,166,.15); }
+    .dot.amber { background: var(--amber); box-shadow: 0 0 0 4px rgba(245,158,11,.15); }
+    .feed strong { font-weight: 750; }
+    .feed time { display: block; color: var(--mute); font-size: .75rem; margin-top: .15rem; }
+
+    /* Quiz */
+    .q {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 1.05rem 1.1rem; margin-bottom: .7rem; box-shadow: var(--shadow);
+    }
+    .qn { font-weight: 750; margin-bottom: .65rem; }
+    .opts { display: grid; gap: .4rem; }
+    .opts label {
+      display: flex; gap: .6rem; align-items: center; padding: .7rem .8rem;
+      border-radius: 12px; border: 1px solid var(--line); cursor: pointer; font-size: .9rem; font-weight: 500;
+      transition: border-color .15s, background .15s, transform .15s;
+    }
+    .opts label:hover { border-color: #c7c9f5; background: #f8f8ff; transform: translateX(2px); }
+    .opts input { accent-color: var(--indigo); }
+
+    .role-home { display: none; }
+    body.role-student .home-student,
+    body.role-teacher .home-teacher,
+    body.role-admin .home-admin { display: block; }
+
+    .mini-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .mini-table th, .mini-table td { text-align: left; padding: .65rem .2rem; border-bottom: 1px solid var(--line); }
+    .mini-table th { color: var(--mute); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+
+    @media (max-width: 980px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .grid-2, .welcome { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 800px) {
+      .shell { flex-direction: column; }
+      .sidebar { width: 100%; }
+    }
+  </style>
+</head>
+<body class="role-student">
+  <div class="banner">
+    <div><strong>Reference demo</strong> — Live app now uses full Shiko chrome (<code>shell.css?v=shiko2</code>).</div>
+    <div class="roles">
+      <button type="button" class="on" data-role="student">Student</button>
+      <button type="button" data-role="teacher">Teacher</button>
+      <button type="button" data-role="admin">Admin</button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark">EV</div>
+        <div>
+          <div class="bname">EdVidura</div>
+          <div class="btag">Learning OS</div>
+        </div>
+      </div>
+      <div class="search"><span>⌕</span> Search courses…</div>
+      <nav>
+        <div class="sec sec-learn">Menu</div>
+        <a class="link on" href="#home" data-screen="home"><span class="ico">⌂</span> Dashboard</a>
+        <a class="link" href="#lessons" data-screen="lessons"><span class="ico">▦</span> Lessons</a>
+        <a class="link" href="#quiz" data-screen="quiz"><span class="ico">✎</span> Quiz</a>
+        <a class="link" href="#results" data-screen="results"><span class="ico">★</span> My results</a>
+        <div class="sec sec-teach">Instructor</div>
+        <a class="link nav-x nav-teach" href="#upload" data-screen="upload"><span class="ico">↑</span> Upload</a>
+        <a class="link nav-x nav-teach" href="#class" data-screen="class"><span class="ico">◉</span> Class results</a>
+        <div class="sec sec-admin">School</div>
+        <a class="link nav-x nav-admin" href="#teachers" data-screen="teachers"><span class="ico">▣</span> Teachers</a>
+        <a class="link nav-x nav-admin" href="#classes" data-screen="classes"><span class="ico">▤</span> Classes</a>
+        <a class="link nav-x nav-admin" href="#students" data-screen="students"><span class="ico">☰</span> Students</a>
+      </nav>
+      <div class="foot">
+        <div class="who">
+          <div class="avatar" id="avatar">AN</div>
+          <div>
+            <div class="uname" id="uname">Alice Nguyen</div>
+            <div class="urole" id="urole">Student</div>
+          </div>
+        </div>
+        <a class="back" href="#">← Back to Moodle</a>
+      </div>
+    </aside>
+
+    <div class="content">
+      <header class="topbar">
+        <div class="top-left">
+          <h1 id="ptitle">Dashboard</h1>
+          <p id="psub">Algebra I · Riverside High</p>
+        </div>
+        <div class="top-right">
+          <a class="icon-btn" href="#" title="Notifications">🔔</a>
+          <a class="chip" href="#">← Moodle</a>
+        </div>
+      </header>
+
+      <main class="main">
+        <section class="screen on" id="home">
+          <div class="role-home home-student">
+            <div class="welcome">
+              <div>
+                <p class="welcome-k">Welcome back</p>
+                <h2>Hi, Alice 👋</h2>
+                <p>Continue your Algebra chapter — you’re 66% through. Quiz unlocks next.</p>
+                <div class="actions">
+                  <a class="btn light" href="#quiz" data-screen="quiz">Continue learning</a>
+                  <a class="btn ghost-w" href="#lessons" data-screen="lessons">View lessons</a>
+                </div>
+              </div>
+              <div class="ring-box" style="position:relative;z-index:1">
+                <div class="ring-wrap">
+                  <div class="ring" style="--p:66"></div>
+                  <div class="ring-label">66%</div>
+                </div>
+                <div class="ring-meta"><strong>Course progress</strong>2 of 3 complete</div>
+              </div>
+            </div>
+
+            <div class="stats">
+              <div class="stat"><div class="stat-ico i1">▦</div><div><b>3</b><span>Lessons</span></div></div>
+              <div class="stat"><div class="stat-ico i2">✎</div><div><b>1</b><span>Quiz ready</span></div></div>
+              <div class="stat"><div class="stat-ico i3">★</div><div><b>2/3</b><span>Last score</span></div></div>
+              <div class="stat"><div class="stat-ico i4">⏱</div><div><b>~5m</b><span>Next step</span></div></div>
+            </div>
+
+            <div class="grid-2">
+              <div class="card">
+                <div class="card-h">
+                  <h2>Continue course</h2>
+                  <a href="#lessons" data-screen="lessons">See all</a>
+                </div>
+                <a class="course-item" href="#lessons" data-screen="lessons">
+                  <div class="thumb t1">1</div>
+                  <div>
+                    <div class="ci-title">Linear equations</div>
+                    <div class="ci-meta">Reading · completed</div>
+                    <div class="bar"><i style="--w:100%"></i></div>
+                  </div>
+                  <span class="badge ok">Done</span>
+                </a>
+                <a class="course-item" href="#lessons" data-screen="lessons">
+                  <div class="thumb t2">2</div>
+                  <div>
+                    <div class="ci-title">Slope &amp; intercept</div>
+                    <div class="ci-meta">Video · completed</div>
+                    <div class="bar"><i style="--w:100%"></i></div>
+                  </div>
+                  <span class="badge ok">Done</span>
+                </a>
+                <a class="course-item now" href="#quiz" data-screen="quiz">
+                  <div class="thumb t3">3</div>
+                  <div>
+                    <div class="ci-title">Chapter check</div>
+                    <div class="ci-meta">Quiz · up next</div>
+                    <div class="bar"><i style="--w:0%"></i></div>
+                  </div>
+                  <span class="badge warn">Next</span>
+                </a>
+              </div>
+              <div class="card">
+                <div class="card-h"><h2>Recent activity</h2></div>
+                <ul class="feed">
+                  <li><span class="dot"></span><div><strong>Completed</strong> Slope &amp; intercept<time>Today · 10:12</time></div></li>
+                  <li><span class="dot teal"></span><div><strong>Scored 2/3</strong> on practice quiz<time>Yesterday</time></div></li>
+                  <li><span class="dot amber"></span><div><strong>Started</strong> Linear equations<time>Mon</time></div></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="role-home home-teacher">
+            <div class="welcome">
+              <div>
+                <p class="welcome-k">Instructor</p>
+                <h2>Hi, Priya 👋</h2>
+                <p>Period 2 · 18 of 24 learners attempted the chapter quiz.</p>
+                <div class="actions">
+                  <a class="btn light" href="#class" data-screen="class">Class results</a>
+                  <a class="btn ghost-w" href="#upload" data-screen="upload">Upload content</a>
+                </div>
+              </div>
+              <div class="ring-box" style="position:relative;z-index:1">
+                <div class="ring-wrap">
+                  <div class="ring" style="--p:75"></div>
+                  <div class="ring-label">75%</div>
+                </div>
+                <div class="ring-meta"><strong>Class attempt rate</strong>18 / 24 learners</div>
+              </div>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="stat-ico i1">◉</div><div><b>24</b><span>Learners</span></div></div>
+              <div class="stat"><div class="stat-ico i2">✎</div><div><b>18</b><span>Attempted</span></div></div>
+              <div class="stat"><div class="stat-ico i3">★</div><div><b>71%</b><span>Avg score</span></div></div>
+              <div class="stat"><div class="stat-ico i4">!</div><div><b>4</b><span>Not started</span></div></div>
+            </div>
+          </div>
+
+          <div class="role-home home-admin">
+            <div class="welcome">
+              <div>
+                <p class="welcome-k">School admin</p>
+                <h2>Riverside High</h2>
+                <p>Manage teachers, classes, and students for this workspace.</p>
+                <div class="actions">
+                  <a class="btn light" href="#teachers" data-screen="teachers">Teachers</a>
+                  <a class="btn ghost-w" href="#classes" data-screen="classes">Classes</a>
+                </div>
+              </div>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="stat-ico i1">▣</div><div><b>12</b><span>Teachers</span></div></div>
+              <div class="stat"><div class="stat-ico i2">▤</div><div><b>6</b><span>Classes</span></div></div>
+              <div class="stat"><div class="stat-ico i3">☰</div><div><b>184</b><span>Students</span></div></div>
+              <div class="stat"><div class="stat-ico i4">▦</div><div><b>3</b><span>Courses</span></div></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="lessons">
+          <div class="card">
+            <div class="card-h"><h2>Lessons</h2><a href="#quiz" data-screen="quiz">Go to quiz</a></div>
+            <a class="course-item" href="#"><div class="thumb t1">1</div><div><div class="ci-title">Linear equations</div><div class="ci-meta">Reading · ~8 min</div><div class="bar"><i style="--w:100%"></i></div></div><span class="badge ok">Done</span></a>
+            <a class="course-item" href="#"><div class="thumb t2">2</div><div><div class="ci-title">Slope &amp; intercept</div><div class="ci-meta">Video · ~6 min</div><div class="bar"><i style="--w:100%"></i></div></div><span class="badge ok">Done</span></a>
+            <a class="course-item now" href="#quiz" data-screen="quiz"><div class="thumb t3">3</div><div><div class="ci-title">Chapter check</div><div class="ci-meta">Quiz · ready</div><div class="bar"><i style="--w:0%"></i></div></div><span class="badge warn">Next</span></a>
+          </div>
+        </section>
+
+        <section class="screen" id="quiz">
+          <div class="welcome" style="margin-bottom:1rem">
+            <div>
+              <p class="welcome-k">Assessment</p>
+              <h2>Chapter check</h2>
+              <p>3 questions · best score can sync to Moodle.</p>
+            </div>
+          </div>
+          <div class="q">
+            <div class="qn">1. What is the slope of y = 2x + 3?</div>
+            <div class="opts">
+              <label><input type="radio" name="q1"/> 2</label>
+              <label><input type="radio" name="q1"/> 3</label>
+              <label><input type="radio" name="q1"/> 5</label>
+            </div>
+          </div>
+          <div class="q">
+            <div class="qn">2. Which point lies on y = x?</div>
+            <div class="opts">
+              <label><input type="radio" name="q2"/> (2, 3)</label>
+              <label><input type="radio" name="q2"/> (4, 4)</label>
+              <label><input type="radio" name="q2"/> (0, 1)</label>
+            </div>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <a class="btn primary" href="#results" data-screen="results">Submit quiz</a>
+            <a class="btn secondary" href="#lessons" data-screen="lessons">Back</a>
+          </div>
+        </section>
+
+        <section class="screen" id="results">
+          <div class="stats">
+            <div class="stat"><div class="stat-ico i1">★</div><div><b>2/3</b><span>Score</span></div></div>
+            <div class="stat"><div class="stat-ico i2">✓</div><div><b>2</b><span>Correct</span></div></div>
+            <div class="stat"><div class="stat-ico i3">×</div><div><b>1</b><span>Missed</span></div></div>
+            <div class="stat"><div class="stat-ico i4">↻</div><div><b>Retry</b><span>Available</span></div></div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-h"><h2>Breakdown</h2></div>
+              <a class="course-item" href="#"><div class="thumb t1">✓</div><div><div class="ci-title">Q1 Slope</div><div class="ci-meta">Correct</div></div><span class="badge ok">1 pt</span></a>
+              <a class="course-item" href="#"><div class="thumb t2">✓</div><div><div class="ci-title">Q2 Point on line</div><div class="ci-meta">Correct</div></div><span class="badge ok">1 pt</span></a>
+              <a class="course-item now" href="#"><div class="thumb t3">×</div><div><div class="ci-title">Q3 Intercept</div><div class="ci-meta">Missed</div></div><span class="badge warn">0 pt</span></a>
+            </div>
+            <div class="card">
+              <div class="card-h"><h2>Next step</h2></div>
+              <p style="margin:0;color:var(--mute);font-size:.92rem">Review <strong style="color:var(--ink)">Slope &amp; intercept</strong>, then try again.</p>
+              <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap">
+                <a class="btn primary" href="#quiz" data-screen="quiz">Try again</a>
+                <a class="btn secondary" href="#lessons" data-screen="lessons">Lessons</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="upload">
+          <div class="card"><div class="card-h"><h2>Upload content</h2></div><p style="margin:0;color:var(--mute)">Add a lesson or quiz question for this school.</p></div>
+        </section>
+        <section class="screen" id="class">
+          <div class="card">
+            <div class="card-h"><h2>Class results</h2></div>
+            <table class="mini-table">
+              <thead><tr><th>Learner</th><th>Score</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Alice Nguyen</td><td>2/3</td><td><span class="badge warn">Retry</span></td></tr>
+                <tr><td>Bob Okonkwo</td><td>3/3</td><td><span class="badge ok">Done</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="screen" id="teachers">
+          <div class="card"><div class="card-h"><h2>Teachers</h2></div><p style="margin:0;color:var(--mute)">School directory + add teacher.</p></div>
+        </section>
+        <section class="screen" id="classes">
+          <div class="card"><div class="card-h"><h2>Classes</h2></div><p style="margin:0;color:var(--mute)">Rosters for this school.</p></div>
+        </section>
+        <section class="screen" id="students">
+          <div class="card"><div class="card-h"><h2>Students</h2></div><p style="margin:0;color:var(--mute)">Enrolled learners.</p></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const titles = {
+      home: ['Dashboard', 'Algebra I · Riverside High'],
+      lessons: ['Lessons', 'Course path'],
+      quiz: ['Quiz', 'Chapter check'],
+      results: ['My results', 'Latest attempt'],
+      upload: ['Upload', 'Add content'],
+      class: ['Class results', 'Period 2'],
+      teachers: ['Teachers', 'School directory'],
+      classes: ['Classes', 'Rosters'],
+      students: ['Students', 'Enrolled learners']
+    };
+    const people = {
+      student: ['Alice Nguyen', 'Student', 'AN'],
+      teacher: ['Priya Shah', 'Teacher', 'PS'],
+      admin: ['Riverside Admin', 'School admin', 'RA']
+    };
+    function go(name) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.toggle('on', el.id === name));
+      document.querySelectorAll('a.link').forEach(a => a.classList.toggle('on', a.dataset.screen === name));
+      const t = titles[name] || ['EdVidura', ''];
+      document.getElementById('ptitle').textContent = t[0];
+      document.getElementById('psub').textContent = t[1];
+    }
+    document.querySelectorAll('[data-screen]').forEach(el => {
+      el.addEventListener('click', e => { e.preventDefault(); go(el.dataset.screen); });
+    });
+    document.querySelectorAll('[data-role]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-role]').forEach(b => b.classList.toggle('on', b === btn));
+        const role = btn.dataset.role;
+        document.body.className = 'role-' + role;
+        document.getElementById('uname').textContent = people[role][0];
+        document.getElementById('urole').textContent = people[role][1];
+        document.getElementById('avatar').textContent = people[role][2];
+        go('home');
+      });
+    });
+  </script>
+</body>
+</html>

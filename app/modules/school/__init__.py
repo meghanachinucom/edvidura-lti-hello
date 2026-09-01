@@ -1,26 +1,41 @@
-"""School organization roster and workspace snapshot."""
-
-from app.modules.school.service import (
-    class_roster_match_keys,
-    create_class,
-    create_teacher,
-    find_school_admin,
-    list_classes_with_roster,
-    list_school_admins,
-    list_school_students,
-    list_teachers,
-    school_snapshot,
-)
-
-__all__ = [
-    "list_school_admins",
-    "find_school_admin",
-    "list_teachers",
-    "list_school_students",
-    "list_classes_with_roster",
-    "class_roster_match_keys",
-    "create_teacher",
-    "create_class",
-    "school_snapshot",
-]
-
+"""School organization roster and workspace snapshot."""
+
+from app.modules.school.service import (
+    class_moodle_filter_labels,
+    class_roster_match_keys,
+    create_class,
+    create_teacher,
+    find_school_admin,
+    get_lti_context_binding,
+    list_classes_with_roster,
+    list_lti_context_bindings,
+    list_school_admins,
+    list_school_students,
+    list_teachers,
+    match_class_for_context,
+    resolve_lti_context_binding,
+    school_snapshot,
+    set_class_course,
+    suggest_course_for_class,
+    upsert_lti_context_binding,
+)
+
+__all__ = [
+    "list_school_admins",
+    "find_school_admin",
+    "list_teachers",
+    "list_school_students",
+    "list_classes_with_roster",
+    "class_roster_match_keys",
+    "class_moodle_filter_labels",
+    "create_teacher",
+    "create_class",
+    "set_class_course",
+    "list_lti_context_bindings",
+    "get_lti_context_binding",
+    "upsert_lti_context_binding",
+    "match_class_for_context",
+    "suggest_course_for_class",
+    "resolve_lti_context_binding",
+    "school_snapshot",
+]

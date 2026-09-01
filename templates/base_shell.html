@@ -32,13 +32,15 @@
       <button class="nav-burger" id="nav-burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
 
       <nav class="nav-menu" id="nav-menu" aria-label="Main">
-        <div class="nav-dd {% if active_page in ['launch_hub','lessons','manuals','quiz_session','quiz_result','active_quizzes'] %}active{% endif %}">
+        <div class="nav-dd {% if active_page in ['launch_hub','lessons','manuals','quiz_session','quiz_result','active_quizzes','learner_analytics','gap_path'] %}active{% endif %}">
           <button class="nav-dd-btn" type="button" aria-expanded="false">
             Learn <span class="caret" aria-hidden="true">▾</span>
           </button>
           <div class="nav-dd-panel" role="menu">
             <a role="menuitem" class="{% if active_page == 'launch_hub' %}on{% endif %}" href="/launch-hub?token={{ quiz_token }}">Dashboard</a>
             <a role="menuitem" class="{% if active_page == 'lessons' %}on{% endif %}" href="/lessons?token={{ quiz_token }}">Lessons</a>
+            <a role="menuitem" class="{% if active_page == 'study_coach' %}on{% endif %}" href="/learn/coach?token={{ quiz_token }}">Study coach</a>
+            <a role="menuitem" class="{% if active_page == 'gap_path' %}on{% endif %}" href="/learn/gap?token={{ quiz_token }}">My plan</a>
             <a role="menuitem" class="{% if active_page == 'manuals' %}on{% endif %}" href="/manuals?token={{ quiz_token }}">Manual</a>
             <a role="menuitem" class="{% if active_page == 'quiz_session' %}on{% endif %}" href="/quiz?token={{ quiz_token }}">Quiz</a>
             <a role="menuitem" href="/quiz?token={{ quiz_token }}&practice=1">Practice lane</a>
@@ -47,16 +49,21 @@
             {% else %}
             <a role="menuitem" class="{% if active_page == 'quiz_result' or active_page == 'active_quizzes' %}on{% endif %}" href="/active-quizzes?token={{ quiz_token }}">My results</a>
             {% endif %}
+            <a role="menuitem" class="{% if active_page == 'learner_analytics' %}on{% endif %}" href="/learn/analytics?token={{ quiz_token }}">My progress</a>
           </div>
         </div>
 
         {% if is_instructor %}
-        <div class="nav-dd {% if active_page in ['teacher_content','teacher_manuals','instructor_overview','teacher_analytics'] %}active{% endif %}">
+        <div class="nav-dd {% if active_page in ['teacher_content','teacher_manuals','instructor_overview','teacher_analytics','teacher_skills','teacher_dct','teacher_ai','teacher_sme'] %}active{% endif %}">
           <button class="nav-dd-btn" type="button" aria-expanded="false">
             Teach <span class="caret" aria-hidden="true">▾</span>
           </button>
           <div class="nav-dd-panel" role="menu">
             <a role="menuitem" class="{% if active_page == 'teacher_content' %}on{% endif %}" href="/teacher/content?token={{ quiz_token }}">Upload content</a>
+            <a role="menuitem" class="{% if active_page == 'teacher_skills' %}on{% endif %}" href="/teacher/skills?token={{ quiz_token }}">Skills registry</a>
+            <a role="menuitem" class="{% if active_page == 'teacher_dct' %}on{% endif %}" href="/teacher/dct?token={{ quiz_token }}">DCT planner</a>
+            <a role="menuitem" class="{% if active_page == 'teacher_sme' %}on{% endif %}" href="/teacher/sme?token={{ quiz_token }}">SME sources</a>
+            <a role="menuitem" class="{% if active_page == 'teacher_ai' %}on{% endif %}" href="/teacher/ai?token={{ quiz_token }}">AI tools</a>
             <a role="menuitem" class="{% if active_page == 'teacher_manuals' %}on{% endif %}" href="/teacher/manuals?token={{ quiz_token }}">Manual versions</a>
             <a role="menuitem" class="{% if active_page == 'instructor_overview' %}on{% endif %}" href="/teacher/attempts?token={{ quiz_token }}">Class results</a>
             <a role="menuitem" class="{% if active_page == 'teacher_analytics' %}on{% endif %}" href="/teacher/analytics?token={{ quiz_token }}">Analytics</a>
@@ -66,14 +73,15 @@
         {% endif %}
 
         {% if is_school_admin %}
-        <div class="nav-dd {% if active_page in ['school_admin_teachers','school_admin_classes','school_admin_students','school_admin_home'] %}active{% endif %}">
+        <div class="nav-dd {% if active_page in ['school_admin_teachers','school_admin_classes','school_admin_students','school_admin_home','school_admin','school_admin_analytics'] %}active{% endif %}">
           <button class="nav-dd-btn" type="button" aria-expanded="false">
             School <span class="caret" aria-hidden="true">▾</span>
           </button>
           <div class="nav-dd-panel" role="menu">
-            <a role="menuitem" class="{% if active_page == 'school_admin_teachers' %}on{% endif %}" href="/school-admin/teachers?token={{ quiz_token }}">Teachers</a>
-            <a role="menuitem" class="{% if active_page == 'school_admin_classes' %}on{% endif %}" href="/school-admin/classes?token={{ quiz_token }}">Classes</a>
-            <a role="menuitem" class="{% if active_page == 'school_admin_students' %}on{% endif %}" href="/school-admin/students?token={{ quiz_token }}">Students</a>
+            <a role="menuitem" class="{% if active_page == 'school_admin_classes' %}on{% endif %}" href="/school-admin/classes?token={{ quiz_token }}">Classes &amp; links</a>
+            <a role="menuitem" class="{% if active_page == 'school_admin_teachers' %}on{% endif %}" href="/school-admin/teachers?token={{ quiz_token }}">Teachers (Moodle)</a>
+            <a role="menuitem" class="{% if active_page == 'school_admin_students' %}on{% endif %}" href="/school-admin/students?token={{ quiz_token }}">Students (Moodle)</a>
+            <a role="menuitem" class="{% if active_page == 'school_admin_analytics' %}on{% endif %}" href="/school-admin/analytics?token={{ quiz_token }}">Analytics</a>
           </div>
         </div>
         {% endif %}
@@ -89,7 +97,7 @@
           </button>
           <div class="nav-dd-panel nav-dd-panel-end" role="menu">
             <div class="nav-dd-label">{{ course | default("Course") }}</div>
-            <a role="menuitem" href="{{ moodle_return_href }}" target="_top" rel="noopener">← Back to Moodle</a>
+            <a role="menuitem" href="{{ lms_return_href or moodle_return_href }}" target="_top" rel="noopener">← Back to {{ lms_name | default("LMS") }}</a>
             <button type="button" class="nav-incident-btn" id="incident-btn">Report a problem</button>
           </div>
         </div>
@@ -116,7 +124,7 @@
           {% if page_subtitle %}<p>{{ page_subtitle }}</p>
           {% else %}<p>{{ course | default("Course") }} · {{ tenant_name | default("School") }}</p>{% endif %}
         </div>
-        <a class="chip moodle-chip" href="{{ moodle_return_href }}" target="_top" rel="noopener">← Moodle</a>
+        <a class="chip moodle-chip" href="{{ lms_return_href or moodle_return_href }}" target="_top" rel="noopener">← {{ lms_name | default("LMS") }}</a>
       </div>
 
       {% if show_contract %}

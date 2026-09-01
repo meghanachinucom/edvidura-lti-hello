@@ -11,6 +11,16 @@
     </div>
   </div>
 
+  {% if remediation_loop %}
+  <div class="banner-note info">
+    Remediation loop — finish this review, then practice, then graded retry.
+    <div class="actions" style="margin-top:0.65rem">
+      <a class="btn secondary" href="{{ loop_practice_href }}">2 · Practice missed items</a>
+      <a class="btn primary" href="{{ loop_graded_href }}">3 · Graded retry</a>
+    </div>
+  </div>
+  {% endif %}
+
   {% if video_url %}
   <div class="video-frame">
     <iframe
