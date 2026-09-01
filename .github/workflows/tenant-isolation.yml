@@ -28,10 +28,10 @@ jobs:
       DATABASE_URL: postgresql://edvidura_app:edvidura_app@127.0.0.1:5432/edvidura
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -57,5 +57,7 @@ jobs:
           ENVIRONMENT: development
           ADMIN_API_KEY: test-admin-key
           SESSION_SECRET: ci-session-secret-not-for-prod
+          # Avoid cross-test rate-limit pollution via shared LAUNCH_CACHE.
+          RATE_LIMIT_ENABLED: "0"
           DATABASE_URL: postgresql://edvidura_app:edvidura_app@127.0.0.1:5432/edvidura
         run: pytest -q tests/

@@ -31,10 +31,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         *,
         enabled: bool = True,
         limits: list[tuple[str, int, int]] | None = None,
+        cache=None,
     ):
         super().__init__(app)
         self.enabled = enabled
         self.limits = limits or DEFAULT_LIMITS
+        # Optional injected cache (tests). None → prefer process LAUNCH_CACHE.
+        self._cache = cache
         self._local: dict[str, list[float]] = defaultdict(list)
         self._lock = Lock()
 
@@ -78,26 +81,35 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             )
         return await call_next(request)
 
-    def _allow(self, key: str, max_req: int, window: int, now: float) -> bool:
-        # Prefer shared cache so multiple workers share the bucket.
+    def _backend(self):
+        if self._cache is not None:
+            return self._cache
         try:
             from app.launch_cache import LAUNCH_CACHE
 
-            raw = LAUNCH_CACHE.get(key)
-            stamps: list[float]
-            if isinstance(raw, list):
-                stamps = [float(x) for x in raw]
-            else:
-                stamps = []
-            stamps = [t for t in stamps if now - t < window]
-            if len(stamps) >= max_req:
-                LAUNCH_CACHE.set(key, stamps, exp=window)
-                return False
-            stamps.append(now)
-            LAUNCH_CACHE.set(key, stamps, exp=window)
-            return True
+            return LAUNCH_CACHE
         except Exception:  # noqa: BLE001
-            pass
+            return None
+
+    def _allow(self, key: str, max_req: int, window: int, now: float) -> bool:
+        backend = self._backend()
+        if backend is not None:
+            try:
+                raw = backend.get(key)
+                stamps: list[float]
+                if isinstance(raw, list):
+                    stamps = [float(x) for x in raw]
+                else:
+                    stamps = []
+                stamps = [t for t in stamps if now - t < window]
+                if len(stamps) >= max_req:
+                    backend.set(key, stamps, exp=window)
+                    return False
+                stamps.append(now)
+                backend.set(key, stamps, exp=window)
+                return True
+            except Exception:  # noqa: BLE001
+                pass
 
         with self._lock:
             stamps = [t for t in self._local[key] if now - t < window]

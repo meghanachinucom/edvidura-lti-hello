@@ -31,11 +31,13 @@ def test_rate_limit_returns_429():
     async def ok(request):
         return PlainTextResponse("ok")
 
+    # Isolated cache so other TestClient suites cannot pollute this bucket.
     app = Starlette(routes=[Route("/onboard", ok)])
     app.add_middleware(
         RateLimitMiddleware,
         enabled=True,
         limits=[("/onboard", 3, 60)],
+        cache=MemoryCache(),
     )
     client = TestClient(app)
     assert client.get("/onboard").status_code == 200
