@@ -47,7 +47,12 @@ SELECT
 FROM tenants t
 WHERE t.status = 'active';
 
-GRANT SELECT ON bi_xapi_statements, bi_xapi_daily, bi_tenant_kpis TO edvidura;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edvidura') THEN
+    GRANT SELECT ON bi_xapi_statements, bi_xapi_daily, bi_tenant_kpis TO edvidura;
+  END IF;
+END $$;
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'edvidura_bi') THEN

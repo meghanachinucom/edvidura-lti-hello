@@ -1,214 +1,451 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">Teach · this school only</p>
-  <h2 class="welcome-title">Upload content</h2>
-  <p class="welcome-lede">
-    Add lessons and quiz questions for <strong>{{ tenant_name }}</strong>.
-    Students in other schools cannot see this.
-  </p>
-</section>
+<div class="page-wrap">
 
-{% if ok_message %}
-<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
-{% endif %}
-
-{% if ai %}
-<p class="banner-note info">
-  AI: <strong>{{ ai.provider }}</strong> ({{ ai.model }})
-  — <a href="/teacher/ai?token={{ quiz_token }}">AI tools</a>
-  · use <em>AI quiz</em> / <em>Simplify</em> on a reading lesson.
-</p>
-{% endif %}
-
-<div class="teach-grid">
-  <section class="panel">
-    <h2>Add a lesson</h2>
-    <form method="post" action="/teacher/lessons/new" class="teach-form" enctype="multipart/form-data">
-      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-      <label>Title
-        <input name="title" required placeholder="Chapter title"/>
-      </label>
-      <label>Type
-        <select name="lesson_type">
-          <option value="article">Reading</option>
-          <option value="video">Video</option>
-          <option value="quiz">Quiz step (links to school quiz)</option>
-        </select>
-      </label>
-      <label>Visibility
-        <select name="status">
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
-        </select>
-      </label>
-      <label>Lesson text
-        <textarea name="body_md" rows="6" placeholder="Write the lesson students will read…"></textarea>
-      </label>
-      <label>Or upload lesson text (.md / .txt)
-        <input type="file" name="body_file" accept=".md,.txt,.markdown,text/plain"/>
-      </label>
-      <label>Attachment (optional PDF / image)
-        <input type="file" name="attachment" accept=".pdf,image/*"/>
-      </label>
-      <label>Video URL (optional, embed URL)
-        <input name="video_url" placeholder="https://www.youtube.com/embed/…"/>
-      </label>
-      <button type="submit" class="btn primary">Save lesson</button>
-    </form>
+  {# ── Hero band ── #}
+  <section class="hero-band" style="padding:var(--sp-xl) var(--sp-2xl)">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">edit_note</span>
+          Content Studio · {{ tenant_name }}
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">
+          Content Studio
+        </h1>
+        <p class="body-md" style="color:var(--outline-variant);margin-top:4px;max-width:480px">
+          Build lessons &amp; quiz questions for <strong style="color:var(--inverse-on-surface)">{{ tenant_name }}</strong>.
+          Students in other schools cannot see this content.
+        </p>
+      </div>
+      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+        {% if ai %}
+        <a href="/teacher/ai?token={{ quiz_token }}" class="btn" style="background:rgba(255,255,255,.12);color:var(--surface-container-lowest);border:1px solid rgba(255,255,255,.2)">
+          <span class="material-symbols-outlined" style="font-size:16px">auto_awesome</span>
+          AI Tools
+        </a>
+        {% endif %}
+        <a href="/lessons?token={{ quiz_token }}" class="btn btn-primary">
+          <span class="material-symbols-outlined" style="font-size:16px">visibility</span>
+          Student View
+        </a>
+      </div>
+    </div>
   </section>
 
-  <section class="panel">
-    <h2>Add a quiz question</h2>
-    <form method="post" action="/teacher/quiz/questions" class="teach-form">
-      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-      <label>Question
-        <textarea name="prompt" rows="3" required placeholder="Ask something students in this school should know…"></textarea>
-      </label>
-      <label>Choice A <input name="choice0" required/></label>
-      <label>Choice B <input name="choice1" required/></label>
-      <label>Choice C <input name="choice2"/></label>
-      <label>Choice D <input name="choice3"/></label>
-      <label>Correct answer
-        <select name="correct_index">
-          <option value="0">A</option>
-          <option value="1">B</option>
-          <option value="2">C</option>
-          <option value="3">D</option>
-        </select>
-      </label>
-      <button type="submit" class="btn primary">Save question</button>
-    </form>
-  </section>
+  {% if ok_message %}
+  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);border-radius:var(--r-xl);color:var(--primary)">
+    <span class="material-symbols-outlined">check_circle</span>
+    <span class="body-md" style="font-weight:600">{{ ok_message | replace('+', ' ') }}</span>
+  </div>
+  {% endif %}
+
+  {% if ai %}
+  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-sm) var(--sp-md);background:rgba(64,194,253,.08);border:1px solid rgba(64,194,253,.2);border-radius:var(--r-full);width:fit-content">
+    <span class="material-symbols-outlined" style="font-size:16px;color:var(--secondary)">smart_toy</span>
+    <span class="body-sm">AI: <strong>{{ ai.provider }}</strong> ({{ ai.model }}) · use <em>AI quiz</em> / <em>Simplify</em> on reading lessons</span>
+  </div>
+  {% endif %}
+
+  {# ── Studio grid: Add lesson | Add question ── #}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-lg)">
+
+    {# Add a lesson #}
+    <div class="frosted" style="padding:var(--sp-xl)">
+      <div style="display:flex;align-items:center;gap:var(--sp-sm);margin-bottom:var(--sp-lg)">
+        <span style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(52,211,153,.07));display:flex;align-items:center;justify-content:center;color:var(--primary);box-shadow:0 2px 8px rgba(52,211,153,.2);flex-shrink:0">
+          <span class="material-symbols-outlined">library_books</span>
+        </span>
+        <div>
+          <h2 class="headline-md" style="margin:0">Add a Lesson</h2>
+          <p class="body-sm text-muted" style="margin:0">Reading, video, or quiz step</p>
+        </div>
+      </div>
+      <form method="post" action="/teacher/lessons/new" enctype="multipart/form-data"
+            style="display:flex;flex-direction:column;gap:var(--sp-md)">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+
+        <div style="display:grid;grid-template-columns:1fr auto auto;gap:var(--sp-sm);align-items:end">
+          <div>
+            <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Title</label>
+            <input name="title" required placeholder="Chapter title"
+                   style="width:100%;padding:10px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-family:var(--font-body);font-size:15px;background:var(--surface-container-lowest);transition:border-color .15s;outline:none"
+                   onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='rgba(14,43,36,.12)'"/>
+          </div>
+          <div>
+            <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Type</label>
+            <select name="lesson_type" style="padding:10px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-family:var(--font-body);font-size:14px;background:var(--surface-container-lowest);cursor:pointer">
+              <option value="article">📖 Reading</option>
+              <option value="video">🎬 Video</option>
+              <option value="quiz">📝 Quiz step</option>
+            </select>
+          </div>
+          <div>
+            <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Status</label>
+            <select name="status" style="padding:10px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-family:var(--font-body);font-size:14px;background:var(--surface-container-lowest);cursor:pointer">
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Lesson text (markdown)</label>
+          <textarea name="body_md" rows="5" placeholder="Write the lesson students will read…"
+                    style="width:100%;padding:var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-family:var(--font-body);font-size:14px;background:var(--surface-container-lowest);resize:vertical;transition:border-color .15s;outline:none;box-sizing:border-box"
+                    onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='rgba(14,43,36,.12)'"></textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-sm)">
+          <div>
+            <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Upload text (.md / .txt)</label>
+            <input type="file" name="body_file" accept=".md,.txt,.markdown,text/plain"
+                   style="width:100%;padding:8px var(--sp-md);border:1.5px dashed rgba(14,43,36,.15);border-radius:var(--r-lg);font-size:13px;background:var(--surface-container);cursor:pointer"/>
+          </div>
+          <div>
+            <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Attachment (PDF / image)</label>
+            <input type="file" name="attachment" accept=".pdf,image/*"
+                   style="width:100%;padding:8px var(--sp-md);border:1.5px dashed rgba(14,43,36,.15);border-radius:var(--r-lg);font-size:13px;background:var(--surface-container);cursor:pointer"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Video URL (embed, optional)</label>
+          <input name="video_url" placeholder="https://www.youtube.com/embed/…"
+                 style="width:100%;padding:10px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-family:var(--font-body);font-size:14px;background:var(--surface-container-lowest);transition:border-color .15s;outline:none"
+                 onfocus="this.style.borderColor='var(--secondary)'" onblur="this.style.borderColor='rgba(14,43,36,.12)'"/>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="align-self:flex-start">
+          <span class="material-symbols-outlined" style="font-size:16px">add_circle</span>
+          Save Lesson
+        </button>
+      </form>
+    </div>
+
+    {# Add a quiz question #}
+    <div class="frosted" style="padding:var(--sp-xl)">
+      <div style="display:flex;align-items:center;gap:var(--sp-sm);margin-bottom:var(--sp-lg)">
+        <span style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(153,202,65,.25),rgba(153,202,65,.07));display:flex;align-items:center;justify-content:center;color:var(--tertiary);box-shadow:0 2px 8px rgba(153,202,65,.2);flex-shrink:0">
+          <span class="material-symbols-outlined">quiz</span>
+        </span>
+        <div>
+          <h2 class="headline-md" style="margin:0">Add a Quiz Question</h2>
+          <p class="body-sm text-muted" style="margin:0">MCQ for the school quiz bank</p>
+        </div>
+      </div>
+      <form method="post" action="/teacher/quiz/questions"
+            style="display:flex;flex-direction:column;gap:var(--sp-md)">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Question</label>
+          <textarea name="prompt" rows="3" required placeholder="Ask something students should know…"
+                    style="width:100%;padding:var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-family:var(--font-body);font-size:14px;background:var(--surface-container-lowest);resize:vertical;transition:border-color .15s;outline:none;box-sizing:border-box"
+                    onfocus="this.style.borderColor='var(--tertiary)'" onblur="this.style.borderColor='rgba(14,43,36,.12)'"></textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-sm)">
+          {% for letter, name in [('A','choice0'),('B','choice1'),('C','choice2'),('D','choice3')] %}
+          <div>
+            <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Choice {{ letter }}</label>
+            <input name="{{ name }}" {% if letter in ['A','B'] %}required{% endif %}
+                   placeholder="Option {{ letter }}"
+                   style="width:100%;padding:10px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-family:var(--font-body);font-size:14px;background:var(--surface-container-lowest);transition:border-color .15s;outline:none;box-sizing:border-box"
+                   onfocus="this.style.borderColor='var(--tertiary)'" onblur="this.style.borderColor='rgba(14,43,36,.12)'"/>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Correct Answer</label>
+          <div style="display:flex;gap:var(--sp-sm)">
+            {% for val, lbl in [('0','A'),('1','B'),('2','C'),('3','D')] %}
+            <label style="display:flex;align-items:center;gap:6px;padding:8px 16px;border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-full);cursor:pointer;font-size:14px;font-weight:600;transition:all .15s;background:var(--surface-container-lowest)"
+                   onmouseover="this.style.background='rgba(153,202,65,.1)';this.style.borderColor='var(--tertiary)'"
+                   onmouseout="if(!this.querySelector('input').checked){this.style.background='var(--surface-container-lowest)';this.style.borderColor='rgba(14,43,36,.12)'}">
+              <input type="radio" name="correct_index" value="{{ val }}" {% if val == '0' %}checked{% endif %}
+                     style="accent-color:var(--tertiary)" onchange="document.querySelectorAll('.ans-opt').forEach(el=>el.style.background='var(--surface-container-lowest)');this.parentElement.style.background='rgba(153,202,65,.15)';this.parentElement.style.borderColor='var(--tertiary)'"/>
+              {{ lbl }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn" style="align-self:flex-start;background:linear-gradient(135deg,var(--tertiary),#7cb518);color:#fff;box-shadow:0 4px 12px rgba(153,202,65,.3)">
+          <span class="material-symbols-outlined" style="font-size:16px">add_circle</span>
+          Save Question
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {# ── Published lessons ── #}
+  <div class="frosted" style="padding:var(--sp-xl)">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-md);margin-bottom:var(--sp-lg)">
+      <div style="display:flex;align-items:center;gap:var(--sp-sm)">
+        <span style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(52,211,153,.07));display:flex;align-items:center;justify-content:center;color:var(--primary);box-shadow:0 2px 8px rgba(52,211,153,.2);flex-shrink:0">
+          <span class="material-symbols-outlined">menu_book</span>
+        </span>
+        <div>
+          <h2 class="headline-md" style="margin:0">Published Lessons</h2>
+          <p class="body-sm text-muted" style="margin:0">{{ lessons | length if lessons else 0 }} lessons in this course</p>
+        </div>
+      </div>
+      <a href="/lessons?token={{ quiz_token }}" class="btn btn-glass" style="font-size:13px">
+        <span class="material-symbols-outlined" style="font-size:15px">open_in_new</span>
+        Student view
+      </a>
+    </div>
+
+    {% if lessons %}
+    <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+      {% for L in lessons %}
+      {# type icon + color #}
+      {% set type_icon = '📖' if L.lesson_type == 'article' else ('🎬' if L.lesson_type == 'video' else '📝') %}
+      {% set type_color = 'var(--primary)' if L.lesson_type == 'article' else ('var(--secondary)' if L.lesson_type == 'video' else 'var(--tertiary)') %}
+      {% set status_ok = (L.status or 'published') == 'published' %}
+
+      <div style="border:1.5px solid rgba(14,43,36,.07);border-radius:var(--r-xl);overflow:hidden;
+                  animation:fadeSlideUp .3s ease both;animation-delay:{{ loop.index0 * 0.04 }}s;
+                  background:{{ 'rgba(255,255,255,.9)' if status_ok else 'rgba(14,43,36,.03)' }}">
+
+        {# Row header #}
+        <div style="display:flex;align-items:center;gap:var(--sp-md);padding:var(--sp-md) var(--sp-lg)">
+          {# Position badge #}
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,{{ type_color }},transparent);border:1.5px solid {{ type_color }};display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:800;color:{{ type_color }};flex-shrink:0;opacity:{{ '1' if status_ok else '.5' }}">
+            {{ '%02d'|format(L.position) }}
+          </div>
+
+          {# Title + meta #}
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:var(--sp-xs);flex-wrap:wrap">
+              <a href="{% if L.lesson_type == 'quiz' %}/quiz?token={{ quiz_token }}{% else %}/lessons/{{ L.id }}?token={{ quiz_token }}{% endif %}"
+                 style="font-family:var(--font-body);font-size:15px;font-weight:600;color:var(--on-surface);text-decoration:none"
+                 onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--on-surface)'">
+                {{ type_icon }} {{ L.title }}
+              </a>
+              <span class="chip {% if L.lesson_type == 'article' %}chip-mint{% elif L.lesson_type == 'video' %}chip-sky{% else %}chip-lime{% endif %}" style="font-size:10px">
+                {{ L.lesson_type }}
+              </span>
+              {% if status_ok %}
+              <span style="font-size:10px;padding:2px 8px;border-radius:var(--r-full);background:rgba(52,211,153,.12);color:var(--primary);font-weight:700;letter-spacing:.04em">LIVE</span>
+              {% else %}
+              <span style="font-size:10px;padding:2px 8px;border-radius:var(--r-full);background:rgba(14,43,36,.08);color:var(--on-surface-variant);font-weight:700;letter-spacing:.04em">{{ L.status | upper }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          {# Quick actions #}
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap">
+            {# Reorder #}
+            <form method="post" action="/teacher/lessons/{{ L.id }}/reorder" style="display:inline">
+              <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+              <input type="hidden" name="direction" value="up"/>
+              <button type="submit" title="Move up" style="width:32px;height:32px;border:1px solid rgba(14,43,36,.1);border-radius:var(--r-lg);background:var(--surface-container);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='var(--primary-container)'" onmouseout="this.style.background='var(--surface-container)'">↑</button>
+            </form>
+            <form method="post" action="/teacher/lessons/{{ L.id }}/reorder" style="display:inline">
+              <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+              <input type="hidden" name="direction" value="down"/>
+              <button type="submit" title="Move down" style="width:32px;height:32px;border:1px solid rgba(14,43,36,.1);border-radius:var(--r-lg);background:var(--surface-container);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='var(--surface-container-high)'" onmouseout="this.style.background='var(--surface-container)'">↓</button>
+            </form>
+
+            {% if L.lesson_type != 'quiz' and (L.body_md or '')|length > 40 %}
+            <form method="post" action="/teacher/ai/generate" style="display:inline">
+              <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+              <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
+              <input type="hidden" name="count" value="3"/>
+              <button type="submit" title="Generate MCQs" class="btn" style="font-size:11px;padding:5px 10px;background:linear-gradient(135deg,rgba(153,202,65,.2),rgba(153,202,65,.05));color:var(--tertiary);border:1px solid rgba(153,202,65,.3)">
+                <span class="material-symbols-outlined" style="font-size:13px">auto_awesome</span>AI quiz
+              </button>
+            </form>
+            <form method="post" action="/teacher/ai/simplify" style="display:inline">
+              <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+              <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
+              <button type="submit" title="Simplify text" class="btn" style="font-size:11px;padding:5px 10px;background:linear-gradient(135deg,rgba(64,194,253,.15),rgba(64,194,253,.04));color:var(--secondary);border:1px solid rgba(64,194,253,.25)">
+                <span class="material-symbols-outlined" style="font-size:13px">auto_fix_high</span>Simplify
+              </button>
+            </form>
+            {% endif %}
+
+            {% if status_ok %}
+            <form method="post" action="/teacher/lessons/{{ L.id }}/status" style="display:inline">
+              <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+              <input type="hidden" name="status" value="draft"/>
+              <button type="submit" class="btn" style="font-size:11px;padding:5px 10px;background:rgba(14,43,36,.06);color:var(--on-surface-variant);border:1px solid rgba(14,43,36,.1)">Unpublish</button>
+            </form>
+            {% else %}
+            <form method="post" action="/teacher/lessons/{{ L.id }}/status" style="display:inline">
+              <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+              <input type="hidden" name="status" value="published"/>
+              <button type="submit" class="btn btn-primary" style="font-size:11px;padding:5px 10px">Publish</button>
+            </form>
+            {% endif %}
+
+            {# Edit toggle #}
+            <button onclick="toggleEdit('edit-{{ L.id }}')" title="Edit"
+                    style="width:32px;height:32px;border:1px solid rgba(14,43,36,.1);border-radius:var(--r-lg);background:var(--surface-container);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--on-surface-variant)"
+                    onmouseover="this.style.background='rgba(52,211,153,.12)';this.style.color='var(--primary)'"
+                    onmouseout="this.style.background='var(--surface-container)';this.style.color='var(--on-surface-variant)'">
+              <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+            </button>
+          </div>
+        </div>
+
+        {# Edit panel (hidden by default) #}
+        <div id="edit-{{ L.id }}" style="display:none;border-top:1px solid rgba(14,43,36,.07);padding:var(--sp-lg);background:rgba(213,245,234,.15)">
+          <form method="post" action="/teacher/lessons/{{ L.id }}/edit" enctype="multipart/form-data"
+                style="display:flex;flex-direction:column;gap:var(--sp-md)">
+            <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+            <div style="display:grid;grid-template-columns:1fr auto auto;gap:var(--sp-sm);align-items:end">
+              <div>
+                <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Title</label>
+                <input name="title" value="{{ L.title }}" required
+                       style="width:100%;padding:9px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-size:14px;font-family:var(--font-body);background:var(--surface-container-lowest);outline:none"/>
+              </div>
+              <div>
+                <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Type</label>
+                <select name="lesson_type" style="padding:9px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-size:14px;font-family:var(--font-body);background:var(--surface-container-lowest)">
+                  <option value="article" {% if L.lesson_type == 'article' %}selected{% endif %}>📖 Reading</option>
+                  <option value="video"   {% if L.lesson_type == 'video'   %}selected{% endif %}>🎬 Video</option>
+                  <option value="quiz"    {% if L.lesson_type == 'quiz'    %}selected{% endif %}>📝 Quiz step</option>
+                </select>
+              </div>
+              <div>
+                <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Status</label>
+                <select name="status" style="padding:9px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-size:14px;font-family:var(--font-body);background:var(--surface-container-lowest)">
+                  <option value="published" {% if (L.status or 'published') == 'published' %}selected{% endif %}>Published</option>
+                  <option value="draft"     {% if L.status == 'draft'     %}selected{% endif %}>Draft</option>
+                  <option value="archived"  {% if L.status == 'archived'  %}selected{% endif %}>Archived</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Lesson text</label>
+              <textarea name="body_md" rows="4"
+                        style="width:100%;padding:var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-size:14px;font-family:var(--font-body);background:var(--surface-container-lowest);resize:vertical;outline:none;box-sizing:border-box">{{ L.body_md or '' }}</textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-sm)">
+              <div>
+                <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Replace text from file</label>
+                <input type="file" name="body_file" accept=".md,.txt,.markdown,text/plain"
+                       style="width:100%;padding:7px var(--sp-md);border:1.5px dashed rgba(14,43,36,.15);border-radius:var(--r-lg);font-size:13px;background:var(--surface-container);cursor:pointer"/>
+              </div>
+              <div>
+                <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Add attachment</label>
+                <input type="file" name="attachment" accept=".pdf,image/*"
+                       style="width:100%;padding:7px var(--sp-md);border:1.5px dashed rgba(14,43,36,.15);border-radius:var(--r-lg);font-size:13px;background:var(--surface-container);cursor:pointer"/>
+              </div>
+            </div>
+            <div>
+              <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Video URL</label>
+              <input name="video_url" value="{{ L.video_url or '' }}"
+                     style="width:100%;padding:9px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-size:14px;font-family:var(--font-body);background:var(--surface-container-lowest);outline:none"/>
+            </div>
+            <div style="display:flex;gap:var(--sp-sm);align-items:center">
+              <button type="submit" class="btn btn-primary" style="font-size:13px">
+                <span class="material-symbols-outlined" style="font-size:15px">save</span>Update
+              </button>
+            </div>
+          </form>
+          <form method="post" action="/teacher/lessons/{{ L.id }}/delete"
+                onsubmit="return confirm('Permanently delete this lesson?')"
+                style="margin-top:var(--sp-sm)">
+            <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+            <button type="submit" class="btn" style="font-size:12px;color:var(--error);border:1px solid rgba(186,26,26,.2);background:rgba(186,26,26,.05)">
+              <span class="material-symbols-outlined" style="font-size:14px">delete</span>Delete lesson
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:var(--sp-2xl);color:var(--on-surface-variant)">
+      <span class="material-symbols-outlined" style="font-size:48px;display:block;margin-bottom:var(--sp-md)">library_add</span>
+      <p class="body-md">No lessons yet — add one above.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── Quiz question bank ── #}
+  <div class="frosted" style="padding:var(--sp-xl)">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-md);margin-bottom:var(--sp-lg)">
+      <div style="display:flex;align-items:center;gap:var(--sp-sm)">
+        <span style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(153,202,65,.25),rgba(153,202,65,.07));display:flex;align-items:center;justify-content:center;color:var(--tertiary);box-shadow:0 2px 8px rgba(153,202,65,.2);flex-shrink:0">
+          <span class="material-symbols-outlined">question_mark</span>
+        </span>
+        <div>
+          <h2 class="headline-md" style="margin:0">Quiz Question Bank</h2>
+          <p class="body-sm text-muted" style="margin:0">
+            {% if quiz %}{{ quiz.title }}{% else %}School quiz{% endif %}
+            · {{ questions | length if questions else 0 }} questions
+          </p>
+        </div>
+      </div>
+      <a href="/quiz?token={{ quiz_token }}" class="btn btn-glass" style="font-size:13px">
+        <span class="material-symbols-outlined" style="font-size:15px">play_circle</span>
+        Preview quiz
+      </a>
+    </div>
+
+    {% if questions %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--sp-md)">
+      {% for q in questions %}
+      <div style="background:rgba(255,255,255,.85);border:1.5px solid rgba(14,43,36,.07);border-radius:var(--r-xl);
+                  padding:var(--sp-md);animation:fadeSlideUp .3s ease both;animation-delay:{{ loop.index0 * 0.05 }}s;
+                  border-left:3px solid var(--tertiary)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-sm);margin-bottom:var(--sp-sm)">
+          <div style="width:24px;height:24px;border-radius:50%;background:rgba(153,202,65,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--tertiary);flex-shrink:0">
+            {{ loop.index }}
+          </div>
+          <p class="body-md" style="flex:1;margin:0;font-weight:600;font-size:14px;line-height:1.4">{{ q.prompt }}</p>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0 0 var(--sp-sm);display:flex;flex-direction:column;gap:4px">
+          {% for c in q.choices %}
+          {% set is_correct = loop.index0 == q.correct_index %}
+          <li style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:var(--r-lg);
+                     background:{{ 'rgba(52,211,153,.12)' if is_correct else 'transparent' }};
+                     color:{{ 'var(--primary)' if is_correct else 'var(--on-surface-variant)' }};
+                     font-size:13px;font-weight:{{ '600' if is_correct else '400' }}">
+            <span style="width:18px;height:18px;border-radius:50%;border:1.5px solid {{ 'var(--primary)' if is_correct else 'rgba(14,43,36,.2)' }};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;background:{{ 'var(--primary)' if is_correct else 'transparent' }};color:{{ '#fff' if is_correct else 'var(--on-surface-variant)' }}">
+              {{ ['A','B','C','D'][loop.index0] }}
+            </span>
+            {{ c }}{% if is_correct %} <span class="material-symbols-outlined" style="font-size:14px;margin-left:auto">check_circle</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        <form method="post" action="/teacher/quiz/questions/{{ q.id }}/delete"
+              onsubmit="return confirm('Delete this question?')">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <button type="submit" class="btn" style="font-size:11px;padding:4px 10px;color:var(--error);border:1px solid rgba(186,26,26,.2);background:rgba(186,26,26,.04)">
+            <span class="material-symbols-outlined" style="font-size:13px">delete</span>Delete
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:var(--sp-2xl);color:var(--on-surface-variant)">
+      <span class="material-symbols-outlined" style="font-size:48px;display:block;margin-bottom:var(--sp-md)">quiz</span>
+      <p class="body-md">No questions yet — add one above.</p>
+      <p class="body-sm text-muted">Students access the quiz via Lessons → Take the quiz.</p>
+    </div>
+    {% endif %}
+  </div>
+
 </div>
 
-<section class="panel">
-  <div class="panel-head">
-    <h2>Published lessons</h2>
-    <a class="btn secondary" href="/lessons?token={{ quiz_token }}">Student view</a>
-  </div>
-  {% if lessons %}
-  <ol class="lesson-list">
-    {% for L in lessons %}
-    <li class="lesson-item lesson-item-manage">
-      <a href="{% if L.lesson_type == 'quiz' %}/quiz?token={{ quiz_token }}{% else %}/lessons/{{ L.id }}?token={{ quiz_token }}{% endif %}">
-        <span class="lesson-pos">{{ '%02d'|format(L.position) }}</span>
-        <span class="lesson-body">
-          <span class="lesson-title">{{ L.title }}</span>
-          <span class="lesson-type">{{ L.lesson_type }} · {{ L.status or 'published' }}</span>
-        </span>
-        <span class="lesson-go">→</span>
-      </a>
-      <div class="teach-actions">
-        <form method="post" action="/teacher/lessons/{{ L.id }}/reorder">
-          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-          <input type="hidden" name="direction" value="up"/>
-          <button type="submit" class="btn secondary">↑</button>
-        </form>
-        <form method="post" action="/teacher/lessons/{{ L.id }}/reorder">
-          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-          <input type="hidden" name="direction" value="down"/>
-          <button type="submit" class="btn secondary">↓</button>
-        </form>
-        {% if L.lesson_type != 'quiz' and (L.body_md or '')|length > 40 %}
-        <form method="post" action="/teacher/ai/generate">
-          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-          <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
-          <input type="hidden" name="count" value="3"/>
-          <button type="submit" class="btn secondary" title="Generate MCQs from lesson text">AI quiz</button>
-        </form>
-        <form method="post" action="/teacher/ai/simplify">
-          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-          <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
-          <button type="submit" class="btn secondary" title="Rewrite at a simpler level">Simplify</button>
-        </form>
-        {% endif %}
-        {% if (L.status or 'published') == 'published' %}
-        <form method="post" action="/teacher/lessons/{{ L.id }}/status">
-          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-          <input type="hidden" name="status" value="draft"/>
-          <button type="submit" class="btn secondary">Unpublish</button>
-        </form>
-        {% else %}
-        <form method="post" action="/teacher/lessons/{{ L.id }}/status">
-          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-          <input type="hidden" name="status" value="published"/>
-          <button type="submit" class="btn primary">Publish</button>
-        </form>
-        {% endif %}
-      </div>
-      <details class="teach-edit">
-        <summary>Edit</summary>
-        <form method="post" action="/teacher/lessons/{{ L.id }}/edit" class="teach-form" enctype="multipart/form-data">
-          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-          <label>Title <input name="title" value="{{ L.title }}" required/></label>
-          <label>Type
-            <select name="lesson_type">
-              <option value="article" {% if L.lesson_type == 'article' %}selected{% endif %}>Reading</option>
-              <option value="video" {% if L.lesson_type == 'video' %}selected{% endif %}>Video</option>
-              <option value="quiz" {% if L.lesson_type == 'quiz' %}selected{% endif %}>Quiz step</option>
-            </select>
-          </label>
-          <label>Visibility
-            <select name="status">
-              <option value="published" {% if (L.status or 'published') == 'published' %}selected{% endif %}>Published</option>
-              <option value="draft" {% if L.status == 'draft' %}selected{% endif %}>Draft</option>
-              <option value="archived" {% if L.status == 'archived' %}selected{% endif %}>Archived</option>
-            </select>
-          </label>
-          <label>Lesson text
-            <textarea name="body_md" rows="4">{{ L.body_md or '' }}</textarea>
-          </label>
-          <label>Replace text from file
-            <input type="file" name="body_file" accept=".md,.txt,.markdown,text/plain"/>
-          </label>
-          <label>Add attachment
-            <input type="file" name="attachment" accept=".pdf,image/*"/>
-          </label>
-          <label>Video URL
-            <input name="video_url" value="{{ L.video_url or '' }}"/>
-          </label>
-          <div class="cta-row">
-            <button type="submit" class="btn primary">Update</button>
-          </div>
-        </form>
-        <form method="post" action="/teacher/lessons/{{ L.id }}/delete" class="teach-form" onsubmit="return confirm('Delete this lesson?');">
-          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-          <button type="submit" class="btn secondary">Delete lesson</button>
-        </form>
-      </details>
-    </li>
-    {% endfor %}
-  </ol>
-  {% else %}
-  <div class="empty"><p>No lessons yet — add one above.</p></div>
-  {% endif %}
-</section>
+<script>
+function toggleEdit(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
 
-<section class="panel">
-  <div class="panel-head">
-    <h2>Quiz questions {% if quiz %}<span class="meta">· {{ quiz.title }}</span>{% endif %}</h2>
-    <a class="btn secondary" href="/quiz?token={{ quiz_token }}">Preview quiz</a>
-  </div>
-  {% if questions %}
-  <ol class="q-list">
-    {% for q in questions %}
-    <li>
-      <strong>{{ q.prompt }}</strong>
-      <ul>
-        {% for c in q.choices %}
-        <li{% if loop.index0 == q.correct_index %} class="ok"{% endif %}>{{ c }}{% if loop.index0 == q.correct_index %} ← correct{% endif %}</li>
-        {% endfor %}
-      </ul>
-      <form method="post" action="/teacher/quiz/questions/{{ q.id }}/delete" onsubmit="return confirm('Delete this question?');">
-        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-        <button type="submit" class="btn secondary">Delete</button>
-      </form>
-    </li>
-    {% endfor %}
-  </ol>
-  {% else %}
-  <div class="empty"><p>No questions yet — add one above. Students take the quiz from Learn → Take the quiz.</p></div>
-  {% endif %}
-</section>
+<style>
+@media (max-width: 768px) {
+  .page-wrap > div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+}
+</style>
 {% endblock %}

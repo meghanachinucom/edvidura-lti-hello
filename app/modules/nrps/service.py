@@ -157,6 +157,105 @@ def get_roster(
         return item
 
 
+def list_rosters(tenant_id: UUID | str) -> list[dict[str, Any]]:
+    """All cached Moodle context rosters for this school (RLS)."""
+    with db.tenant_connection(tenant_id) as conn:
+        rows = conn.execute(
+            """
+            SELECT id, lti_context_id, class_id, members, member_count,
+                   source, fetched_at
+            FROM lti_context_rosters
+            ORDER BY fetched_at DESC NULLS LAST
+            """
+        ).fetchall()
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        item = dict(row)
+        item["id"] = str(item["id"])
+        if item.get("class_id"):
+            item["class_id"] = str(item["class_id"])
+        members = item.get("members") or []
+        if isinstance(members, str):
+            members = json.loads(members)
+        item["members"] = list(members) if isinstance(members, list) else []
+        out.append(item)
+    return out
+
+
+def school_roster_totals(tenant_id: UUID | str) -> dict[str, Any]:
+    """
+    Unique Moodle people for this school from cached NRPS (one school = one tenant).
+
+    Dedupes by user_id across courses/contexts.
+    """
+    rosters = list_rosters(tenant_id)
+    by_id: dict[str, dict[str, Any]] = {}
+    latest_fetch = None
+    contexts: list[dict[str, Any]] = []
+    for r in rosters:
+        fetched = r.get("fetched_at")
+        if fetched and (latest_fetch is None or fetched > latest_fetch):
+            latest_fetch = fetched
+        contexts.append(
+            {
+                "lti_context_id": str(r.get("lti_context_id") or ""),
+                "member_count": int(r.get("member_count") or len(r.get("members") or [])),
+                "fetched_at": (
+                    fetched.isoformat()
+                    if hasattr(fetched, "isoformat")
+                    else str(fetched or "")
+                ),
+            }
+        )
+        for m in r.get("members") or []:
+            if not isinstance(m, dict):
+                continue
+            if str(m.get("status") or "Active").lower() == "inactive":
+                continue
+            uid = str(m.get("user_id") or "").strip()
+            if not uid:
+                continue
+            prev = by_id.get(uid)
+            if not prev:
+                by_id[uid] = dict(m)
+            else:
+                # Prefer richer name; OR instructor/learner flags
+                if not prev.get("name") and m.get("name"):
+                    prev["name"] = m["name"]
+                prev["is_learner"] = bool(prev.get("is_learner") or m.get("is_learner"))
+                prev["is_instructor"] = bool(
+                    prev.get("is_instructor") or m.get("is_instructor")
+                )
+    members = list(by_id.values())
+    instructors = [m for m in members if m.get("is_instructor")]
+    learners_only = [
+        m for m in members if m.get("is_learner") and not m.get("is_instructor")
+    ]
+    return {
+        "source": "moodle_nrps",
+        "context_count": len(rosters),
+        "contexts": contexts,
+        "users_total": len(members),
+        "learners": len(learners_only),
+        "instructors": len(instructors),
+        "members": [
+            {
+                "user_id": m.get("user_id"),
+                "name": m.get("name"),
+                "is_learner": bool(m.get("is_learner")),
+                "is_instructor": bool(m.get("is_instructor")),
+            }
+            for m in sorted(members, key=lambda x: str(x.get("name") or ""))
+        ],
+        "fetched_at": (
+            latest_fetch.isoformat()
+            if hasattr(latest_fetch, "isoformat")
+            else str(latest_fetch or "")
+        ),
+        "synced": len(rosters) > 0,
+    }
+
+
 def display_names_by_subject(
     tenant_id: UUID | str, lti_context_id: str
 ) -> dict[str, str]:

@@ -1,15 +1,22 @@
 """Minimal FastAPI/Starlette adapters for PyLTI1p3."""
 from __future__ import annotations
 
+import os
+
+import jwt
 from fastapi import Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pylti1p3.cookie import CookieService
+from pylti1p3.exception import LtiException
 from pylti1p3.message_launch import MessageLaunch
 from pylti1p3.oidc_login import OIDCLogin
 from pylti1p3.redirect import Redirect
 from pylti1p3.request import Request
 from pylti1p3.session import SessionService
 from starlette.requests import Request as StarletteRequest
+
+# Moodle (local Docker) vs Railway clock skew often trips iat/nbf/exp checks.
+_LTI_JWT_LEEWAY = max(0, int(os.getenv("LTI_JWT_LEEWAY", "120") or "120"))
 
 
 class FastAPIRequest(Request):
@@ -150,10 +157,24 @@ class FastAPIMessageLaunch(MessageLaunch):
     def _get_request_param(self, key: str):
         return self._request.get_param(key)
 
+    def validate_jwt_signature(self):
+        """Decode id_token with clock-skew leeway (local Moodle ↔ cloud tool)."""
+        id_token = self._get_id_token()
+        public_key, key_alg = self.get_public_key()
+        try:
+            jwt.decode(
+                id_token,
+                public_key,
+                algorithms=[key_alg],
+                options=self._jwt_verify_options,
+                leeway=_LTI_JWT_LEEWAY,
+            )
+        except jwt.InvalidTokenError as e:
+            raise LtiException(f"Can't decode id_token: {str(e)}") from e
+        return self
+
     def validate_state(self):
         """Accept state from cache when cross-site cookies are blocked (local HTTP)."""
-        from pylti1p3.exception import LtiException
-
         state_from_request = self._get_request_param("state")
         if not state_from_request:
             raise LtiException("Missing state param")

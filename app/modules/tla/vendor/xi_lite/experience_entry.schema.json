@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://edvidura.local/tla/vendor/xi_lite/experience_entry.schema.json",
+  "title": "ADL xi-lite Experience Index entry (schema.org Course shaped)",
+  "description": "Document shape implied by adlnet/xi-lite (filters on url + educationalAlignment[].competency). Derived from upstream app.js / mongo.js — not an official ADL JSON Schema file.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "handle": { "type": "string", "format": "uri" },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "url": { "type": "string" },
+    "provider": { "type": "string" },
+    "educationalAlignment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "competency": { "type": "string", "description": "Competency IRI or code" },
+          "alignmentType": { "type": "string" }
+        },
+        "required": ["competency"]
+      }
+    },
+    "@type": { "const": "Course" },
+    "@context": { "type": "string" }
+  },
+  "required": ["id", "name", "url"]
+}

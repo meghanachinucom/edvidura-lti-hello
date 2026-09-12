@@ -1,65 +1,188 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<div class="welcome solo">
-  <div>
-    <p class="welcome-k">{{ course_row.title }}</p>
-    <h2>Lessons</h2>
-    <p>
+<div class="page-wrap">
+
+  {# ── Page header ── #}
+  <section class="frosted" style="padding:var(--sp-xl);position:relative;overflow:hidden">
+    <div style="position:absolute;top:-40px;right:-20px;width:280px;height:280px;background:rgba(52,211,153,.12);border-radius:50%;filter:blur(50px);pointer-events:none"></div>
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        {# kicker #}
+        <div style="display:flex;align-items:center;gap:var(--sp-xs);margin-bottom:var(--sp-xs);flex-wrap:wrap">
+          <span class="label-caps text-muted">Lessons</span>
+          {% if context_heading %}
+          <span class="chip chip-primary" style="font-size:10px">{{ context_heading }}</span>
+          {% endif %}
+        </div>
+        <h1 class="headline-xl">{{ context_heading or course_title or "Lesson Path" }}</h1>
+        {% set blurb = course_description | default(path_blurb) | default("") %}
+        {% if blurb %}
+        <p class="path-blurb card-variant" style="max-width:600px;margin-top:var(--sp-sm)">{{ blurb }}</p>
+        {% endif %}
+      </div>
+      <div style="display:flex;gap:var(--sp-sm)">
+        {% if not is_instructor and not is_school_admin %}
+        <a href="/quiz?token={{ quiz_token }}" class="btn btn-primary">
+          <span class="material-symbols-outlined" style="font-size:16px">quiz</span>
+          Go to quiz
+        </a>
+        {% endif %}
+        <a href="/launch-hub?token={{ quiz_token }}" class="btn btn-glass">
+          <span class="material-symbols-outlined" style="font-size:16px">home</span>
+          Dashboard
+        </a>
+      </div>
+    </div>
+  </section>
+
+  {# ── Lessons grid ── #}
+  {# Support both variable names #}
+  {% set lessons = lessons | default(lesson_items) | default([]) %}
+
+  {% if lessons %}
+
+  {# Progress summary strip #}
+  {% set done = lessons | selectattr('completed') | list | length %}
+  {% set total = lessons | length %}
+  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-md)">
+    <div class="progress-track" style="flex:1;min-width:200px;height:10px">
+      {% if total > 0 %}
+      <div class="progress-fill" style="width:{{ (done/total*100) | int }}%"></div>
+      {% endif %}
+    </div>
+    <span class="label-caps text-muted">{{ done }} / {{ total }} completed</span>
+  </div>
+
+  {# Topic filter chips #}
+  {% if topics %}
+  <div style="display:flex;gap:var(--sp-xs);overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+    <button class="chip chip-dark filter-chip active" data-filter="all">All ({{ total }})</button>
+    {% for t in topics %}
+    <button class="chip chip-sky filter-chip" data-filter="{{ t.slug }}">{{ t.label }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Card grid #}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--sp-md)">
+    {% for lesson in lessons %}
+    <div class="lesson-card {% if lesson.lesson_type %}lt-{{ lesson.lesson_type | lower }}{% endif %}"
+         data-topic="{{ lesson.lesson_type | lower | default('general') }}">
+      {# Emoji / icon header image #}
+      <div class="lesson-img">
+        <span style="font-size:36px">
+          {% if lesson.lesson_type == 'video' %}🎬
+          {% elif lesson.lesson_type == 'quiz' %}📝
+          {% elif lesson.lesson_type == 'reading' %}📖
+          {% elif lesson.lesson_type == 'lab' %}🔬
+          {% else %}📚{% endif %}
+        </span>
+      </div>
+
+      {# Badges row #}
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-xs);margin-bottom:var(--sp-xs)">
+        <span class="chip chip-sky" style="font-size:10px">
+          {% if lesson.lesson_type %}{{ lesson.lesson_type }}{% else %}Lesson{% endif %}
+          {% if lesson.duration %} · {{ lesson.duration }}{% endif %}
+        </span>
+        {% if lesson.completed %}
+        <span class="chip chip-mint" style="font-size:10px">
+          <span class="material-symbols-outlined" style="font-size:11px">check</span>
+          Done
+        </span>
+        {% elif loop.first or (loop.index0 > 0 and lessons[loop.index0-1].completed) %}
+        <span class="chip chip-dark" style="font-size:10px">Up next</span>
+        {% endif %}
+      </div>
+
+      {# Title & body #}
+      <h3 class="headline-md" style="margin-bottom:var(--sp-xs)">{{ "%02d" % loop.index }} · {{ lesson.title }}</h3>
+      {% if lesson.summary %}
+      <p class="body-sm text-muted" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:var(--sp-md)">{{ lesson.summary }}</p>
+      {% endif %}
+
+      {# Progress bar #}
+      {% if lesson.progress %}
+      <div style="margin-bottom:var(--sp-sm)">
+        <div style="display:flex;justify-content:space-between" class="label-caps text-muted">
+          <span>Progress</span>
+          <span style="color:var(--primary)">{{ lesson.progress }}%</span>
+        </div>
+        <div class="progress-track" style="margin-top:4px">
+          <div class="progress-fill" style="width:{{ lesson.progress }}%"></div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# CTA #}
+      <div style="display:flex;gap:var(--sp-xs);margin-top:auto">
+        {% if not is_instructor and not is_school_admin %}
+          {% if lesson.completed %}
+          <a href="/lesson/{{ lesson.id }}?token={{ quiz_token }}" class="btn btn-surface" style="flex:1;justify-content:center;font-size:13px">Review</a>
+          <a href="/quiz?token={{ quiz_token }}&lesson={{ lesson.id }}" class="btn btn-primary" style="flex:1;justify-content:center;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:14px">quiz</span>
+            Quiz
+          </a>
+          {% else %}
+          <a href="/lesson/{{ lesson.id }}?token={{ quiz_token }}" class="btn btn-primary" style="flex:1;justify-content:center;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:14px">play_arrow</span>
+            Start
+          </a>
+          {% endif %}
+        {% else %}
+        <a href="/lesson/{{ lesson.id }}?token={{ quiz_token }}" class="btn btn-surface" style="flex:1;justify-content:center;font-size:13px">
+          <span class="material-symbols-outlined" style="font-size:14px">visibility</span>
+          Preview
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% elif course_row %}
+  {# course exists but no lessons #}
+  <div class="card" style="padding:var(--sp-2xl);text-align:center">
+    <span class="material-symbols-outlined" style="font-size:56px;color:var(--outline-variant);display:block;margin-bottom:var(--sp-md)">menu_book</span>
+    <h2 class="headline-md" style="margin-bottom:var(--sp-xs)">No lessons yet</h2>
+    <p class="body-md text-muted" style="margin-bottom:var(--sp-lg)">
       {% if is_instructor %}
-      Students work through these in order. Add more from Upload.
-      {% elif order_mode == 'adaptive' %}
-      Your path is reordered for open skill gaps (author order is unchanged).
+      Add content from the Manage Content page, or use AI authoring to generate lessons.
       {% else %}
-      Open each lesson, mark it complete, then take the quiz when you’re ready.
+      Your teacher hasn't published lessons yet. Check back soon.
       {% endif %}
     </p>
-    <div class="actions">
-      {% if is_instructor %}
-      <a class="btn light" href="/teacher/content?token={{ quiz_token }}">Upload content</a>
-      {% endif %}
-      <a class="btn ghost-w" href="/quiz?token={{ quiz_token }}">Go to quiz</a>
-      {% if not is_instructor %}
-      <a class="btn ghost-w" href="/learn/gap?token={{ quiz_token }}">My plan</a>
-      {% endif %}
-    </div>
+    {% if is_instructor %}
+    <a href="/teacher/content?token={{ quiz_token }}" class="btn btn-primary">Manage content</a>
+    {% endif %}
   </div>
-</div>
-
-{% if progress %}
-<div class="stats">
-  <div class="stat"><div class="stat-ico i1">▦</div><div><b>{{ progress.completed_count }}/{{ progress.total_count }}</b><span>Complete</span></div></div>
-  <div class="stat"><div class="stat-ico i2">◎</div><div><b>{{ progress.percent }}%</b><span>Progress</span></div></div>
-  {% if order_mode == 'adaptive' %}
-  <div class="stat"><div class="stat-ico i3">◆</div><div><b>Adaptive</b><span>Gap-first order</span></div></div>
   {% endif %}
-</div>
-{% endif %}
 
-<div class="card">
-  <div class="card-h">
-    <h2>{% if order_mode == 'adaptive' %}Your adaptive path{% else %}Course path{% endif %}</h2>
-    <a href="/quiz?token={{ quiz_token }}">Quiz</a>
-  </div>
-  {% for item in lesson_items %}
-  <a class="course-item {% if item.priority and not item.completed %}now{% elif not item.completed and loop.first %}now{% elif item.completed %}{% elif loop.index0 == progress.completed_count|default(0) %}now{% endif %}" href="{{ item.href }}">
-    <div class="thumb {% if loop.index % 3 == 1 %}t1{% elif loop.index % 3 == 2 %}t2{% else %}t3{% endif %}">{{ '%02d'|format(item.position) }}</div>
-    <div>
-      <div class="ci-title">{{ item.title }}</div>
-      <div class="ci-meta">
-        {% if item.lesson_type == 'video' %}Video
-        {% elif item.lesson_type == 'quiz' %}Quiz
-        {% else %}Reading{% endif %}
-        {% if item.priority and item.priority_reason %} · gap: {{ item.priority_reason }}{% endif %}
-        {% if item.completed %} · completed{% endif %}
-      </div>
-      <div class="bar"><i style="--w: {% if item.completed %}100{% else %}0{% endif %}%"></i></div>
-    </div>
-    {% if item.completed %}<span class="badge ok">Done</span>
-    {% elif item.priority %}<span class="badge warn">Priority</span>
-    {% else %}<span class="badge warn">Open</span>{% endif %}
-  </a>
-  {% else %}
-  <p class="lede">No lessons yet.</p>
-  {% endfor %}
 </div>
+
+<style>
+  .lesson-card .lesson-img { transition: transform .3s; }
+  .lesson-card:hover .lesson-img { transform: scale(1.04); }
+  .filter-chip.active { background: var(--inverse-surface) !important; color: var(--tertiary-fixed) !important; }
+</style>
+<script>
+(function(){
+  var chips = document.querySelectorAll('.filter-chip');
+  var cards = document.querySelectorAll('[data-topic]');
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      chips.forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      var f = chip.getAttribute('data-filter');
+      cards.forEach(function(card){
+        if(f === 'all' || card.getAttribute('data-topic') === f){
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+})();
+</script>
 {% endblock %}

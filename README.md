@@ -88,7 +88,7 @@ Runtime LTI config is always loaded from Postgres `lti_platforms` (not from `MOO
 
 Contracts: `docs/decisions/DEC-006.md`, `docs/TENANT_RESOLUTION.md`, `docs/EVENT_ENVELOPE_V1.md`, `docs/XAPI.md`, `docs/SPECIALS.md`, `docs/ANALYTICS.md`, `docs/AI_ASSESSMENT.md`.
 
-**Deploy to Railway:** see [`docs/RAILWAY.md`](docs/RAILWAY.md) (`Dockerfile`, `railway.toml`, `LTI_PRIVATE_KEY_PEM`).
+**Deploy to Railway:** `python scripts/railway_bootstrap.py --apply` after `railway login`. See [`docs/RAILWAY.md`](docs/RAILWAY.md).
 
 Pilot runbook: [docs/PILOT.md](docs/PILOT.md). Demo: docs/DEMO_SCRIPT.md. AGS: docs/AGS_CHECKLIST.md. Backups: docs/BACKUP.md.
 

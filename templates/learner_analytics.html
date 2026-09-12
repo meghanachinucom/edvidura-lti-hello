@@ -1,86 +1,107 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">Learn · my progress</p>
-  <h2 class="welcome-title">Your learning snapshot</h2>
-  <p class="welcome-lede">
-    Attempts and evidence for this launch identity — Moodle still owns the official gradebook.
-  </p>
-</section>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">monitoring</span>
+          My progress
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">Your snapshot</h1>
+        <p class="body-md" style="color:var(--outline-variant);max-width:520px;margin-top:4px">
+          Attempts and evidence for this launch identity — Moodle still owns the official gradebook.
+        </p>
+      </div>
+      <a class="btn btn-primary" href="/learn/gap?token={{ quiz_token }}">
+        <span class="material-symbols-outlined" style="font-size:16px">route</span>
+        My plan
+      </a>
+      <a class="btn" href="/learn/activity?token={{ quiz_token }}" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">
+        Activity
+      </a>
+    </div>
+  </section>
 
-<div class="insight-row insight-row-4">
-  <div class="insight">
-    <span class="insight-k">Attempts</span>
-    <span class="insight-v">{{ dash.attempt_count }}</span>
+  <div class="grid-4">
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Attempts</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--primary)">{{ dash.attempt_count }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Avg score</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--secondary)">{% if dash.avg_percent is not none %}{{ dash.avg_percent }}%{% else %}—{% endif %}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Best</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--tertiary)">{% if dash.best_percent is not none %}{{ dash.best_percent }}%{% else %}—{% endif %}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">xAPI</span>
+      <div class="metric-counter" style="margin-top:6px">{{ dash.xapi_count }}</div>
+    </div>
   </div>
-  <div class="insight">
-    <span class="insight-k">Avg score</span>
-    <span class="insight-v">{% if dash.avg_percent is not none %}{{ dash.avg_percent }}%{% else %}—{% endif %}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Best</span>
-    <span class="insight-v">{% if dash.best_percent is not none %}{{ dash.best_percent }}%{% else %}—{% endif %}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">xAPI</span>
-    <span class="insight-v">{{ dash.xapi_count }}</span>
-  </div>
-</div>
 
-<div class="insight-row insight-row-4">
-  <div class="insight">
-    <span class="insight-k">Passed (≥60%)</span>
-    <span class="insight-v">{{ dash.pass_count }}</span>
+  <div class="grid-4">
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Passed (≥60%)</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--primary)">{{ dash.pass_count }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Below pass</span>
+      <div class="metric-counter" style="margin-top:6px;color:#f59e0b">{{ dash.fail_count }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Lessons done</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--secondary)">{{ dash.lesson_completions }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Practice</span>
+      <a href="/quiz?token={{ quiz_token }}&practice=1" class="btn btn-surface" style="margin-top:var(--sp-sm);font-size:13px">Open practice lane</a>
+    </div>
   </div>
-  <div class="insight">
-    <span class="insight-k">Below pass</span>
-    <span class="insight-v">{{ dash.fail_count }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Lessons done</span>
-    <span class="insight-v">{{ dash.lesson_completions }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Actions</span>
-    <span class="insight-v" style="font-size:0.95rem">
-      <a class="link" href="/learn/gap?token={{ quiz_token }}">My plan</a>
-    </span>
-  </div>
-</div>
 
-<section class="panel">
-  <div class="panel-head">
-    <h2>Recent attempts</h2>
-  </div>
-  {% if dash.recent %}
-  <table>
-    <thead><tr><th>When</th><th>Score</th><th>Course</th><th>Moodle</th><th></th></tr></thead>
-    <tbody>
-    {% for r in dash.recent %}
-      <tr>
-        <td class="meta">{{ r.created_at[:16] }}</td>
-        <td>{{ r.score }}/{{ r.max_score }} ({{ r.percent }}%)</td>
-        <td>{{ r.course_label or '—' }}</td>
-        <td>{% if r.grade_sent %}<span class="ok">Synced</span>{% else %}<span class="meta">Local</span>{% endif %}</td>
-        <td><a class="link" href="/quiz/result/{{ r.id }}?token={{ quiz_token }}">Open</a></td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p class="lede">No attempts yet — take the quiz to see progress here.</p>
-  <a class="btn primary" href="/quiz?token={{ quiz_token }}">Take quiz</a>
-  {% endif %}
-</section>
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <h2 class="headline-md" style="margin-bottom:var(--sp-md)">Recent attempts</h2>
+    {% if dash.recent %}
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>When</th><th>Score</th><th>Course</th><th>Moodle</th><th></th></tr></thead>
+        <tbody>
+        {% for r in dash.recent %}
+          <tr>
+            <td class="body-sm text-muted">{{ r.created_at[:16] }}</td>
+            <td><strong>{{ r.score }}/{{ r.max_score }}</strong> <span class="body-sm text-muted">({{ r.percent }}%)</span></td>
+            <td>{{ r.course_label or '—' }}</td>
+            <td>{% if r.grade_sent %}<span class="chip chip-mint">Synced</span>{% else %}<span class="body-sm text-muted">Local</span>{% endif %}</td>
+            <td><a class="btn btn-surface" style="font-size:11px;padding:4px 10px" href="/quiz/result/{{ r.id }}?token={{ quiz_token }}">Open</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="body-sm text-muted">No attempts yet — take the quiz to see progress here.</p>
+    <a class="btn btn-primary" href="/quiz?token={{ quiz_token }}" style="margin-top:var(--sp-md);display:inline-flex">Take quiz</a>
+    {% endif %}
+  </section>
 
-{% if dash.skill_verbs %}
-<section class="panel">
-  <h2>Your xAPI verbs</h2>
-  <p class="meta">
+  {% if dash.skill_verbs %}
+  <section class="card" style="padding:var(--sp-lg)">
+    <h2 class="headline-sm" style="margin-bottom:var(--sp-sm)">Your xAPI verbs</h2>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
     {% for v in dash.skill_verbs %}
-      {{ v.label }} ({{ v.count }}){% if not loop.last %} · {% endif %}
+      <span class="chip chip-sky">{{ v.label }} · {{ v.count }}</span>
     {% endfor %}
-  </p>
-</section>
-{% endif %}
+    </div>
+    <a class="btn btn-surface" style="margin-top:var(--sp-md);font-size:13px" href="/learn/activity?token={{ quiz_token }}">View detailed recordings</a>
+  </section>
+  {% else %}
+  <section class="card" style="padding:var(--sp-lg)">
+    <h2 class="headline-sm" style="margin-bottom:var(--sp-sm)">Learning evidence</h2>
+    <p class="body-sm text-muted">xAPI recordings appear here after lessons, quizzes, manuals, or coach questions.</p>
+    <a class="btn btn-surface" style="margin-top:var(--sp-md);font-size:13px" href="/learn/activity?token={{ quiz_token }}">Open activity</a>
+  </section>
+  {% endif %}
+</div>
 {% endblock %}

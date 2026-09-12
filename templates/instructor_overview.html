@@ -1,274 +1,331 @@
 {% extends "base_shell.html" %}
 {% block content %}
-{% if ok_message %}
-<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
-{% endif %}
+<div class="page-wrap">
+  {% if ok_message %}
+  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.26);border-radius:var(--r-xl);color:var(--primary)">
+    <span class="material-symbols-outlined">check_circle</span>
+    <span class="body-md" style="font-weight:600">{{ ok_message | replace('+', ' ') }}</span>
+  </div>
+  {% endif %}
 
-<div class="insight-row insight-row-4">
-  <div class="insight">
-    <span class="insight-k">Attempts</span>
-    <span class="insight-v">{{ total_attempts }}</span>
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">analytics</span>
+          Class Results
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(30px,4vw,50px)">Results Overview</h1>
+        <p class="body-md" style="color:var(--outline-variant);max-width:620px;margin-top:4px">
+          Review attempts, pass rate, Moodle roster awareness, competency signals, and recommended next steps in one place.
+        </p>
+      </div>
+      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+        <form method="post" action="/teacher/roster/sync" style="display:inline">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <button type="submit" class="btn" style="background:rgba(255,255,255,.12);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">
+            <span class="material-symbols-outlined" style="font-size:15px">sync</span>
+            Sync roster{% if nrps_count %} ({{ nrps_count }}){% endif %}
+          </button>
+        </form>
+        <a class="btn btn-primary" href="/teacher/attempts.csv?token={{ quiz_token }}{{ filter_qs }}">
+          <span class="material-symbols-outlined" style="font-size:15px">download</span>
+          Export CSV
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid-4">
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Attempts</span>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:6px">
+            <span class="metric-counter" style="color:var(--primary)">{{ total_attempts }}</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(52,211,153,.07));display:flex;align-items:center;justify-content:center;color:var(--primary)"><span class="material-symbols-outlined">bolt</span></span>
+      </div>
+      <div class="progress-track" style="margin-top:var(--sp-md)"><div class="progress-fill" style="width:100%"></div></div>
+    </div>
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Learners</span>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:6px">
+            <span class="metric-counter" style="color:var(--secondary)">{{ learner_count }}</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(64,194,253,.25),rgba(64,194,253,.07));display:flex;align-items:center;justify-content:center;color:var(--secondary)"><span class="material-symbols-outlined">groups</span></span>
+      </div>
+      <svg class="sparkline" style="margin-top:var(--sp-sm)"><path d="M0,20 L40,19 L80,15 L120,10 L160,8" fill="none" stroke="var(--secondary)" stroke-width="2.5" stroke-linecap="round"/><circle cx="160" cy="8" r="3.5" fill="var(--secondary)"/></svg>
+    </div>
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Avg Score</span>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:6px">
+            <span class="metric-counter" style="color:var(--tertiary)">{% if avg_percent is not none %}{{ avg_percent }}%{% else %}-{% endif %}</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(153,202,65,.25),rgba(153,202,65,.07));display:flex;align-items:center;justify-content:center;color:var(--tertiary)"><span class="material-symbols-outlined">trending_up</span></span>
+      </div>
+      <div class="progress-track" style="margin-top:var(--sp-md)"><div class="progress-fill-lime" style="width:{{ avg_percent or 0 }}%"></div></div>
+    </div>
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Pass Rate</span>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:6px">
+            <span class="metric-counter" style="color:#f59e0b">{% if pass_rate is not none %}{{ pass_rate }}%{% else %}-{% endif %}</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(245,158,11,.24),rgba(245,158,11,.06));display:flex;align-items:center;justify-content:center;color:#f59e0b"><span class="material-symbols-outlined">military_tech</span></span>
+      </div>
+      <div class="body-sm text-muted" style="margin-top:var(--sp-md)">Synced to Moodle: {{ synced_count }}</div>
+    </div>
   </div>
-  <div class="insight">
-    <span class="insight-k">Learners</span>
-    <span class="insight-v">{{ learner_count }}</span>
+
+  <div class="grid-12-8-4">
+    <section class="frosted" style="padding:var(--sp-xl)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-md);flex-wrap:wrap;margin-bottom:var(--sp-lg)">
+        <div>
+          <h2 class="headline-md">Filters</h2>
+          {% if selected_class_name %}
+          <p class="body-sm text-muted" style="margin-top:4px">Filtered by Moodle-bound class <strong>{{ selected_class_name }}</strong>.</p>
+          {% else %}
+          <p class="body-sm text-muted" style="margin-top:4px">Narrow by class, course, or date range.</p>
+          {% endif %}
+        </div>
+      </div>
+      <form method="get" action="/teacher/attempts" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--sp-sm);align-items:end">
+        <input type="hidden" name="token" value="{{ quiz_token }}"/>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Class</label>
+          <select name="class_id" style="width:100%;padding:10px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);background:var(--surface-container-lowest)">
+            <option value="">All classes</option>
+            {% for c in classes %}
+            <option value="{{ c.id }}" {% if filter_class_id == (c.id ~ '') %}selected{% endif %}>{{ c.class_name }} ({{ c.class_code }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Course label</label>
+          <select name="course" style="width:100%;padding:10px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);background:var(--surface-container-lowest)">
+            <option value="">All courses</option>
+            {% for label in course_labels %}
+            <option value="{{ label }}" {% if filter_course == label %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">From</label>
+          <input type="date" name="date_from" value="{{ filter_date_from }}" style="width:100%;padding:10px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);background:var(--surface-container-lowest);box-sizing:border-box"/>
+        </div>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">To</label>
+          <input type="date" name="date_to" value="{{ filter_date_to }}" style="width:100%;padding:10px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);background:var(--surface-container-lowest);box-sizing:border-box"/>
+        </div>
+        <div style="display:flex;gap:var(--sp-sm)">
+          <button type="submit" class="btn btn-primary">Apply</button>
+          <a class="btn btn-glass" href="/teacher/attempts?token={{ quiz_token }}">Clear</a>
+        </div>
+      </form>
+    </section>
+
+    <aside style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Moodle Roster</h3>
+        {% if nrps_members %}
+        <p class="body-sm text-muted">{{ nrps_count }} member{{ 's' if nrps_count != 1 else '' }}{% if nrps_fetched_at %} · synced {{ nrps_fetched_at }}{% endif %}</p>
+        {% else %}
+        <p class="body-sm text-muted">
+          No roster cached yet.
+          {% if nrps_available %}Use sync above.{% else %}Enable NRPS in Moodle and relaunch as teacher.{% endif %}
+        </p>
+        {% endif %}
+      </div>
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Time Capsule</h3>
+        <a class="btn btn-surface" href="/teacher/time-capsule.json?token={{ quiz_token }}">Download JSON</a>
+      </div>
+    </aside>
   </div>
-  <div class="insight">
-    <span class="insight-k">Avg score</span>
-    <span class="insight-v">{% if avg_percent is not none %}{{ avg_percent }}%{% else %}—{% endif %}</span>
+
+  <div class="grid-12-7-5">
+    <section style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      <div class="frosted" style="padding:var(--sp-lg)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md)">
+          <h2 class="headline-md">At-Risk Coach</h2>
+          <span class="chip chip-secondary">Rules only</span>
+        </div>
+        {% if at_risk %}
+        <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+          {% for r in at_risk %}
+          <div class="attempt-item" style="border-left-color:#f59e0b">
+            <div class="avatar avatar-sm" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.06));color:#b45309;font-weight:700">{{ (r.learner_name or '?')[0].upper() }}</div>
+            <div style="flex:1;min-width:0">
+              <div class="headline-sm" style="font-size:14px">{{ r.learner_name }}</div>
+              <div class="body-sm text-muted">{{ r.attempt_count }} attempts · latest {{ r.latest_percent }}%</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                {% for reason in r.reasons %}
+                <span class="chip" style="background:rgba(245,158,11,.1);color:#b45309;font-size:10px">{{ reason }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="body-sm text-muted">No at-risk signals for this filter yet.</p>
+        {% endif %}
+      </div>
+
+      {% if ai_actions and ai_actions.actions %}
+      <div class="frosted" style="padding:var(--sp-lg)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md)">
+          <h2 class="headline-md">AI Next Steps</h2>
+          <span class="chip chip-mint">{{ ai_actions.provider }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+          {% for a in ai_actions.actions %}
+          <div class="card" style="padding:var(--sp-md);border-left:3px solid var(--primary)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-sm)">
+              <strong>{{ a.title }}</strong>
+              <span class="chip chip-sky">{{ a.urgency }}</span>
+            </div>
+            <p class="body-sm text-muted" style="margin-top:6px">{{ a.detail }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        {% if ai_actions.note %}<p class="body-sm text-muted" style="margin-top:var(--sp-sm)">{{ ai_actions.note }}</p>{% endif %}
+      </div>
+      {% endif %}
+
+      <div class="frosted" style="padding:var(--sp-lg)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md)">
+          <h2 class="headline-md">Recent Attempts</h2>
+          <span class="body-sm text-muted">Institution Moodle link activity</span>
+        </div>
+        {% if attempts %}
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>Learner</th><th>Course</th><th>Score</th><th>Moodle</th><th>When</th><th></th></tr></thead>
+            <tbody>
+            {% for a in attempts %}
+              <tr>
+                <td>{{ a.learner_name or a.subject }}</td>
+                <td>{{ a.course_label or "-" }}</td>
+                <td><strong>{{ a.score }}/{{ a.max_score }}</strong></td>
+                <td>{% if a.grade_sent %}<span class="chip chip-mint">Synced</span>{% else %}<span class="body-sm text-muted">Not synced</span>{% endif %}</td>
+                <td class="body-sm text-muted">{{ a.created_at }}</td>
+                <td><a class="btn btn-surface" style="font-size:11px;padding:4px 10px" href="/quiz/result/{{ a.id }}?token={{ quiz_token }}">Open</a></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="body-sm text-muted">No student attempts yet.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <aside style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Competency Map</h3>
+        {% if competency_map %}
+        <div style="display:flex;flex-direction:column;gap:10px">
+          {% for c in competency_map %}
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span class="body-sm">{{ c.label }}</span>
+              <span class="body-sm text-muted">{% if c.percent is not none %}{{ c.percent }}%{% else %}-{% endif %}</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill {% if c.status == 'strong' %}{% elif c.status == 'ok' %}progress-fill-sky{% else %}progress-fill-lime{% endif %}" style="width:{{ c.percent if c.percent is not none else 0 }}%"></div></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="body-sm text-muted">No competency samples yet.</p>
+        {% endif %}
+      </div>
+
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Quiet Class Radar</h3>
+        {% if radar and radar.hottest %}
+        <p class="body-sm text-muted" style="margin-bottom:var(--sp-sm)">Hottest miss: <strong>{{ radar.hottest.prompt }}</strong></p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          {% for item in radar.items %}
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;gap:var(--sp-sm)">
+              <span class="body-sm truncate">{{ item.prompt }}</span>
+              <span class="body-sm text-muted">{{ item.fail_rate }}%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" style="width:{{ item.fail_rate }}%;background:linear-gradient(90deg,#f59e0b,#fbbf24);box-shadow:0 0 6px rgba(245,158,11,.35)"></div></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="body-sm text-muted">Not enough attempt detail yet for item-level radar.</p>
+        {% endif %}
+      </div>
+    </aside>
   </div>
-  <div class="insight">
-    <span class="insight-k">Pass rate</span>
-    <span class="insight-v">{% if pass_rate is not none %}{{ pass_rate }}%{% else %}—{% endif %}</span>
+
+  <div class="grid-2">
+    <section class="frosted" style="padding:var(--sp-lg)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md)">
+        <h2 class="headline-md">Learner Best Scores</h2>
+        <span class="body-sm text-muted">Pass >= 60% · {{ synced_count }} synced</span>
+      </div>
+      {% if learners %}
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th>Learner</th><th>Best</th><th>Attempts</th><th>Moodle</th><th></th></tr></thead>
+          <tbody>
+          {% for L in learners %}
+            <tr>
+              <td>{{ L.learner_name or L.subject }}</td>
+              <td><strong>{{ L.best_score }}/{{ L.best_max }}</strong> <span class="body-sm text-muted">({{ L.best_percent }}%)</span></td>
+              <td>{{ L.attempts }}</td>
+              <td>{% if L.grade_sent %}<span class="chip chip-mint">Synced</span>{% else %}<span class="body-sm text-muted">-</span>{% endif %}</td>
+              <td><a class="btn btn-surface" style="font-size:11px;padding:4px 10px" href="/quiz/result/{{ L.best_attempt_id }}?token={{ quiz_token }}">Review</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="body-sm text-muted">No student attempts for this filter.</p>
+      {% endif %}
+    </section>
+
+    <section class="frosted" style="padding:var(--sp-lg)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md)">
+        <h2 class="headline-md">Lesson Progress</h2>
+        <span class="body-sm text-muted">{{ course_title }}</span>
+      </div>
+      {% if progress_roster %}
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th>Learner</th><th>Completed</th><th>Progress</th></tr></thead>
+          <tbody>
+          {% for p in progress_roster %}
+            <tr>
+              <td>{{ p.learner_name or p.subject }}</td>
+              <td>{{ p.completed_count }}/{{ p.total_count }}</td>
+              <td><strong>{{ p.percent }}%</strong></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="body-sm text-muted">No lesson completions recorded yet.</p>
+      {% endif %}
+    </section>
   </div>
 </div>
-
-<section class="panel">
-  <div class="panel-head">
-    <h2>Filters</h2>
-    <div class="actions">
-      <form method="post" action="/teacher/roster/sync" style="display:inline">
-        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-        <button type="submit" class="btn secondary" title="Pull Moodle memberships via NRPS">
-          Sync Moodle roster{% if nrps_count %} ({{ nrps_count }}){% endif %}
-        </button>
-      </form>
-      <a class="btn secondary" href="/teacher/attempts.csv?token={{ quiz_token }}{{ filter_qs }}">Export CSV</a>
-    </div>
-  </div>
-  <form method="get" action="/teacher/attempts" class="teach-form filter-row">
-    <input type="hidden" name="token" value="{{ quiz_token }}"/>
-    <label>Class
-      <select name="class_id">
-        <option value="">All classes</option>
-        {% for c in classes %}
-        <option value="{{ c.id }}" {% if filter_class_id == (c.id ~ '') %}selected{% endif %}>{{ c.class_name }} ({{ c.class_code }})</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label>Course label
-      <select name="course">
-        <option value="">All courses</option>
-        {% for label in course_labels %}
-        <option value="{{ label }}" {% if filter_course == label %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label>From
-      <input type="date" name="date_from" value="{{ filter_date_from }}"/>
-    </label>
-    <label>To
-      <input type="date" name="date_to" value="{{ filter_date_to }}"/>
-    </label>
-    <div class="cta-row">
-      <button type="submit" class="btn primary">Apply</button>
-      <a class="btn secondary" href="/teacher/attempts?token={{ quiz_token }}">Clear</a>
-    </div>
-  </form>
-  {% if selected_class_name %}
-  <p class="meta">Filtered by Moodle-bound class <strong>{{ selected_class_name }}</strong> (course labels from LTI context).</p>
-  {% endif %}
-</section>
-
-<section class="panel">
-  <div class="panel-head">
-    <h2>Moodle roster (NRPS)</h2>
-    <span class="meta">Awareness only — people stay in Moodle</span>
-  </div>
-  {% if nrps_members %}
-  <p class="meta">{{ nrps_count }} member{{ 's' if nrps_count != 1 else '' }}{% if nrps_fetched_at %} · synced {{ nrps_fetched_at }}{% endif %}</p>
-  <ul class="q-list">
-    {% for m in nrps_members[:40] %}
-    <li>
-      <strong>{{ m.name }}</strong>
-      <span class="meta"> · <code>{{ m.user_id }}</code>
-        {% if m.is_instructor %}· instructor{% endif %}
-        {% if m.email %}· {{ m.email }}{% endif %}
-      </span>
-    </li>
-    {% endfor %}
-  </ul>
-  {% if nrps_members|length > 40 %}<p class="meta">Showing first 40.</p>{% endif %}
-  {% else %}
-  <p class="lede">
-    No roster cached yet.
-    {% if nrps_available %}Click <strong>Sync Moodle roster</strong> above.
-    {% else %}Enable Names and Role Provisioning on the Moodle external tool, relaunch as teacher, then sync.
-    {% endif %}
-  </p>
-  {% endif %}
-</section>
-
-<section class="panel">
-  <div class="panel-head">
-    <h2>At-risk coach</h2>
-    <span class="meta">Rules only — repeat fails, low score, incomplete path</span>
-  </div>
-  {% if at_risk %}
-  <ul class="at-risk-list">
-    {% for r in at_risk %}
-    <li>
-      <strong>{{ r.learner_name }}</strong>
-      <span class="meta">{{ r.attempt_count }} attempts · latest {{ r.latest_percent }}%</span>
-      <ul>
-        {% for reason in r.reasons %}
-        <li>{{ reason }}</li>
-        {% endfor %}
-      </ul>
-    </li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p class="meta">No at-risk signals for this filter yet.</p>
-  {% endif %}
-</section>
-
-{% if ai_actions and ai_actions.actions %}
-<section class="panel">
-  <div class="panel-head">
-    <h2>AI next steps</h2>
-    <span class="meta">{{ ai_actions.provider }} · suggestions for you to act on</span>
-  </div>
-  <ul class="at-risk-list">
-    {% for a in ai_actions.actions %}
-    <li>
-      <strong>{{ a.title }}</strong>
-      <span class="meta">{{ a.urgency }}</span>
-      <p>{{ a.detail }}</p>
-    </li>
-    {% endfor %}
-  </ul>
-  {% if ai_actions.note %}<p class="banner-note info">{{ ai_actions.note }}</p>{% endif %}
-</section>
-{% endif %}
-
-<section class="panel">
-  <div class="panel-head">
-    <h2>Class competency map</h2>
-    <span class="meta">Aggregated skill strength from attempts</span>
-  </div>
-  {% if competency_map %}
-  <div class="comp-bars">
-    {% for c in competency_map %}
-    <div class="comp-row status-{{ c.status }}">
-      <div class="comp-label">{{ c.label }}</div>
-      <div class="comp-track" aria-hidden="true"><i style="width: {{ c.percent if c.percent is not none else 0 }}%"></i></div>
-      <div class="comp-pct">{% if c.percent is not none %}{{ c.percent }}%{% else %}—{% endif %}</div>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="meta">No competency samples yet.</p>
-  {% endif %}
-</section>
-
-<section class="panel">
-  <div class="panel-head">
-    <h2>Quiet class radar</h2>
-    <span class="meta">Where the class stalls — not a leaderboard</span>
-  </div>
-  {% if radar and radar.hottest %}
-  <p class="lede">Hottest miss: <strong>{{ radar.hottest.prompt }}</strong> ({{ radar.hottest.fail_rate }}% fail · {{ radar.hottest.fail_count }}/{{ radar.hottest.attempts }})</p>
-  <div class="radar-bars">
-    {% for item in radar.items %}
-    <div class="radar-row">
-      <div class="radar-label">{{ item.prompt }}</div>
-      <div class="radar-track" aria-hidden="true"><i style="width: {{ item.fail_rate }}%"></i></div>
-      <div class="radar-pct">{{ item.fail_rate }}%</div>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="meta">Not enough attempt detail yet for item-level radar.</p>
-  {% endif %}
-  <div class="actions">
-    <a class="btn secondary" href="/teacher/time-capsule.json?token={{ quiz_token }}">Download time capsule</a>
-  </div>
-</section>
-
-<section class="panel">
-  <div class="panel-head">
-    <h2>Learner best scores</h2>
-    <span class="meta">Pass ≥ 60% · {{ synced_count }} synced to Moodle</span>
-  </div>
-  {% if learners %}
-  <table>
-    <thead>
-      <tr>
-        <th>Learner</th>
-        <th>Best</th>
-        <th>Attempts</th>
-        <th>Moodle</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for L in learners %}
-      <tr>
-        <td>{{ L.learner_name or L.subject }}</td>
-        <td><strong>{{ L.best_score }}/{{ L.best_max }}</strong> <span class="meta">({{ L.best_percent }}%)</span></td>
-        <td>{{ L.attempts }}</td>
-        <td>{% if L.grade_sent %}<span class="ok">Synced</span>{% else %}<span class="meta">—</span>{% endif %}</td>
-        <td><a class="link" href="/quiz/result/{{ L.best_attempt_id }}?token={{ quiz_token }}">Review</a></td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty">
-    <p>No student attempts for this filter.</p>
-  </div>
-  {% endif %}
-</section>
-
-<section class="panel">
-  <div class="panel-head">
-    <h2>Lesson progress</h2>
-    <span class="meta">{{ course_title }}</span>
-  </div>
-  {% if progress_roster %}
-  <table>
-    <thead><tr><th>Learner</th><th>Completed</th><th>Progress</th></tr></thead>
-    <tbody>
-    {% for p in progress_roster %}
-      <tr>
-        <td>{{ p.learner_name or p.subject }}</td>
-        <td>{{ p.completed_count }}/{{ p.total_count }}</td>
-        <td><strong>{{ p.percent }}%</strong></td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty">
-    <p>No lesson completions recorded yet.</p>
-  </div>
-  {% endif %}
-</section>
-
-<section class="panel">
-  <h2>Recent attempts</h2>
-  <p class="lede">Everyone who has submitted from this institution’s Moodle link.</p>
-  {% if attempts %}
-  <table>
-    <thead><tr><th>Learner</th><th>Course</th><th>Score</th><th>In Moodle</th><th>When</th><th></th></tr></thead>
-    <tbody>
-    {% for a in attempts %}
-      <tr>
-        <td>{{ a.learner_name or a.subject }}</td>
-        <td>{{ a.course_label or "—" }}</td>
-        <td><strong>{{ a.score }}/{{ a.max_score }}</strong></td>
-        <td>{% if a.grade_sent %}<span class="ok">Synced</span>{% else %}<span class="meta">Not synced</span>{% endif %}</td>
-        <td class="meta">{{ a.created_at }}</td>
-        <td><a class="link" href="/quiz/result/{{ a.id }}?token={{ quiz_token }}">Open</a></td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty">
-    <p>No student attempts yet.</p>
-  </div>
-  {% endif %}
-</section>
 {% endblock %}

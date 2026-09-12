@@ -12,6 +12,28 @@ EdVidura emits **xAPI 1.0.3 statements** for learning analytics. **Moodle AGS re
 | Skill profile (quiz) | `mastered` / `failed` / `attempted` | D15 competency statements per skill |
 | Lesson complete | `completed` | Activity id includes lesson UUID |
 | Manual open | `experienced` | Resource activity |
+| Study coach turn | `interacted` | PeBL Discussion-aligned fields (see below) |
+
+### Study coach ↔ PeBL Discussion (Technical Specification)
+
+PeBL requires discussion/chat capture: **User ID, Timestamp, Thread ID, Access level, Text of the message**.
+
+| PeBL field | EdVidura extension / field |
+|------------|----------------------------|
+| User ID | Actor account (`subject`) |
+| Timestamp | Statement `timestamp` |
+| Thread ID | `…/thread_id` (+ activity IRI `…/study-coach/thread/{id}`) |
+| Access level | `…/access_level` (default `class`; `COACH_XAPI_ACCESS_LEVEL`) |
+| Text of message | Preview always; **full text** when `COACH_XAPI_FULL_TEXT=1` |
+
+```env
+# Privacy-light default (preview ≤120 chars + hash)
+# PeBL Discussion parity:
+COACH_XAPI_FULL_TEXT=1
+COACH_XAPI_ACCESS_LEVEL=class
+```
+
+Activity UI: `/learn/activity`, `/teacher/activity`, `/school-admin/activity`.
 
 Actor uses LTI `account` (`homePage` + `name` = LMS `sub`), not email.
 
@@ -45,10 +67,13 @@ Dev-only mirrors (404 in production): `GET /dev/xapi/statements/{tenant_id}`, `P
 XAPI_LRS_ENDPOINT=https://your-lrs.example/xAPI
 XAPI_LRS_KEY=...
 XAPI_LRS_SECRET=...
+XAPI_LRS_PROVIDER=yet   # yet | generic | auto — Yet SQL LRS uses /xapi/statements
 XAPI_ACTOR_HOMEPAGE=http://localhost:8085
 ```
 
 Empty endpoint = local store only (tiers still apply).
+
+Yet Analytics SQL LRS + Metabase runbook: [YET_LRS_METABASE.md](YET_LRS_METABASE.md).
 
 ## Outbox
 

@@ -1,19 +1,26 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">Study hint · {{ hint.provider }}</p>
-  <h2 class="welcome-title">Try this</h2>
-  <p class="welcome-lede">{{ hint.review_focus or 'Review, then practice.' }}</p>
-</section>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1">
+      <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+        <span class="material-symbols-outlined" style="font-size:13px">lightbulb</span>
+        Study hint · {{ hint.provider }}
+      </div>
+      <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,44px)">Try this</h1>
+      <p class="body-md" style="color:var(--outline-variant);margin-top:4px">{{ hint.review_focus or 'Review, then practice.' }}</p>
+    </div>
+  </section>
 
-<section class="panel">
-  <p class="meta">Question</p>
-  <p>{{ prompt }}</p>
-  <p style="margin-top:1rem">{{ hint.hint }}</p>
-  {% if hint.note %}<p class="banner-note info">{{ hint.note }}</p>{% endif %}
-  <div class="actions" style="margin-top:1rem">
-    <a class="btn primary" href="{{ back_href }}">Back to result</a>
-    <a class="btn secondary" href="/learn/coach?token={{ quiz_token }}">Ask study coach</a>
-  </div>
-</section>
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <span class="label-caps text-muted">Question</span>
+    <p class="headline-sm" style="margin:6px 0 var(--sp-lg)">{{ prompt }}</p>
+    <p class="body-lg">{{ hint.hint }}</p>
+    {% if hint.note %}<p class="body-sm text-muted" style="margin-top:var(--sp-md)">{{ hint.note }}</p>{% endif %}
+    <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap;margin-top:var(--sp-lg)">
+      <a class="btn btn-primary" href="{{ back_href }}">Back to result</a>
+      <a class="btn btn-glass" href="/learn/coach?token={{ quiz_token }}">Ask study coach</a>
+    </div>
+  </section>
+</div>
 {% endblock %}

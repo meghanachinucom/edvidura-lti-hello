@@ -2,7 +2,34 @@
 
 Moodle stays elsewhere (school LMS or local Docker). Railway runs **FastAPI + Postgres**.
 
-## 1. Create project
+## 0. Automate (recommended)
+
+From the repo root:
+
+```bash
+# one-time
+npm i -g @railway/cli
+railway login
+
+# generate secrets + LTI key (writes keys/railway-bootstrap.env — gitignored)
+python scripts/railway_bootstrap.py
+
+# create/link project, add Postgres, set variables, generate domain, deploy
+python scripts/railway_bootstrap.py --apply
+```
+
+Then:
+
+1. Confirm `GET {APP_BASE_URL}/health` → `ok`, `db_ok`
+2. `railway variable set RUN_MIGRATIONS=0`
+3. Point Moodle at `{APP_BASE_URL}/lti/launch`, `/lti/login`, `/.well-known/jwks.json`
+
+CI: add GitHub secret `RAILWAY_TOKEN` (Railway → Account → Tokens).  
+`.github/workflows/railway-deploy.yml` runs `railway up` on push to `main` / `master`.
+
+Without the CLI, use the dashboard steps below and paste values from `keys/railway-bootstrap.env`.
+
+## 1. Create project (manual)
 
 1. [railway.app](https://railway.app) → **New Project** → deploy this GitHub repo
 2. **Add Postgres** plugin and link it to the web service (`DATABASE_URL`)
@@ -80,6 +107,45 @@ Checklist:
 4. Confirm with: `GET /dev/tenancy/cross-check` (ops auth) or `pytest tests/test_tenant_isolation.py::test_app_role_is_not_bypassrls`.
 
 Capability tables (`lti_registration_invites`, `lti_launch_snapshots`, `quiz_session_tokens`) use RLS too; opaque token/launch lookups set `app.capability_lookup` inside the app only.
+
+## 7. Host Moodle on Railway (optional)
+
+EdVidura and Moodle are **two services**. Do not point Moodle at the EdVidura Postgres plugin.
+
+From the repo root (Railway CLI logged in, project linked):
+
+```bash
+python scripts/deploy_moodle_railway.py
+```
+
+That script:
+
+1. Creates a `moodle` service (if missing)
+2. Adds a **second** Postgres plugin for Moodle only
+3. Sets `SSLPROXY=true`, `REVERSEPROXY=false`, admin env vars
+4. Mounts a volume at `/var/www/moodledata`
+5. Generates `https://….up.railway.app` and deploys `moodle/Dockerfile`
+
+First boot runs Moodle’s installer and can take several minutes. Then:
+
+- Open `{MOODLE_URL}/login/index.php`
+- Default admin is `admin` / `Admin@12345` unless you override `MOODLE_USERNAME` / `MOODLE_PASSWORD`
+- Register that Moodle issuer on EdVidura (`/admin/tenants/.../lti-platforms`) with `auth.php` / `token.php` / `certs.php` on `{MOODLE_URL}`
+- Point the Moodle LTI tool at `{APP_BASE_URL}/lti/launch`, `/lti/login`, `/.well-known/jwks.json`
+
+Manual deploy without the script:
+
+```bash
+railway add --service moodle
+railway add --database postgres
+railway volume add --service moodle --mount-path /var/www/moodledata
+railway domain -s moodle
+railway up ./moodle --path-as-root -s moodle --detach
+```
+
+Set `SITE_URL=https://<moodle-domain>` after the domain exists (or let the image entrypoint use `RAILWAY_PUBLIC_DOMAIN`).
+
+**Cost / RAM:** Moodle wants ~1 GB+. Hobby plans can OOM; bump the service memory if the container restarts during install.
 
 ## Notes
 

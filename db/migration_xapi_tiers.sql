@@ -26,7 +26,18 @@ BEGIN
     END IF;
 END $$;
 
-GRANT CONNECT ON DATABASE edvidura TO edvidura_bi;
+DO $$
+BEGIN
+  EXECUTE format(
+    'GRANT CONNECT ON DATABASE %I TO edvidura_bi',
+    current_database()
+  );
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'skip GRANT CONNECT for edvidura_bi';
+  WHEN undefined_object THEN
+    RAISE NOTICE 'skip GRANT CONNECT for edvidura_bi (missing role/db)';
+END $$;
 GRANT USAGE ON SCHEMA public TO edvidura_bi;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO edvidura_bi;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO edvidura_bi;

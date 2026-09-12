@@ -1,15 +1,96 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<div class="welcome solo">
-  <div>
-    <p class="welcome-k">Ghost coach</p>
-    <h2>Finish the path first</h2>
-    <p>{{ coach.message }}</p>
-    <div class="actions">
-      <a class="btn light" href="/lessons?token={{ quiz_token }}">Continue lessons</a>
-      <a class="btn ghost-w" href="/quiz?token={{ quiz_token }}&force=1">Take quiz anyway</a>
-      <a class="btn ghost-w" href="/quiz?token={{ quiz_token }}&practice=1">Practice lane (no grade)</a>
+{% set done = coach.completed | default(0) %}
+{% set total = coach.total | default(0) %}
+{% set pct = ((done / total * 100) | round(0) | int) if total else 0 %}
+<div class="page-wrap quiz-gate-page">
+  <section class="hero-band quiz-gate-hero">
+    <div class="quiz-gate-hero-inner">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-sm)">
+          <span class="material-symbols-outlined" style="font-size:14px">psychology</span>
+          Ghost coach
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,44px)">
+          Finish the path first
+        </h1>
+        <p class="body-md" style="color:var(--outline-variant);margin-top:8px;max-width:540px">
+          {{ coach.message }}
+        </p>
+      </div>
+      <div class="quiz-gate-ring" aria-hidden="true">
+        <svg viewBox="0 0 96 96" width="96" height="96">
+          <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="8"/>
+          <circle cx="48" cy="48" r="40" fill="none" stroke="var(--tertiary-fixed)" stroke-width="8"
+                  stroke-linecap="round"
+                  stroke-dasharray="{{ (pct / 100 * 251.2) | round(1) }} 251.2"
+                  transform="rotate(-90 48 48)"/>
+        </svg>
+        <div class="quiz-gate-ring-label">
+          <strong>{{ done }}</strong><span>/{{ total }}</span>
+        </div>
+      </div>
     </div>
+    <div class="quiz-progress-track" aria-hidden="true">
+      <div class="quiz-progress-fill" style="width:{{ pct }}%"></div>
+    </div>
+  </section>
+
+  <div class="quiz-gate-grid">
+    <article class="q-card quiz-gate-primary">
+      <header class="q-card-head">
+        <div class="q-num" aria-hidden="true">
+          <span class="material-symbols-outlined" style="font-size:22px">auto_stories</span>
+        </div>
+        <div class="q-card-meta">
+          <span class="label-caps text-muted">Recommended</span>
+          <p class="headline-sm q-prompt">Keep going on your lessons</p>
+          <p class="body-sm text-muted" style="margin-top:6px">
+            Complete the open chapters first so the quiz matches what you just studied.
+          </p>
+        </div>
+      </header>
+      <div style="margin-top:var(--sp-lg)">
+        <a class="btn btn-primary" href="/lessons?token={{ quiz_token }}">
+          <span class="material-symbols-outlined" style="font-size:16px">play_arrow</span>
+          Continue lessons
+        </a>
+      </div>
+    </article>
+
+    <aside class="quiz-gate-side">
+      <div class="frosted quiz-aside-card">
+        <div class="quiz-aside-icon">
+          <span class="material-symbols-outlined">route</span>
+        </div>
+        <h3 class="headline-sm">Your progress</h3>
+        <p class="body-sm text-muted" style="margin-top:6px">
+          {{ done }} of {{ total }} lesson{{ '' if total == 1 else 's' }} done
+          · {{ (total - done) if total else 0 }} still open
+        </p>
+        <div class="quiz-gate-meter" aria-hidden="true">
+          <div class="quiz-gate-meter-fill" style="width:{{ pct }}%"></div>
+        </div>
+      </div>
+
+      <div class="card quiz-aside-card">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Other options</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a class="btn btn-surface" href="/quiz?token={{ quiz_token }}&practice=1" style="justify-content:flex-start;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">fitness_center</span>
+            Practice lane (no grade)
+          </a>
+          <a class="btn btn-surface" href="/quiz?token={{ quiz_token }}&force=1" style="justify-content:flex-start;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">bolt</span>
+            Take quiz anyway
+          </a>
+          <a class="btn btn-glass" href="/learn/coach?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">psychology</span>
+            Ask study coach
+          </a>
+        </div>
+      </div>
+    </aside>
   </div>
 </div>
 {% endblock %}

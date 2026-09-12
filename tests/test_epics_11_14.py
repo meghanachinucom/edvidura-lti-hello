@@ -170,6 +170,8 @@ def test_tla_experience_and_profile_shapes(monkeypatch):
     )
     ex = experience_index("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", actor="learner-1")
     assert ex[0]["actor"] == "learner-1"
+    assert ex[0]["schema"].endswith("experience.v1")
     prof = learner_profile("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "learner-1")
     assert prof["competency_count"] == 1
     assert prof["analytics"]["attempt_count"] == 2
+    assert prof["schema"].endswith("profile.v1")

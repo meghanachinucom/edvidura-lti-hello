@@ -1,45 +1,64 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="panel">
-  <div class="panel-head">
-    <div>
-      <h2>Course readiness check</h2>
-      <p class="lede">{{ questions_count }} questions · scored out of {{ max_score }}.</p>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">emoji_events</span>
+          Help · My results
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">
+          {% if is_instructor %}Recent attempts{% else %}My results{% endif %}
+        </h1>
+        <p class="body-md" style="color:var(--outline-variant);margin-top:4px">
+          {{ questions_count }} questions · scored out of {{ max_score }}.
+        </p>
+      </div>
+      <a class="btn btn-primary" href="/quiz?token={{ quiz_token }}">
+        <span class="material-symbols-outlined" style="font-size:16px">play_arrow</span>
+        Take quiz
+      </a>
     </div>
-    <a class="btn primary" href="/quiz?token={{ quiz_token }}">Take quiz</a>
-  </div>
-</section>
+  </section>
 
-<section class="panel">
-  <h2>{% if is_instructor %}Recent attempts{% else %}Your attempts{% endif %}</h2>
-  {% if recent_attempts %}
-  <table>
-    <thead>
-      <tr>
-        {% if is_instructor %}<th>Learner</th>{% endif %}
-        <th>Score</th>
-        <th>In Moodle</th>
-        <th>When</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for a in recent_attempts %}
-      <tr>
-        {% if is_instructor %}<td>{{ a.learner_name or a.subject }}</td>{% endif %}
-        <td><strong>{{ a.score }}/{{ a.max_score }}</strong></td>
-        <td>{% if a.grade_sent %}<span class="ok">Synced</span>{% else %}<span class="meta">Not synced</span>{% endif %}</td>
-        <td class="meta">{{ a.created_at }}</td>
-        <td><a class="link" href="/quiz/result/{{ a.id }}?token={{ quiz_token }}">Review</a></td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty">
-    <p>No attempts yet.</p>
-    <a class="btn primary" href="/quiz?token={{ quiz_token }}">Start your first attempt</a>
-  </div>
-  {% endif %}
-</section>
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <div class="section-head">
+      <h2 class="headline-md">Attempt history</h2>
+      <a class="btn btn-glass" href="/learn/analytics?token={{ quiz_token }}" style="font-size:13px">My progress</a>
+    </div>
+    {% if recent_attempts %}
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            {% if is_instructor %}<th>Learner</th>{% endif %}
+            <th>Score</th>
+            <th>In Moodle</th>
+            <th>When</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for a in recent_attempts %}
+          <tr>
+            {% if is_instructor %}<td>{{ a.learner_name or a.subject }}</td>{% endif %}
+            <td><strong>{{ a.score }}/{{ a.max_score }}</strong></td>
+            <td>{% if a.grade_sent %}<span class="chip chip-mint">Synced</span>{% else %}<span class="body-sm text-muted">Not synced</span>{% endif %}</td>
+            <td class="body-sm text-muted">{{ a.created_at }}</td>
+            <td><a class="btn btn-surface" style="font-size:11px;padding:4px 10px" href="/quiz/result/{{ a.id }}?token={{ quiz_token }}">Review</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:var(--sp-2xl)">
+      <span class="material-symbols-outlined" style="font-size:48px;opacity:.4;display:block;margin-bottom:var(--sp-sm)">quiz</span>
+      <p class="body-md">No attempts yet.</p>
+      <a class="btn btn-primary" href="/quiz?token={{ quiz_token }}" style="margin-top:var(--sp-md);display:inline-flex">Start your first attempt</a>
+    </div>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}

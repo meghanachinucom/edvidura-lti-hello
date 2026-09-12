@@ -3,24 +3,28 @@
 <a class="skip-link" href="#manual-body">Skip to manual content</a>
 
 <article class="ebook-reader" aria-label="Technical manual">
-  <section class="welcome">
-    <p class="welcome-kicker">eBook · v{{ version.version }}{% if version.is_published %} · published{% endif %}</p>
-    <h2 class="welcome-title">{{ manual.title }}</h2>
-    {% if version.changelog %}<p class="welcome-lede">{{ version.changelog }}</p>{% endif %}
+  <section class="hero-band" style="margin-bottom:var(--sp-lg)">
+    <div style="position:relative;z-index:1">
+      <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+        eBook · v{{ version.version }}{% if version.is_published %} · published{% endif %}
+      </div>
+      <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(26px,4vw,40px)">{{ manual.title }}</h1>
+      {% if version.changelog %}<p class="body-md" style="color:var(--outline-variant);margin-top:4px">{{ version.changelog }}</p>{% endif %}
+    </div>
   </section>
 
   {% if focus or remediation_loop %}
-  <div class="banner-note info focus-banner" id="focus-banner" role="status">
+  <div class="card" id="focus-banner" role="status" style="padding:var(--sp-md) var(--sp-lg);margin-bottom:var(--sp-lg);border-left:3px solid var(--secondary)">
     {% if focus %}
     Jumping to pinned section: <strong>{{ focus_label }}</strong>
-    <span class="meta"> · version {{ version.version }}</span>
+    <span class="body-sm text-muted"> · version {{ version.version }}</span>
     {% else %}
     Remediation loop — review, then practice, then graded retry
     {% endif %}
     {% if quiz_token %}
-    <div class="actions" style="margin-top:0.65rem">
-      <a class="btn secondary" href="{{ loop_practice_href }}">2 · Practice this skill</a>
-      <a class="btn primary" href="{{ loop_graded_href }}">3 · Graded retry</a>
+    <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap;margin-top:var(--sp-sm)">
+      <a class="btn btn-glass" href="{{ loop_practice_href }}">Practice this skill</a>
+      <a class="btn btn-primary" href="{{ loop_graded_href }}">Graded retry</a>
     </div>
     {% endif %}
   </div>

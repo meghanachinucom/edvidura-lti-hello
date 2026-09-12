@@ -1,131 +1,618 @@
 {% extends "base_shell.html" %}
 {% block content %}
+<div class="page-wrap">
 
-{% if is_school_admin %}
-<div class="welcome solo">
-  <div>
-    <p class="welcome-k">School admin</p>
-    <h2>{{ tenant_name }}</h2>
-    <p>Manage teachers, classes, and students for this workspace.</p>
-    <div class="actions">
-      <a class="btn light" href="/school-admin/teachers?token={{ quiz_token }}">Teachers</a>
-      <a class="btn ghost-w" href="/school-admin/classes?token={{ quiz_token }}">Classes</a>
-    </div>
-  </div>
-</div>
-{% if school_snap %}
-<div class="stats">
-  <div class="stat"><div class="stat-ico i1">▣</div><div><b>{{ school_snap.teacher_count }}</b><span>Teachers</span></div></div>
-  <div class="stat"><div class="stat-ico i2">▤</div><div><b>{{ school_snap.class_count }}</b><span>Classes</span></div></div>
-  <div class="stat"><div class="stat-ico i3">☰</div><div><b>{{ school_snap.student_count }}</b><span>Students</span></div></div>
-  <div class="stat"><div class="stat-ico i4">▦</div><div><b>{{ school_snap.chapter_count }}</b><span>Lessons</span></div></div>
-</div>
-{% endif %}
+{# ════════════════════════════════════════════════════════
+   STUDENT VIEW
+   ════════════════════════════════════════════════════════ #}
+{% if not is_instructor and not is_school_admin %}
 
-{% elif is_instructor %}
-<div class="welcome solo">
-  <div>
-    <p class="welcome-k">Instructor</p>
-    <h2>Hi{% if first_name %}, {{ first_name }}{% endif %}</h2>
-    <p>{{ course }} · {{ tenant_name }} — review class results or upload content.</p>
-    <div class="actions">
-      <a class="btn light" href="/teacher/attempts?token={{ quiz_token }}">Class results</a>
-      <a class="btn ghost-w" href="/teacher/content?token={{ quiz_token }}">Upload content</a>
-    </div>
-  </div>
-</div>
-<div class="stats">
-  {% if school_snap %}
-  <div class="stat"><div class="stat-ico i1">◉</div><div><b>{{ school_snap.student_count }}</b><span>Learners</span></div></div>
-  <div class="stat"><div class="stat-ico i2">▤</div><div><b>{{ school_snap.class_count }}</b><span>Classes</span></div></div>
-  <div class="stat"><div class="stat-ico i3">▦</div><div><b>{{ school_snap.chapter_count }}</b><span>Lessons</span></div></div>
-  <div class="stat"><div class="stat-ico i4">▣</div><div><b>{{ school_snap.teacher_count }}</b><span>Teachers</span></div></div>
-  {% else %}
-  <div class="stat"><div class="stat-ico i1">◉</div><div><b>—</b><span>Open class results</span></div></div>
-  {% endif %}
-</div>
+  {# ── Hero frosted panel ── #}
+  <section class="frosted" style="padding:var(--sp-xl) var(--sp-2xl);position:relative;overflow:hidden">
+    {# ambient glows #}
+    <div style="position:absolute;top:-60px;right:-40px;width:320px;height:320px;background:rgba(52,211,153,.15);border-radius:50%;filter:blur(60px);pointer-events:none"></div>
+    <div style="position:absolute;bottom:-40px;left:60px;width:240px;height:240px;background:rgba(190,242,100,.18);border-radius:50%;filter:blur(50px);pointer-events:none"></div>
 
-{% else %}
-<div class="welcome">
-  <div>
-    <p class="welcome-k">Welcome back</p>
-    <h2>Hi{% if first_name %}, {{ first_name }}{% endif %}</h2>
-    <p>
-      {% if progress and progress.all_lessons_done %}
-      Lessons done — quiz is next.
-      {% elif progress and progress.completed_count %}
-      Continue where you left off. You’re {{ progress.percent }}% through.
-      {% else %}
-      Start with lessons, then take the quiz.
-      {% endif %}
-    </p>
-    <div class="actions">
-      <a class="btn light" href="{{ continue_href }}">{{ continue_label }}</a>
-      <a class="btn ghost-w" href="/lessons?token={{ quiz_token }}">View lessons</a>
-      {% if gap_path and gap_path.active %}
-      <a class="btn ghost-w" href="/learn/gap?token={{ quiz_token }}">Gap training</a>
-      {% else %}
-      <a class="btn ghost-w" href="/quiz?token={{ quiz_token }}&practice=1">Practice lane</a>
-      {% endif %}
-    </div>
-  </div>
-  <div class="ring-box">
-    <div class="ring-wrap">
-      <div class="ring" style="--p: {{ progress.percent if progress else 0 }}"></div>
-      <div class="ring-label">{{ progress.percent if progress else 0 }}%</div>
-    </div>
-    <div class="ring-meta">
-      <strong>Course progress</strong>
-      {% if progress %}{{ progress.completed_count }} of {{ progress.total_count }} complete{% else %}Not started{% endif %}
-    </div>
-  </div>
-</div>
-
-<div class="stats">
-  <div class="stat"><div class="stat-ico i1">▦</div><div><b>{{ progress.total_count if progress else 0 }}</b><span>Lessons</span></div></div>
-  <div class="stat"><div class="stat-ico i2">✎</div><div><b>1</b><span>Quiz ready</span></div></div>
-  <div class="stat"><div class="stat-ico i3">★</div><div><b>{% if last_score is not none %}{{ last_score }}/{{ last_max }}{% else %}—{% endif %}</b><span>Last score</span></div></div>
-  <div class="stat"><div class="stat-ico i4">→</div><div><b>{{ continue_label }}</b><span>Next step</span></div></div>
-</div>
-
-<div class="grid-2">
-  <div class="card">
-    <div class="card-h">
-      <h2>Continue course</h2>
-      <a href="/lessons?token={{ quiz_token }}">See all</a>
-    </div>
-    {% if chapter_items %}
-      {% for L in chapter_items %}
-      <a class="course-item {% if L.now %}now{% endif %}" href="{% if L.lesson_type == 'quiz' %}/quiz?token={{ quiz_token }}{% else %}/lessons/{{ L.id }}?token={{ quiz_token }}{% endif %}">
-        <div class="thumb {% if loop.index % 3 == 1 %}t1{% elif loop.index % 3 == 2 %}t2{% else %}t3{% endif %}">{{ loop.index }}</div>
-        <div>
-          <div class="ci-title">{{ L.title }}</div>
-          <div class="ci-meta">{{ L.lesson_type | capitalize }}{% if L.adaptive %} · gap recommended{% elif L.done %} · completed{% elif L.now %} · up next{% endif %}</div>
-          <div class="bar"><i style="--w: {% if L.done %}100{% else %}0{% endif %}%"></i></div>
+    <div style="position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:var(--sp-xl);align-items:center">
+      <div>
+        {# Kicker #}
+        <div class="chip chip-dark" style="margin-bottom:var(--sp-sm)">
+          <span class="material-symbols-outlined" style="font-size:13px">bolt</span>
+          {{ context_heading or "EdVidura" }}
         </div>
-        {% if L.done %}<span class="badge ok">Done</span>
-        {% elif L.adaptive %}<span class="badge warn">Gap</span>
-        {% elif L.now %}<span class="badge warn">Next</span>
-        {% else %}<span class="badge">Open</span>{% endif %}
-      </a>
-      {% endfor %}
-    {% else %}
-      <p class="lede">No lessons published yet for this school.</p>
-    {% endif %}
-  </div>
-  <div class="card">
-    <div class="card-h"><h2>Path</h2></div>
-    <ul class="feed">
-      <li><span class="dot"></span><div><strong>Lessons</strong> work through the chapter<time>Step 1</time></div></li>
-      <li><span class="dot teal"></span><div><strong>Quiz</strong> check understanding{% if ags_available %} · syncs to Moodle{% endif %}<time>Step 2</time></div></li>
-      {% if gap_path and gap_path.active %}
-      <li><span class="dot amber"></span><div><strong>Gap training</strong> close weak skills then retry<a class="link" href="/learn/gap?token={{ quiz_token }}">Open</a><time>C10</time></div></li>
-      {% else %}
-      <li><span class="dot amber"></span><div><strong>My results</strong> review score &amp; retry<time>Step 3</time></div></li>
-      {% endif %}
-    </ul>
-  </div>
-</div>
-{% endif %}
 
+        {# Greeting + headline #}
+        <h1 class="display-hero" style="color:var(--on-surface);margin-bottom:var(--sp-xs)">
+          Hi, {{ display_name or user_name or "Student" }}
+        </h1>
+        <p class="body-lg text-muted" style="max-width:480px;margin-bottom:var(--sp-lg)">
+          {% if class_snap %}
+            {% set _pct = progress.completion_pct | default(0) if progress else 0 %}
+            You're {{ _pct }}% through this class path.
+          {% else %}
+            Ready to continue your learning path?
+          {% endif %}
+        </p>
+
+        {# Primary CTA #}
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-sm)">
+          <a href="/lessons?token={{ quiz_token }}" class="btn btn-primary">
+            <span class="material-symbols-outlined" style="font-size:16px">play_arrow</span>
+            {{ continue_label or continue_cta_label or "Continue learning" }}
+          </a>
+          <a href="/quiz?token={{ quiz_token }}" class="btn btn-surface">
+            <span class="material-symbols-outlined" style="font-size:16px">quiz</span>
+            Take quiz
+          </a>
+        </div>
+
+        {# Secondary links #}
+        <div class="hub-secondary" style="margin-top:var(--sp-md)">
+          <a href="/lessons?token={{ quiz_token }}">All lessons</a>
+          <a href="/quiz?token={{ quiz_token }}&practice=1">Practice</a>
+          {% if last_result_id %}
+          <a href="/quiz/result/{{ last_result_id }}?token={{ quiz_token }}">My results</a>
+          {% else %}
+          <a href="/active-quizzes?token={{ quiz_token }}">My results</a>
+          {% endif %}
+          <a href="/learn/coach?token={{ quiz_token }}">Study coach</a>
+        </div>
+      </div>
+
+      {# Progress ring #}
+      {% if class_snap %}
+      <div style="flex-shrink:0;width:200px;display:flex;flex-direction:column;align-items:center;gap:var(--sp-xs)">
+        <div class="gauge-wrap" style="width:160px;height:160px">
+          <svg width="160" height="160" style="transform:rotate(-90deg)">
+            <circle cx="80" cy="80" r="64" fill="none" stroke="var(--surface-container-high)" stroke-width="12"/>
+            <circle cx="80" cy="80" r="64" fill="none"
+              stroke="var(--primary-container)" stroke-width="12"
+              stroke-linecap="round"
+              stroke-dasharray="402"
+              stroke-dashoffset="{{ 402 - (_pct / 100 * 402) | int }}"/>
+          </svg>
+          <div class="gauge-label">
+            <span class="metric-counter" style="color:var(--on-surface)">{{ _pct }}%</span>
+            <span class="label-caps text-muted">complete</span>
+          </div>
+        </div>
+        <span class="body-sm text-muted">{{ progress.completed_count | default(0) }} of {{ class_snap.lesson_count }} done</span>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {# ── Stat strip ── #}
+  {% if class_snap %}
+  <div class="grid-4">
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Lessons</span>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+        <span class="metric-counter" style="color:var(--on-surface)">{{ class_snap.lesson_count }}</span>
+        <span class="body-sm text-muted">total</span>
+      </div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Attempts</span>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+        <span class="metric-counter" style="color:var(--secondary)">{{ class_snap.attempt_count | default(0) }}</span>
+      </div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Last score</span>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+        {% if last_score is not none %}
+        <span class="metric-counter" style="color:var(--primary)">{{ last_score }}</span>
+        {% else %}
+        <span class="metric-counter text-muted">—</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Next step</span>
+      <div class="stat-next body-sm" style="margin-top:6px;color:var(--on-surface)">
+        {{ continue_cta_label or "Start a lesson" }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="grid-4">
+    <a href="/quiz?token={{ quiz_token }}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--primary)">
+      <span class="material-symbols-outlined" style="color:var(--primary)">quiz</span>
+      <h3 class="headline-sm" style="margin-top:8px">Quiz</h3>
+      <p class="body-sm text-muted">Take the graded chapter check</p>
+    </a>
+    <a href="/learn/coach?token={{ quiz_token }}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--secondary)">
+      <span class="material-symbols-outlined" style="color:var(--secondary)">psychology</span>
+      <h3 class="headline-sm" style="margin-top:8px">Study coach</h3>
+      <p class="body-sm text-muted">Ask about approved sources</p>
+    </a>
+    <a href="{% if last_result_id %}/quiz/result/{{ last_result_id }}?token={{ quiz_token }}{% else %}/active-quizzes?token={{ quiz_token }}{% endif %}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--tertiary)">
+      <span class="material-symbols-outlined" style="color:var(--tertiary)">emoji_events</span>
+      <h3 class="headline-sm" style="margin-top:8px">My results</h3>
+      <p class="body-sm text-muted">Review scores and receipts</p>
+    </a>
+    <a href="/learn/gap?token={{ quiz_token }}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid #f59e0b">
+      <span class="material-symbols-outlined" style="color:#f59e0b">route</span>
+      <h3 class="headline-sm" style="margin-top:8px">My plan</h3>
+      <p class="body-sm text-muted">Close skill gaps step by step</p>
+    </a>
+    <a href="/manuals?token={{ quiz_token }}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--primary)">
+      <span class="material-symbols-outlined" style="color:var(--primary)">menu_book</span>
+      <h3 class="headline-sm" style="margin-top:8px">Manual</h3>
+      <p class="body-sm text-muted">Open published eBook chapters</p>
+    </a>
+    <a href="/quiz?token={{ quiz_token }}&practice=1" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--secondary)">
+      <span class="material-symbols-outlined" style="color:var(--secondary)">fitness_center</span>
+      <h3 class="headline-sm" style="margin-top:8px">Practice lane</h3>
+      <p class="body-sm text-muted">No Moodle sync — just practice</p>
+    </a>
+    <a href="/learn/analytics?token={{ quiz_token }}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--tertiary)">
+      <span class="material-symbols-outlined" style="color:var(--tertiary)">monitoring</span>
+      <h3 class="headline-sm" style="margin-top:8px">My progress</h3>
+      <p class="body-sm text-muted">Attempts, best score, xAPI</p>
+    </a>
+    <a href="/lessons?token={{ quiz_token }}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid #f59e0b">
+      <span class="material-symbols-outlined" style="color:#f59e0b">play_circle</span>
+      <h3 class="headline-sm" style="margin-top:8px">Lessons</h3>
+      <p class="body-sm text-muted">Continue the class path</p>
+    </a>
+  </div>
+
+  {# ── Lesson path card ── #}
+  {% set lessons = lessons | default(chapter_items) | default([]) %}
+  {% if lessons %}
+  <div class="frosted" style="padding:var(--sp-lg)">
+    <div class="section-head">
+      <div>
+        <h2 class="headline-lg">{{ context_heading or "Your lesson path" }}</h2>
+        {% if class_snap and class_snap.subject %}
+        <p class="path-blurb" style="margin-top:4px">{{ class_snap.subject }}</p>
+        {% endif %}
+      </div>
+      <a href="/lessons?token={{ quiz_token }}" class="btn btn-glass" style="font-size:13px">See all</a>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:0">
+      {% for lesson in lessons[:6] %}
+      <div class="lesson-row {% if lesson.done %}done{% elif lesson.now %}next{% endif %}">
+        <span class="lesson-num">{{ "%02d" % loop.index }}</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:var(--sp-xs);flex-wrap:wrap">
+            <span class="headline-sm truncate">{{ lesson.title }}</span>
+            {% if lesson.lesson_type %}
+            <span class="chip chip-sky" style="font-size:10px">{{ lesson.lesson_type }}</span>
+            {% endif %}
+            {% if lesson.adaptive %}
+            <span class="chip chip-tertiary" style="font-size:10px">Adaptive</span>
+            {% endif %}
+          </div>
+        </div>
+        <div style="flex-shrink:0;display:flex;align-items:center;gap:var(--sp-xs)">
+          {% if lesson.done %}
+          <span class="chip chip-mint">
+            <span class="material-symbols-outlined" style="font-size:12px">check</span>
+            Done
+          </span>
+          {% else %}
+          <a href="{{ lesson.href or ('/lesson/' ~ lesson.id ~ '?token=' ~ quiz_token) }}" class="btn btn-primary" style="padding:6px var(--sp-md);font-size:13px">
+            {% if lesson.now %}Continue{% else %}Open{% endif %}
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+{# ════════════════════════════════════════════════════════
+   TEACHER VIEW
+   ════════════════════════════════════════════════════════ #}
+{% elif is_instructor and not is_school_admin %}
+
+  {% if class_snap %}
+  {# ── Forest-ink hero ── #}
+  <section class="hero-band">
+    <div style="position:relative;z-index:1">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-xl)">
+        <div>
+          <div style="display:flex;align-items:center;gap:var(--sp-xs);flex-wrap:wrap;margin-bottom:var(--sp-xs)">
+            <span class="chip" style="background:rgba(255,255,255,.1);color:var(--tertiary-fixed);backdrop-filter:blur(8px)">
+              <span class="gem gem-primary" style="animation:ping 1.5s infinite"></span>
+              Instructor · {{ context_heading }}
+            </span>
+            <span class="chip" style="background:rgba(255,255,255,.1);color:var(--surface-container-highest)">
+              {{ tenant_name or "Riverside High" }}
+            </span>
+            <span class="chip" style="background:rgba(0,108,75,.3);color:var(--primary-fixed)">Single Class Scope</span>
+          </div>
+          <h1 class="display-hero" style="color:var(--surface-container-lowest);margin-bottom:var(--sp-xs)">
+            {{ context_heading }}
+          </h1>
+          <p class="body-md" style="color:var(--outline-variant);max-width:560px">
+            <span class="material-symbols-outlined" style="font-size:16px;color:var(--primary-fixed-dim)">verified_user</span>
+            Figures below are strictly for <strong style="color:var(--surface-container-lowest)">{{ context_heading }}</strong> only
+            ({{ class_snap.student_count }} students · {{ class_snap.lesson_count }} lessons).
+          </p>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:var(--sp-sm)">
+          <a href="/teacher/attempts?token={{ quiz_token }}" class="btn" style="background:var(--primary-container);color:var(--on-primary-container)">
+            Class results
+            <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+          </a>
+          <a href="/teacher/analytics?token={{ quiz_token }}" class="btn btn-glass" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.2)">
+            <span class="material-symbols-outlined" style="font-size:16px">equalizer</span>
+            Analytics
+          </a>
+          <a href="/lessons?token={{ quiz_token }}" class="btn btn-glass" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.2)">
+            <span class="material-symbols-outlined" style="font-size:16px">visibility</span>
+            Preview
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ── Class metrics ── #}
+  <div class="grid-4">
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Cohort Enrolled</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter">{{ class_snap.student_count }}</span>
+            <span class="body-sm text-muted">learners</span>
+          </div>
+        </div>
+        <span style="width:40px;height:40px;border-radius:50%;background:var(--surface-container);display:flex;align-items:center;justify-content:center;color:var(--primary)">
+          <span class="material-symbols-outlined">groups</span>
+        </span>
+      </div>
+      <svg class="sparkline" style="margin-top:var(--sp-sm)">
+        <path d="M0,18 L32,16 L64,18 L96,14 L128,14 L160,12" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="160" cy="12" r="3.5" fill="var(--primary)"/>
+      </svg>
+    </div>
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Active Modules</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter" style="color:var(--secondary)">{{ class_snap.lesson_count }}</span>
+            <span class="body-sm text-muted">units live</span>
+          </div>
+        </div>
+        <span style="width:40px;height:40px;border-radius:50%;background:var(--surface-container);display:flex;align-items:center;justify-content:center;color:var(--secondary)">
+          <span class="material-symbols-outlined">menu_book</span>
+        </span>
+      </div>
+      <svg class="sparkline" style="margin-top:var(--sp-sm)">
+        <path d="M0,22 L40,19 L80,11 L120,8 L160,4" fill="none" stroke="var(--secondary)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="160" cy="4" r="3.5" fill="var(--secondary)"/>
+      </svg>
+    </div>
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Drill Attempts</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter" style="color:var(--tertiary)">{{ class_snap.attempt_count }}</span>
+            <span class="body-sm text-muted">total</span>
+          </div>
+        </div>
+        <span style="width:40px;height:40px;border-radius:50%;background:var(--surface-container);display:flex;align-items:center;justify-content:center;color:var(--tertiary)">
+          <span class="material-symbols-outlined">bolt</span>
+        </span>
+      </div>
+      <svg class="sparkline" style="margin-top:var(--sp-sm)">
+        <path d="M0,20 L26,22 L52,15 L78,17 L104,8 L130,12 L160,5" fill="none" stroke="var(--tertiary)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="160" cy="5" r="3.5" fill="var(--tertiary)"/>
+      </svg>
+    </div>
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Class Avg Score</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter">{{ class_snap.avg_percent | default("—") }}{% if class_snap.avg_percent %}%{% endif %}</span>
+          </div>
+        </div>
+        {# circular arc gauge #}
+        <div style="position:relative;width:44px;height:44px;flex-shrink:0">
+          <svg width="44" height="44" style="transform:rotate(-90deg)">
+            <circle cx="22" cy="22" r="18" fill="none" stroke="var(--surface-container-highest)" stroke-width="4"/>
+            <circle cx="22" cy="22" r="18" fill="none" stroke="var(--primary-container)" stroke-width="4"
+              stroke-dasharray="113"
+              stroke-dashoffset="{{ 113 - ((class_snap.avg_percent | default(0)) / 100 * 113) | int }}"
+              stroke-linecap="round"/>
+          </svg>
+          <span class="material-symbols-outlined" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--primary)">trending_up</span>
+        </div>
+      </div>
+      <div style="margin-top:var(--sp-sm);display:flex;align-items:center;gap:var(--sp-xs)">
+        <span class="chip chip-mint" style="font-size:10px">
+          <span class="material-symbols-outlined" style="font-size:11px">arrow_upward</span>
+          Live
+        </span>
+        <span class="body-sm text-muted">class scope only</span>
+      </div>
+    </div>
+  </div>
+
+  {# ── Split stage: attempts feed + roster ── #}
+  <div class="grid-12-7-5">
+
+    {# left — attempts #}
+    <section style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      {# Section header bar #}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-md) var(--sp-lg);
+                  background:linear-gradient(105deg,rgba(52,211,153,.08) 0%,rgba(255,255,255,.6) 100%);
+                  border:1.5px solid rgba(52,211,153,.18);border-radius:var(--r-xl);
+                  backdrop-filter:blur(12px)">
+        <div style="display:flex;align-items:center;gap:var(--sp-sm)">
+          <span style="position:relative;display:flex;width:14px;height:14px;flex-shrink:0">
+            <span style="position:absolute;inset:0;border-radius:50%;background:var(--primary);animation:ping 1.5s infinite;opacity:.5"></span>
+            <span style="position:relative;border-radius:50%;width:14px;height:14px;background:var(--primary)"></span>
+          </span>
+          <div>
+            <h2 class="headline-md" style="line-height:1.1;font-size:18px">Live Assessment Feed</h2>
+            <span class="body-sm text-muted">Auto-filtered to {{ context_heading }}</span>
+          </div>
+        </div>
+        <a href="/teacher/attempts?token={{ quiz_token }}" class="btn btn-primary" style="font-size:12px;padding:6px 14px">
+          View all
+          <span class="material-symbols-outlined" style="font-size:14px">arrow_forward</span>
+        </a>
+      </div>
+
+      {# attempt items #}
+      {% set recent_attempts = recent_attempts | default([]) %}
+      {% if recent_attempts %}
+      {% for att in recent_attempts[:6] %}
+      <div class="attempt-item">
+        <div class="avatar" style="background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(52,211,153,.07));color:var(--primary);font-weight:700;border:1.5px solid rgba(52,211,153,.2)">
+          {{ (att.learner_name or "?")[0].upper() }}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:var(--sp-xs);flex-wrap:wrap">
+            <span class="headline-sm truncate" style="font-size:14px;font-weight:600">{{ att.learner_name or "Student" }}</span>
+            <span class="body-sm text-muted">· {{ att.time_ago or "" }}</span>
+          </div>
+          <p class="body-sm truncate" style="color:var(--on-surface);margin-top:2px;font-size:12px">{{ att.quiz_title or "Quiz attempt" }}</p>
+          <div style="display:flex;align-items:center;gap:var(--sp-xs);margin-top:4px;flex-wrap:wrap">
+            <span class="chip {% if att.score_pct and att.score_pct >= 70 %}chip-mint{% elif att.score_pct %}chip-sky{% else %}chip-secondary{% endif %}" style="font-size:10px">
+              {{ att.score_str or "—" }}
+            </span>
+            {% if att.synced %}
+            <span class="sync-stamp synced" style="font-size:10px">
+              <span class="material-symbols-outlined" style="font-size:11px">check_circle</span>Synced
+            </span>
+            {% else %}
+            <span class="sync-stamp pending" style="font-size:10px">Pending</span>
+            {% endif %}
+          </div>
+        </div>
+        <a href="/teacher/attempts?token={{ quiz_token }}" class="btn" style="font-size:11px;padding:5px 10px;background:rgba(52,211,153,.08);color:var(--primary);border:1px solid rgba(52,211,153,.2);flex-shrink:0">Review</a>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="padding:var(--sp-2xl);text-align:center;background:rgba(255,255,255,.7);border:1.5px dashed rgba(14,43,36,.1);border-radius:var(--r-2xl)">
+        <span class="material-symbols-outlined" style="font-size:48px;display:block;margin-bottom:var(--sp-md);color:var(--on-surface-variant);opacity:.5">pending_actions</span>
+        <p class="headline-sm" style="color:var(--on-surface);margin-bottom:4px">No attempts yet</p>
+        <p class="body-sm text-muted">When students take quizzes, results appear here in real time.</p>
+        <a href="/lessons?token={{ quiz_token }}" class="btn btn-primary" style="margin-top:var(--sp-lg);display:inline-flex">
+          <span class="material-symbols-outlined" style="font-size:15px">visibility</span>
+          Preview lessons
+        </a>
+      </div>
+      {% endif %}
+    </section>
+
+    {# right — roster #}
+    <aside style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      <div style="background:linear-gradient(135deg,rgba(52,211,153,.06) 0%,rgba(255,255,255,.85) 100%);
+                  border:1.5px solid rgba(14,43,36,.07);border-top:2px solid rgba(52,211,153,.2);
+                  border-radius:var(--r-2xl);padding:var(--sp-lg);backdrop-filter:blur(16px)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-md)">
+          <div style="display:flex;align-items:center;gap:var(--sp-sm)">
+            <span style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,rgba(52,211,153,.2),rgba(52,211,153,.05));display:flex;align-items:center;justify-content:center;color:var(--primary)">
+              <span class="material-symbols-outlined" style="font-size:18px">groups</span>
+            </span>
+            <div>
+              <h3 class="headline-sm" style="font-size:16px;margin:0">{{ context_heading }} Roster</h3>
+              <span class="body-sm text-muted">{{ class_snap.student_count }} enrolled</span>
+            </div>
+          </div>
+          <span class="chip chip-mint" style="font-size:10px">
+            <span class="gem gem-primary" style="animation:ping 1.5s infinite"></span>
+            Live
+          </span>
+        </div>
+        {% set roster = class_snap.roster | default([]) %}
+        {% if roster %}
+        <div style="display:flex;flex-direction:column;gap:4px">
+          {% for s in roster %}
+          <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:8px var(--sp-sm);
+                      border-radius:var(--r-lg);transition:background .15s;
+                      animation:fadeSlideUp .25s ease both;animation-delay:{{ loop.index0 * 0.04 }}s"
+               onmouseover="this.style.background='rgba(52,211,153,.08)'" onmouseout="this.style.background='transparent'">
+            <div class="avatar avatar-sm" style="background:linear-gradient(135deg,hsl({{ (loop.index * 37) % 360 }},60%,88%),hsl({{ (loop.index * 37 + 40) % 360 }},50%,82%));color:hsl({{ (loop.index * 37) % 360 }},50%,30%);font-weight:700;flex-shrink:0">
+              {{ (s.name or "?")[0].upper() }}
+            </div>
+            <div style="min-width:0;flex:1">
+              <div class="headline-sm truncate" style="font-size:13px;font-weight:600">{{ s.name }}</div>
+              <div class="body-sm text-muted truncate" style="font-size:11px">{{ s.email or s.role or "Student" }}</div>
+            </div>
+            <span class="gem gem-primary" style="flex-shrink:0"></span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:var(--sp-lg)">
+          <span class="material-symbols-outlined" style="font-size:36px;display:block;margin-bottom:8px;color:var(--on-surface-variant);opacity:.5">person_search</span>
+          <p class="body-sm text-muted">Roster not synced yet.</p>
+          <p class="body-sm text-muted" style="font-size:11px">Check NRPS settings.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      {# Quick actions card #}
+      <div style="background:var(--inverse-surface);border-radius:var(--r-xl);padding:var(--sp-lg);display:flex;flex-direction:column;gap:var(--sp-sm)">
+        <span class="label-caps" style="color:var(--outline-variant);margin-bottom:4px">Quick actions</span>
+        <a href="/teacher/content?token={{ quiz_token }}" class="btn" style="background:rgba(52,211,153,.15);color:var(--primary-fixed);border:1px solid rgba(52,211,153,.25);justify-content:flex-start;font-size:13px">
+          <span class="material-symbols-outlined" style="font-size:15px">edit_note</span>
+          Manage lessons
+        </a>
+        <a href="/teacher/ai?token={{ quiz_token }}" class="btn" style="background:rgba(64,194,253,.1);color:var(--secondary-fixed);border:1px solid rgba(64,194,253,.2);justify-content:flex-start;font-size:13px">
+          <span class="material-symbols-outlined" style="font-size:15px">auto_awesome</span>
+          AI tools
+        </a>
+        <a href="/teacher/analytics?token={{ quiz_token }}" class="btn" style="background:rgba(190,242,100,.1);color:var(--tertiary-fixed);border:1px solid rgba(190,242,100,.2);justify-content:flex-start;font-size:13px">
+          <span class="material-symbols-outlined" style="font-size:15px">insights</span>
+          Deep analytics
+        </a>
+      </div>
+    </aside>
+  </div>
+
+  {% else %}
+  {# ── No class linked state ── #}
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;text-align:center;padding:var(--sp-xl) 0">
+      <span class="material-symbols-outlined" style="font-size:56px;color:var(--outline-variant);display:block;margin-bottom:var(--sp-md)">link_off</span>
+      <h1 class="headline-xl" style="color:var(--surface-container-lowest);margin-bottom:var(--sp-sm)">No class is linked to this Moodle launch yet</h1>
+      <p class="body-lg" style="color:var(--outline-variant);margin-bottom:var(--sp-lg)">
+        Your Moodle context hasn't been bound to an EdVidura class.<br>
+        Contact your school admin or use the binding tool below.
+      </p>
+      <a href="/school-admin/classes?token={{ quiz_token }}" class="btn btn-primary">
+        <span class="material-symbols-outlined" style="font-size:16px">add_link</span>
+        Classes &amp; links
+      </a>
+    </div>
+  </section>
+  {% endif %}
+
+{# ════════════════════════════════════════════════════════
+   SCHOOL ADMIN VIEW
+   ════════════════════════════════════════════════════════ #}
+{% elif is_school_admin %}
+
+  {# ── Hero ── #}
+  <section class="frosted card-3xl" style="padding:var(--sp-2xl);position:relative;overflow:hidden">
+    <div style="position:absolute;right:-60px;top:-60px;width:360px;height:360px;background:rgba(52,211,153,.15);border-radius:50%;filter:blur(60px);pointer-events:none"></div>
+    <div style="position:absolute;left:30%;bottom:-40px;width:280px;height:280px;background:rgba(56,189,248,.12);border-radius:50%;filter:blur(50px);pointer-events:none"></div>
+
+    <div style="position:relative;z-index:1">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-xl);margin-bottom:var(--sp-2xl)">
+        <div>
+          <div class="chip chip-primary" style="margin-bottom:var(--sp-sm)">
+            <span class="material-symbols-outlined" style="font-size:13px">account_balance</span>
+            Campus Administration · {{ tenant_name or "Riverside High" }}
+          </div>
+          <h1 class="display-hero" style="line-height:.95;margin-bottom:var(--sp-sm)">{{ tenant_name or "Riverside High" }}</h1>
+          <p class="body-lg text-muted" style="max-width:500px">
+            Unified governance across {{ class_count or 10 }} active classes, faculty allocation, student rosters, and real-time LMS synchronization.
+          </p>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:var(--sp-sm)">
+          <a href="/school-admin/classes?token={{ quiz_token }}" class="btn btn-primary">
+            Classes &amp; links
+            <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+          </a>
+          <a href="/school-admin/teachers?token={{ quiz_token }}" class="btn btn-surface">Teachers</a>
+          <a href="/school-admin/students?token={{ quiz_token }}" class="btn btn-surface">Students</a>
+          <a href="/school-admin/analytics?token={{ quiz_token }}" class="btn btn-surface">Analytics</a>
+        </div>
+      </div>
+
+      {# Stat constellation #}
+      <div class="grid-4">
+        <div style="padding:var(--sp-lg);border-radius:var(--r-xl);background:rgba(213,245,234,.7);backdrop-filter:blur(8px)">
+          <span class="label-caps text-muted">Faculty Pool</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter">{{ teacher_count or "—" }}</span>
+            <span class="body-sm text-muted">teachers</span>
+          </div>
+        </div>
+        <div style="padding:var(--sp-lg);border-radius:var(--r-xl);background:rgba(213,245,234,.7);backdrop-filter:blur(8px)">
+          <span class="label-caps text-muted">Active Cohorts</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter" style="color:var(--secondary)">{{ class_count or "—" }}</span>
+            <span class="body-sm text-muted">classes</span>
+          </div>
+        </div>
+        <div style="padding:var(--sp-lg);border-radius:var(--r-xl);background:rgba(213,245,234,.7);backdrop-filter:blur(8px)">
+          <span class="label-caps text-muted">Total Learners</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter" style="color:var(--tertiary)">{{ student_count or "—" }}</span>
+            <span class="body-sm text-muted">students</span>
+          </div>
+        </div>
+        <div style="padding:var(--sp-lg);border-radius:var(--r-xl);background:rgba(213,245,234,.7);backdrop-filter:blur(8px)">
+          <span class="label-caps text-muted">Lessons Live</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter">{{ lesson_count or "—" }}</span>
+            <span class="body-sm text-muted">total</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ── Classes mosaic ── #}
+  {% set classes = classes | default([]) %}
+  {% set bindings = bindings | default([]) %}
+  {% if classes %}
+  <div>
+    <div class="section-head">
+      <div>
+        <h2 class="headline-lg">Classes Campus Mosaic</h2>
+        <p class="body-md text-muted" style="margin-top:4px">Active cohort registry, curriculum links, and Moodle status.</p>
+      </div>
+      <a href="/school-admin/classes?token={{ quiz_token }}" class="btn btn-glass" style="font-size:13px">All classes &amp; links</a>
+    </div>
+
+    <div class="grid-2" style="gap:var(--sp-md)">
+      {% for cls in classes[:10] %}
+      <div class="card" style="padding:var(--sp-lg);position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;right:0;width:100px;height:100px;background:rgba(52,211,153,.06);border-radius:50%;filter:blur(30px);pointer-events:none"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-sm)">
+          <span class="chip chip-secondary">{{ cls.class_code }}</span>
+          {% set cls_bound = bindings | selectattr('class_id', 'equalto', cls.id) | list | length > 0 if bindings else false %}
+          {% if cls_bound %}
+          <span class="chip chip-primary">
+            <span class="gem gem-primary"></span>
+            Bound
+          </span>
+          {% else %}
+          <span class="chip" style="background:rgba(249,188,58,.15);color:#92400e;">
+            <span class="gem gem-warning" style="animation:ping 1.5s infinite"></span>
+            Needs link
+          </span>
+          {% endif %}
+        </div>
+        <h3 class="headline-md" style="margin-bottom:4px">{{ cls.subject or cls.class_name }}</h3>
+        <div style="background:rgba(213,245,234,.5);border-radius:var(--r-lg);padding:var(--sp-sm);display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:var(--sp-xs)">
+            <span class="material-symbols-outlined" style="font-size:18px;color:var(--primary)">school</span>
+            <div>
+              <div class="label-interactive" style="font-size:13px">{{ cls.teachers[0].name if cls.teachers else "—" }}</div>
+              <div class="body-sm text-muted" style="font-size:11px">{{ cls.students | length }} enrolled students</div>
+            </div>
+          </div>
+          <a href="/school-admin/classes?token={{ quiz_token }}" class="btn btn-surface" style="font-size:12px;padding:4px var(--sp-sm)">
+            <span class="material-symbols-outlined" style="font-size:14px">arrow_outward</span>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+{% endif %}
+</div>
 {% endblock %}

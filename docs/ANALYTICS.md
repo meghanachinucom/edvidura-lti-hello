@@ -7,10 +7,23 @@ EdVidura keeps **Moodle AGS as gradebook SoR**. Analytics uses quiz attempts + x
 | Role | Route | Source |
 |------|-------|--------|
 | **Learner** | `/learn/analytics` | `learner_dashboard(tenant, subject)` |
-| **Teacher** | `/teacher/analytics` (+ `.json` / `.csv`) | `tenant_dashboard` |
-| **School admin** | `/school-admin/analytics` | same tenant roll-up |
+| **Teacher** | `/teacher/analytics` (+ `.json` / `.csv` / `live.json`) | `tenant_dashboard` + `live_school_users` |
+| **School admin** | `/school-admin/analytics` (+ `live.json`) | same |
 
-Module: `app.modules.analytics`.
+### Live people (one school)
+
+Auto-refreshes every 10s:
+
+| Metric | Meaning |
+|--------|---------|
+| **Moodle users / learners / instructors** | Unique people from last **NRPS roster sync** (real Moodle enrolments) |
+| **Active now** | Distinct LTI launches in the last 15 minutes |
+| **Active today** | Distinct launches since midnight |
+| **Quiz learners** | Distinct subjects with quiz attempts (activity, not enrolment) |
+
+Sync roster: teacher → Class results → **Sync Moodle roster** (tool must allow NRPS).
+
+Module: `app.modules.analytics` (+ `app.modules.nrps.school_roster_totals`).
 
 ## Metabase
 
@@ -45,7 +58,25 @@ METABASE_EMBED_DASHBOARD_ID=1    # published dashboard id
 
 When set, teacher + school-admin Analytics show a static embed iframe (`metabase_embed_url`) with optional `tenant_id` / `tenant_slug` locked params. Otherwise the pages link out to Metabase.
 
+## Yet Analytics SQL LRS
+
+Forward statements to Yet SQL LRS (or any xAPI 1.0.3 LRS). Full runbook: [YET_LRS_METABASE.md](YET_LRS_METABASE.md).
+
+```env
+XAPI_LRS_PROVIDER=yet
+XAPI_LRS_ENDPOINT=http://localhost:8080/xapi
+XAPI_LRS_KEY=edvidura_key
+XAPI_LRS_SECRET=edvidura_secret
+```
+
+```bash
+cd db && docker compose --profile lrs up -d
+```
+
+Ops: `GET /api/v1/analytics/integrations?probe=true`
+
 ## Related
 
 - [XAPI.md](XAPI.md) — statement store / middleware API / LRS
+- [YET_LRS_METABASE.md](YET_LRS_METABASE.md) — Yet + Metabase together
 - Class results — radar, competency map, at-risk

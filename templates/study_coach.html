@@ -1,64 +1,124 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">SME study coach</p>
-  <h2 class="welcome-title">Ask about approved sources</h2>
-  <p class="welcome-lede">
-    Answers stay grounded in version-pinned manuals and lessons your teacher approved.
-    {% if ai %}Mode: <strong>{{ ai.provider }}</strong>{% endif %}
-    {% if source_count %}<span class="meta"> · {{ source_count }} source chunk{{ 's' if source_count != 1 else '' }}</span>{% endif %}
-  </p>
-  <p class="meta">Retention: turns are <strong>not stored</strong> (stateless coach). Official grades stay in your LMS.</p>
-</section>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">psychology</span>
+          Help · Study coach
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">Ask the coach</h1>
+        <p class="body-md" style="color:var(--outline-variant);max-width:560px;margin-top:4px">
+          Answers stay grounded in version-pinned manuals and lessons your teacher approved.
+          Turns are <strong style="color:var(--inverse-on-surface)">not stored</strong>. Official grades stay in your LMS.
+        </p>
+      </div>
+      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+        {% if ai %}<span class="chip" style="background:rgba(52,211,153,.16);color:var(--primary-fixed)">{{ ai.provider }}</span>{% endif %}
+        {% if source_count %}<span class="chip" style="background:rgba(255,255,255,.12);color:var(--surface-container-lowest)">{{ source_count }} source chunk{{ 's' if source_count != 1 else '' }}</span>{% endif %}
+      </div>
+    </div>
+  </section>
 
-{% if error %}<p class="banner ok">{{ error }}</p>{% endif %}
+  {% if error %}
+  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(186,26,26,.08);border:1px solid rgba(186,26,26,.18);border-radius:var(--r-xl);color:var(--error)">
+    <span class="material-symbols-outlined">error</span>
+    <span class="body-md" style="font-weight:600">{{ error }}</span>
+  </div>
+  {% endif %}
 
-<section class="panel">
-  <form method="post" action="/learn/coach" class="teach-form">
-    <input type="hidden" name="token" value="{{ quiz_token }}"/>
-    <label>Your question
-      <textarea name="question" rows="3" required placeholder="What is a variable?">{{ question }}</textarea>
-    </label>
-    <button type="submit" class="btn primary">Ask</button>
-  </form>
-</section>
+  <div class="grid-12-7-5">
+    <section class="frosted" style="padding:var(--sp-xl)">
+      <div style="display:flex;align-items:center;gap:var(--sp-sm);margin-bottom:var(--sp-lg)">
+        <span style="width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,rgba(64,194,253,.24),rgba(64,194,253,.06));display:flex;align-items:center;justify-content:center;color:var(--secondary)">
+          <span class="material-symbols-outlined">chat</span>
+        </span>
+        <div>
+          <h2 class="headline-md" style="margin:0">Your question</h2>
+          <p class="body-sm text-muted" style="margin:0">Ask about a concept from this class</p>
+        </div>
+      </div>
+      <form method="post" action="/learn/coach" style="display:flex;flex-direction:column;gap:var(--sp-md)">
+        <input type="hidden" name="token" value="{{ quiz_token }}"/>
+        <textarea name="question" rows="4" required placeholder="What is a variable?" style="width:100%;padding:var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-family:var(--font-body);font-size:15px;background:var(--surface-container-lowest);resize:vertical;box-sizing:border-box;outline:none">{{ question }}</textarea>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-start">
+          <span class="material-symbols-outlined" style="font-size:16px">send</span>
+          Ask
+        </button>
+      </form>
+    </section>
 
-{% if answer %}
-<section class="panel">
-  <h2>Answer</h2>
-  <p>{{ answer.answer }}</p>
-  {% if answer.citation_links %}
-  <h3 class="meta" style="margin-top:1rem">Citations</h3>
-  <ul class="cite-list">
-    {% for c in answer.citation_links %}
-    <li class="cite-card">
-      <div class="cite-head">
+    <aside style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Quick help</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a class="btn btn-surface" href="/quiz?token={{ quiz_token }}&practice=1" style="justify-content:flex-start;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">fitness_center</span>
+            Practice lane
+          </a>
+          <a class="btn btn-surface" href="/learn/gap?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">route</span>
+            My plan
+          </a>
+          <a class="btn btn-surface" href="/manuals?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">menu_book</span>
+            Manual
+          </a>
+        </div>
+      </div>
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:6px">Privacy</h3>
+        <p class="body-sm text-muted">This coach is stateless. It does not keep a conversation history.</p>
+      </div>
+    </aside>
+  </div>
+
+  {% if answer %}
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-md);flex-wrap:wrap;margin-bottom:var(--sp-md)">
+      <h2 class="headline-md">Answer</h2>
+      {% if answer.grounded is defined and answer.grounded %}
+      <span class="chip chip-mint">Grounded</span>
+      {% elif answer.grounded is defined %}
+      <span class="chip chip-secondary">Not in SME sources</span>
+      {% endif %}
+    </div>
+    <p class="body-lg">{{ answer.answer }}</p>
+
+    {% if answer.citation_links %}
+    <h3 class="headline-sm" style="margin:var(--sp-lg) 0 var(--sp-sm)">Citations</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:var(--sp-sm)">
+      {% for c in answer.citation_links %}
+      <div class="card" style="padding:var(--sp-md);border-left:3px solid var(--secondary)">
         {% if c.href %}
-        <a class="link" href="{{ c.href }}{% if quiz_token %}{% if '?' in c.href %}&{% else %}?{% endif %}token={{ quiz_token }}{% endif %}">{{ c.title }}</a>
+        <a href="{{ c.href }}{% if quiz_token %}{% if '?' in c.href %}&{% else %}?{% endif %}token={{ quiz_token }}{% endif %}" style="font-weight:600;color:var(--on-surface);text-decoration:none">{{ c.title }}</a>
         {% else %}
         <strong>{{ c.title }}</strong>
         {% endif %}
-        {% if c.kind %}<span class="badge">{{ c.kind }}{% if c.version %} · v{{ c.version }}{% endif %}</span>{% endif %}
+        {% if c.kind %}<div class="chip chip-sky" style="font-size:10px;margin-top:6px">{{ c.kind }}{% if c.version %} · v{{ c.version }}{% endif %}</div>{% endif %}
+        {% if c.excerpt %}<p class="body-sm text-muted" style="margin-top:8px">{{ c.excerpt }}</p>{% endif %}
       </div>
-      {% if c.excerpt %}<p class="meta cite-excerpt">{{ c.excerpt }}</p>{% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-  {% elif answer.citations %}
-  <p class="meta">From: {% for c in answer.citations %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+      {% endfor %}
+    </div>
+    {% elif answer.citations %}
+    <p class="body-sm text-muted" style="margin-top:var(--sp-md)">From: {% for c in answer.citations %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+
+    {% if answer.grounded is defined and not answer.grounded %}
+    <div style="margin-top:var(--sp-md);padding:var(--sp-md);background:rgba(245,158,11,.08);border-radius:var(--r-lg);color:#92400e">
+      Not found in approved SME sources{% if answer.refusal_reason %} ({{ answer.refusal_reason }}){% endif %}.
+    </div>
+    {% endif %}
+    {% if answer.note %}<p class="body-sm text-muted" style="margin-top:var(--sp-sm)">{{ answer.note }}</p>{% endif %}
+
+    {% if answer.practice_hint %}
+    <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap;margin-top:var(--sp-lg)">
+      <a class="btn btn-primary" href="/quiz?token={{ quiz_token }}&practice=1">Practice related quiz</a>
+      <a class="btn btn-glass" href="/learn/gap?token={{ quiz_token }}">Open my plan</a>
+    </div>
+    {% endif %}
+  </section>
   {% endif %}
-  {% if answer.grounded is defined and not answer.grounded %}
-  <p class="banner-note info">
-    Not found in approved SME sources{% if answer.refusal_reason %} ({{ answer.refusal_reason }}){% endif %}.
-  </p>
-  {% endif %}
-  {% if answer.note %}<p class="banner-note info">{{ answer.note }}</p>{% endif %}
-  {% if answer.practice_hint %}
-  <div class="actions" style="margin-top:1rem">
-    <a class="btn primary" href="/quiz?token={{ quiz_token }}&practice=1">Practice related quiz</a>
-    <a class="btn secondary" href="/learn/gap?token={{ quiz_token }}">Open my plan</a>
-  </div>
-  {% endif %}
-</section>
-{% endif %}
+</div>
 {% endblock %}

@@ -25,8 +25,9 @@ COPY docs/SAAS_ROADMAP.md ./docs/SAAS_ROADMAP.md
 RUN mkdir -p keys app/static/uploads \
     && printf '' > keys/.gitkeep \
     && printf '' > app/static/uploads/.gitkeep \
+    && sed -i 's/\r$//' scripts/docker_entrypoint.sh \
     && chmod +x scripts/docker_entrypoint.sh
 
 EXPOSE 8000
 
-ENTRYPOINT ["scripts/docker_entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "/app/scripts/docker_entrypoint.sh"]

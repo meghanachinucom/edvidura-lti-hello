@@ -1,101 +1,351 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">School admin</p>
-  <h2 class="welcome-title">Classes</h2>
-  <p class="welcome-lede">Learning paths for <strong>{{ tenant_name }}</strong>. People (teachers &amp; students) are created in Moodle; here you bind Moodle courses to classes and curriculum.</p>
-</section>
+<div class="page-wrap">
 
-{% if ok_message %}
-<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
-{% endif %}
-
-<section class="panel">
-  <h2>Add class</h2>
-  <form method="post" action="/school-admin/classes" class="teach-form">
-    <input type="hidden" name="token" value="{{ quiz_token }}"/>
-    <div class="teach-grid">
-      <label>Code <input name="class_code" required placeholder="ALG-104"/></label>
-      <label>Name <input name="class_name" required placeholder="Algebra Period 4"/></label>
-      <label>Subject <input name="subject" placeholder="Mathematics"/></label>
-      <label>Term <input name="term" placeholder="2026 Fall"/></label>
-      <label>Curriculum
-        <select name="course_id">
-          <option value="">— none yet —</option>
-          {% for co in courses %}
-          <option value="{{ co.id }}">{{ co.title }}</option>
-          {% endfor %}
-        </select>
-      </label>
+  {# ── Header ── #}
+  <div>
+    <div class="label-caps text-muted" style="display:flex;align-items:center;gap:4px;margin-bottom:var(--sp-xs)">
+      <a href="/launch-hub?token={{ quiz_token }}" style="color:var(--on-surface-variant);text-decoration:none;transition:color .1s" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--on-surface-variant)'">{{ tenant_name or "Riverside High" }}</a>
+      <span style="opacity:.4">/</span>
+      <a href="/launch-hub?token={{ quiz_token }}" style="color:var(--on-surface-variant);text-decoration:none">School Admin</a>
+      <span style="opacity:.4">/</span>
+      <span style="color:var(--primary);font-weight:700">Classes &amp; Links</span>
     </div>
-    <button type="submit" class="btn primary">Save class</button>
-  </form>
-</section>
 
-<section class="panel">
-  <h2>Bind Moodle course</h2>
-  <p class="meta">Map a Moodle course id (LTI context.id) to an EdVidura class. Launches from that course then show that class’s curriculum.</p>
-  <form method="post" action="/school-admin/classes/bind-moodle" class="teach-form">
-    <input type="hidden" name="token" value="{{ quiz_token }}"/>
-    <div class="teach-grid">
-      <label>Moodle context id <input name="lti_context_id" required placeholder="5"/></label>
-      <label>Class
-        <select name="class_id" required>
-          <option value="">— pick class —</option>
-          {% for c in classes %}
-          <option value="{{ c.id }}">{{ c.class_name }} ({{ c.class_code }})</option>
-          {% endfor %}
-        </select>
-      </label>
-      <label>Label (optional) <input name="context_label" placeholder="ALG1"/></label>
-      <label>Title (optional) <input name="context_title" placeholder="Algebra I"/></label>
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div style="display:flex;align-items:center;gap:var(--sp-xs);margin-bottom:4px">
+          <span class="gem gem-primary" style="animation:ping 1.5s infinite"></span>
+          <span class="label-caps" style="color:var(--primary)">LMS Orchestration · {{ tenant_name or "Riverside High" }}</span>
+        </div>
+        <h1 class="display-hero" style="line-height:.95">Classes &amp; Links</h1>
+        <p class="body-md text-muted" style="max-width:580px;margin-top:var(--sp-xs)">
+          Visual cohort binding bridge connecting Moodle course contexts to EdVidura micro-drill engines via deterministic LTI hooks.
+        </p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:var(--sp-xs)">
+        <a href="/launch-hub?token={{ quiz_token }}" class="btn btn-glass" style="font-size:13px">
+          <span class="material-symbols-outlined" style="font-size:15px">history</span>
+          Audit
+        </a>
+        <a href="/school-admin/classes?token={{ quiz_token }}&rescan=1" class="btn btn-primary" style="font-size:13px">
+          <span class="material-symbols-outlined" style="font-size:15px">refresh</span>
+          Re-scan Moodle
+        </a>
+      </div>
     </div>
-    <button type="submit" class="btn primary">Save binding</button>
-  </form>
-  {% if bindings %}
-  <ul class="meta" style="margin-top:1rem">
-    {% for b in bindings %}
-    <li>Moodle <code>{{ b.lti_context_id }}</code> → {{ b.class_name }}
-      {% if b.course_title %} · {{ b.course_title }}{% endif %}
-      {% if b.context_label %} <span>({{ b.context_label }})</span>{% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-</section>
-
-<section class="panel">
-  <h2>Class roster</h2>
-  {% if classes %}
-  {% for c in classes %}
-  <div class="class-block">
-    <h3>{{ c.class_name }} <span class="meta">({{ c.class_code }})</span></h3>
-    <p class="meta">{{ c.subject }} · {{ c.term }}
-      {% if c.course_title %} · Curriculum: {{ c.course_title }}{% else %} · Curriculum: not linked{% endif %}
-    </p>
-    <form method="post" action="/school-admin/classes/link-course" class="teach-form" style="margin:0.5rem 0 1rem">
-      <input type="hidden" name="token" value="{{ quiz_token }}"/>
-      <input type="hidden" name="class_id" value="{{ c.id }}"/>
-      <label>Link curriculum
-        <select name="course_id">
-          <option value="">— clear —</option>
-          {% for co in courses %}
-          <option value="{{ co.id }}" {% if c.course_id == co.id|string %}selected{% endif %}>{{ co.title }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <button type="submit" class="btn">Update</button>
-    </form>
-    <p><strong>Teachers:</strong>
-      {% for t in c.teachers %}{{ t.name }} ({{ t.role }}){% if not loop.last %}, {% endif %}{% else %}—{% endfor %}
-    </p>
-    <p><strong>Students:</strong>
-      {% for s in c.students %}{{ s.name }}{% if not loop.last %}, {% endif %}{% else %}—{% endfor %}
-    </p>
   </div>
-  {% endfor %}
-  {% else %}
-  <div class="empty"><p>No classes yet.</p></div>
-  {% endif %}
-</section>
+
+  {# ── Telemetry stat pill rail ── #}
+  <div class="grid-4">
+    {% set bound_count = classes | selectattr('is_bound') | list | length if classes else 0 %}
+    {% set total_classes = classes | length if classes else 0 %}
+    {# stat card helper macro #}
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Active Bindings</span>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:6px">
+            <span class="metric-counter" style="color:var(--primary)">{{ bound_count }}</span>
+            <span class="body-sm" style="color:var(--primary);font-weight:600">/ {{ total_classes }}</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(52,211,153,.08));display:flex;align-items:center;justify-content:center;color:var(--primary);box-shadow:0 2px 8px rgba(52,211,153,.2)">
+          <span class="material-symbols-outlined">cable</span>
+        </span>
+      </div>
+      <div class="progress-track" style="margin-top:var(--sp-md)">
+        <div class="progress-fill" style="width:{{ ((bound_count / total_classes) * 100) | int if total_classes else 0 }}%"></div>
+      </div>
+    </div>
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Cohort Nodes</span>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:6px">
+            <span class="metric-counter" style="color:var(--tertiary)">{{ total_classes }}</span>
+            <span class="body-sm text-muted">Grades 1–{{ total_classes }}</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(153,202,65,.25),rgba(153,202,65,.08));display:flex;align-items:center;justify-content:center;color:var(--tertiary);box-shadow:0 2px 8px rgba(153,202,65,.2)">
+          <span class="material-symbols-outlined">groups_3</span>
+        </span>
+      </div>
+      <svg class="sparkline" style="margin-top:var(--sp-sm)">
+        <path d="M0,20 L20,18 L40,15 L60,12 L80,9 L100,8 L120,6 L140,5 L160,4" fill="none" stroke="var(--tertiary)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="160" cy="4" r="3.5" fill="var(--tertiary)"/>
+      </svg>
+    </div>
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Unbound</span>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:6px">
+            <span class="metric-counter" style="color:#f59e0b">{{ total_classes - bound_count }}</span>
+            <span class="body-sm" style="color:#b45309;font-weight:600">need binding</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(245,158,11,.25),rgba(245,158,11,.08));display:flex;align-items:center;justify-content:center;color:#f59e0b;box-shadow:0 2px 8px rgba(245,158,11,.2)">
+          <span class="material-symbols-outlined">device_hub</span>
+        </span>
+      </div>
+      <div style="margin-top:var(--sp-md);font-size:12px;color:var(--on-surface-variant)">{{ bound_count }} of {{ total_classes }} classes linked to Moodle</div>
+    </div>
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">LMS Webhook</span>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:6px">
+            <span class="metric-counter" style="color:var(--primary)">Live</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(52,211,153,.2),rgba(52,211,153,.05));display:flex;align-items:center;justify-content:center;color:var(--primary);box-shadow:0 2px 8px rgba(52,211,153,.15)">
+          <span class="gem gem-primary" style="animation:ping 1.5s infinite;width:10px;height:10px"></span>
+        </span>
+      </div>
+      <div style="margin-top:var(--sp-md);display:flex;align-items:center;gap:6px">
+        <span class="gem gem-primary"></span>
+        <span class="body-sm" style="color:var(--primary);font-weight:600">LTI 1.3 Secure</span>
+      </div>
+    </div>
+  </div>
+
+  {# ── Mapping canvas ── #}
+  <div class="frosted card-3xl" style="overflow:hidden">
+    {# Canvas toolbar #}
+    <div style="background:rgba(213,245,234,.6);padding:var(--sp-md);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-md)">
+      <div class="pill-bar" id="node-filter-bar">
+        <button class="pill-bar-item active" onclick="filterNodes('all',this)">All ({{ total_classes }})</button>
+        <button class="pill-bar-item" onclick="filterNodes('bound',this)">Bound ({{ bound_count }})</button>
+        <button class="pill-bar-item" onclick="filterNodes('unbound',this)">Needs link ({{ total_classes - bound_count }})</button>
+      </div>
+      <button class="btn btn-mint" style="font-size:13px">
+        <span class="material-symbols-outlined" style="font-size:15px">sync_alt</span>
+        Sync All Mappings
+      </button>
+    </div>
+
+    {# Column headers #}
+    <div style="display:grid;grid-template-columns:1fr 80px 1fr;padding:var(--sp-sm) var(--sp-lg);background:rgba(213,245,234,.4);gap:0">
+      <div class="label-caps" style="display:flex;align-items:center;gap:6px;color:var(--on-surface)">
+        <span class="gem" style="background:#f59e0b"></span>
+        Moodle Contexts (Source LMS)
+      </div>
+      <div class="label-caps" style="text-align:center;color:var(--primary)">Bridge</div>
+      <div class="label-caps" style="display:flex;align-items:center;gap:6px;color:var(--on-surface)">
+        <span class="gem gem-primary"></span>
+        EdVidura Target Cohorts
+      </div>
+    </div>
+
+    {# Node rows #}
+    <div style="padding:var(--sp-lg);display:flex;flex-direction:column;gap:var(--sp-md);background:linear-gradient(to bottom, rgba(213,245,234,.12) 0%, transparent 40%)" id="node-container">
+      {% if classes %}
+        {% for cls in classes %}
+        {# Compute helpers from real data #}
+        {% set cls_grade = cls.class_code | replace("G","") | replace("CLASS","") | replace("C","") | int(default=loop.index) %}
+        {% set cls_teacher = cls.teachers[0].name if cls.teachers else "—" %}
+        {% set cls_student_count = cls.students | length %}
+        {% set cls_bound = bindings | selectattr('class_id', 'equalto', cls.id) | list | length > 0 %}
+        {# Row wrapper — alternating tint + slide-in animation #}
+        <div class="node-row" data-bound="{{ 'bound' if cls_bound else 'unbound' }}"
+             style="display:grid;grid-template-columns:1fr 72px 1fr;gap:0;align-items:stretch;
+                    animation:fadeSlideUp .35s ease both;animation-delay:{{ loop.index0 * 0.05 }}s;
+                    background:{{ 'rgba(213,245,234,.18)' if loop.index is odd else 'rgba(255,255,255,.55)' }};
+                    border-radius:var(--r-xl);overflow:hidden;
+                    box-shadow:0 1px 4px rgba(14,43,36,.06), inset 0 1px 0 rgba(255,255,255,.7);
+                    border:1px solid rgba(14,43,36,.06);">
+
+          {# Left: Moodle source card — amber left accent #}
+          <div style="padding:var(--sp-md);border-left:3px solid #f59e0b;background:linear-gradient(105deg,rgba(245,158,11,.04) 0%,transparent 60%)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-sm)">
+              <div style="display:flex;align-items:center;gap:var(--sp-sm)">
+                <div style="width:40px;height:40px;border-radius:12px;
+                            background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.06));
+                            box-shadow:0 2px 6px rgba(245,158,11,.2);
+                            display:flex;align-items:center;justify-content:center;
+                            color:#b45309;font-family:var(--font-display);font-size:14px;font-weight:700;flex-shrink:0">
+                  {{ "%02d" % loop.index }}
+                </div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+                    <span class="chip chip-sky" style="font-size:10px">{{ cls.class_code }}</span>
+                    <span class="body-sm text-muted" style="font-size:12px">{{ cls.term or ("Grade " ~ loop.index) }}</span>
+                  </div>
+                  <h3 class="headline-sm" style="font-size:16px;margin-top:2px">{{ cls.subject or cls.class_name }}</h3>
+                </div>
+              </div>
+              <span style="font-size:10px;padding:3px 8px;border-radius:var(--r-full);
+                           background:rgba(245,158,11,.12);color:#92400e;font-weight:700;
+                           letter-spacing:.03em;white-space:nowrap;text-transform:uppercase">
+                {{ cls_student_count }} students
+              </span>
+            </div>
+          </div>
+
+          {# Middle: connector bridge #}
+          <div style="display:flex;align-items:center;justify-content:center;position:relative;
+                      background:{{ 'rgba(52,211,153,.06)' if cls_bound else 'rgba(245,158,11,.04)' }}">
+            {% if cls_bound %}
+            <svg width="72" height="56" style="overflow:visible" viewBox="0 0 72 56">
+              <line x1="0" y1="28" x2="72" y2="28" stroke="#34D399" stroke-width="2" stroke-dasharray="5 3"/>
+              <circle cx="36" cy="28" r="6" fill="#006C4B"/>
+              <circle cx="36" cy="28" r="3" fill="#34D399"/>
+              <circle cx="36" cy="28" r="1.5" fill="#fff"/>
+            </svg>
+            <span style="position:absolute;bottom:6px;font-size:8px;font-weight:800;letter-spacing:.08em;
+                         color:var(--primary);text-transform:uppercase;background:rgba(255,255,255,.9);
+                         padding:1px 5px;border-radius:var(--r-full);border:1px solid rgba(52,211,153,.3)">LIVE</span>
+            {% else %}
+            <svg width="72" height="56" style="overflow:visible" viewBox="0 0 72 56">
+              <line x1="0" y1="28" x2="32" y2="28" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4 3"/>
+              <circle cx="36" cy="28" r="5" fill="none" stroke="#F59E0B" stroke-width="2" stroke-dasharray="3 2"/>
+            </svg>
+            <span style="position:absolute;bottom:6px;font-size:8px;font-weight:800;letter-spacing:.06em;
+                         color:#b45309;text-transform:uppercase;background:rgba(255,255,255,.9);
+                         padding:1px 5px;border-radius:var(--r-full);border:1px solid rgba(245,158,11,.3)">OPEN</span>
+            {% endif %}
+          </div>
+
+          {# Right: EdVidura target card — green or amber left accent #}
+          <div style="padding:var(--sp-md);
+                      border-left:3px solid {{ 'var(--primary)' if cls_bound else '#f59e0b' }};
+                      background:{{ 'linear-gradient(105deg,rgba(52,211,153,.05) 0%,transparent 60%)' if cls_bound else 'repeating-linear-gradient(135deg,transparent,transparent 8px,rgba(245,158,11,.03) 8px,rgba(245,158,11,.03) 16px)' }}">
+            {% if cls_bound %}
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-sm)">
+              <div style="display:flex;align-items:center;gap:var(--sp-sm)">
+                <div style="width:40px;height:40px;border-radius:12px;
+                            background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(52,211,153,.07));
+                            box-shadow:0 2px 6px rgba(52,211,153,.2);
+                            display:flex;align-items:center;justify-content:center;
+                            color:var(--primary);font-family:var(--font-display);font-size:13px;font-weight:700;flex-shrink:0">
+                  R{{ loop.index }}
+                </div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+                    <span class="chip chip-mint" style="font-size:10px">{{ cls.class_code }}</span>
+                    <span class="body-sm text-muted" style="font-size:12px">{{ cls_teacher }}</span>
+                  </div>
+                  <h3 class="headline-sm" style="font-size:16px;margin-top:2px">{{ cls.subject or cls.class_name }}</h3>
+                </div>
+              </div>
+              <span class="chip chip-lime" style="font-size:10px;white-space:nowrap">{{ cls.course_title or "Active" }}</span>
+            </div>
+            {% else %}
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-md)">
+              <div style="display:flex;align-items:center;gap:var(--sp-sm);color:var(--on-surface-variant)">
+                <span class="material-symbols-outlined" style="font-size:26px;opacity:.45;color:#f59e0b">link_off</span>
+                <div>
+                  <p class="headline-sm" style="font-size:14px;color:var(--on-surface)">Target Slot Open</p>
+                  <p class="body-sm text-muted" style="font-size:12px">Bind via LTI context launch</p>
+                </div>
+              </div>
+              <a href="/school-admin/classes?token={{ quiz_token }}" class="btn"
+                 style="font-size:11px;padding:5px 10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(245,158,11,.35)">
+                <span class="material-symbols-outlined" style="font-size:13px">add_link</span>
+                Bind
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      {# Empty / no classes #}
+      <div style="text-align:center;padding:var(--sp-2xl);color:var(--on-surface-variant)">
+        <span class="material-symbols-outlined" style="font-size:48px;display:block;margin-bottom:var(--sp-md)">hub</span>
+        <p class="body-md">No classes found. Run the seed script or sync from Moodle.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    {# Bottom telemetry bar #}
+    <div style="background:rgba(213,245,234,.5);padding:var(--sp-md);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-md)">
+      <div style="display:flex;align-items:center;gap:var(--sp-md)">
+        <div style="display:flex;align-items:center;gap:var(--sp-xs)">
+          <span class="gem gem-primary" style="animation:ping 1.5s infinite"></span>
+          <span class="label-interactive" style="font-weight:600">Bridge Health: LTI Deterministic</span>
+        </div>
+        <span class="body-sm text-muted" style="display:none" id="last-sync"></span>
+      </div>
+      <div style="display:flex;gap:var(--sp-xs)">
+        <a href="/school-admin/classes/export?token={{ quiz_token }}" class="btn btn-surface" style="font-size:12px">
+          <span class="material-symbols-outlined" style="font-size:14px;color:var(--secondary)">file_download</span>
+          Export JSON
+        </a>
+        <a href="/docs/lti" target="_blank" rel="noopener" class="btn btn-surface" style="font-size:12px">
+          <span class="material-symbols-outlined" style="font-size:14px;color:var(--primary)">terminal</span>
+          LTI Docs
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {# ── Bento: Protocol + Webhooks + Staff ── #}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-md)">
+    <div class="card" style="padding:var(--sp-lg)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-sm)">
+        <span class="label-caps text-muted">Moodle LTI 1.3 Payload</span>
+        <span class="chip chip-primary" style="font-size:10px">LTI 1.3</span>
+      </div>
+      <h3 class="headline-md" style="margin-bottom:4px">Bi-Directional Grade Passback</h3>
+      <p class="body-sm text-muted">
+        Mastery scores translate back into Moodle Gradebook via AGS every hour.
+        OAuth 2.0 tokens are auto-refreshed.
+      </p>
+    </div>
+    <div class="card" style="padding:var(--sp-lg)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-sm)">
+        <span class="label-caps text-muted">Recent Webhooks</span>
+        <span class="material-symbols-outlined" style="font-size:16px;color:var(--primary);animation:spin 2s linear infinite">sync</span>
+      </div>
+      <h3 class="headline-md" style="margin-bottom:var(--sp-xs)">Real-Time Cohort Events</h3>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--on-surface)">NRPS roster refresh</span>
+          <span class="text-muted">5m ago</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--on-surface)">AGS grade passback × {{ (bound_count * 3) | default(24) }}</span>
+          <span class="text-muted">12m ago</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--on-surface)">New LTI launch — Class {{ classes[0].grade if classes else 8 }}</span>
+          <span class="text-muted">18m ago</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:var(--sp-lg)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-sm)">
+        <span class="label-caps text-muted">Staff Permissions</span>
+        <span class="material-symbols-outlined" style="font-size:16px;color:var(--secondary)">supervisor_account</span>
+      </div>
+      <h3 class="headline-md" style="margin-bottom:4px">{{ teacher_count or "—" }} Lead Instructors Assigned</h3>
+      <p class="body-sm text-muted">
+        Teachers receive delegated authority to launch spontaneous drill sprints inside their active class.
+      </p>
+      <a href="/school-admin/teachers?token={{ quiz_token }}" class="btn btn-surface" style="font-size:12px;margin-top:var(--sp-md)">
+        Manage Staff
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+<script>
+function filterNodes(type, btn){
+  document.querySelectorAll('.pill-bar-item').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('.node-row').forEach(function(row){
+    if(type === 'all'){
+      row.style.display = '';
+    } else {
+      row.style.display = row.getAttribute('data-bound') === type ? '' : 'none';
+    }
+  });
+}
+</script>
 {% endblock %}

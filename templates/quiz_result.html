@@ -1,192 +1,218 @@
 {% extends "base_shell.html" %}
 {% block content %}
-{% if receipt and receipt.practice %}
-<div class="banner-note info">Practice attempt — not sent to Moodle gradebook.</div>
-{% elif grade_sent %}
-<div class="banner-note ok">Score sent to the Moodle gradebook.</div>
-{% elif grade_error %}
-<div class="banner-note info">Saved in EdVidura. Moodle sync note: {{ grade_error }}</div>
-{% else %}
-<div class="banner-note info">Saved in EdVidura. Moodle gradebook sync was not available on this launch.</div>
-{% endif %}
-
-{% if stickers %}
-<div class="sticker-row">
-  {% for s in stickers %}
-  <span class="sticker sticker-{{ s.tone }}">{{ s.label }}</span>
-  {% endfor %}
-</div>
-{% endif %}
-
-<div class="stats">
-  <div class="stat"><div class="stat-ico i1">★</div><div><b>{{ score }}/{{ max_score }}</b><span>Score</span></div></div>
-  <div class="stat"><div class="stat-ico i2">✓</div><div><b>{{ score }}</b><span>Correct</span></div></div>
-  <div class="stat"><div class="stat-ico i3">×</div><div><b>{{ max_score - score }}</b><span>Missed</span></div></div>
-  <div class="stat"><div class="stat-ico i4">↻</div><div><b>Retry</b><span>Missed only</span></div></div>
-</div>
-
-{% if has_misses %}
-<section class="panel remediation-loop">
-  <div class="panel-head">
-    <h2>{% if gap_path and gap_path.active %}{% if gap_path.mode == 'difference' %}{% if gap_path.persisted %}Difference plan saved{% else %}Difference training path{% endif %}{% elif gap_path.persisted %}Learning plan saved{% else %}Gap training path{% endif %}{% else %}Closed remediation loop{% endif %}</h2>
-    <span class="meta">{% if gap_path and gap_path.mode == 'difference' %}D23 · {% elif gap_path and gap_path.persisted %}PLE · {% endif %}Miss → review → practice → graded</span>
+<div class="page-wrap">
+  {% if receipt and receipt.practice %}
+  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(64,194,253,.1);border:1px solid rgba(64,194,253,.22);border-radius:var(--r-xl);color:var(--secondary)">
+    <span class="material-symbols-outlined">fitness_center</span>
+    <span class="body-md">Practice attempt — not sent to Moodle gradebook.</span>
   </div>
-  {% if is_practice %}
-  <p class="lede">Practice done. Next: <strong>graded retry</strong> of the missed items (can sync to Moodle).</p>
-  <div class="actions" style="margin-top:0.75rem">
-    <a class="btn primary btn-lg" href="{{ graded_retry_href }}">Graded retry</a>
-    {% if loop_review_href %}
-    <a class="btn secondary" href="{{ loop_review_href }}">Re-open review</a>
-    {% endif %}
+  {% elif grade_sent %}
+  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.26);border-radius:var(--r-xl);color:var(--primary)">
+    <span class="material-symbols-outlined">check_circle</span>
+    <span class="body-md">Score sent to the Moodle gradebook.</span>
   </div>
-  {% elif gap_path and gap_path.active %}
-  <ol class="loop-steps" style="line-height:1.7;padding-left:1.25rem;margin:0.5rem 0 0">
-    {% for step in gap_path.steps %}
-    <li>
-      <a class="link" href="{{ step.href }}">{{ step.label }}</a>
-      {% if step.meta %}<span class="meta"> — {{ step.meta }}</span>{% endif %}
-    </li>
-    {% endfor %}
-  </ol>
-  <div class="actions" style="margin-top:1rem">
-    <a class="btn primary" href="{{ gap_path.first_href }}">1 · Start gap path</a>
-    <a class="btn secondary" href="{{ gap_path.practice_href }}">Practice</a>
-    <a class="btn secondary" href="{{ gap_path.graded_href }}">Graded retry</a>
-    <a class="btn secondary" href="/learn/gap?token={{ quiz_token }}">Full gap page</a>
+  {% elif grade_error %}
+  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:var(--r-xl);color:#b45309">
+    <span class="material-symbols-outlined">info</span>
+    <span class="body-md">Saved in EdVidura. Moodle sync note: {{ grade_error }}</span>
   </div>
   {% else %}
-  <ol class="loop-steps" style="line-height:1.7;padding-left:1.25rem;margin:0.5rem 0 0">
-    <li><strong>Review</strong> — open the pinned lesson or manual section for a missed skill.</li>
-    <li><strong>Practice</strong> — sandbox quiz on missed items (no Moodle sync).</li>
-    <li><strong>Graded retry</strong> — same missed items, score can sync to Moodle.</li>
-  </ol>
-  <div class="actions" style="margin-top:1rem">
-    {% if loop_review_href %}
-    <a class="btn primary" href="{{ loop_review_href }}">1 · {{ loop_review_label }}</a>
-    {% endif %}
-    <a class="btn secondary" href="{{ practice_href }}">2 · Practice lane</a>
-    <a class="btn secondary" href="{{ graded_retry_href }}">3 · Graded retry</a>
+  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(64,194,253,.08);border:1px solid rgba(64,194,253,.18);border-radius:var(--r-xl);color:var(--on-surface)">
+    <span class="material-symbols-outlined">info</span>
+    <span class="body-md">Saved in EdVidura. Moodle gradebook sync was not available on this launch.</span>
   </div>
   {% endif %}
-</section>
-{% endif %}
 
-{% if receipt %}
-<div class="card receipt-card">
-  <div class="card-h">
-    <h2>Grade receipt</h2>
-    {% if receipt.sealed %}<span class="badge ok">Sealed</span>{% else %}<span class="badge">Evidence</span>{% endif %}
-  </div>
-  <dl class="kv receipt-kv">
-    <dt>Attempt</dt><dd><code>{{ receipt.attempt_id }}</code></dd>
-    <dt>Score</dt><dd>{{ receipt.score }}/{{ receipt.max_score }} ({{ receipt.percent }}%)</dd>
-    <dt>Moodle gradebook</dt>
-    <dd>{% if receipt.practice %}Skipped (practice){% elif receipt.grade_sent %}Synced{% elif receipt.ags_available %}Pending / not synced{% else %}AGS off on launch{% endif %}</dd>
-    <dt>xAPI statement</dt>
-    <dd>{% if receipt.xapi_statement_id %}<code>{{ receipt.xapi_statement_id }}</code>{% else %}—{% endif %}</dd>
-    {% if skill_xapi_count %}
-    <dt>Skill xAPI</dt>
-    <dd>{{ skill_xapi_count }} competency statement{% if skill_xapi_count != 1 %}s{% endif %}</dd>
-    {% endif %}
-    <dt>Issued</dt><dd class="meta">{{ receipt.issued_at }}</dd>
-    {% if receipt.seal %}
-    <dt>Seal (HMAC)</dt><dd><code class="meta">{{ receipt.seal[:24] }}…</code></dd>
-    {% endif %}
-  </dl>
-  <p class="lede" style="margin:0.75rem 0 0">Moodle owns the official grade; EdVidura keeps the sealed learning story.</p>
-  <div class="actions" style="margin-top:0.75rem">
-    <a class="btn secondary" href="/quiz/result/{{ attempt_id }}/receipt.json?token={{ quiz_token }}">Download sealed JSON</a>
-    <a class="btn secondary" href="/receipts/verify?token={{ quiz_token }}">Verify a seal</a>
-  </div>
-</div>
-{% endif %}
-
-{% if competencies %}
-<section class="panel competency-panel">
-  <div class="panel-head">
-    <h2>Competency map</h2>
-    <span class="meta">Skills from this attempt</span>
-  </div>
-  <div class="comp-bars">
-    {% for c in competencies %}
-    <div class="comp-row status-{{ c.status }}">
-      <div class="comp-label">{{ c.label }}</div>
-      <div class="comp-track" aria-hidden="true"><i style="width: {{ c.percent if c.percent is not none else 0 }}%"></i></div>
-      <div class="comp-pct">{% if c.percent is not none %}{{ c.percent }}%{% else %}—{% endif %}</div>
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">emoji_events</span>
+          My results
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">{{ score }}/{{ max_score }}</h1>
+        <p class="body-md" style="color:var(--outline-variant);margin-top:4px">{{ learner_name or "You" }} · {{ course or "This quiz" }}</p>
+      </div>
+      {% if stickers %}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        {% for s in stickers %}
+        <span class="chip" style="background:rgba(255,255,255,.12);color:var(--surface-container-lowest)">{{ s.label }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
     </div>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
+  </section>
 
-<div class="grid-2">
-  <div class="card">
-    <div class="card-h"><h2>Breakdown</h2></div>
-    {% if review %}
-      {% for item in review %}
-      <div class="course-item {% if not item.correct %}now{% endif %}">
-        <div class="thumb {% if item.correct %}t2{% else %}t3{% endif %}">{% if item.correct %}✓{% else %}×{% endif %}</div>
-        <div>
-          <div class="ci-title">{{ item.prompt }}</div>
-          <div class="ci-meta">
-            {% if item.correct %}Correct
-            {% else %}Missed{% if item.correct_choice %} · correct: {{ item.correct_choice }}{% endif %}
-            {% endif %}
+  <div class="grid-4">
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Score</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--primary)">{{ score }}/{{ max_score }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Correct</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--tertiary)">{{ score }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Missed</span>
+      <div class="metric-counter" style="margin-top:6px;color:#f59e0b">{{ max_score - score }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Next</span>
+      <div class="body-md" style="margin-top:10px;font-weight:600">{% if has_misses %}Retry missed{% else %}Keep going{% endif %}</div>
+    </div>
+  </div>
+
+  {% if has_misses %}
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <div class="section-head">
+      <div>
+        <h2 class="headline-md">{% if gap_path and gap_path.active %}{% if gap_path.mode == 'difference' %}{% if gap_path.persisted %}Difference plan saved{% else %}Difference training path{% endif %}{% elif gap_path.persisted %}Learning plan saved{% else %}Gap training path{% endif %}{% else %}Closed remediation loop{% endif %}</h2>
+        <p class="body-sm text-muted">{% if gap_path and gap_path.mode == 'difference' %}D23 · {% elif gap_path and gap_path.persisted %}PLE · {% endif %}Miss → review → practice → graded</p>
+      </div>
+    </div>
+    {% if is_practice %}
+    <p class="body-md">Practice done. Next: <strong>graded retry</strong> of the missed items (can sync to Moodle).</p>
+    <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap;margin-top:var(--sp-md)">
+      <a class="btn btn-primary" href="{{ graded_retry_href }}">Graded retry</a>
+      {% if loop_review_href %}<a class="btn btn-glass" href="{{ loop_review_href }}">Re-open review</a>{% endif %}
+    </div>
+    {% elif gap_path and gap_path.active %}
+    <ol style="margin:0;padding-left:1.25rem;display:flex;flex-direction:column;gap:8px">
+      {% for step in gap_path.steps %}
+      <li>
+        <a href="{{ step.href }}" style="color:var(--primary);font-weight:600;text-decoration:none">{{ step.label }}</a>
+        {% if step.meta %}<span class="body-sm text-muted"> — {{ step.meta }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+    <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap;margin-top:var(--sp-lg)">
+      <a class="btn btn-primary" href="{{ gap_path.first_href }}">Start gap path</a>
+      <a class="btn btn-glass" href="{{ gap_path.practice_href }}">Practice</a>
+      <a class="btn btn-surface" href="{{ gap_path.graded_href }}">Graded retry</a>
+      <a class="btn btn-surface" href="/learn/gap?token={{ quiz_token }}">Full plan</a>
+    </div>
+    {% else %}
+    <div class="grid-4" style="margin-bottom:var(--sp-md)">
+      <div class="card" style="padding:var(--sp-md)"><span class="label-caps text-muted">1 · Review</span><p class="body-sm" style="margin-top:6px">Open the pinned lesson or manual.</p></div>
+      <div class="card" style="padding:var(--sp-md)"><span class="label-caps text-muted">2 · Practice</span><p class="body-sm" style="margin-top:6px">Sandbox quiz, no Moodle sync.</p></div>
+      <div class="card" style="padding:var(--sp-md)"><span class="label-caps text-muted">3 · Graded</span><p class="body-sm" style="margin-top:6px">Retry missed items for a score.</p></div>
+    </div>
+    <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+      {% if loop_review_href %}<a class="btn btn-primary" href="{{ loop_review_href }}">{{ loop_review_label }}</a>{% endif %}
+      <a class="btn btn-glass" href="{{ practice_href }}">Practice lane</a>
+      <a class="btn btn-surface" href="{{ graded_retry_href }}">Graded retry</a>
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <div class="grid-12-7-5">
+    <section class="frosted" style="padding:var(--sp-xl)">
+      <h2 class="headline-md" style="margin-bottom:var(--sp-md)">Breakdown</h2>
+      {% if review %}
+      <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+        {% for item in review %}
+        <div class="card" style="padding:var(--sp-md);border-left:3px solid {{ 'var(--primary)' if item.correct else '#f59e0b' }}">
+          <div style="display:flex;justify-content:space-between;gap:var(--sp-sm);align-items:flex-start">
+            <div>
+              <div class="headline-sm" style="font-size:15px">{{ item.prompt }}</div>
+              <p class="body-sm text-muted" style="margin-top:4px">
+                {% if item.correct %}Correct{% else %}Missed{% if item.correct_choice %} · correct: {{ item.correct_choice }}{% endif %}{% endif %}
+              </p>
+            </div>
+            {% if item.correct %}<span class="chip chip-mint">1 pt</span>{% else %}<span class="chip" style="background:rgba(245,158,11,.12);color:#92400e">0 pt</span>{% endif %}
           </div>
           {% if item.teleport_href %}
-          <div class="teleport">
-            <a class="link" href="{{ item.teleport_href }}">{{ item.teleport_label }} →</a>
-            <span class="meta">{{ item.teleport_hint }}</span>
-          </div>
+          <a href="{{ item.teleport_href }}" class="body-sm" style="display:inline-block;margin-top:8px;color:var(--primary);font-weight:600;text-decoration:none">{{ item.teleport_label }} →</a>
+          <span class="body-sm text-muted"> {{ item.teleport_hint }}</span>
           {% endif %}
           {% if not item.correct %}
-          <form method="post" action="/learn/ai/hint" style="margin-top:0.4rem">
+          <form method="post" action="/learn/ai/hint" style="margin-top:8px">
             <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
             <input type="hidden" name="attempt_id" value="{{ attempt_id }}"/>
             <input type="hidden" name="prompt" value="{{ item.prompt }}"/>
             <input type="hidden" name="correct_choice" value="{{ item.correct_choice or '' }}"/>
-            <button type="submit" class="btn secondary">AI hint</button>
+            <button type="submit" class="btn btn-surface" style="font-size:12px;padding:5px 10px">
+              <span class="material-symbols-outlined" style="font-size:14px">lightbulb</span>
+              AI hint
+            </button>
           </form>
           {% endif %}
           {% if item.manual_href %}
-          <div class="teleport">
-            <a class="link" href="{{ item.manual_href }}">{{ item.manual_label or "Pinned manual section" }} →</a>
-            <span class="meta">Version-pinned · then practice → graded retry</span>
+          <div style="margin-top:8px">
+            <a href="{{ item.manual_href }}" style="color:var(--primary);font-weight:600;text-decoration:none;font-size:13px">{{ item.manual_label or "Pinned manual section" }} →</a>
           </div>
           {% endif %}
           {% if item.practice_loop_href and not item.correct %}
-          <div class="teleport">
-            <a class="link" href="{{ item.practice_loop_href }}">Practice this skill →</a>
-            <a class="link" href="{{ item.graded_loop_href }}">Graded retry →</a>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <a class="btn btn-glass" style="font-size:12px;padding:5px 10px" href="{{ item.practice_loop_href }}">Practice this skill</a>
+            <a class="btn btn-surface" style="font-size:12px;padding:5px 10px" href="{{ item.graded_loop_href }}">Graded retry</a>
           </div>
           {% endif %}
         </div>
-        {% if item.correct %}<span class="badge ok">1 pt</span>
-        {% else %}<span class="badge warn">0 pt</span>{% endif %}
+        {% endfor %}
       </div>
-      {% endfor %}
-    {% else %}
-      <p class="lede">{{ learner_name }} · {{ course }}</p>
-    {% endif %}
-  </div>
-  <div class="card">
-    <div class="card-h"><h2>Next step</h2></div>
-    <p class="lede" style="margin:0">
-      {% if score == max_score %}Nice work — full marks.
-      {% elif is_practice %}Finish the loop with a graded retry.
-      {% elif score == 0 %}Open the pinned manual or lesson, practice, then graded retry.
-      {% else %}Miss → manual section → practice lane → graded retry.{% endif %}
-    </p>
-    <div class="actions" style="margin-top:1rem">
-      {% if is_practice and has_misses %}
-      <a class="btn primary" href="{{ graded_retry_href }}">Graded retry</a>
       {% else %}
-      <a class="btn primary" href="{{ retry_href }}">Retry missed</a>
-      <a class="btn secondary" href="{{ practice_href }}">Practice lane</a>
+      <p class="body-sm text-muted">{{ learner_name }} · {{ course }}</p>
       {% endif %}
-      <a class="btn secondary" href="/learn/coach?token={{ quiz_token }}">Study coach</a>
-      <a class="btn secondary" href="/lessons?token={{ quiz_token }}">Lessons</a>
-    </div>
+    </section>
+
+    <aside style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:8px">Next step</h3>
+        <p class="body-sm text-muted">
+          {% if score == max_score %}Nice work — full marks.
+          {% elif is_practice %}Finish the loop with a graded retry.
+          {% elif score == 0 %}Open the pinned manual or lesson, practice, then graded retry.
+          {% else %}Miss → manual section → practice lane → graded retry.{% endif %}
+        </p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:var(--sp-md)">
+          {% if is_practice and has_misses %}
+          <a class="btn btn-primary" href="{{ graded_retry_href }}">Graded retry</a>
+          {% else %}
+          <a class="btn btn-primary" href="{{ retry_href }}">Retry missed</a>
+          <a class="btn btn-surface" href="{{ practice_href }}">Practice lane</a>
+          {% endif %}
+          <a class="btn btn-surface" href="/learn/coach?token={{ quiz_token }}">Study coach</a>
+          <a class="btn btn-glass" href="/lessons?token={{ quiz_token }}">Lessons</a>
+        </div>
+      </div>
+
+      {% if competencies %}
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Competency map</h3>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          {% for c in competencies %}
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span class="body-sm">{{ c.label }}</span>
+              <span class="body-sm text-muted">{% if c.percent is not none %}{{ c.percent }}%{% else %}—{% endif %}</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" style="width:{{ c.percent if c.percent is not none else 0 }}%"></div></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if receipt %}
+      <div class="card" style="padding:var(--sp-lg)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-sm)">
+          <h3 class="headline-sm">Grade receipt</h3>
+          {% if receipt.sealed %}<span class="chip chip-mint">Sealed</span>{% else %}<span class="chip chip-sky">Evidence</span>{% endif %}
+        </div>
+        <div class="body-sm" style="display:flex;flex-direction:column;gap:6px">
+          <div><span class="text-muted">Score</span> · {{ receipt.score }}/{{ receipt.max_score }} ({{ receipt.percent }}%)</div>
+          <div><span class="text-muted">Moodle</span> · {% if receipt.practice %}Skipped (practice){% elif receipt.grade_sent %}Synced{% elif receipt.ags_available %}Pending{% else %}AGS off{% endif %}</div>
+          {% if skill_xapi_count %}<div><span class="text-muted">Skill xAPI</span> · {{ skill_xapi_count }}</div>{% endif %}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:var(--sp-md)">
+          <a class="btn btn-surface" href="/quiz/result/{{ attempt_id }}/receipt.json?token={{ quiz_token }}" style="font-size:12px">Download JSON</a>
+          <a class="btn btn-glass" href="/receipts/verify?token={{ quiz_token }}" style="font-size:12px">Verify a seal</a>
+        </div>
+      </div>
+      {% endif %}
+    </aside>
   </div>
 </div>
 {% endblock %}

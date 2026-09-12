@@ -3,8 +3,10 @@
 from app.modules.school.service import (
     class_moodle_filter_labels,
     class_roster_match_keys,
+    class_workspace_snapshot,
     create_class,
     create_teacher,
+    find_lead_class_for_teacher,
     find_school_admin,
     get_lti_context_binding,
     list_classes_with_roster,
@@ -13,6 +15,7 @@ from app.modules.school.service import (
     list_school_students,
     list_teachers,
     match_class_for_context,
+    resolve_bound_course,
     resolve_lti_context_binding,
     school_snapshot,
     set_class_course,
@@ -31,6 +34,7 @@ __all__ = [
     "create_teacher",
     "create_class",
     "set_class_course",
+    "find_lead_class_for_teacher",
     "list_lti_context_bindings",
     "get_lti_context_binding",
     "upsert_lti_context_binding",
@@ -38,4 +42,6 @@ __all__ = [
     "suggest_course_for_class",
     "resolve_lti_context_binding",
     "school_snapshot",
+    "class_workspace_snapshot",
+    "resolve_bound_course",
 ]

@@ -1,9 +1,9 @@
 <?php
 /**
- * Moodle logins for the school hierarchy demo.
+ * Moodle logins for Riverside Classes 1–10 (+ Lakeside peer sample).
  *
- * Moodle site admin (admin) creates schools/tools.
- * Each school has its own admin + teachers + students.
+ * Password for all demo users: Demo@12345
+ * Site admin remains: admin / Admin@12345
  *
  * Run: php /tmp/seed_moodle_users.php
  */
@@ -14,16 +14,26 @@ require_once $CFG->dirroot . '/user/lib.php';
 
 $password = 'Demo@12345';
 
+$teachers = [
+    1 => ['riverside_c01_t', 'Priya', 'Sharma'],
+    2 => ['riverside_c02_t', 'James', 'Cole'],
+    3 => ['riverside_c03_t', 'Ana', 'Ruiz'],
+    4 => ['riverside_c04_t', 'Omar', 'Haddad'],
+    5 => ['riverside_c05_t', 'Helen', 'Park'],
+    6 => ['riverside_c06_t', 'Mei', 'Chen'],
+    7 => ['riverside_c07_t', 'Sam', 'Okonkwo'],
+    8 => ['riverside_priya', 'Priya', 'Sharma'], // Class 8 lead (classic demo)
+    9 => ['riverside_c09_t', 'Tom', 'Brooks'],
+    10 => ['riverside_c10_t', 'Nina', 'Rossi'],
+];
+
 $users = [
-    // Riverside High — school admin, teachers, students
     ['riverside_admin', 'Riverside', 'Admin', 'admin@riverside.test', 'schooladmin'],
-    ['riverside_priya', 'Priya', 'Sharma', 'priya.sharma@riverside.test', 'editingteacher'],
-    ['riverside_james', 'James', 'Cole', 'james.cole@riverside.test', 'editingteacher'],
+    // Keep classic Class 8 students
     ['riverside_alice', 'Alice', 'Nguyen', 'alice.nguyen@riverside.test', 'student'],
     ['riverside_bob', 'Bob', 'Okonkwo', 'bob.okonkwo@riverside.test', 'student'],
     ['riverside_carol', 'Carol', 'Patel', 'carol.patel@riverside.test', 'student'],
-
-    // Lakeside Academy — school admin, teachers, students
+    // Lakeside peer
     ['lakeside_admin', 'Lakeside', 'Admin', 'admin@lakeside.test', 'schooladmin'],
     ['lakeside_helen', 'Helen', 'Park', 'helen.park@lakeside.test', 'editingteacher'],
     ['lakeside_omar', 'Omar', 'Haddad', 'omar.haddad@lakeside.test', 'editingteacher'],
@@ -31,6 +41,39 @@ $users = [
     ['lakeside_evan', 'Evan', 'Kim', 'evan.kim@lakeside.test', 'student'],
     ['lakeside_fay', 'Fay', 'Hassan', 'fay.hassan@lakeside.test', 'student'],
 ];
+
+foreach ($teachers as $grade => [$username, $firstname, $lastname]) {
+    $users[] = [
+        $username,
+        $firstname,
+        $lastname,
+        "c{$grade}.teacher@riverside.test",
+        'editingteacher',
+    ];
+}
+
+$first = ['Dev', 'Elena', 'Finn', 'Gita', 'Hugo', 'Ivy', 'Jon', 'Kira', 'Leo', 'Mira'];
+$last = ['Singh', 'Costa', 'Nair', 'Frost', 'Walsh', 'Gupta', 'Diaz', 'Khan', 'Berg', 'Shaw'];
+$si = 0;
+for ($grade = 1; $grade <= 10; $grade++) {
+    for ($n = 1; $n <= 5; $n++) {
+        // Class 8 seats 1–3 already covered by alice/bob/carol
+        if ($grade === 8 && $n <= 3) {
+            continue;
+        }
+        $username = sprintf('riverside_c%02d_s%02d', $grade, $n);
+        $fn = $first[$si % count($first)];
+        $ln = $last[$si % count($last)];
+        $si++;
+        $users[] = [
+            $username,
+            $fn,
+            $ln,
+            sprintf('c%02d.s%02d@riverside.test', $grade, $n),
+            'student',
+        ];
+    }
+}
 
 foreach ($users as [$username, $firstname, $lastname, $email, $rolehint]) {
     $existing = $DB->get_record('user', ['username' => $username, 'deleted' => 0]);
@@ -68,5 +111,7 @@ foreach ($users as [$username, $firstname, $lastname, $email, $rolehint]) {
 }
 
 echo "PASSWORD_FOR_ALL={$password}\n";
-echo "SITE_ADMIN=admin / Admin@12345 (creates schools)\n";
+echo "SITE_ADMIN=admin / Admin@12345\n";
+echo "CLASS_8_TEACHER=riverside_priya / {$password}\n";
+echo "CLASS_8_STUDENT=riverside_alice / {$password}\n";
 echo "Done.\n";

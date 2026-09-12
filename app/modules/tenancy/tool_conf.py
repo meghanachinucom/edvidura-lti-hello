@@ -56,10 +56,7 @@ def build_tool_conf_from_db(*, require_platforms: bool = True) -> ToolConfDict:
         }
 
     tool_conf = ToolConfDict(conf)
-    public_pem = None
-    public_key = Path("keys") / "public.key"
-    if public_key.exists():
-        public_pem = public_key.read_text(encoding="utf-8")
+    public_pem = _public_pem_for_tool(settings.private_key_pem)
 
     for issuer, clients in conf.items():
         for client in clients:
@@ -71,3 +68,25 @@ def build_tool_conf_from_db(*, require_platforms: bool = True) -> ToolConfDict:
                 tool_conf.set_public_key(issuer, public_pem, client_id=cid)
 
     return tool_conf
+
+
+def _public_pem_for_tool(private_pem: str) -> str | None:
+    """Prefer keys/public.key; otherwise derive from the private PEM (Railway)."""
+    public_key = Path("keys") / "public.key"
+    if public_key.exists():
+        return public_key.read_text(encoding="utf-8")
+    try:
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.serialization import load_pem_private_key
+
+        private = load_pem_private_key(private_pem.encode("utf-8"), password=None)
+        return (
+            private.public_key()
+            .public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+            .decode("utf-8")
+        )
+    except Exception:  # noqa: BLE001
+        return None

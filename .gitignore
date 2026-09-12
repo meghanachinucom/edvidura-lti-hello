@@ -12,6 +12,7 @@ config/lti_config.json
 keys/*.pem
 keys/*.key
 keys/*.json
+keys/*.env
 !keys/.gitkeep
 
 # OS / IDE

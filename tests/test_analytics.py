@@ -4,11 +4,55 @@ from __future__ import annotations
 from app.modules.analytics import learner_dashboard, metabase_embed_url
 
 
-def test_learner_dashboard_empty_subject():
-    dash = learner_dashboard("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "")
-    assert dash["attempt_count"] == 0
-    assert dash["recent"] == []
-    assert dash["avg_percent"] is None
+def test_school_roster_totals_dedupes(monkeypatch):
+    from app.modules.nrps import service as nrps_svc
+
+    monkeypatch.setattr(
+        nrps_svc,
+        "list_rosters",
+        lambda _t: [
+            {
+                "lti_context_id": "5",
+                "member_count": 2,
+                "fetched_at": None,
+                "members": [
+                    {
+                        "user_id": "u1",
+                        "name": "Alice",
+                        "is_learner": True,
+                        "is_instructor": False,
+                        "status": "Active",
+                    },
+                    {
+                        "user_id": "u2",
+                        "name": "Priya",
+                        "is_learner": False,
+                        "is_instructor": True,
+                        "status": "Active",
+                    },
+                ],
+            },
+            {
+                "lti_context_id": "6",
+                "member_count": 1,
+                "fetched_at": None,
+                "members": [
+                    {
+                        "user_id": "u1",
+                        "name": "Alice Nguyen",
+                        "is_learner": True,
+                        "is_instructor": False,
+                        "status": "Active",
+                    },
+                ],
+            },
+        ],
+    )
+    tot = nrps_svc.school_roster_totals("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    assert tot["users_total"] == 2
+    assert tot["learners"] == 1
+    assert tot["instructors"] == 1
+    assert tot["synced"] is True
 
 
 def test_metabase_embed_url_none_without_secret(monkeypatch):

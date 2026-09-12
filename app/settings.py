@@ -8,7 +8,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[1]
-load_dotenv(ROOT / ".env", override=True)
+# Prefer process env (Railway / CI) over local .env defaults.
+load_dotenv(ROOT / ".env", override=False)
 
 
 @dataclass(frozen=True)
@@ -24,7 +25,9 @@ class Settings:
     xapi_lrs_endpoint: str
     xapi_lrs_key: str
     xapi_lrs_secret: str
-    xapi_actor_homepage: str
+    # yet | generic | auto — Yet Analytics SQL LRS uses /xapi/statements
+    xapi_lrs_provider: str = "auto"
+    xapi_actor_homepage: str = "http://localhost:8085"
     # Inline PEM for Railway (takes precedence over file when set).
     private_key_pem_env: str = ""
     # AI assessment (optional). Local heuristic works when disabled / no key.
@@ -60,6 +63,10 @@ class Settings:
     receipt_signing_key: str = ""
     # D01: if true, coach may persist turns later; default false = stateless.
     coach_store_turns: bool = False
+    # PeBL Discussion-style: include full message text in xAPI (default off).
+    coach_xapi_full_text: bool = False
+    # Access level recorded on coach statements (PeBL discussion field).
+    coach_xapi_access_level: str = "class"
 
     @property
     def is_production(self) -> bool:
@@ -126,6 +133,9 @@ def get_settings() -> Settings:
         xapi_lrs_endpoint=os.getenv("XAPI_LRS_ENDPOINT", "").strip(),
         xapi_lrs_key=os.getenv("XAPI_LRS_KEY", "").strip(),
         xapi_lrs_secret=os.getenv("XAPI_LRS_SECRET", "").strip(),
+        xapi_lrs_provider=(
+            os.getenv("XAPI_LRS_PROVIDER", "auto").strip().lower() or "auto"
+        ),
         xapi_actor_homepage=os.getenv(
             "XAPI_ACTOR_HOMEPAGE", "http://localhost:8085"
         ).rstrip("/"),
@@ -177,4 +187,9 @@ def get_settings() -> Settings:
         receipt_signing_key=os.getenv("RECEIPT_SIGNING_KEY", "").strip(),
         coach_store_turns=os.getenv("COACH_STORE_TURNS", "").strip().lower()
         in {"1", "true", "yes", "on"},
+        coach_xapi_full_text=os.getenv("COACH_XAPI_FULL_TEXT", "").strip().lower()
+        in {"1", "true", "yes", "on"},
+        coach_xapi_access_level=(
+            os.getenv("COACH_XAPI_ACCESS_LEVEL", "class").strip() or "class"
+        ),
     )

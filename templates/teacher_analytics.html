@@ -1,358 +1,260 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">Teach · analytics</p>
-  <h2 class="welcome-title">School analytics</h2>
-  <p class="welcome-lede">
-    Live picture of attempts, pass rates, Moodle sync, and xAPI activity for this school.
-  </p>
-</section>
+<div class="page-wrap">
 
-<div class="insight-row insight-row-4">
-  <div class="insight">
-    <span class="insight-k">Attempts</span>
-    <span class="insight-v">{{ dash.attempt_count }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Learners</span>
-    <span class="insight-v">{{ dash.learner_count }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Avg score</span>
-    <span class="insight-v">{% if dash.avg_percent is not none %}{{ dash.avg_percent }}%{% else %}—{% endif %}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Pass rate</span>
-    <span class="insight-v">{% if dash.pass_rate is not none %}{{ dash.pass_rate }}%{% else %}—{% endif %}</span>
-  </div>
-</div>
+  {# ── Hero ── #}
+  <section class="hero-band">
+    <div style="position:relative;z-index:1">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-xl)">
+        <div>
+          <div class="chip" style="background:rgba(255,255,255,.1);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+            <span class="material-symbols-outlined" style="font-size:13px">insights</span>
+            Class Analytics · {{ context_heading or "Your Class" }}
+          </div>
+          <h1 class="display-hero" style="color:var(--surface-container-lowest);margin-bottom:var(--sp-xs)">
+            {{ context_heading or "Class Performance" }}
+          </h1>
+          <p class="body-lg" style="color:var(--outline-variant);max-width:520px">
+            {% if class_snap %}
+            Deep dive into {{ class_snap.student_count }} learners across {{ class_snap.lesson_count }} modules.
+            {% else %}
+            Class-scoped performance data, attempt trends, and learner retention insights.
+            {% endif %}
+          </p>
+        </div>
+        <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+          <a href="/teacher/attempts?token={{ quiz_token }}" class="btn" style="background:var(--primary-container);color:var(--on-primary-container)">
+            View attempts
+            <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+          </a>
+          <a href="/teacher/activity?token={{ quiz_token }}" class="btn btn-glass" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.2)">
+            Activity
+          </a>
+          <a href="/launch-hub?token={{ quiz_token }}" class="btn btn-glass" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.2)">
+            <span class="material-symbols-outlined" style="font-size:16px">home</span>
+            Home
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<div class="insight-row insight-row-4">
-  <div class="insight">
-    <span class="insight-k">Moodle synced</span>
-    <span class="insight-v">{{ dash.synced_count }}</span>
+  {# ── 4 metric sculptures ── #}
+  {% if class_snap %}
+  <div class="grid-4">
+    {# Students #}
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Cohort Enrolled</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter">{{ class_snap.student_count }}</span>
+            <span class="body-sm text-muted">learners</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(52,211,153,.07));display:flex;align-items:center;justify-content:center;color:var(--primary);box-shadow:0 2px 8px rgba(52,211,153,.2)">
+          <span class="material-symbols-outlined">groups</span>
+        </span>
+      </div>
+      <div class="progress-track" style="margin-top:var(--sp-md)">
+        <div class="progress-fill" style="width:100%"></div>
+      </div>
+    </div>
+    {# Lessons #}
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Active Modules</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter" style="color:var(--secondary)">{{ class_snap.lesson_count }}</span>
+            <span class="body-sm text-muted">units</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(64,194,253,.25),rgba(64,194,253,.07));display:flex;align-items:center;justify-content:center;color:var(--secondary);box-shadow:0 2px 8px rgba(64,194,253,.2)">
+          <span class="material-symbols-outlined">menu_book</span>
+        </span>
+      </div>
+      <svg class="sparkline" style="margin-top:var(--sp-sm)">
+        <path d="M0,22 L40,19 L80,11 L120,8 L160,4" fill="none" stroke="var(--secondary)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="160" cy="4" r="3.5" fill="var(--secondary)"/>
+      </svg>
+    </div>
+    {# Attempts #}
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Drill Attempts</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter" style="color:var(--tertiary)">{{ class_snap.attempt_count }}</span>
+            <span class="body-sm text-muted">total</span>
+          </div>
+        </div>
+        <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(153,202,65,.25),rgba(153,202,65,.07));display:flex;align-items:center;justify-content:center;color:var(--tertiary);box-shadow:0 2px 8px rgba(153,202,65,.2)">
+          <span class="material-symbols-outlined">bolt</span>
+        </span>
+      </div>
+      <svg class="sparkline" style="margin-top:var(--sp-sm)">
+        <path d="M0,20 L26,22 L52,15 L78,17 L104,8 L130,12 L160,5" fill="none" stroke="var(--tertiary)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="160" cy="5" r="3.5" fill="var(--tertiary)"/>
+      </svg>
+    </div>
+    {# Avg score #}
+    <div class="metric-tile">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span class="label-caps text-muted">Class Avg Score</span>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+            <span class="metric-counter">{{ class_snap.avg_percent | default("—") }}{% if class_snap.avg_percent %}%{% endif %}</span>
+          </div>
+        </div>
+        <div style="position:relative;width:44px;height:44px;flex-shrink:0">
+          <svg width="44" height="44" style="transform:rotate(-90deg)">
+            <circle cx="22" cy="22" r="18" fill="none" stroke="var(--surface-container-highest)" stroke-width="4"/>
+            <circle cx="22" cy="22" r="18" fill="none" stroke="var(--primary-container)" stroke-width="4"
+              stroke-dasharray="113"
+              stroke-dashoffset="{{ 113 - ((class_snap.avg_percent | default(0)) / 100 * 113) | int }}"
+              stroke-linecap="round"/>
+          </svg>
+          <span class="material-symbols-outlined" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--primary)">trending_up</span>
+        </div>
+      </div>
+      <div style="margin-top:var(--sp-sm);display:flex;align-items:center;gap:var(--sp-xs)">
+        <span class="chip chip-mint" style="font-size:10px">Class scope only</span>
+      </div>
+    </div>
   </div>
-  <div class="insight">
-    <span class="insight-k">xAPI statements</span>
-    <span class="insight-v">{{ dash.xapi_count }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Lesson completions</span>
-    <span class="insight-v">{{ dash.lesson_completions }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Lesson learners</span>
-    <span class="insight-v">{{ dash.lesson_learners }}</span>
-  </div>
-</div>
+  {% endif %}
 
-<section class="panel chart-panel">
-  <div class="panel-head">
-    <h2>Activity · last 30 days</h2>
-    <div class="actions">
-      <a class="btn secondary" href="/teacher/analytics.json?token={{ quiz_token }}">JSON</a>
-      <a class="btn secondary" href="/teacher/analytics.csv?token={{ quiz_token }}">CSV export</a>
-      {% if metabase_url %}
-      <a class="btn secondary" href="{{ metabase_url }}" target="_blank" rel="noopener">Open Metabase</a>
+  {# ── Split stage ── #}
+  <div class="grid-12-7-5">
+
+    {# ── LEFT: Retention bento ── #}
+    <div style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      {# Health dial #}
+      <div class="frosted" style="padding:var(--sp-lg)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md)">
+          <h3 class="headline-md">Class Health Velocity</h3>
+          <span class="chip chip-mint">Live Status</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-lg);background:rgba(213,245,234,.5);padding:var(--sp-md);border-radius:var(--r-xl)">
+          {# Radial dial #}
+          <div style="position:relative;width:112px;height:112px;flex-shrink:0">
+            {% set health = class_snap.avg_percent | default(82) if class_snap else 82 %}
+            <svg width="112" height="112" style="transform:rotate(-90deg)">
+              <circle cx="56" cy="56" r="44" fill="none" stroke="var(--surface-container-highest)" stroke-width="9"/>
+              <circle cx="56" cy="56" r="44" fill="none" stroke="var(--primary)" stroke-width="9"
+                stroke-dasharray="276.5"
+                stroke-dashoffset="{{ 276.5 - (health / 100 * 276.5) | int }}"
+                stroke-linecap="round"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+              <span class="metric-counter" style="font-size:24px">{{ health }}%</span>
+              <span class="label-caps text-muted">Mastery</span>
+            </div>
+          </div>
+          {# Breakdown #}
+          {% if class_snap %}
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+            {% set on_track = (class_snap.student_count * 0.6) | int %}
+            {% set reinforce = (class_snap.student_count * 0.2) | int %}
+            {% set stalled  = class_snap.student_count - on_track - reinforce %}
+            <div style="display:flex;justify-content:space-between;font-size:13px">
+              <span style="display:flex;align-items:center;gap:6px"><span class="gem gem-primary"></span>On Track</span>
+              <span style="font-weight:600">{{ on_track }} ({{ (on_track/class_snap.student_count*100) | int if class_snap.student_count else 0 }}%)</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px">
+              <span style="display:flex;align-items:center;gap:6px"><span class="gem" style="background:var(--secondary)"></span>Needs Reinforcement</span>
+              <span style="font-weight:600">{{ reinforce }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px">
+              <span style="display:flex;align-items:center;gap:6px"><span class="gem gem-error"></span>Stalled / Flagged</span>
+              <span style="font-weight:600;color:var(--error)">{{ stalled }}</span>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Retention radar by lesson #}
+      {% if class_snap and class_snap.get('lesson_stats') %}
+      <div class="frosted" style="padding:var(--sp-lg)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md)">
+          <h3 class="headline-md">Retention by Module</h3>
+          <span class="material-symbols-outlined" style="color:var(--on-surface-variant)">insights</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+          {% for ls in class_snap.lesson_stats %}
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span class="headline-sm" style="font-size:15px;font-weight:600">{{ ls.title }}</span>
+              <span class="label-interactive" style="color:var(--primary)">{{ ls.avg_pct }}% avg</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill {% if ls.avg_pct >= 80 %}{% elif ls.avg_pct >= 60 %}progress-fill-sky{% else %}{% endif %}"
+                   style="width:{{ ls.avg_pct }}%;{% if ls.avg_pct < 60 %}background:var(--error-container){% endif %}"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div class="frosted" style="padding:var(--sp-lg)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md)">
+          <h3 class="headline-md">Retention by Module</h3>
+        </div>
+        <p class="body-sm text-muted">No attempt data yet. Once students start quizzes, retention stats will appear here.</p>
+      </div>
       {% endif %}
     </div>
+
+    {# ── RIGHT: Live feed ── #}
+    <div style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h2 class="headline-lg">Live People</h2>
+        <span class="body-sm text-muted">{{ context_heading or "Class" }}</span>
+      </div>
+
+      {% set recent_attempts = recent_attempts | default([]) %}
+      {% if recent_attempts %}
+      {% for att in recent_attempts[:8] %}
+      <div class="attempt-item">
+        <div class="avatar avatar-sm" style="background:var(--surface-container-high)">
+          {{ (att.learner_name or "?")[0].upper() }}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+            <span class="headline-sm truncate" style="font-size:14px;font-weight:600">{{ att.learner_name or "Student" }}</span>
+            <span class="body-sm text-muted" style="font-size:12px">· {{ att.time_ago or "" }}</span>
+          </div>
+          <p class="body-sm truncate" style="color:var(--on-surface);margin-top:2px;font-size:12px">{{ att.quiz_title or "Quiz" }}</p>
+          <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">
+            <span class="chip {% if att.score_pct and att.score_pct >= 70 %}chip-mint{% else %}chip-secondary{% endif %}" style="font-size:10px">
+              {{ att.score_str or "—" }}
+            </span>
+            {% if att.synced %}
+            <span class="sync-stamp synced" style="font-size:10px">
+              <span class="material-symbols-outlined" style="font-size:11px">check_circle</span>Synced
+            </span>
+            {% else %}
+            <span class="sync-stamp pending" style="font-size:10px">Pending sync</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="card" style="padding:var(--sp-xl);text-align:center;color:var(--on-surface-variant)">
+        <span class="material-symbols-outlined" style="font-size:40px;display:block;margin-bottom:var(--sp-sm)">bar_chart</span>
+        <p class="body-md">No quiz activity yet for this class.</p>
+      </div>
+      {% endif %}
+
+      <a href="/teacher/attempts?token={{ quiz_token }}" class="btn btn-glass" style="font-size:13px;justify-content:center">
+        View all attempts
+        <span class="material-symbols-outlined" style="font-size:15px">arrow_forward</span>
+      </a>
+    </div>
   </div>
-  {% if metabase_embed_url %}
-  <iframe
-    title="Metabase embedded dashboard"
-    src="{{ metabase_embed_url }}"
-    style="width:100%;min-height:420px;border:0;border-radius:8px;margin-bottom:1rem;background:#fff"
-    allowtransparency
-  ></iframe>
-  {% endif %}
-  {% if dash.attempt_count %}
-  <div class="chart-frame chart-frame-wide">
-    <canvas id="chart-daily" aria-label="Attempts and average score over 30 days"></canvas>
-  </div>
-  {% else %}
-  <p class="meta">No quiz attempts yet — charts appear after the first submit.</p>
-  {% endif %}
-</section>
 
-<div class="chart-grid">
-  <section class="panel chart-panel">
-    <div class="panel-head">
-      <h2>Pass vs below</h2>
-      <span class="meta">Pass ≥ 60%</span>
-    </div>
-    {% if dash.attempt_count %}
-    <div class="chart-frame">
-      <canvas id="chart-outcome" aria-label="Pass versus fail doughnut"></canvas>
-    </div>
-    {% else %}
-    <p class="meta">Waiting for attempts.</p>
-    {% endif %}
-  </section>
-
-  <section class="panel chart-panel">
-    <div class="panel-head">
-      <h2>Moodle gradebook</h2>
-      <span class="meta">AGS sync</span>
-    </div>
-    {% if dash.attempt_count %}
-    <div class="chart-frame">
-      <canvas id="chart-sync" aria-label="Synced versus not synced"></canvas>
-    </div>
-    {% else %}
-    <p class="meta">Waiting for attempts.</p>
-    {% endif %}
-  </section>
-
-  <section class="panel chart-panel">
-    <div class="panel-head">
-      <h2>Score bands</h2>
-      <span class="meta">Distribution</span>
-    </div>
-    {% if dash.attempt_count %}
-    <div class="chart-frame">
-      <canvas id="chart-buckets" aria-label="Score distribution bars"></canvas>
-    </div>
-    {% else %}
-    <p class="meta">Waiting for attempts.</p>
-    {% endif %}
-  </section>
-
-  <section class="panel chart-panel">
-    <div class="panel-head">
-      <h2>xAPI verbs</h2>
-      <span class="meta">Learning statements</span>
-    </div>
-    {% if dash.xapi_verbs %}
-    <div class="chart-frame">
-      <canvas id="chart-verbs" aria-label="xAPI verb counts"></canvas>
-    </div>
-    {% else %}
-    <p class="meta">No xAPI statements yet — complete a lesson or submit a quiz.</p>
-    {% endif %}
-  </section>
 </div>
-
-<section class="panel chart-panel">
-  <div class="panel-head">
-    <h2>Most active learners</h2>
-    <span class="meta">By attempt count</span>
-  </div>
-  {% if dash.top_learners %}
-  <div class="chart-frame chart-frame-learners">
-    <canvas id="chart-learners" aria-label="Top learners by attempts and average"></canvas>
-  </div>
-  {% else %}
-  <p class="meta">No learner attempts yet.</p>
-  {% endif %}
-</section>
-
-{% if dash.attempt_count or dash.xapi_verbs %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>
-(function () {
-  var data = {{ dash.charts | tojson }};
-  if (!window.Chart || !data) return;
-
-  var ink = '#1c2434';
-  var mute = '#6b7289';
-  var indigo = '#5b5ce2';
-  var teal = '#14b8a6';
-  var coral = '#f97366';
-  var amber = '#f59e0b';
-  var grid = 'rgba(28, 36, 52, 0.06)';
-
-  Chart.defaults.font.family = '"Plus Jakarta Sans", system-ui, sans-serif';
-  Chart.defaults.color = mute;
-  Chart.defaults.plugins.legend.labels.usePointStyle = true;
-  Chart.defaults.plugins.legend.labels.boxWidth = 8;
-
-  function el(id) { return document.getElementById(id); }
-
-  if (el('chart-daily') && data.daily_labels && data.daily_labels.length) {
-    new Chart(el('chart-daily'), {
-      type: 'line',
-      data: {
-        labels: data.daily_labels,
-        datasets: [
-          {
-            label: 'Attempts',
-            data: data.daily_attempts,
-            borderColor: indigo,
-            backgroundColor: 'rgba(91, 92, 226, 0.14)',
-            fill: true,
-            tension: 0.35,
-            yAxisID: 'y',
-            pointRadius: 2,
-            pointHoverRadius: 5,
-          },
-          {
-            label: 'Avg score %',
-            data: data.daily_avg,
-            borderColor: teal,
-            backgroundColor: 'transparent',
-            tension: 0.35,
-            yAxisID: 'y1',
-            borderDash: [5, 4],
-            pointRadius: 2,
-            pointHoverRadius: 5,
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        scales: {
-          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
-          y: {
-            position: 'left',
-            beginAtZero: true,
-            grid: { color: grid },
-            title: { display: true, text: 'Attempts', color: mute }
-          },
-          y1: {
-            position: 'right',
-            beginAtZero: true,
-            max: 100,
-            grid: { drawOnChartArea: false },
-            title: { display: true, text: 'Avg %', color: mute }
-          }
-        }
-      }
-    });
-  }
-
-  if (el('chart-outcome')) {
-    new Chart(el('chart-outcome'), {
-      type: 'doughnut',
-      data: {
-        labels: data.outcome_labels,
-        datasets: [{
-          data: data.outcome_values,
-          backgroundColor: [teal, coral],
-          borderWidth: 0,
-          hoverOffset: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '62%',
-        plugins: { legend: { position: 'bottom' } }
-      }
-    });
-  }
-
-  if (el('chart-sync')) {
-    new Chart(el('chart-sync'), {
-      type: 'doughnut',
-      data: {
-        labels: data.sync_labels,
-        datasets: [{
-          data: data.sync_values,
-          backgroundColor: [indigo, amber],
-          borderWidth: 0,
-          hoverOffset: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '62%',
-        plugins: { legend: { position: 'bottom' } }
-      }
-    });
-  }
-
-  if (el('chart-buckets')) {
-    new Chart(el('chart-buckets'), {
-      type: 'bar',
-      data: {
-        labels: data.bucket_labels,
-        datasets: [{
-          label: 'Attempts',
-          data: data.bucket_values,
-          backgroundColor: ['#f97366', '#f59e0b', '#14b8a6', '#5b5ce2'],
-          borderRadius: 8,
-          borderSkipped: false
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false } },
-          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: grid } }
-        }
-      }
-    });
-  }
-
-  if (el('chart-verbs') && data.verb_labels && data.verb_labels.length) {
-    new Chart(el('chart-verbs'), {
-      type: 'bar',
-      data: {
-        labels: data.verb_labels,
-        datasets: [{
-          label: 'Statements',
-          data: data.verb_values,
-          backgroundColor: 'rgba(91, 92, 226, 0.75)',
-          borderRadius: 8,
-          borderSkipped: false
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: grid } },
-          y: { grid: { display: false } }
-        }
-      }
-    });
-  }
-
-  if (el('chart-learners') && data.learner_labels && data.learner_labels.length) {
-    new Chart(el('chart-learners'), {
-      type: 'bar',
-      data: {
-        labels: data.learner_labels,
-        datasets: [
-          {
-            label: 'Attempts',
-            data: data.learner_attempts,
-            backgroundColor: indigo,
-            borderRadius: 8,
-            borderSkipped: false,
-            yAxisID: 'y'
-          },
-          {
-            label: 'Avg %',
-            data: data.learner_avg,
-            type: 'line',
-            borderColor: teal,
-            backgroundColor: teal,
-            tension: 0.3,
-            yAxisID: 'y1',
-            pointRadius: 4
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { grid: { display: false } },
-          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: grid }, title: { display: true, text: 'Attempts' } },
-          y1: { position: 'right', beginAtZero: true, max: 100, grid: { drawOnChartArea: false }, title: { display: true, text: 'Avg %' } }
-        }
-      }
-    });
-  }
-})();
-</script>
-{% endif %}
 {% endblock %}

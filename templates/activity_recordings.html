@@ -1,0 +1,74 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">history_edu</span>
+          {{ scope_label }}
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">Activity recordings</h1>
+        <p class="body-md" style="color:var(--outline-variant);max-width:560px;margin-top:4px">
+          Detailed xAPI evidence for this school. Coach turns show a short question preview (not full chat history). Moodle still owns grades.
+        </p>
+      </div>
+      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+        <a class="btn btn-primary" href="{{ back_href }}?token={{ quiz_token }}">Back to analytics</a>
+        {% if show_subject_filter %}
+        <form method="get" action="{{ request.url.path }}" style="display:flex;gap:8px;align-items:center">
+          <input type="hidden" name="token" value="{{ quiz_token }}">
+          <input class="input" name="subject" value="{{ filter_subject or '' }}" placeholder="Filter LMS subject" style="min-width:160px;padding:8px 12px">
+          <button class="btn btn-surface" type="submit">Filter</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <div class="section-head" style="margin-bottom:var(--sp-md)">
+      <h2 class="headline-md">{{ rows|length }} recent events</h2>
+      <span class="chip chip-sky">xAPI · tenant RLS</span>
+    </div>
+    {% if rows %}
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>When</th>
+            {% if show_actor %}<th>Learner</th>{% endif %}
+            <th>Action</th>
+            <th>Object</th>
+            <th>Detail</th>
+            <th>Tier</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td class="body-sm text-muted" style="white-space:nowrap">{{ r.when[:19] }}</td>
+            {% if show_actor %}
+            <td>
+              <div class="body-sm"><strong>{{ r.actor_name }}</strong></div>
+              <div class="body-sm text-muted">{{ r.actor_sub }}</div>
+            </td>
+            {% endif %}
+            <td><span class="chip chip-mint">{{ r.verb_label }}</span></td>
+            <td class="body-sm">{{ r.object_label }}</td>
+            <td class="body-sm" style="max-width:360px">{{ r.detail or '—' }}</td>
+            <td class="body-sm text-muted">
+              {{ r.tier or '—' }}
+              {% if r.sent_to_lrs %}<span class="chip chip-sky" style="margin-left:4px">LRS</span>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="body-sm text-muted">No xAPI recordings yet. Complete a lesson, take a quiz, open a manual, or ask the study coach.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

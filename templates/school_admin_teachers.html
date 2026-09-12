@@ -1,43 +1,105 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">School admin</p>
-  <h2 class="welcome-title">Teachers</h2>
-  <p class="welcome-lede">
-    Teacher accounts are created in <strong>Moodle</strong>, not EdVidura.
-    When a teacher opens this tool via LTI, EdVidura uses their Moodle role and course — no separate EdVidura login.
-  </p>
-  <div class="welcome-actions">
-    <a class="btn primary" href="{{ moodle_base }}/admin/user.php" target="_top" rel="noopener">Open Moodle users</a>
-    <a class="btn secondary" href="/school-admin/classes?token={{ quiz_token }}">Link classes &amp; content</a>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">school</span>
+          School admin · Teachers
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">Teachers</h1>
+        <p class="body-md" style="color:var(--outline-variant);max-width:580px;margin-top:4px">
+          Teacher accounts are created in <strong style="color:var(--inverse-on-surface)">Moodle</strong>, not EdVidura.
+          An LTI launch uses their Moodle role and course — no separate EdVidura login.
+        </p>
+      </div>
+      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+        <a class="btn btn-primary" href="{{ moodle_base }}/admin/user.php" target="_top" rel="noopener">
+          <span class="material-symbols-outlined" style="font-size:16px">open_in_new</span>
+          Open Moodle users
+        </a>
+        <a class="btn" href="/school-admin/classes?token={{ quiz_token }}" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">
+          Link classes
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid-4">
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Directory</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--primary)">{{ teachers | length if teachers else 0 }}</div>
+      <p class="body-sm text-muted" style="margin-top:6px">Demo seed teachers</p>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Source of truth</span>
+      <div class="headline-sm" style="margin-top:10px">Moodle</div>
+      <p class="body-sm text-muted" style="margin-top:6px">People stay in the LMS</p>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Access</span>
+      <div class="headline-sm" style="margin-top:10px">LTI launch</div>
+      <p class="body-sm text-muted" style="margin-top:6px">Role + course from Moodle</p>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Next</span>
+      <a href="/school-admin/classes?token={{ quiz_token }}" class="btn btn-surface" style="margin-top:var(--sp-sm);font-size:13px">Bind a class</a>
+    </div>
   </div>
-</section>
 
-<section class="panel">
-  <h2>How it works</h2>
-  <ol class="meta" style="line-height:1.7;padding-left:1.25rem">
-    <li>In Moodle: create the teacher, enroll them in the course.</li>
-    <li>In EdVidura: bind that Moodle course to a class + curriculum (Classes).</li>
-    <li>Teacher launches EdVidura from Moodle → sees that class’s content and results.</li>
-  </ol>
-</section>
+  <div class="grid-12-7-5">
+    <section class="frosted" style="padding:var(--sp-xl)">
+      <h2 class="headline-md" style="margin-bottom:var(--sp-md)">How it works</h2>
+      <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+        <div class="card" style="padding:var(--sp-md);border-left:3px solid #f59e0b">
+          <span class="label-caps text-muted">01 · Moodle</span>
+          <p class="body-md" style="margin-top:6px">Create the teacher and enroll them in the course.</p>
+        </div>
+        <div class="card" style="padding:var(--sp-md);border-left:3px solid var(--secondary)">
+          <span class="label-caps text-muted">02 · EdVidura</span>
+          <p class="body-md" style="margin-top:6px">Bind that Moodle course to a class + curriculum.</p>
+        </div>
+        <div class="card" style="padding:var(--sp-md);border-left:3px solid var(--primary)">
+          <span class="label-caps text-muted">03 · Launch</span>
+          <p class="body-md" style="margin-top:6px">Teacher opens EdVidura from Moodle and sees that class’s content and results.</p>
+        </div>
+      </div>
+    </section>
+    <aside class="card" style="padding:var(--sp-lg)">
+      <h3 class="headline-sm" style="margin-bottom:8px">Quick links</h3>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a class="btn btn-surface" href="/school-admin/students?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">Students</a>
+        <a class="btn btn-surface" href="/school-admin/analytics?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">Analytics</a>
+        <a class="btn btn-glass" href="/school-admin/classes?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">Classes &amp; links</a>
+      </div>
+    </aside>
+  </div>
 
-{% if teachers %}
-<section class="panel">
-  <h2>Demo directory (optional seed)</h2>
-  <p class="meta">Local demo data only — not the live Moodle directory. Production people live in Moodle.</p>
-  <table>
-    <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
-    <tbody>
-    {% for t in teachers %}
-      <tr>
-        <td><code>{{ t.teacher_code }}</code></td>
-        <td>{{ t.name }}</td>
-        <td class="meta">{{ t.email }}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</section>
-{% endif %}
+  {% if teachers %}
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <div class="section-head">
+      <div>
+        <h2 class="headline-md">Demo directory</h2>
+        <p class="body-sm text-muted">Local seed data only — not the live Moodle directory.</p>
+      </div>
+      <span class="chip chip-mint">{{ teachers | length }} teachers</span>
+    </div>
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>Code</th><th>Name</th><th>Email</th></tr></thead>
+        <tbody>
+        {% for t in teachers %}
+          <tr>
+            <td><code>{{ t.teacher_code }}</code></td>
+            <td style="font-weight:600">{{ t.name }}</td>
+            <td class="body-sm text-muted">{{ t.email }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</div>
 {% endblock %}

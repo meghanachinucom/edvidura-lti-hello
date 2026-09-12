@@ -60,6 +60,98 @@ def test_lesson_completed_statement():
     assert str(lid) in stmt["object"]["id"]
 
 
+def test_coach_interacted_statement_pii_light():
+    from app.modules.xapi import build_coach_interacted_statement
+
+    q = "How do I solve 2x + 3 = 7?"
+    stmt = build_coach_interacted_statement(
+        tenant_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        subject="user-1",
+        learner_name="Alice",
+        question=q,
+        grounded=True,
+        citation_count=2,
+        course_title="Algebra",
+        thread_id="coach-user-1-abc",
+    )
+    assert stmt["verb"]["id"] == verbs.VERB_INTERACTED
+    assert "/study-coach/thread/" in stmt["object"]["id"]
+    assert stmt["result"]["success"] is True
+    ext = stmt["context"]["extensions"]
+    assert ext["https://edvidura.local/xapi/extensions/question_len"] == len(q)
+    assert len(ext["https://edvidura.local/xapi/extensions/question_sha256"]) == 64
+    assert ext["https://edvidura.local/xapi/extensions/question_preview"] == q
+    assert "message_text" not in str(ext.keys()) or (
+        "https://edvidura.local/xapi/extensions/message_text" not in ext
+    )
+    assert ext["https://edvidura.local/xapi/extensions/thread_id"] == "coach-user-1-abc"
+    long_q = "x" * 200
+    stmt2 = build_coach_interacted_statement(
+        tenant_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        subject="user-1",
+        learner_name="Alice",
+        question=long_q,
+    )
+    prev = stmt2["context"]["extensions"][
+        "https://edvidura.local/xapi/extensions/question_preview"
+    ]
+    assert len(prev) <= 121
+    assert prev.endswith("…")
+
+
+def test_coach_pebl_full_text_mode():
+    from app.modules.xapi import build_coach_interacted_statement
+
+    q = "Explain slope in one sentence."
+    ans = "Slope is rise over run."
+    stmt = build_coach_interacted_statement(
+        tenant_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        subject="user-1",
+        learner_name="Alice",
+        question=q,
+        answer_text=ans,
+        include_full_text=True,
+        thread_id="thread-9",
+        access_level="class",
+        grounded=True,
+    )
+    ext = stmt["context"]["extensions"]
+    assert ext["https://edvidura.local/xapi/extensions/message_text"] == q
+    assert ext["https://edvidura.local/xapi/extensions/answer_text"] == ans
+    assert ext["https://edvidura.local/xapi/extensions/access_level"] == "class"
+    assert stmt["result"]["response"] == q
+    assert stmt["object"]["definition"]["interactionType"] == "long-fill-in"
+
+
+def test_present_statement_row_coach():
+    from app.modules.xapi.activity import present_statement_row
+    from app.modules.xapi import build_coach_interacted_statement
+
+    stmt = build_coach_interacted_statement(
+        tenant_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        subject="user-1",
+        learner_name="Alice",
+        question="What is a slope?",
+        grounded=True,
+        citation_count=1,
+    )
+    row = present_statement_row(
+        {
+            "statement_id": stmt["id"],
+            "verb_id": stmt["verb"]["id"],
+            "actor_sub": "user-1",
+            "object_id": stmt["object"]["id"],
+            "statement": stmt,
+            "tier": "transactional",
+            "sent_to_lrs": False,
+            "created_at": None,
+        }
+    )
+    assert row["verb_label"] == "Coach chat"
+    assert "What is a slope?" in row["detail"]
+    assert row["actor_name"] == "Alice"
+
+
 def test_skill_assessed_statement_mastered():
     from app.modules.xapi import build_skill_assessed_statement
 

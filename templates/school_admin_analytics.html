@@ -1,92 +1,201 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">School admin · analytics</p>
-  <h2 class="welcome-title">School analytics</h2>
-  <p class="welcome-lede">
-    Tenant roll-up of attempts, Moodle sync, and xAPI. Official grades stay in Moodle.
-  </p>
-</section>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">monitoring</span>
+          School admin · Analytics
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">School analytics</h1>
+        <p class="body-md" style="color:var(--outline-variant);max-width:560px;margin-top:4px">
+          Real Moodle people for this school, plus live launches and attempt activity.
+        </p>
+      </div>
+      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+        <a class="btn btn-primary" href="/teacher/analytics?token={{ quiz_token }}">Teacher charts</a>
+        <a class="btn" href="/school-admin/activity?token={{ quiz_token }}" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Activity</a>
+        {% if metabase_url %}
+        <a class="btn" href="{{ metabase_url }}" target="_blank" rel="noopener" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Open Metabase</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
 
-<div class="insight-row insight-row-4">
-  <div class="insight">
-    <span class="insight-k">Attempts</span>
-    <span class="insight-v">{{ dash.attempt_count }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Learners</span>
-    <span class="insight-v">{{ dash.learner_count }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Avg score</span>
-    <span class="insight-v">{% if dash.avg_percent is not none %}{{ dash.avg_percent }}%{% else %}—{% endif %}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Pass rate</span>
-    <span class="insight-v">{% if dash.pass_rate is not none %}{{ dash.pass_rate }}%{% else %}—{% endif %}</span>
-  </div>
-</div>
+  <section class="frosted" id="live-people" style="padding:var(--sp-xl)">
+    <div class="section-head">
+      <div style="display:flex;align-items:center;gap:var(--sp-sm)">
+        <span style="position:relative;display:flex;width:12px;height:12px">
+          <span style="position:absolute;inset:0;border-radius:50%;background:var(--primary);animation:ping 1.5s infinite;opacity:.5"></span>
+          <span style="position:relative;border-radius:50%;width:12px;height:12px;background:var(--primary)"></span>
+        </span>
+        <div>
+          <h2 class="headline-md">Live people · this school</h2>
+          <p class="body-sm text-muted" id="live-hint">{{ live.hint }}</p>
+        </div>
+      </div>
+      <span class="chip chip-mint" id="live-stamp">Refreshing…</span>
+    </div>
 
-<div class="insight-row insight-row-4">
-  <div class="insight">
-    <span class="insight-k">Moodle synced</span>
-    <span class="insight-v">{{ dash.synced_count }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">xAPI</span>
-    <span class="insight-v">{{ dash.xapi_count }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Lesson completions</span>
-    <span class="insight-v">{{ dash.lesson_completions }}</span>
-  </div>
-  <div class="insight">
-    <span class="insight-k">Unsynced</span>
-    <span class="insight-v">{{ dash.unsynced_count }}</span>
-  </div>
-</div>
+    <div class="grid-4">
+      <div class="metric-tile">
+        <span class="label-caps text-muted">Moodle users</span>
+        <div class="metric-counter" style="margin-top:6px;color:var(--primary)" id="live-moodle-users">{{ live.moodle_users }}</div>
+      </div>
+      <div class="metric-tile">
+        <span class="label-caps text-muted">Learners (roster)</span>
+        <div class="metric-counter" style="margin-top:6px;color:var(--secondary)" id="live-moodle-learners">{{ live.moodle_learners }}</div>
+      </div>
+      <div class="metric-tile">
+        <span class="label-caps text-muted">Active now (15m)</span>
+        <div class="metric-counter" style="margin-top:6px;color:var(--tertiary)" id="live-active-now">{{ live.active_now }}</div>
+      </div>
+      <div class="metric-tile">
+        <span class="label-caps text-muted">Active today</span>
+        <div class="metric-counter" style="margin-top:6px" id="live-active-today">{{ live.active_today }}</div>
+      </div>
+    </div>
 
-<section class="panel">
-  <div class="panel-head">
-    <h2>Exports &amp; BI</h2>
-    <div class="actions">
-      <a class="btn secondary" href="/teacher/analytics?token={{ quiz_token }}">Teacher charts</a>
-      {% if metabase_url %}
-      <a class="btn secondary" href="{{ metabase_url }}" target="_blank" rel="noopener">Open Metabase</a>
-      {% endif %}
+    <div class="grid-4" style="margin-top:var(--sp-md)">
+      <div class="metric-tile">
+        <span class="label-caps text-muted">Instructors</span>
+        <div class="metric-counter" style="margin-top:6px;color:var(--primary)" id="live-moodle-instructors">{{ live.moodle_instructors }}</div>
+      </div>
+      <div class="metric-tile">
+        <span class="label-caps text-muted">Ever launched</span>
+        <div class="metric-counter" style="margin-top:6px;color:var(--secondary)" id="live-launchers">{{ live.launchers_all_time }}</div>
+      </div>
+      <div class="metric-tile">
+        <span class="label-caps text-muted">Quiz learners</span>
+        <div class="metric-counter" style="margin-top:6px;color:var(--tertiary)" id="live-attempt-learners">{{ live.attempt_learners }}</div>
+      </div>
+      <div class="metric-tile">
+        <span class="label-caps text-muted">Roster synced</span>
+        <div class="headline-md" style="margin-top:10px" id="live-synced">{% if live.moodle_synced %}Yes{% else %}No{% endif %}</div>
+      </div>
+    </div>
+
+    {% if not live.moodle_synced %}
+    <div style="margin-top:var(--sp-md);padding:var(--sp-md);background:rgba(64,194,253,.08);border:1px solid rgba(64,194,253,.2);border-radius:var(--r-xl)">
+      Enrolment count needs a Moodle roster sync: launch as teacher → Class results → <strong>Sync Moodle roster</strong>
+      (tool Services → Names and Role Provisioning = Use this service).
+    </div>
+    {% endif %}
+    <div id="live-active-list" class="body-sm text-muted" style="margin-top:var(--sp-md)"></div>
+  </section>
+
+  <div class="grid-4">
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Attempts</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--primary)">{{ dash.attempt_count }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Learners (attempts)</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--secondary)">{{ dash.learner_count }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Avg score</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--tertiary)">{% if dash.avg_percent is not none %}{{ dash.avg_percent }}%{% else %}—{% endif %}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Pass rate</span>
+      <div class="metric-counter" style="margin-top:6px;color:#f59e0b">{% if dash.pass_rate is not none %}{{ dash.pass_rate }}%{% else %}—{% endif %}</div>
     </div>
   </div>
-  {% if metabase_embed_url %}
-  <iframe
-    title="Metabase school dashboard"
-    src="{{ metabase_embed_url }}"
-    style="width:100%;min-height:480px;border:0;border-radius:8px;background:#fff"
-    allowtransparency
-  ></iframe>
-  {% else %}
-  <p class="meta">
-    Set <code>METABASE_SECRET_KEY</code> and <code>METABASE_EMBED_DASHBOARD_ID</code> for a signed embed.
-    Until then, use the Metabase link or teacher Analytics charts.
-  </p>
-  {% endif %}
-</section>
 
-{% if dash.top_learners %}
-<section class="panel">
-  <h2>Top learners (by attempts)</h2>
-  <table>
-    <thead><tr><th>Learner</th><th>Attempts</th><th>Avg</th><th>Best</th></tr></thead>
-    <tbody>
-    {% for L in dash.top_learners %}
-      <tr>
-        <td>{{ L.label }}</td>
-        <td>{{ L.attempts }}</td>
-        <td>{{ L.avg_percent }}%</td>
-        <td>{{ L.best_percent }}%</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</section>
-{% endif %}
+  <div class="grid-4">
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Moodle synced grades</span>
+      <div class="metric-counter" style="margin-top:6px">{{ dash.synced_count }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">xAPI</span>
+      <div class="metric-counter" style="margin-top:6px">{{ dash.xapi_count }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Lesson completions</span>
+      <div class="metric-counter" style="margin-top:6px">{{ dash.lesson_completions }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Unsynced</span>
+      <div class="metric-counter" style="margin-top:6px;color:#f59e0b">{{ dash.unsynced_count }}</div>
+    </div>
+  </div>
+
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <div class="section-head">
+      <h2 class="headline-md">Exports &amp; BI</h2>
+    </div>
+    {% if metabase_embed_url %}
+    <iframe
+      title="Metabase school dashboard"
+      src="{{ metabase_embed_url }}"
+      style="width:100%;min-height:480px;border:0;border-radius:var(--r-xl);background:#fff"
+      allowtransparency
+    ></iframe>
+    {% else %}
+    <p class="body-sm text-muted">
+      Set <code>METABASE_SECRET_KEY</code> and <code>METABASE_EMBED_DASHBOARD_ID</code> for a signed embed.
+    </p>
+    {% endif %}
+  </section>
+
+  {% if dash.top_learners %}
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <h2 class="headline-md" style="margin-bottom:var(--sp-md)">Top learners (by attempts)</h2>
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>Learner</th><th>Attempts</th><th>Avg</th><th>Best</th></tr></thead>
+        <tbody>
+        {% for L in dash.top_learners %}
+          <tr>
+            <td style="font-weight:600">{{ L.label }}</td>
+            <td>{{ L.attempts }}</td>
+            <td>{{ L.avg_percent }}%</td>
+            <td>{{ L.best_percent }}%</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  const token = {{ quiz_token | tojson }};
+  const url = "/school-admin/analytics/live.json?token=" + encodeURIComponent(token);
+  function apply(d) {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set("live-moodle-users", d.moodle_users);
+    set("live-moodle-learners", d.moodle_learners);
+    set("live-moodle-instructors", d.moodle_instructors);
+    set("live-active-now", d.active_now);
+    set("live-active-today", d.active_today);
+    set("live-launchers", d.launchers_all_time);
+    set("live-attempt-learners", d.attempt_learners);
+    set("live-synced", d.moodle_synced ? "Yes" : "No");
+    set("live-stamp", "Updated " + (d.generated_at || "").replace("T", " ").replace("Z", " UTC"));
+    const hint = document.getElementById("live-hint");
+    if (hint && d.hint) hint.textContent = d.hint;
+    const list = document.getElementById("live-active-list");
+    if (list) {
+      const rows = d.active_now_list || [];
+      list.innerHTML = rows.length
+        ? "<strong>Active now:</strong> " + rows.map(r => r.name || r.subject).join(", ")
+        : "";
+    }
+  }
+  async function tick() {
+    try {
+      const res = await fetch(url, { credentials: "same-origin" });
+      if (res.ok) apply(await res.json());
+    } catch (e) { /* ignore transient */ }
+  }
+  tick();
+  setInterval(tick, 10000);
+})();
+</script>
 {% endblock %}

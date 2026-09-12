@@ -389,3 +389,99 @@ def export_rows(tenant_id: UUID | str, *, limit: int = 500) -> list[dict[str, An
             (lim,),
         ).fetchall()
         return [dict(r) for r in rows]
+
+
+def live_school_users(tenant_id: UUID | str) -> dict[str, Any]:
+    """
+    Real-time-ish people counts for one school (tenant).
+
+    - Moodle NRPS cache = enrolled users (authoritative people count when synced)
+    - launch_events = who actually opened EdVidura (active / today)
+    - quiz_attempts DISTINCT = learners who submitted (activity, not enrolment)
+    """
+    from datetime import datetime, timezone
+
+    from app.modules import nrps as nrps_mod
+
+    roster = nrps_mod.school_roster_totals(tenant_id)
+    with db.tenant_connection(tenant_id) as conn:
+        active_15 = conn.execute(
+            """
+            SELECT COUNT(DISTINCT subject)::int AS n
+            FROM launch_events
+            WHERE created_at >= now() - interval '15 minutes'
+              AND COALESCE(subject, '') <> ''
+            """
+        ).fetchone()
+        active_today = conn.execute(
+            """
+            SELECT COUNT(DISTINCT subject)::int AS n
+            FROM launch_events
+            WHERE created_at >= date_trunc('day', now())
+              AND COALESCE(subject, '') <> ''
+            """
+        ).fetchone()
+        launchers = conn.execute(
+            """
+            SELECT COUNT(DISTINCT subject)::int AS n
+            FROM launch_events
+            WHERE COALESCE(subject, '') <> ''
+            """
+        ).fetchone()
+        attempt_learners = conn.execute(
+            """
+            SELECT COUNT(DISTINCT subject)::int AS n
+            FROM quiz_attempts
+            WHERE COALESCE(subject, '') <> ''
+            """
+        ).fetchone()
+        recent = conn.execute(
+            """
+            SELECT subject, MAX(created_at) AS last_seen
+            FROM launch_events
+            WHERE created_at >= now() - interval '15 minutes'
+              AND COALESCE(subject, '') <> ''
+            GROUP BY subject
+            ORDER BY last_seen DESC
+            LIMIT 20
+            """
+        ).fetchall()
+
+    names = {
+        str(m.get("user_id")): str(m.get("name") or m.get("user_id"))
+        for m in (roster.get("members") or [])
+    }
+    active_now = [
+        {
+            "subject": str(r["subject"]),
+            "name": names.get(str(r["subject"]), str(r["subject"])),
+            "last_seen": (
+                r["last_seen"].isoformat()
+                if hasattr(r.get("last_seen"), "isoformat")
+                else str(r.get("last_seen") or "")
+            ),
+        }
+        for r in recent
+    ]
+
+    return {
+        "tenant_id": str(tenant_id),
+        "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "moodle_users": int(roster.get("users_total") or 0),
+        "moodle_learners": int(roster.get("learners") or 0),
+        "moodle_instructors": int(roster.get("instructors") or 0),
+        "moodle_synced": bool(roster.get("synced")),
+        "moodle_fetched_at": roster.get("fetched_at") or "",
+        "moodle_contexts": int(roster.get("context_count") or 0),
+        "active_now": int((active_15 or {}).get("n") or 0),
+        "active_today": int((active_today or {}).get("n") or 0),
+        "launchers_all_time": int((launchers or {}).get("n") or 0),
+        "attempt_learners": int((attempt_learners or {}).get("n") or 0),
+        "active_now_list": active_now,
+        "members": roster.get("members") or [],
+        "hint": (
+            "Sync Moodle roster from Class results (teacher) to refresh enrolment counts."
+            if not roster.get("synced")
+            else "Enrolment counts from last Moodle NRPS sync; Active now = launches in last 15 min."
+        ),
+    }

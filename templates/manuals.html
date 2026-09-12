@@ -1,29 +1,37 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">Learn · this school only</p>
-  <h2 class="welcome-title">Technical manuals</h2>
-  <p class="welcome-lede">Published versions of school manuals and eBook chapters.</p>
-</section>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1">
+      <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+        <span class="material-symbols-outlined" style="font-size:13px">menu_book</span>
+        Manual · this school only
+      </div>
+      <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">Technical manuals</h1>
+      <p class="body-md" style="color:var(--outline-variant);max-width:520px;margin-top:4px">
+        Published versions of school manuals and eBook chapters.
+      </p>
+    </div>
+  </section>
 
-<section class="panel">
   {% if manuals %}
-  <ul class="lesson-list">
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-md)">
     {% for m in manuals %}
-    <li class="lesson-item">
-      <a href="/manuals/{{ m.id }}?token={{ quiz_token }}">
-        <span class="lesson-pos">M</span>
-        <span class="lesson-body">
-          <span class="lesson-title">{{ m.title }}</span>
-          <span class="lesson-type">{{ m.description or m.slug }}</span>
-        </span>
-        <span class="lesson-go">→</span>
-      </a>
-    </li>
+    <a href="/manuals/{{ m.id }}?token={{ quiz_token }}" class="lesson-card" style="text-decoration:none;color:inherit">
+      <div class="lesson-img">📖</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <span class="chip chip-mint" style="font-size:10px">Manual</span>
+      </div>
+      <h3 class="headline-sm">{{ m.title }}</h3>
+      <p class="body-sm text-muted" style="margin-top:4px">{{ m.description or m.slug }}</p>
+    </a>
     {% endfor %}
-  </ul>
+  </div>
   {% else %}
-  <div class="empty"><p>No published manuals yet.</p></div>
+  <section class="frosted" style="padding:var(--sp-2xl);text-align:center">
+    <span class="material-symbols-outlined" style="font-size:48px;opacity:.4;display:block;margin-bottom:var(--sp-sm)">menu_book</span>
+    <p class="body-md">No published manuals yet.</p>
+  </section>
   {% endif %}
-</section>
+</div>
 {% endblock %}

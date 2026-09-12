@@ -239,16 +239,27 @@ def main() -> int:
             if not path.exists():
                 print(f"ERROR: required migration missing: {name}", file=sys.stderr)
                 return 1
+            if name == "init.sql":
+                missing_inst = conn.execute(
+                    "SELECT to_regclass('public.institutions') IS NULL"
+                ).fetchone()
+                if missing_inst and missing_inst[0]:
+                    conn.execute(
+                        "DELETE FROM schema_migrations WHERE filename = 'init.sql'"
+                    )
             if _already_applied(conn, name):
                 print(f"skip applied {name}")
                 continue
-            # Fresh installs need init.sql; existing local/Railway DBs already have it.
+            # Fresh installs need init.sql; existing DBs already have core tables.
             if name == "init.sql":
                 row = conn.execute(
-                    "SELECT to_regclass('public.tenants') IS NOT NULL"
+                    """
+                    SELECT to_regclass('public.tenants') IS NOT NULL
+                       AND to_regclass('public.institutions') IS NOT NULL
+                    """
                 ).fetchone()
                 if row and row[0]:
-                    print("skip init.sql (tenants already present) — baselining")
+                    print("skip init.sql (core tables already present) — baselining")
                     _mark_applied(conn, name)
                     continue
             print(f"apply {name}…")

@@ -21,6 +21,68 @@ def _require_tenant(tenant_id: UUID) -> None:
         )
 
 
+@router.get("/tla/maturity")
+def tla_maturity(_ops: OpsAuth) -> dict[str, Any]:
+    """TLA/CMM requirements (all levels) + ADL refs + vendored artifacts."""
+    return tla.maturity_report()
+
+
+@router.get("/tla/cmi5/requirements")
+def tla_cmi5_requirements(
+    _ops: OpsAuth,
+    limit: int = Query(20, ge=1, le=200),
+    req_id: str | None = Query(None, description="CATAPULT requirement id"),
+) -> dict[str, Any]:
+    """Vendored ADL CATAPULT cmi5 requirements.json lookup."""
+    if req_id:
+        row = tla.get_requirement(req_id)
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Requirement '{req_id}' not found",
+            )
+        return {"id": req_id, "requirement": row}
+    return tla.summarize_requirements(limit=limit)
+
+
+@router.get("/xi/experiences")
+def list_xi_experiences(
+    _ops: OpsAuth,
+    tenant_id: UUID = Query(...),
+    competency: str | None = Query(
+        None, description="Filter educationalAlignment.competency (xi-lite)"
+    ),
+    url: str | None = Query(None, description="Filter content url (xi-lite)"),
+    limit: int = Query(1000, ge=1, le=5000),
+    offset: int = Query(0, ge=0),
+) -> list[dict[str, Any]]:
+    """ADL xi-lite compatible Experience Index listing."""
+    _require_tenant(tenant_id)
+    return tla.xi_experiences(
+        tenant_id,
+        competency=competency,
+        url=url,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/xi/experiences/{experience_id}")
+def get_xi_experience(
+    experience_id: str,
+    _ops: OpsAuth,
+    tenant_id: UUID = Query(...),
+) -> dict[str, Any]:
+    """ADL xi-lite compatible single Experience Index entry."""
+    _require_tenant(tenant_id)
+    row = tla.xi_experience(tenant_id, experience_id)
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Experience not found"
+        )
+    return row
+
+
 @router.get("/catalogue/courses")
 def list_catalogue_courses(
     _ops: OpsAuth,

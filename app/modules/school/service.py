@@ -168,7 +168,7 @@ def list_classes_with_roster(tenant_id: UUID | str) -> list[dict[str, Any]]:
         for c in classes:
             teachers = conn.execute(
                 """
-                SELECT t.name, t.teacher_code, ct.role
+                SELECT t.name, t.teacher_code, t.email, ct.role
                 FROM class_teachers ct
                 JOIN teachers t ON t.id = ct.teacher_id
                 WHERE ct.class_id = %s
@@ -358,6 +358,27 @@ def _norm(s: str) -> str:
     return " ".join((s or "").strip().lower().split())
 
 
+def _grade_from_text(*parts: str) -> int | None:
+    """Extract Class N (1–10) from Moodle titles/labels/shortnames."""
+    import re
+
+    blob = " ".join(_norm(p) for p in parts if p)
+    if not blob:
+        return None
+    if "demo" in blob:
+        return 8
+    m = re.search(r"\bclass\s*0*([1-9]|10)\b", blob)
+    if m:
+        return int(m.group(1))
+    m = re.search(r"\bclass0*([1-9]|10)\b", blob)
+    if m:
+        return int(m.group(1))
+    m = re.search(r"\brhs-c0*([1-9]|10)\b", blob)
+    if m:
+        return int(m.group(1))
+    return None
+
+
 def _score_class_match(
     cls: dict[str, Any], *, label: str, title: str
 ) -> int:
@@ -368,6 +389,10 @@ def _score_class_match(
     label_n = _norm(label)
     title_n = _norm(title)
     score = 0
+    grade = _grade_from_text(label, title)
+    if grade is not None:
+        if name == f"class {grade}" or code.endswith(f"{grade:02d}"):
+            score = max(score, 95)
     if label_n and code and label_n == code:
         score = max(score, 100)
     if title_n and name and title_n == name:
@@ -386,6 +411,32 @@ def _score_class_match(
     if label_n and code and (label_n in code or code in label_n):
         score = max(score, 40)
     return score
+
+
+def find_lead_class_for_teacher(
+    tenant_id: UUID | str,
+    *,
+    email: str | None = None,
+    name: str | None = None,
+) -> dict[str, Any] | None:
+    """Match instructor email/name to a lead class (fallback when LTI context unknown)."""
+    email_n = (email or "").strip().lower()
+    name_n = (name or "").strip().lower()
+    if not email_n and not name_n:
+        return None
+    for cls in list_classes_with_roster(tenant_id):
+        for t in cls.get("teachers") or []:
+            t_email = str(t.get("email") or "").strip().lower()
+            t_name = str(t.get("name") or "").strip().lower()
+            role = str(t.get("role") or "").strip().lower()
+            if role and role not in ("lead", "teacher", "editingteacher", ""):
+                continue
+            if email_n and t_email and email_n == t_email:
+                return cls
+            # Require full display-name match (avoid "Priya" → wrong class)
+            if name_n and t_name and name_n == t_name:
+                return cls
+    return None
 
 
 def match_class_for_context(
@@ -537,6 +588,57 @@ def school_snapshot(tenant_id: UUID | str) -> dict[str, Any]:
         "binding_count": len(bindings),
         "student_count": len(
             {s["student_code"] for c in classes for s in c.get("students") or []}
+        ),
+    }
+
+
+def class_workspace_snapshot(
+    tenant_id: UUID | str, class_id: UUID | str | None
+) -> dict[str, Any] | None:
+    """Class-scoped hub stats for an LTI-bound teacher launch."""
+    cid = str(class_id or "").strip()
+    if not cid:
+        return None
+    selected = None
+    for c in list_classes_with_roster(tenant_id):
+        if str(c["id"]) == cid:
+            selected = c
+            break
+    if not selected:
+        return None
+
+    course = None
+    if selected.get("course_id"):
+        course = get_bound_course(tenant_id, selected["course_id"])
+    lessons = list_lessons(tenant_id, course["id"]) if course else []
+    labels = class_moodle_filter_labels(tenant_id, cid)
+    summary = db.quiz_attempt_class_summary(
+        tenant_id, limit=500, course_labels=labels or None
+    )
+    avg = summary.get("avg_percent")
+    return {
+        "class_id": cid,
+        "class_code": selected.get("class_code") or "",
+        "class_name": selected.get("class_name") or "",
+        "subject": selected.get("subject") or "",
+        "course": course,
+        "course_title": (course or {}).get("title")
+        or selected.get("course_title")
+        or "",
+        "student_count": len(selected.get("students") or []),
+        "teacher_count": len(selected.get("teachers") or []),
+        "lesson_count": len(lessons),
+        "attempt_count": int(summary.get("total_attempts") or 0),
+        "learner_attempted": int(summary.get("learner_count") or 0),
+        "avg_percent": int(round(avg)) if avg is not None else None,
+        "synced_count": int(summary.get("synced_count") or 0),
+        "heading": (
+            f"{selected.get('class_name') or 'Class'}"
+            + (
+                f" · {selected.get('subject')}"
+                if selected.get("subject")
+                else ""
+            )
         ),
     }
 

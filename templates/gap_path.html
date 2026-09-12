@@ -1,103 +1,117 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">{% if gap_path and gap_path.mode == 'difference' %}Difference training · D23{% else %}Personal learning plan · PLE{% endif %}</p>
-  <h2 class="welcome-title">{% if gap_path and gap_path.mode == 'difference' %}Close role skill gaps{% else %}Close your skill gaps{% endif %}</h2>
-  <p class="welcome-lede">
-    {% if gap_path and gap_path.mode == 'difference' %}
-    Path from your target role’s required skills minus what you already demonstrated.
-    {% else %}
-    Your saved path from the last graded attempt. Mark steps done as you go —
-    Home Continue points at the next open step.
-    {% endif %}
-  </p>
-</section>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1">
+      <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+        <span class="material-symbols-outlined" style="font-size:13px">route</span>
+        {% if gap_path and gap_path.mode == 'difference' %}Difference training · D23{% else %}My plan · PLE{% endif %}
+      </div>
+      <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">
+        {% if gap_path and gap_path.mode == 'difference' %}Close role skill gaps{% else %}My learning plan{% endif %}
+      </h1>
+      <p class="body-md" style="color:var(--outline-variant);max-width:560px;margin-top:4px">
+        {% if gap_path and gap_path.mode == 'difference' %}
+        Path from your target role’s required skills minus what you already demonstrated.
+        {% else %}
+        Your saved path from the last graded attempt. Home Continue points at the next open step.
+        {% endif %}
+      </p>
+    </div>
+  </section>
 
-<section class="panel">
-  <div class="panel-head">
-    <h2>Target role</h2>
-    <span class="meta">Optional · difference training</span>
-  </div>
-  <form method="post" action="/learn/gap/role" class="teach-form filter-row">
-    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-    <label>Role
-      <select name="role_code">
-        <option value="">— attempt gaps only —</option>
-        {% for r in roles or [] %}
-        <option value="{{ r.role_code }}" {% if target_role == r.role_code %}selected{% endif %}>
-          {{ r.label }} ({{ r.skill_codes|length }} skills)
-        </option>
-        {% endfor %}
-      </select>
-    </label>
-    <button type="submit" class="btn secondary">Apply role</button>
-  </form>
-</section>
-
-{% if gap_path and gap_path.active %}
-<section class="panel">
-  <div class="panel-head">
-    <h2>{% if gap_path.mode == 'difference' %}Difference path{% else %}Your plan{% endif %}</h2>
-    <span class="meta">
-      {% if gap_path.persisted %}Saved · {% endif %}
-      {% if gap_path.role_code %}<code>{{ gap_path.role_code }}</code> · {% endif %}
-      {{ gap_path.done_count or 0 }}/{{ gap_path.step_count or gap_path.steps|length }} steps
-      {% if gap_path.progress_pct is defined %} · {{ gap_path.progress_pct }}%{% endif %}
-    </span>
-  </div>
-  {% if gap_path.skills %}
-  <p class="meta">
-    {% if gap_path.mode == 'difference' %}Role gaps:{% else %}Weak / developing:{% endif %}
-    {% for s in gap_path.skills %}
-      <strong>{{ s.label }}</strong>{% if s.percent is not none %} ({{ s.percent }}%){% endif %}{% if not loop.last %}, {% endif %}
-    {% endfor %}
-  </p>
-  {% endif %}
-  <ol class="loop-steps" style="line-height:1.8;padding-left:1.25rem">
-    {% for step in gap_path.steps %}
-    <li>
-      {% if step.done %}<span class="badge ok">Done</span>{% endif %}
-      <a class="link" href="{{ step.href }}">{{ step.n }}. {{ step.label }}</a>
-      {% if step.meta %}<span class="meta"> — {{ step.meta }}</span>{% endif %}
-      {% if gap_path.persisted and not step.done and step.key %}
-      <form method="post" action="/learn/gap/step" style="display:inline;margin-left:0.5rem">
-        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-        <input type="hidden" name="step_key" value="{{ step.key }}"/>
-        <button type="submit" class="btn secondary" style="padding:0.15rem 0.5rem;font-size:0.85rem">Mark done</button>
-      </form>
+  <div class="grid-12-8-4">
+    <section class="frosted" style="padding:var(--sp-xl)">
+      {% if gap_path and gap_path.active %}
+      <div class="section-head">
+        <div>
+          <h2 class="headline-md">{% if gap_path.mode == 'difference' %}Difference path{% else %}Your plan{% endif %}</h2>
+          <p class="body-sm text-muted" style="margin-top:4px">
+            {% if gap_path.persisted %}Saved · {% endif %}
+            {% if gap_path.role_code %}<code>{{ gap_path.role_code }}</code> · {% endif %}
+            {{ gap_path.done_count or 0 }}/{{ gap_path.step_count or gap_path.steps|length }} steps
+            {% if gap_path.progress_pct is defined %} · {{ gap_path.progress_pct }}%{% endif %}
+          </p>
+        </div>
+        {% if gap_path.progress_pct is defined %}
+        <span class="metric-counter" style="font-size:24px;color:var(--primary)">{{ gap_path.progress_pct }}%</span>
+        {% endif %}
+      </div>
+      {% if gap_path.progress_pct is defined %}
+      <div class="progress-track" style="margin-bottom:var(--sp-lg)"><div class="progress-fill" style="width:{{ gap_path.progress_pct }}%"></div></div>
       {% endif %}
-    </li>
-    {% endfor %}
-  </ol>
-  <div class="actions" style="margin-top:1rem">
-    {% if gap_path.first_href %}
-    <a class="btn primary" href="{{ gap_path.first_href }}">Continue next step</a>
-    {% endif %}
-    {% if gap_path.practice_href %}
-    <a class="btn secondary" href="{{ gap_path.practice_href }}">Jump to practice</a>
-    {% endif %}
-    {% if gap_path.graded_href %}
-    <a class="btn secondary" href="{{ gap_path.graded_href }}">Jump to graded retry</a>
-    {% endif %}
-  </div>
-</section>
-{% else %}
-<section class="panel">
-  <p class="lede">No open plan — take the quiz (or finish lessons first). A miss saves a training path here. Pick a target role above for difference training.</p>
-  <div class="actions">
-    <a class="btn primary" href="/quiz?token={{ quiz_token }}">Take quiz</a>
-    <a class="btn secondary" href="/lessons?token={{ quiz_token }}">Lessons</a>
-  </div>
-</section>
-{% endif %}
+      {% if gap_path.skills %}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--sp-md)">
+        {% for s in gap_path.skills %}
+        <span class="chip chip-sky">{{ s.label }}{% if s.percent is not none %} · {{ s.percent }}%{% endif %}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+        {% for step in gap_path.steps %}
+        <div class="card" style="padding:var(--sp-md);display:flex;align-items:center;gap:var(--sp-md);border-left:3px solid {{ 'var(--primary)' if step.done else 'rgba(14,43,36,.12)' }}">
+          <div style="width:32px;height:32px;border-radius:10px;background:{{ 'rgba(52,211,153,.18)' if step.done else 'var(--surface-container)' }};color:{{ 'var(--primary)' if step.done else 'var(--on-surface-variant)' }};display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">
+            {% if step.done %}✓{% else %}{{ step.n }}{% endif %}
+          </div>
+          <div style="flex:1;min-width:0">
+            <a href="{{ step.href }}" style="color:var(--on-surface);font-weight:600;text-decoration:none">{{ step.label }}</a>
+            {% if step.meta %}<div class="body-sm text-muted">{{ step.meta }}</div>{% endif %}
+          </div>
+          {% if gap_path.persisted and not step.done and step.key %}
+          <form method="post" action="/learn/gap/step">
+            <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+            <input type="hidden" name="step_key" value="{{ step.key }}"/>
+            <button type="submit" class="btn btn-surface" style="font-size:12px;padding:5px 10px">Mark done</button>
+          </form>
+          {% elif step.done %}
+          <span class="chip chip-mint">Done</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap;margin-top:var(--sp-lg)">
+        {% if gap_path.first_href %}<a class="btn btn-primary" href="{{ gap_path.first_href }}">Continue next step</a>{% endif %}
+        {% if gap_path.practice_href %}<a class="btn btn-glass" href="{{ gap_path.practice_href }}">Jump to practice</a>{% endif %}
+        {% if gap_path.graded_href %}<a class="btn btn-surface" href="{{ gap_path.graded_href }}">Graded retry</a>{% endif %}
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:var(--sp-xl)">
+        <span class="material-symbols-outlined" style="font-size:48px;opacity:.4;display:block;margin-bottom:var(--sp-sm)">route</span>
+        <p class="body-md">No open plan yet.</p>
+        <p class="body-sm text-muted">Take the quiz (or finish lessons first). A miss saves a training path here.</p>
+        <div style="display:flex;justify-content:center;gap:var(--sp-sm);margin-top:var(--sp-md)">
+          <a class="btn btn-primary" href="/quiz?token={{ quiz_token }}">Take quiz</a>
+          <a class="btn btn-glass" href="/lessons?token={{ quiz_token }}">Lessons</a>
+        </div>
+      </div>
+      {% endif %}
+    </section>
 
-{% if adaptive_next and adaptive_next.mode == 'adaptive' %}
-<section class="panel">
-  <h2>Adaptive next (C9)</h2>
-  <p class="lede">{{ adaptive_next.reason }}</p>
-  <a class="btn secondary" href="/lessons/{{ adaptive_next.lesson_id }}?token={{ quiz_token }}">
-    Open {{ adaptive_next.title }}
-  </a>
-</section>
-{% endif %}
+    <aside style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Target role</h3>
+        <p class="body-sm text-muted" style="margin-bottom:var(--sp-sm)">Optional · difference training</p>
+        <form method="post" action="/learn/gap/role" style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <select name="role_code" style="width:100%;padding:10px var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);background:var(--surface-container-lowest)">
+            <option value="">— attempt gaps only —</option>
+            {% for r in roles or [] %}
+            <option value="{{ r.role_code }}" {% if target_role == r.role_code %}selected{% endif %}>
+              {{ r.label }} ({{ r.skill_codes|length }} skills)
+            </option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-primary">Apply role</button>
+        </form>
+      </div>
+      {% if adaptive_next and adaptive_next.mode == 'adaptive' %}
+      <div class="card" style="padding:var(--sp-lg);border-left:3px solid var(--secondary)">
+        <h3 class="headline-sm" style="margin-bottom:6px">Adaptive next</h3>
+        <p class="body-sm text-muted">{{ adaptive_next.reason }}</p>
+        <a class="btn btn-surface" style="margin-top:var(--sp-sm)" href="/lessons/{{ adaptive_next.lesson_id }}?token={{ quiz_token }}">Open {{ adaptive_next.title }}</a>
+      </div>
+      {% endif %}
+    </aside>
+  </div>
+</div>
 {% endblock %}

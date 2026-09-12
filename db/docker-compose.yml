@@ -1,4 +1,5 @@
 # EdVidura shared Postgres (multi-tenant spike) + optional Metabase BI
+# + optional Yet Analytics SQL LRS
 services:
   db:
     image: postgres:16-alpine
@@ -35,6 +36,30 @@ services:
     profiles:
       - bi
 
+  # Optional Yet Analytics SQL LRS (SQLite) — http://localhost:8080/admin
+  # App env:
+  #   XAPI_LRS_PROVIDER=yet
+  #   XAPI_LRS_ENDPOINT=http://localhost:8080/xapi
+  #   XAPI_LRS_KEY=edvidura_key
+  #   XAPI_LRS_SECRET=edvidura_secret
+  # Docs: https://yetanalytics.github.io/lrsql/
+  yet-lrs:
+    image: yetanalytics/lrsql:latest
+    ports:
+      - "8080:8080"
+    environment:
+      LRSQL_API_KEY_DEFAULT: edvidura_key
+      LRSQL_API_SECRET_DEFAULT: edvidura_secret
+      LRSQL_ADMIN_USER_DEFAULT: edvidura_admin
+      LRSQL_ADMIN_PASS_DEFAULT: EdViduraAdmin1!
+      LRSQL_DB_NAME: db/lrsql.sqlite.db
+      LRSQL_ALLOW_ALL_ORIGINS: "true"
+    volumes:
+      - yet_lrs_data:/lrsql/db
+    profiles:
+      - lrs
+
 volumes:
   edvidura_pg:
   metabase_data:
+  yet_lrs_data:

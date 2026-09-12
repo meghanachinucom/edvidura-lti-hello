@@ -1,50 +1,178 @@
 {% extends "base_shell.html" %}
 {% block content %}
-{% if practice_mode %}
-<div class="banner-note info">Practice lane — scores save here and to xAPI, but <strong>not</strong> to Moodle.{% if remediation_loop %} After this, take the <strong>graded retry</strong>.{% endif %}</div>
-{% elif remediation_loop %}
-<div class="banner-note ok">Graded remediation retry — missed items only; can sync to Moodle.</div>
-{% elif coach_warn %}
-<div class="banner-note info">Ghost coach notes open lessons — you chose to continue anyway.</div>
-{% endif %}
+<div class="page-wrap quiz-page">
+  {% if practice_mode %}
+  <div class="quiz-banner quiz-banner--practice">
+    <span class="material-symbols-outlined">fitness_center</span>
+    <span class="body-md">Practice lane — scores save here and to xAPI, but <strong>not</strong> to Moodle.{% if remediation_loop %} After this, take the <strong>graded retry</strong>.{% endif %}</span>
+  </div>
+  {% elif remediation_loop %}
+  <div class="quiz-banner quiz-banner--retry">
+    <span class="material-symbols-outlined">replay</span>
+    <span class="body-md">Graded remediation retry — missed items only; can sync to Moodle.</span>
+  </div>
+  {% elif coach_warn %}
+  <div class="quiz-banner quiz-banner--warn">
+    <span class="material-symbols-outlined">info</span>
+    <span class="body-md">Ghost coach notes open lessons — you chose to continue anyway.</span>
+  </div>
+  {% endif %}
 
-<div class="welcome solo">
-  <div>
-    <p class="welcome-k">Assessment</p>
-    <h2>{% if practice_mode %}Practice check{% elif retry_from %}Missed items{% else %}Chapter check{% endif %}</h2>
-    <p>{{ questions|length }} question{% if questions|length != 1 %}s{% endif %} · {% if practice_mode %}no Moodle sync{% elif ags_available %}can sync to Moodle{% else %}saves in EdVidura{% endif %}.</p>
+  <section class="hero-band quiz-hero">
+    <div class="quiz-hero-inner">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">{% if practice_mode %}fitness_center{% else %}quiz{% endif %}</span>
+          {% if practice_mode %}Practice lane{% elif retry_from %}Missed items{% else %}Chapter check{% endif %}
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">
+          {% if practice_mode %}Practice check{% elif retry_from %}Retry missed{% else %}Take the quiz{% endif %}
+        </h1>
+        <p class="body-md" style="color:var(--outline-variant);margin-top:4px;max-width:520px">
+          {{ questions|length }} question{% if questions|length != 1 %}s{% endif %}
+          · {% if practice_mode %}no Moodle sync{% elif ags_available %}can sync to Moodle{% else %}saves in EdVidura{% endif %}.
+        </p>
+      </div>
+      <div class="quiz-hero-actions">
+        <div class="quiz-progress-pill" id="quiz-progress-pill" aria-live="polite">
+          <span class="material-symbols-outlined">done_all</span>
+          <span><strong id="quiz-answered-count">0</strong> / {{ questions|length }} answered</span>
+        </div>
+        <a href="/lessons?token={{ quiz_token }}" class="btn" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">
+          <span class="material-symbols-outlined" style="font-size:15px">arrow_back</span>
+          Back to lessons
+        </a>
+      </div>
+    </div>
+    <div class="quiz-progress-track" aria-hidden="true">
+      <div class="quiz-progress-fill" id="quiz-progress-fill" style="width:0%"></div>
+    </div>
+  </section>
+
+  <div class="quiz-layout">
+    <form method="post" action="/quiz/submit" id="quiz-form" class="quiz-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      {% if practice_mode %}<input type="hidden" name="practice_mode" value="1"/>{% endif %}
+      {% if retry_from %}<input type="hidden" name="retry_from" value="{{ retry_from }}"/>{% endif %}
+
+      {% for q in questions %}
+      <article class="q-card" data-qid="{{ q.id }}" style="animation-delay:{{ loop.index0 * 0.05 }}s">
+        <header class="q-card-head">
+          <div class="q-num" aria-hidden="true">{{ loop.index }}</div>
+          <div class="q-card-meta">
+            <span class="label-caps text-muted">Question {{ loop.index }} of {{ questions|length }}</span>
+            <p class="headline-sm q-prompt">{{ q.prompt }}</p>
+          </div>
+        </header>
+        <div class="q-opts" role="radiogroup" aria-label="Question {{ loop.index }}">
+          {% for choice in q.choices %}
+          {% set letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[loop.index0] %}
+          <label class="q-opt">
+            <input type="radio" name="{{ q.id }}" value="{{ loop.index0 }}" required/>
+            <span class="q-opt-letter">{{ letter }}</span>
+            <span class="q-opt-text">{{ choice }}</span>
+            <span class="q-opt-check material-symbols-outlined" aria-hidden="true">check_circle</span>
+          </label>
+          {% endfor %}
+        </div>
+      </article>
+      {% endfor %}
+
+      <div class="quiz-submit-bar">
+        <div class="quiz-submit-meta">
+          <span class="material-symbols-outlined">bolt</span>
+          <span class="body-sm" id="quiz-submit-hint">Answer every question to unlock submit.</span>
+        </div>
+        <div class="quiz-submit-actions">
+          <button type="submit" class="btn btn-primary" id="quiz-submit-btn">
+            <span class="material-symbols-outlined" style="font-size:16px">send</span>
+            {% if practice_mode %}Submit practice{% else %}Submit quiz{% endif %}
+          </button>
+          <a class="btn btn-glass" href="/lessons?token={{ quiz_token }}">Cancel</a>
+          <a class="btn btn-surface" href="/learn/coach?token={{ quiz_token }}">Ask study coach</a>
+        </div>
+      </div>
+    </form>
+
+    <aside class="quiz-aside">
+      <div class="frosted quiz-aside-card">
+        <div class="quiz-aside-icon">
+          <span class="material-symbols-outlined">tips_and_updates</span>
+        </div>
+        <h3 class="headline-sm">Before you submit</h3>
+        <ul class="quiz-tips">
+          <li>Pick one answer per question</li>
+          <li>You can change answers anytime</li>
+          <li>{% if practice_mode %}Practice stays off Moodle{% elif ags_available %}Graded attempts can sync to Moodle{% else %}Results save in EdVidura{% endif %}</li>
+        </ul>
+      </div>
+      <div class="card quiz-aside-card">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Need a nudge?</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a class="btn btn-surface" href="/learn/coach?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">psychology</span>
+            Study coach
+          </a>
+          <a class="btn btn-surface" href="/manuals?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">menu_book</span>
+            Open manual
+          </a>
+          <a class="btn btn-surface" href="/lessons?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">auto_stories</span>
+            Review lessons
+          </a>
+        </div>
+      </div>
+    </aside>
   </div>
 </div>
-
-<form method="post" action="/quiz/submit" id="quiz-form">
-  <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-  {% if practice_mode %}<input type="hidden" name="practice_mode" value="1"/>{% endif %}
-  {% if retry_from %}<input type="hidden" name="retry_from" value="{{ retry_from }}"/>{% endif %}
-  {% for q in questions %}
-  <div class="q">
-    <div class="qn">{{ loop.index }}. {{ q.prompt }}</div>
-    <div class="opts">
-      {% for choice in q.choices %}
-      <label>
-        <input type="radio" name="{{ q.id }}" value="{{ loop.index0 }}" required/>
-        {{ choice }}
-      </label>
-      {% endfor %}
-    </div>
-  </div>
-  {% endfor %}
-  <div class="actions sticky-actions">
-    <button type="submit" class="btn primary btn-lg" id="quiz-submit-btn">
-      {% if practice_mode %}Submit practice{% else %}Submit quiz{% endif %}
-    </button>
-    <a class="btn secondary" href="/lessons?token={{ quiz_token }}">Back</a>
-  </div>
-</form>
 <script>
-  document.getElementById('quiz-form').addEventListener('submit', function () {
-    var btn = document.getElementById('quiz-submit-btn');
-    btn.disabled = true;
-    btn.textContent = 'Submitting…';
+(function () {
+  var form = document.getElementById('quiz-form');
+  if (!form) return;
+  var total = {{ questions|length }};
+  var countEl = document.getElementById('quiz-answered-count');
+  var fillEl = document.getElementById('quiz-progress-fill');
+  var hintEl = document.getElementById('quiz-submit-hint');
+  var btn = document.getElementById('quiz-submit-btn');
+
+  function answeredCount() {
+    var names = {};
+    form.querySelectorAll('input[type=radio]:checked').forEach(function (el) {
+      names[el.name] = true;
+    });
+    return Object.keys(names).length;
+  }
+
+  function refresh() {
+    var n = answeredCount();
+    if (countEl) countEl.textContent = String(n);
+    if (fillEl) fillEl.style.width = (total ? Math.round((n / total) * 100) : 0) + '%';
+    form.querySelectorAll('.q-card').forEach(function (card) {
+      var qid = card.getAttribute('data-qid');
+      var done = !!form.querySelector('input[name="' + qid + '"]:checked');
+      card.classList.toggle('is-answered', done);
+      card.querySelectorAll('.q-opt').forEach(function (opt) {
+        var input = opt.querySelector('input[type=radio]');
+        opt.classList.toggle('is-selected', !!(input && input.checked));
+      });
+    });
+    if (btn) btn.disabled = n < total;
+    if (hintEl) {
+      hintEl.textContent = n < total
+        ? (total - n) + ' question' + (total - n === 1 ? '' : 's') + ' left'
+        : 'Ready to submit — double-check if you like';
+    }
+  }
+
+  form.addEventListener('change', refresh);
+  form.addEventListener('submit', function () {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+    }
   });
+  refresh();
+})();
 </script>
 {% endblock %}

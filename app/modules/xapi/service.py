@@ -1,14 +1,10 @@
 """Persist xAPI statements under RLS; tier promotion + LRS forward with retry."""
 from __future__ import annotations
 
-import base64
 import json
 import logging
-import time
 from typing import Any
 from uuid import UUID
-
-import httpx
 
 from app import db
 from app.modules.xapi.builder import (
@@ -16,6 +12,7 @@ from app.modules.xapi.builder import (
     build_quiz_attempt_statement,
     build_resource_experienced_statement,
     build_skill_assessed_statement,
+    build_coach_interacted_statement,
 )
 from app.settings import get_settings
 
@@ -108,6 +105,64 @@ def record_resource_experienced(
         resource_id=resource_id,
         resource_title=resource_title,
         resource_kind=resource_kind,
+        homepage=homepage or settings.xapi_actor_homepage,
+        activity_base=settings.app_base_url,
+    )
+    return _store_and_maybe_send(
+        tenant_id=tenant_id,
+        statement=statement,
+        actor_sub=subject,
+        attempt_id=None,
+        source_event_id=None,
+        send_lrs=send_lrs,
+        promote_on_valid=True,
+    )
+
+
+def record_coach_interaction(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    question: str,
+    grounded: bool = False,
+    refusal_reason: str | None = None,
+    citation_count: int = 0,
+    course_title: str = "",
+    course_id: UUID | str | None = None,
+    thread_id: str | None = None,
+    answer_text: str | None = None,
+    access_level: str | None = None,
+    include_full_text: bool | None = None,
+    homepage: str | None = None,
+    send_lrs: bool = True,
+) -> dict[str, Any]:
+    """Persist a study-coach chat turn as xAPI interacted (under RLS).
+
+    When ``COACH_XAPI_FULL_TEXT=1``, statements include PeBL Discussion fields
+    (full message text, thread id, access level).
+    """
+    settings = get_settings()
+    full = (
+        bool(include_full_text)
+        if include_full_text is not None
+        else bool(getattr(settings, "coach_xapi_full_text", False))
+    )
+    level = access_level or getattr(settings, "coach_xapi_access_level", "class")
+    statement = build_coach_interacted_statement(
+        tenant_id=tenant_id,
+        subject=subject,
+        learner_name=learner_name,
+        question=question,
+        grounded=grounded,
+        refusal_reason=refusal_reason,
+        citation_count=citation_count,
+        course_title=course_title,
+        course_id=course_id,
+        thread_id=thread_id,
+        access_level=str(level or "class"),
+        include_full_text=full,
+        answer_text=answer_text,
         homepage=homepage or settings.xapi_actor_homepage,
         activity_base=settings.app_base_url,
     )
@@ -309,37 +364,22 @@ def forward_to_lrs(
     statement: dict[str, Any], *, retries: int = 3
 ) -> tuple[bool, str | None, int]:
     """POST statement to LRS with simple retry. No-op if LRS not configured."""
+    from app.modules.xapi.lrs_client import post_statement
+
     settings = get_settings()
-    endpoint = (settings.xapi_lrs_endpoint or "").strip().rstrip("/")
+    endpoint = (settings.xapi_lrs_endpoint or "").strip()
     if not endpoint:
         return False, None, 0
-    key = settings.xapi_lrs_key
-    secret = settings.xapi_lrs_secret
-    if not key or not secret:
-        return False, "LRS key/secret missing", 0
-    url = endpoint if endpoint.endswith("/statements") else f"{endpoint}/statements"
-    token = base64.b64encode(f"{key}:{secret}".encode()).decode()
-    headers = {
-        "Authorization": f"Basic {token}",
-        "X-Experience-API-Version": "1.0.3",
-        "Content-Type": "application/json",
-    }
-    last_err: str | None = None
-    attempts = 0
-    for i in range(max(1, retries)):
-        attempts = i + 1
-        try:
-            with httpx.Client(timeout=12.0) as client:
-                resp = client.post(url, headers=headers, json=statement)
-            if resp.status_code in {200, 204}:
-                return True, None, attempts
-            last_err = f"LRS HTTP {resp.status_code}: {resp.text[:200]}"
-        except Exception as exc:  # noqa: BLE001
-            last_err = str(exc)
-            logger.warning("LRS forward attempt %s failed: %s", attempts, exc)
-        if i + 1 < retries:
-            time.sleep(0.4 * (2**i))
-    return False, last_err, attempts
+    provider = getattr(settings, "xapi_lrs_provider", "auto") or "auto"
+    ok, err, attempts, _meta = post_statement(
+        statement,
+        endpoint=endpoint,
+        key=settings.xapi_lrs_key,
+        secret=settings.xapi_lrs_secret,
+        provider=provider,  # type: ignore[arg-type]
+        retries=retries,
+    )
+    return ok, err, attempts
 
 
 def retry_failed_lrs(
