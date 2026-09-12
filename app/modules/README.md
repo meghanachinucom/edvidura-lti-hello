@@ -17,7 +17,7 @@ Import domain logic from `app.modules.*` — not from FastAPI route files.
 | `app.modules.analytics` | Tenant + learner KPIs, Metabase embed, Yet+Metabase integration status | BI / reporting |
 | `app.modules.ai_assessment` | MCQs, simplify, grade assist, deep-link & next-step suggestions; E04 OpenAI + local HTTP | Assessment authoring |
 | `app.modules.ai_authoring` | D13 teacher SME authoring assistant (grounded drafts) | Authoring |
-| `app.modules.ai_tutor` | Student hints + SME study coach (citations, retention stance) | Tutoring |
+| `app.modules.ai_tutor` | Student hints + SME study coach (citations, retention stance, Indian-language voice catalog) | Tutoring |
 | `app.modules.skills` | C8 competency registry + D23 roles + D08 framework import / TO review | Adaptive / gap / difference |
 | `app.modules.adaptive` | C9/C10 adaptive next + gap/difference paths + PLE + DCT order/planner | Tutoring / remediation |
 | `app.modules.sme` | C13 SME source registry: approved manuals/lessons for study coach | Tutoring / RAG grounding |

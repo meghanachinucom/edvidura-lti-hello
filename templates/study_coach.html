@@ -1,5 +1,46 @@
 {% extends "base_shell.html" %}
 {% block content %}
+<style>
+  .coach-voice-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: var(--sp-md);
+  }
+  .coach-voice-bar label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--outline);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .coach-voice-bar select {
+    min-width: 180px;
+    padding: 8px 12px;
+    border: 1.5px solid rgba(14,43,36,.12);
+    border-radius: var(--r-lg);
+    font-family: var(--font-body);
+    font-size: 14px;
+    background: var(--surface-container-lowest);
+  }
+  .coach-mic-on {
+    background: rgba(186,26,26,.12) !important;
+    color: var(--error) !important;
+    border-color: rgba(186,26,26,.28) !important;
+  }
+  #coach-voice-status {
+    font-size: 13px;
+    color: var(--outline);
+    min-height: 1.2em;
+  }
+  .coach-answer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+</style>
 <div class="page-wrap">
   <section class="hero-band">
     <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
@@ -11,12 +52,16 @@
         <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">Ask the coach</h1>
         <p class="body-md" style="color:var(--outline-variant);max-width:560px;margin-top:4px">
           Answers stay grounded in version-pinned manuals and lessons your teacher approved.
-          Turns are <strong style="color:var(--inverse-on-surface)">not stored</strong>. Official grades stay in your LMS.
+          Speak or type in Indian languages. Turns are <strong style="color:var(--inverse-on-surface)">not stored</strong>. Official grades stay in your LMS.
         </p>
       </div>
       <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
         {% if ai %}<span class="chip" style="background:rgba(52,211,153,.16);color:var(--primary-fixed)">{{ ai.provider }}</span>{% endif %}
         {% if source_count %}<span class="chip" style="background:rgba(255,255,255,.12);color:var(--surface-container-lowest)">{{ source_count }} source chunk{{ 's' if source_count != 1 else '' }}</span>{% endif %}
+        <span class="chip" style="background:rgba(64,194,253,.18);color:var(--surface-container-lowest)">
+          <span class="material-symbols-outlined" style="font-size:13px">record_voice_over</span>
+          Voice
+        </span>
       </div>
     </div>
   </section>
@@ -36,17 +81,37 @@
         </span>
         <div>
           <h2 class="headline-md" style="margin:0">Your question</h2>
-          <p class="body-sm text-muted" style="margin:0">Ask about a concept from this class</p>
+          <p class="body-sm text-muted" style="margin:0">Type or use the mic · pick a reply language</p>
         </div>
       </div>
-      <form method="post" action="/learn/coach" style="display:flex;flex-direction:column;gap:var(--sp-md)">
+
+      <div class="coach-voice-bar">
+        <label for="coach-voice-lang">Language</label>
+        <select id="coach-voice-lang" name="reply_language" form="coach-ask-form" aria-label="Coach voice and reply language">
+          {% for lang in voice_languages %}
+          <option value="{{ lang.code }}" {% if lang.code == reply_language %}selected{% endif %}>
+            {{ lang.name }}{% if lang.native and lang.native != lang.name %} · {{ lang.native }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+        <button type="button" id="coach-mic-btn" class="btn btn-surface" aria-pressed="false" title="Speak your question">
+          <span class="material-symbols-outlined" style="font-size:16px">mic</span>
+          Mic
+        </button>
+        <p id="coach-voice-status" role="status" aria-live="polite"></p>
+      </div>
+
+      <form id="coach-ask-form" method="post" action="/learn/coach" style="display:flex;flex-direction:column;gap:var(--sp-md)">
         <input type="hidden" name="token" value="{{ quiz_token }}"/>
-        <textarea name="question" rows="4" required placeholder="What is a variable?" style="width:100%;padding:var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-family:var(--font-body);font-size:15px;background:var(--surface-container-lowest);resize:vertical;box-sizing:border-box;outline:none">{{ question }}</textarea>
+        <textarea id="coach-question" name="question" rows="4" required placeholder="What is a variable? / चर क्या है?" style="width:100%;padding:var(--sp-md);border:1.5px solid rgba(14,43,36,.12);border-radius:var(--r-lg);font-family:var(--font-body);font-size:15px;background:var(--surface-container-lowest);resize:vertical;box-sizing:border-box;outline:none">{{ question }}</textarea>
         <button type="submit" class="btn btn-primary" style="align-self:flex-start">
           <span class="material-symbols-outlined" style="font-size:16px">send</span>
           Ask
         </button>
       </form>
+      <p class="body-sm text-muted" style="margin-top:var(--sp-sm)">
+        Mic and Speak use your browser (best in Chrome/Edge). Includes Hindi, Telugu, Tamil, Kannada, Malayalam, Marathi, Gujarati, Bengali, Punjabi, Odia, Urdu, Assamese, Sanskrit, Nepali, and English.
+      </p>
     </section>
 
     <aside style="display:flex;flex-direction:column;gap:var(--sp-md)">
@@ -69,7 +134,7 @@
       </div>
       <div class="card" style="padding:var(--sp-lg)">
         <h3 class="headline-sm" style="margin-bottom:6px">Privacy</h3>
-        <p class="body-sm text-muted">This coach is stateless. It does not keep a conversation history.</p>
+        <p class="body-sm text-muted">This coach is stateless. Voice stays in the browser — audio is not uploaded to EdVidura.</p>
       </div>
     </aside>
   </div>
@@ -78,13 +143,26 @@
   <section class="frosted" style="padding:var(--sp-xl)">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-md);flex-wrap:wrap;margin-bottom:var(--sp-md)">
       <h2 class="headline-md">Answer</h2>
-      {% if answer.grounded is defined and answer.grounded %}
-      <span class="chip chip-mint">Grounded</span>
-      {% elif answer.grounded is defined %}
-      <span class="chip chip-secondary">Not in SME sources</span>
-      {% endif %}
+      <div class="coach-answer-actions">
+        {% if answer.reply_language_name %}
+        <span class="chip chip-sky">{{ answer.reply_language_name }}</span>
+        {% endif %}
+        {% if answer.grounded is defined and answer.grounded %}
+        <span class="chip chip-mint">Grounded</span>
+        {% elif answer.grounded is defined %}
+        <span class="chip chip-secondary">Not in SME sources</span>
+        {% endif %}
+        <button type="button" id="coach-speak-btn" class="btn btn-primary" title="Read the answer aloud">
+          <span class="material-symbols-outlined" style="font-size:16px">volume_up</span>
+          Speak
+        </button>
+        <button type="button" id="coach-speak-stop-btn" class="btn btn-surface" title="Stop speaking">
+          <span class="material-symbols-outlined" style="font-size:16px">stop</span>
+          Stop
+        </button>
+      </div>
     </div>
-    <p class="body-lg">{{ answer.answer }}</p>
+    <p id="coach-answer-text" class="body-lg" lang="{{ answer.reply_language or reply_language }}">{{ answer.answer }}</p>
 
     {% if answer.citation_links %}
     <h3 class="headline-sm" style="margin:var(--sp-lg) 0 var(--sp-sm)">Citations</h3>
@@ -121,4 +199,8 @@
   </section>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/coach_voice.js"></script>
 {% endblock %}

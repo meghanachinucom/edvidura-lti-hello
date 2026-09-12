@@ -3819,6 +3819,7 @@ async def learner_gap_step_done(request: Request, token: str | None = None):
 @router.get("/learn/coach", response_class=HTMLResponse)
 async def learner_coach_get(request: Request, token: str | None = None):
     from app.modules.ai_assessment import ai_status
+    from app.modules.ai_tutor.voice import list_voice_languages, normalize_voice_lang
 
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
@@ -3838,6 +3839,11 @@ async def learner_coach_get(request: Request, token: str | None = None):
             del title
     except Exception:  # noqa: BLE001
         source_count = 0
+    reply_language = normalize_voice_lang(
+        request.query_params.get("lang")
+        or session.get("coach_voice_lang")
+        or "en-IN"
+    )
     return _shell(
         request,
         "study_coach.html",
@@ -3850,6 +3856,8 @@ async def learner_coach_get(request: Request, token: str | None = None):
             "answer": None,
             "question": "",
             "source_count": source_count,
+            "voice_languages": list_voice_languages(),
+            "reply_language": reply_language,
         },
     )
 
@@ -3858,6 +3866,7 @@ async def learner_coach_get(request: Request, token: str | None = None):
 async def learner_coach_post(request: Request, token: str | None = None):
     from app.modules import ai_tutor
     from app.modules.ai_assessment import ai_status
+    from app.modules.ai_tutor.voice import list_voice_languages, normalize_voice_lang
 
     form = await request.form()
     tok = str(form.get("token") or form.get("quiz_token") or token or "")
@@ -3865,6 +3874,15 @@ async def learner_coach_post(request: Request, token: str | None = None):
     if isinstance(session, HTMLResponse):
         return session
     question = str(form.get("question") or "").strip()
+    reply_language = normalize_voice_lang(
+        str(form.get("reply_language") or session.get("coach_voice_lang") or "")
+    )
+    if reply_language != session.get("coach_voice_lang"):
+        session["coach_voice_lang"] = reply_language
+        request.session[SESSION_KEY] = {
+            **session,
+            "quiz_token": _ensure_token(session),
+        }
     course_title, chunks = ai_tutor.curriculum_chunks_for_session(
         session["tenant_id"],
         session.get("edvidura_course_id") or None,
@@ -3878,6 +3896,7 @@ async def learner_coach_post(request: Request, token: str | None = None):
             question=question,
             curriculum_chunks=chunks,
             course_title=course_title,
+            reply_language=reply_language,
         )
     except ValueError as exc:
         err = str(exc)
@@ -3927,6 +3946,8 @@ async def learner_coach_post(request: Request, token: str | None = None):
             "question": question,
             "error": err,
             "source_count": len(chunks),
+            "voice_languages": list_voice_languages(),
+            "reply_language": reply_language,
         },
     )
 

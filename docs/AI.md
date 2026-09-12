@@ -44,11 +44,12 @@ Shows `provider: openai | local_http | local`.
 | **Deep-link suggestions** | Teacher | LTI Deep Linking picker |
 | **AI hint** on missed items | Student | Quiz result → AI hint |
 | **Study coach (D01)** | Student | Study coach — citations + practice handoff; answers from approved SME sources |
+| **Coach voice (Indian languages)** | Student | Study coach — Mic (STT) + Speak (TTS) via browser Web Speech; reply language picker (Hindi, Telugu, Tamil, Kannada, Malayalam, Marathi, Gujarati, Bengali, Punjabi, Odia, Urdu, Assamese, Sanskrit, Nepali, English) |
 
 ## Modules
 
 - `app.modules.ai_assessment` — teacher drafting & suggestions  
-- `app.modules.ai_tutor` — student hints & coach  
+- `app.modules.ai_tutor` — student hints & coach (`voice.py` Indian language catalog)
 - `app.modules.ai_authoring` — D13 teacher SME authoring assistant  
 - `app.modules.sme` — C13 approved source registry  
 

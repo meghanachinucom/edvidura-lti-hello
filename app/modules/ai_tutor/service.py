@@ -113,13 +113,22 @@ def study_coach_answer(
     question: str,
     curriculum_chunks: list[dict[str, Any]],
     course_title: str = "",
+    reply_language: str = "en-IN",
 ) -> dict[str, Any]:
     """Answer a student question using only provided curriculum chunks."""
+    from app.modules.ai_tutor.voice import (
+        normalize_voice_lang,
+        reply_language_instruction,
+        voice_language_meta,
+    )
     from app.settings import get_settings
 
     q = (question or "").strip()
     if len(q) < 3:
         raise ValueError("Ask a short question about your course")
+    lang = normalize_voice_lang(reply_language)
+    lang_meta = voice_language_meta(lang)
+    lang_instruction = reply_language_instruction(lang)
     # Retention: coach is intentionally stateless (no turn store by default).
     store_turns = bool(getattr(get_settings(), "coach_store_turns", False))
     chunks: list[dict[str, Any]] = []
@@ -152,6 +161,8 @@ def study_coach_answer(
             "practice_hint": True,
             "provider": "local",
             "model": "heuristic-v1",
+            "reply_language": lang,
+            "reply_language_name": lang_meta["name"],
         }
 
     def _openai():
@@ -162,11 +173,14 @@ def study_coach_answer(
                 "Prefer version-pinned manual sections when present. "
                 "If the answer is not in the material, say you don't know from "
                 "these sources and set grounded=false. "
-                "Do not invent URLs or sources. Return ONLY JSON: "
+                "Do not invent URLs or sources. "
+                f"{lang_instruction} "
+                "Return ONLY JSON: "
                 '{"answer":"...","citations":["source title",...],"grounded":true}'
             ),
             user=(
                 f"Course: {course_title or 'this course'}\n"
+                f"Reply language: {lang_meta['name']} ({lang})\n"
                 f"Student question: {q}\n"
                 f"Approved sources: {[{'title': c['title'], 'body': c['body']} for c in chunks]}"
             ),
@@ -183,6 +197,7 @@ def study_coach_answer(
         }
 
     def _local():
+        # Match Latin tokens; Indic questions still score via English source text.
         q_words = {w.lower() for w in re.findall(r"[A-Za-z]{3,}", q)}
         scored: list[tuple[int, int, dict[str, Any]]] = []
         for c in chunks:
@@ -193,7 +208,10 @@ def study_coach_answer(
             scored.append((score, manual_bonus, c))
         scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
         best = scored[0][2] if scored else chunks[0]
-        if scored and scored[0][0] < 1:
+        if scored and scored[0][0] < 1 and not q_words:
+            # Non-Latin question with no Latin tokens — still return best manual chunk.
+            pass
+        elif scored and scored[0][0] < 1:
             return {
                 "answer": (
                     "I couldn't find that in the approved manuals/lessons. "
@@ -206,9 +224,14 @@ def study_coach_answer(
             }
         excerpt = re.sub(r"\s+", " ", best["body"]).strip()[:280]
         cites = [best["title"]]
+        prefix = f"From “{best['title']}”: "
+        if not lang.startswith("en"):
+            prefix = (
+                f"[{lang_meta['name']}] From “{best['title']}”: "
+            )
         return {
             "answer": (
-                f"From “{best['title']}”: {excerpt}"
+                f"{prefix}{excerpt}"
                 + ("…" if len(best["body"]) > 280 else "")
             ),
             "citations": cites,
@@ -225,6 +248,8 @@ def study_coach_answer(
     result.setdefault("refusal_reason", None if result.get("grounded") else "off_curriculum")
     result["retention"] = "stateless" if not store_turns else "session"
     result["practice_hint"] = True
+    result["reply_language"] = lang
+    result["reply_language_name"] = lang_meta["name"]
     return result
 
 
