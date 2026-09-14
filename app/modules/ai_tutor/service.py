@@ -82,7 +82,7 @@ def _citation_links(
         if not c:
             continue  # drop citations that are not in class materials
         body = str(c.get("body") or "")
-        excerpt = re.sub(r"\s+", " ", body).strip()[:180]
+        excerpt = _strip_markdown(body)[:180]
         if len(body) > 180:
             excerpt += "…"
         out.append(
@@ -166,6 +166,40 @@ def _enforce_class_citations(
     }
 
 
+def _strip_markdown(text: str) -> str:
+    t = text or ""
+    t = re.sub(r"(?m)^\s{0,3}#{1,6}\s*", "", t)
+    t = re.sub(r"[*`_#>]+", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
+def _simple_plain_answer(*, question: str, lesson_title: str, body: str) -> str:
+    """Short, easy student answer from a lesson excerpt (no raw markdown dump)."""
+    clean = _strip_markdown(body)
+    # Prefer 1–2 short sentences.
+    parts = re.split(r"(?<=[.!?])\s+", clean)
+    sentences = [p.strip() for p in parts if len(p.strip()) > 12][:2]
+    core = " ".join(sentences) if sentences else clean[:160]
+    if len(core) > 220:
+        core = core[:217].rstrip() + "…"
+    q = (question or "").lower()
+    if "what is" in q or "what are" in q or "define" in q:
+        return f"In simple words: {core}"
+    if "how" in q:
+        return f"Here’s the easy way from your lesson: {core}"
+    return f"From your class lesson “{lesson_title}”: {core}"
+
+
+def _easy_reply_instruction() -> str:
+    return (
+        "Write for a school student. Keep the answer short and easy: "
+        "2 to 4 simple sentences. No markdown headings. "
+        "Avoid jargon; if you must use a term, explain it in plain words. "
+        "Do not paste lesson text verbatim — explain it simply."
+    )
+
+
 def _token_overlap_score(question: str, chunk: dict[str, Any]) -> int:
     """Score question↔chunk overlap (Latin + long Unicode tokens)."""
     q = question or ""
@@ -247,7 +281,7 @@ def study_coach_answer(
     def _openai():
         data = openai_chat_json(
             system=(
-                "You are a class-scoped study coach. "
+                "You are a friendly class study coach for school students. "
                 f"You may ONLY use the provided lessons for “{scope_label}”. "
                 "Do NOT use general knowledge, other courses, or the open web. "
                 "If the question is not clearly answered by those lessons, "
@@ -255,6 +289,7 @@ def study_coach_answer(
                 "Every grounded answer MUST cite one or more lesson titles "
                 "exactly as listed. Prefer the most relevant lesson. "
                 "Do not invent URLs or source titles. "
+                f"{_easy_reply_instruction()} "
                 f"{lang_instruction} "
                 "Return ONLY JSON: "
                 '{"answer":"...","citations":["exact lesson title",...],"grounded":true}'
@@ -290,23 +325,20 @@ def study_coach_answer(
         if best_score < 1:
             return {
                 "answer": (
-                    f"I can only answer from the lessons for {scope_label}. "
-                    "That question does not match this class’s materials."
+                    f"I can only help with lessons for {scope_label}. "
+                    "Try asking about a topic from this class."
                 ),
                 "citations": [],
                 "citation_links": [],
                 "grounded": False,
                 "refusal_reason": "off_class_materials",
             }
-        excerpt = re.sub(r"\s+", " ", best["body"]).strip()[:280]
         cites = [best["title"]]
-        prefix = f"From “{best['title']}”: "
-        if not lang.startswith("en"):
-            prefix = f"[{lang_meta['name']}] From “{best['title']}”: "
         return {
-            "answer": (
-                f"{prefix}{excerpt}"
-                + ("…" if len(best["body"]) > 280 else "")
+            "answer": _simple_plain_answer(
+                question=q,
+                lesson_title=str(best["title"]),
+                body=str(best["body"]),
             ),
             "citations": cites,
             "citation_links": _citation_links(chunks, cites),
@@ -332,6 +364,14 @@ def study_coach_answer(
         if "provider" not in result:
             result["provider"] = "local"
             result["model"] = "heuristic-v1"
+    # Students should not see technical LLM fallback notes.
+    if result.get("note") and (
+        "fallback" in str(result.get("note")).lower()
+        or "OPENAI" in str(result.get("note"))
+        or "ANTHROPIC" in str(result.get("note"))
+        or ".env" in str(result.get("note"))
+    ):
+        result["note"] = ""
     result.setdefault(
         "refusal_reason",
         None if result.get("grounded") else "off_class_materials",

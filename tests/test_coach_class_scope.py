@@ -30,7 +30,7 @@ def test_study_coach_answers_from_class_lesson():
     chunks = [
         {
             "title": "Variables",
-            "body": "A variable stands for an unknown value. Use letters like x.",
+            "body": "## Algebra\nA variable stands for an unknown value. Use letters like x.",
             "kind": "lesson",
             "lesson_id": "l1",
             "course_id": "c1",
@@ -45,7 +45,10 @@ def test_study_coach_answers_from_class_lesson():
     assert result["grounded"] is True
     assert result["citations"]
     assert "Variables" in result["citations"]
+    assert "##" not in result["answer"]
+    assert "simple" in result["answer"].lower() or "variable" in result["answer"].lower()
     assert result.get("scope") == "class_lessons"
+    assert not result.get("note")
 
 
 def test_study_coach_no_class_materials():
