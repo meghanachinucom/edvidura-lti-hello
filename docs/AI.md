@@ -13,6 +13,17 @@ OPENAI_API_KEY=sk-your-key-here
 OPENAI_MODEL=gpt-4o-mini
 ```
 
+### Anthropic (Claude)
+
+```env
+AI_ENABLED=1
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-your-key-here
+ANTHROPIC_MODEL=claude-3-5-haiku-latest
+```
+
+With `AI_PROVIDER=auto`, Anthropic is preferred when `ANTHROPIC_API_KEY` is set, then OpenAI, then local HTTP.
+
 ### Local OpenAI-compatible (E04)
 
 Point at Ollama, vLLM, LM Studio, etc. (must expose `/v1/chat/completions`):

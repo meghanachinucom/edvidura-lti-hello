@@ -34,7 +34,9 @@ class Settings:
     ai_enabled: bool = False
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
-    # E04: auto | openai | local_http — OpenAI-compatible local inference.
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-3-5-haiku-latest"
+    # E04: auto | openai | anthropic | local_http
     ai_provider: str = "auto"
     ai_force_local: bool = False
     local_ai_base_url: str = ""
@@ -145,6 +147,11 @@ def get_settings() -> Settings:
         openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
         openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
         or "gpt-4o-mini",
+        anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", "").strip(),
+        anthropic_model=os.getenv(
+            "ANTHROPIC_MODEL", "claude-3-5-haiku-latest"
+        ).strip()
+        or "claude-3-5-haiku-latest",
         ai_provider=(
             os.getenv("AI_PROVIDER", "auto").strip().lower() or "auto"
         ),

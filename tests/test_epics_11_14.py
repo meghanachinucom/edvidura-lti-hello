@@ -58,6 +58,8 @@ def test_ai_force_local_prefers_local_endpoint(monkeypatch):
     fake.ai_force_local = True
     fake.openai_api_key = "sk-cloud"
     fake.openai_model = "gpt-4o-mini"
+    fake.anthropic_api_key = "sk-ant-test"
+    fake.anthropic_model = "claude-3-5-haiku-latest"
     fake.local_ai_base_url = "http://127.0.0.1:11434/v1"
     fake.local_ai_api_key = ""
     fake.local_ai_model = "llama"
@@ -68,6 +70,30 @@ def test_ai_force_local_prefers_local_endpoint(monkeypatch):
     st = ai_status()
     assert st["provider"] == "local_http"
     assert st["remote_ready"] is True
+
+
+def test_ai_anthropic_provider_resolves(monkeypatch):
+    from app.modules.ai_assessment import llm as llm_mod
+
+    fake = MagicMock()
+    fake.ai_enabled = True
+    fake.ai_provider = "anthropic"
+    fake.ai_force_local = False
+    fake.openai_api_key = ""
+    fake.openai_model = "gpt-4o-mini"
+    fake.anthropic_api_key = "sk-ant-test"
+    fake.anthropic_model = "claude-3-5-haiku-latest"
+    fake.local_ai_base_url = ""
+    fake.local_ai_api_key = ""
+    fake.local_ai_model = "llama"
+    monkeypatch.setattr(llm_mod, "get_settings", lambda: fake)
+    remote = _resolve_remote()
+    assert remote is not None
+    assert remote["provider"] == "anthropic"
+    assert remote["model"] == "claude-3-5-haiku-latest"
+    st = ai_status()
+    assert st["has_anthropic_key"] is True
+    assert st["provider"] == "anthropic"
 
 
 def test_webhook_hmac_stable():
