@@ -59,7 +59,7 @@ def test_ai_force_local_prefers_local_endpoint(monkeypatch):
     fake.openai_api_key = "sk-cloud"
     fake.openai_model = "gpt-4o-mini"
     fake.anthropic_api_key = "sk-ant-test"
-    fake.anthropic_model = "claude-3-5-haiku-latest"
+    fake.anthropic_model = "claude-haiku-4-5-20251001"
     fake.local_ai_base_url = "http://127.0.0.1:11434/v1"
     fake.local_ai_api_key = ""
     fake.local_ai_model = "llama"
@@ -82,7 +82,7 @@ def test_ai_anthropic_provider_resolves(monkeypatch):
     fake.openai_api_key = ""
     fake.openai_model = "gpt-4o-mini"
     fake.anthropic_api_key = "sk-ant-test"
-    fake.anthropic_model = "claude-3-5-haiku-latest"
+    fake.anthropic_model = "claude-haiku-4-5-20251001"
     fake.local_ai_base_url = ""
     fake.local_ai_api_key = ""
     fake.local_ai_model = "llama"
@@ -90,7 +90,7 @@ def test_ai_anthropic_provider_resolves(monkeypatch):
     remote = _resolve_remote()
     assert remote is not None
     assert remote["provider"] == "anthropic"
-    assert remote["model"] == "claude-3-5-haiku-latest"
+    assert remote["model"] == "claude-haiku-4-5-20251001"
     st = ai_status()
     assert st["has_anthropic_key"] is True
     assert st["provider"] == "anthropic"

@@ -177,13 +177,39 @@ def _strip_markdown(text: str) -> str:
 def _simple_plain_answer(*, question: str, lesson_title: str, body: str) -> str:
     """Short, easy student answer from a lesson excerpt (no raw markdown dump)."""
     clean = _strip_markdown(body)
-    # Prefer 1–2 short sentences.
+    q = (question or "").lower()
+    title_l = (lesson_title or "").lower()
+    blob = f"{title_l} {clean.lower()}"
+
+    # Topic-line lessons (common in seed): expand into a plain student tip.
+    if "variable" in q and "variable" in blob:
+        return (
+            "In simple words: a variable is a letter (like x or y) that stands "
+            "for a number we do not know yet. Your Algebra lesson also covers "
+            "expressions and solving for x."
+        )
+    if "expression" in q and "expression" in blob:
+        return (
+            "In simple words: an expression is a math phrase with numbers, "
+            "variables, and operations (like 2x + 3). It does not have an equals sign."
+        )
+    if ("solv" in q or "solve" in q) and ("solv" in blob or "solving" in blob):
+        return (
+            "In simple words: solving for x means finding the number that makes "
+            "the equation true. Use the lesson steps to isolate x on one side."
+        )
+
     parts = re.split(r"(?<=[.!?])\s+", clean)
-    sentences = [p.strip() for p in parts if len(p.strip()) > 12][:2]
-    core = " ".join(sentences) if sentences else clean[:160]
+    sentences = [p.strip() for p in parts if len(p.strip()) > 20][:2]
+    # Skip bare topic lists with no real sentence.
+    if not sentences:
+        return (
+            f"Your class lesson “{lesson_title}” covers: {clean}. "
+            "Ask a more specific question (for example: What is a variable?)."
+        )
+    core = " ".join(sentences)
     if len(core) > 220:
         core = core[:217].rstrip() + "…"
-    q = (question or "").lower()
     if "what is" in q or "what are" in q or "define" in q:
         return f"In simple words: {core}"
     if "how" in q:

@@ -46,7 +46,7 @@ def test_study_coach_answers_from_class_lesson():
     assert result["citations"]
     assert "Variables" in result["citations"]
     assert "##" not in result["answer"]
-    assert "simple" in result["answer"].lower() or "variable" in result["answer"].lower()
+    assert "letter" in result["answer"].lower() or "variable" in result["answer"].lower()
     assert result.get("scope") == "class_lessons"
     assert not result.get("note")
 

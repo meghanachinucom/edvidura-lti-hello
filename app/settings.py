@@ -35,7 +35,7 @@ class Settings:
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
     anthropic_api_key: str = ""
-    anthropic_model: str = "claude-3-5-haiku-latest"
+    anthropic_model: str = "claude-haiku-4-5-20251001"
     # E04: auto | openai | anthropic | local_http
     ai_provider: str = "auto"
     ai_force_local: bool = False
@@ -149,9 +149,9 @@ def get_settings() -> Settings:
         or "gpt-4o-mini",
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", "").strip(),
         anthropic_model=os.getenv(
-            "ANTHROPIC_MODEL", "claude-3-5-haiku-latest"
+            "ANTHROPIC_MODEL", "claude-haiku-4-5-20251001"
         ).strip()
-        or "claude-3-5-haiku-latest",
+        or "claude-haiku-4-5-20251001",
         ai_provider=(
             os.getenv("AI_PROVIDER", "auto").strip().lower() or "auto"
         ),

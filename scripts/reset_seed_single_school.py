@@ -326,7 +326,13 @@ def curriculum_for_grade(grade: int) -> dict:
         8: (
             [
                 ("ch1-welcome", "Welcome to Algebra I", 1, "article",
-                 "## Algebra I\n\nVariables, expressions, and solving for x.", ""),
+                 "## Algebra I\n\n"
+                 "A **variable** is a letter (like x or y) that stands for a number "
+                 "we do not know yet.\n\n"
+                 "An **expression** combines numbers, variables, and operations "
+                 "(for example 2x + 3).\n\n"
+                 "Solving for x means finding the number that makes an equation true.\n\n"
+                 "This course covers variables, expressions, and solving for x.", ""),
                 ("ch2-equations", "Linear equations", 2, "article",
                  "## Linear equations\n\nBalance both sides. Isolate the variable.", ""),
                 ("ch3-video", "Solving for x (video)", 3, "video",

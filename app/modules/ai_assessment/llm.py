@@ -43,7 +43,7 @@ def _resolve_remote() -> dict[str, str] | None:
             "provider": "anthropic",
             "base_url": "https://api.anthropic.com",
             "api_key": s.anthropic_api_key,
-            "model": s.anthropic_model or "claude-3-5-haiku-latest",
+            "model": s.anthropic_model or "claude-haiku-4-5-20251001",
         }
     if provider == "openai":
         if not openai_ok:
@@ -60,7 +60,7 @@ def _resolve_remote() -> dict[str, str] | None:
             "provider": "anthropic",
             "base_url": "https://api.anthropic.com",
             "api_key": s.anthropic_api_key,
-            "model": s.anthropic_model or "claude-3-5-haiku-latest",
+            "model": s.anthropic_model or "claude-haiku-4-5-20251001",
         }
     if openai_ok:
         return {
@@ -96,7 +96,7 @@ def ai_status() -> dict[str, Any]:
         elif (s.ai_provider or "").lower() == "anthropic":
             how = (
                 "Set AI_ENABLED=1 and ANTHROPIC_API_KEY in .env, then restart. "
-                "Optional: ANTHROPIC_MODEL (default claude-3-5-haiku-latest)."
+                "Optional: ANTHROPIC_MODEL (default claude-haiku-4-5-20251001)."
             )
         else:
             how = (

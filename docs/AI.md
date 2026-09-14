@@ -19,7 +19,7 @@ OPENAI_MODEL=gpt-4o-mini
 AI_ENABLED=1
 AI_PROVIDER=anthropic
 ANTHROPIC_API_KEY=sk-ant-your-key-here
-ANTHROPIC_MODEL=claude-3-5-haiku-latest
+ANTHROPIC_MODEL=claude-haiku-4-5-20251001
 ```
 
 With `AI_PROVIDER=auto`, Anthropic is preferred when `ANTHROPIC_API_KEY` is set, then OpenAI, then local HTTP.
