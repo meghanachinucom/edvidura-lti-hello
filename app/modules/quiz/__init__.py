@@ -1,5 +1,11 @@
-"""Quiz bank, tenant load, and grading."""
+"""Quiz bank, tenant load, grading, and personalized AI quizzes."""
 
+from app.modules.quiz.personalized import (
+    generate_personalized_quiz,
+    infer_difficulty,
+    questions_from_payload,
+    student_performance_profile,
+)
 from app.modules.quiz.service import (
     FALLBACK_QUESTIONS,
     MAX_SCORE,
@@ -24,4 +30,8 @@ __all__ = [
     "list_quiz_question_rows",
     "questions_for_tenant",
     "grade_answers",
+    "generate_personalized_quiz",
+    "infer_difficulty",
+    "questions_from_payload",
+    "student_performance_profile",
 ]

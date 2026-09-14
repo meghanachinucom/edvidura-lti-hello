@@ -267,10 +267,21 @@ async def quiz_submit(
     try:
         form = await request.form()
         practice_mode = str(form.get("practice_mode") or "") == "1"
+        personalized_mode = str(form.get("personalized_mode") or "") == "1"
+        if personalized_mode:
+            practice_mode = True
         all_questions = questions_for_tenant(
             session.get("tenant_id"),
             course_id=session.get("edvidura_course_id") or None,
         )
+        personal_bank = None
+        if personalized_mode:
+            from app.modules.quiz.personalized import questions_from_payload
+
+            bank = session.get("personal_quiz_bank") or {}
+            if str(bank.get("subject") or "") == str(session.get("subject") or ""):
+                personal_bank = bank
+                all_questions = questions_from_payload(bank.get("questions"))
         form_keys = set(form.keys())
         questions = tuple(q for q in all_questions if q.id in form_keys)
         if not questions:
@@ -285,6 +296,20 @@ async def quiz_submit(
         }
         if practice_mode:
             answers_payload["mode"] = "practice"
+        if personalized_mode:
+            answers_payload["mode"] = "personalized_ai"
+            answers_payload["personalized"] = True
+            if personal_bank and isinstance(personal_bank.get("meta"), dict):
+                answers_payload["personal_meta"] = personal_bank["meta"]
+            answers_payload["question_bank"] = [
+                {
+                    "id": q.id,
+                    "prompt": q.prompt,
+                    "choices": list(q.choices),
+                    "correct_index": q.correct_index,
+                }
+                for q in questions
+            ]
         retry_from = str(form.get("retry_from") or "").strip()
         if retry_from:
             answers_payload["retry_from"] = retry_from
@@ -300,9 +325,13 @@ async def quiz_submit(
             answers=answers_payload,
             grade_sent=False,
             grade_error=(
-                "Practice attempt — not sent to Moodle"
-                if practice_mode
-                else "Grade passback queued…"
+                "Personalized AI quiz — practice, not sent to Moodle"
+                if personalized_mode
+                else (
+                    "Practice attempt — not sent to Moodle"
+                    if practice_mode
+                    else "Grade passback queued…"
+                )
             ),
         )
 

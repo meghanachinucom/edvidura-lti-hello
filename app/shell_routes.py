@@ -1321,6 +1321,7 @@ async def quiz_form(
     practice: str | None = None,
     force: str | None = None,
     loop: str | None = None,
+    personalized: str | None = None,
 ):
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
@@ -1332,11 +1333,18 @@ async def quiz_form(
 
     token_s = _ensure_token(session)
     progress = _shell_progress(session, token_s).get("shell_progress")
+    is_personalized = personalized == "1"
+    # Personalized AI quizzes are practice by default (unique per student).
+    is_practice = practice == "1" or is_personalized
     coach = ghost_coach_gate(
         progress,
-        bypass=bool(session.get("is_instructor") or force == "1" or practice == "1"),
+        bypass=bool(
+            session.get("is_instructor")
+            or force == "1"
+            or is_practice
+        ),
     )
-    if coach.get("gate") and force != "1" and practice != "1":
+    if coach.get("gate") and force != "1" and not is_practice:
         return _shell(
             request,
             "quiz_gate.html",
@@ -1344,56 +1352,113 @@ async def quiz_form(
             active_page="quiz_session",
             page_title="Almost ready",
             page_subtitle="Ghost coach",
-            extra={"coach": coach, "practice": practice == "1"},
+            extra={"coach": coach, "practice": is_practice},
         )
 
-    questions = list(
-        questions_for_tenant(
-            session.get("tenant_id"),
-            course_id=session.get("edvidura_course_id") or None,
-        )
-    )
-    retry_ids: list[str] = []
-    if retry:
+    personal_meta: dict[str, Any] = {}
+    personal_err = ""
+    questions: list[Any]
+    if is_personalized and not retry:
         try:
-            prev = db.get_quiz_attempt(session["tenant_id"], UUID(str(retry)))
-        except Exception:  # noqa: BLE001
-            prev = None
-        if prev and str(prev.get("subject")) == str(session.get("subject")):
-            retry_ids = failed_question_ids(prev.get("answers"))
-            if retry_ids:
-                questions = [q for q in questions if q.id in retry_ids]
-    is_practice = practice == "1"
+            from app.modules import content
+            from app.modules import quiz as quiz_mod
+
+            built = quiz_mod.generate_personalized_quiz(
+                tenant_id=session["tenant_id"],
+                subject=str(session.get("subject") or ""),
+                course_id=session.get("edvidura_course_id") or None,
+                list_lessons_fn=content.list_lessons,
+                get_bound_course_fn=content.get_bound_course,
+                count=4,
+                course_label=str(session.get("course") or ""),
+                learner_name=str(session.get("learner_name") or ""),
+            )
+            questions = list(built["questions"])
+            personal_meta = {
+                "difficulty": built.get("difficulty"),
+                "topics": built.get("topics") or [],
+                "focus_topics": built.get("focus_topics") or [],
+                "provider": built.get("provider"),
+                "model": built.get("model"),
+                "course_title": built.get("course_title"),
+            }
+            session["personal_quiz_bank"] = {
+                "subject": str(session.get("subject") or ""),
+                "questions": built.get("question_payload") or [],
+                "meta": personal_meta,
+            }
+            request.session[SESSION_KEY] = {
+                **session,
+                "quiz_token": token_s,
+            }
+        except ValueError as exc:
+            personal_err = str(exc)
+            questions = []
+        except Exception as exc:  # noqa: BLE001
+            personal_err = f"Could not build personalized quiz: {exc}"
+            questions = []
+    else:
+        questions = list(
+            questions_for_tenant(
+                session.get("tenant_id"),
+                course_id=session.get("edvidura_course_id") or None,
+            )
+        )
+        retry_ids: list[str] = []
+        if retry:
+            try:
+                prev = db.get_quiz_attempt(session["tenant_id"], UUID(str(retry)))
+            except Exception:  # noqa: BLE001
+                prev = None
+            if prev and str(prev.get("subject")) == str(session.get("subject")):
+                retry_ids = failed_question_ids(prev.get("answers"))
+                if retry_ids:
+                    questions = [q for q in questions if q.id in retry_ids]
+        else:
+            retry_ids = []
+
+    if is_personalized:
+        retry_ids = []
+
     in_loop = loop == "1"
+    if is_personalized:
+        page_title = "My AI quiz"
+        page_subtitle = (
+            f"{personal_meta.get('difficulty') or 'core'} · "
+            "unique for you · class chapters"
+        )
+    elif is_practice and in_loop:
+        page_title = "Practice (remediation)"
+        page_subtitle = "Sandbox — no Moodle grade sync · then graded retry"
+    elif is_practice:
+        page_title = "Practice quiz"
+        page_subtitle = "Sandbox — no Moodle grade sync · then graded retry"
+    elif retry_ids and in_loop:
+        page_title = "Take the quiz"
+        page_subtitle = f"Graded retry · {len(questions)} missed item(s)"
+    elif retry_ids:
+        page_title = "Take the quiz"
+        page_subtitle = f"Retry {len(questions)} missed item(s)"
+    else:
+        page_title = "Take the quiz"
+        page_subtitle = "Answer each question, then submit"
+
     return _shell(
         request,
         "quiz_session.html",
         session,
         active_page="quiz_session",
-        page_title=(
-            "Practice (remediation)"
-            if is_practice and in_loop
-            else ("Practice quiz" if is_practice else "Take the quiz")
-        ),
-        page_subtitle=(
-            "Sandbox — no Moodle grade sync · then graded retry"
-            if is_practice
-            else (
-                f"Graded retry · {len(questions)} missed item(s)"
-                if retry_ids and in_loop
-                else (
-                    f"Retry {len(questions)} missed item(s)"
-                    if retry_ids
-                    else "Answer each question, then submit"
-                )
-            )
-        ),
+        page_title=page_title,
+        page_subtitle=page_subtitle,
         extra={
             "questions": questions,
             "max_score": len(questions),
             "practice_mode": is_practice,
+            "personalized_mode": is_personalized,
+            "personal_meta": personal_meta,
+            "personal_error": personal_err,
             "retry_from": retry or "",
-            "remediation_loop": in_loop,
+            "remediation_loop": in_loop and not is_personalized,
             "coach_warn": coach.get("warn"),
         },
     )

@@ -8,7 +8,7 @@ Import domain logic from `app.modules.*` — not from FastAPI route files.
 |--------|----------------|-----------------|
 | `app.modules.tenancy` | Resolve LTI → tenant, request context, tool conf | Any LTI multi-tenant service |
 | `app.modules.content` | Courses, lessons, progress, teacher authoring | LMS / curriculum services |
-| `app.modules.quiz` | Question bank, grade, load per tenant | Assessment services |
+| `app.modules.quiz` | Question bank, grade, load per tenant; personalized AI quizzes | Assessment services |
 | `app.modules.school` | Classes, curriculum links, LTI context bindings (people live in Moodle) | SIS / school org |
 | `app.modules.manuals` | Versioned manuals / PeBL eBook (TOC, standalone signed reader) | Curriculum publishing |
 | `app.modules.events` | EVENT_ENVELOPE_V1 outbox + D17 webhook drain | Any domain event pipeline |

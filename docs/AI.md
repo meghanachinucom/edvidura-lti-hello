@@ -47,6 +47,7 @@ Shows `provider: openai | local_http | local`.
 | Feature | Who | Where |
 |---------|-----|--------|
 | **AI quiz** (MCQs from lesson) | Teacher | Upload content → AI quiz |
+| **Personalized AI quiz** | Student | Launch hub → **My AI quiz** (`/quiz?personalized=1`) — unique MCQs from class chapters at foundational/core/challenge depth from prior performance |
 | **PDF / text → MCQ** | Teacher | AI tools → upload PDF/.txt → review → save |
 | **Remediation micro-lesson (DCT)** | Teacher | AI tools → pick skill → review → save draft/published + link skill |
 | **SME authoring assistant (D13)** | Teacher | AI tools → Authoring assistant → draft lesson/manual/MCQ from SME sources → save |

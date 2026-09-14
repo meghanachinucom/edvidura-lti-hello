@@ -1,7 +1,18 @@
 {% extends "base_shell.html" %}
 {% block content %}
 <div class="page-wrap quiz-page">
-  {% if practice_mode %}
+  {% if personalized_mode %}
+  <div class="quiz-banner quiz-banner--practice">
+    <span class="material-symbols-outlined">auto_awesome</span>
+    <span class="body-md">
+      Personalized AI quiz — unique for you from this class’s chapters
+      {% if personal_meta and personal_meta.difficulty %}
+      · depth: <strong>{{ personal_meta.difficulty }}</strong>
+      {% endif %}
+      · not sent to Moodle
+    </span>
+  </div>
+  {% elif practice_mode %}
   <div class="quiz-banner quiz-banner--practice">
     <span class="material-symbols-outlined">fitness_center</span>
     <span class="body-md">Practice lane — scores save here and to xAPI, but <strong>not</strong> to Moodle.{% if remediation_loop %} After this, take the <strong>graded retry</strong>.{% endif %}</span>
@@ -18,19 +29,30 @@
   </div>
   {% endif %}
 
+  {% if personal_error %}
+  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(186,26,26,.08);border:1px solid rgba(186,26,26,.18);border-radius:var(--r-xl);color:var(--error);margin-bottom:var(--sp-md)">
+    <span class="material-symbols-outlined">error</span>
+    <span class="body-md" style="font-weight:600">{{ personal_error }}</span>
+  </div>
+  {% endif %}
+
   <section class="hero-band quiz-hero">
     <div class="quiz-hero-inner">
       <div>
         <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
-          <span class="material-symbols-outlined" style="font-size:13px">{% if practice_mode %}fitness_center{% else %}quiz{% endif %}</span>
-          {% if practice_mode %}Practice lane{% elif retry_from %}Missed items{% else %}Chapter check{% endif %}
+          <span class="material-symbols-outlined" style="font-size:13px">{% if personalized_mode %}auto_awesome{% elif practice_mode %}fitness_center{% else %}quiz{% endif %}</span>
+          {% if personalized_mode %}My AI quiz{% elif practice_mode %}Practice lane{% elif retry_from %}Missed items{% else %}Chapter check{% endif %}
         </div>
         <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">
-          {% if practice_mode %}Practice check{% elif retry_from %}Retry missed{% else %}Take the quiz{% endif %}
+          {% if personalized_mode %}Your AI quiz{% elif practice_mode %}Practice check{% elif retry_from %}Retry missed{% else %}Take the quiz{% endif %}
         </h1>
         <p class="body-md" style="color:var(--outline-variant);margin-top:4px;max-width:520px">
-          {{ questions|length }} question{% if questions|length != 1 %}s{% endif %}
-          · {% if practice_mode %}no Moodle sync{% elif ags_available %}can sync to Moodle{% else %}saves in EdVidura{% endif %}.
+          {% if personalized_mode and personal_meta and personal_meta.focus_topics %}
+            Covers: {{ personal_meta.focus_topics[:4]|join(", ") }}{% if personal_meta.focus_topics|length > 4 %}…{% endif %}
+          {% else %}
+            {{ questions|length }} question{% if questions|length != 1 %}s{% endif %}
+            · {% if practice_mode or personalized_mode %}no Moodle sync{% elif ags_available %}can sync to Moodle{% else %}saves in EdVidura{% endif %}.
+          {% endif %}
         </p>
       </div>
       <div class="quiz-hero-actions">
@@ -53,7 +75,18 @@
     <form method="post" action="/quiz/submit" id="quiz-form" class="quiz-form">
       <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
       {% if practice_mode %}<input type="hidden" name="practice_mode" value="1"/>{% endif %}
+      {% if personalized_mode %}<input type="hidden" name="personalized_mode" value="1"/>{% endif %}
       {% if retry_from %}<input type="hidden" name="retry_from" value="{{ retry_from }}"/>{% endif %}
+
+      {% if not questions %}
+      <div class="card" style="padding:var(--sp-lg)">
+        <p class="body-md">No questions available yet.
+          {% if personalized_mode %}
+          <a href="/lessons?token={{ quiz_token }}">Open lessons</a> or ask your teacher to publish chapter content.
+          {% endif %}
+        </p>
+      </div>
+      {% endif %}
 
       {% for q in questions %}
       <article class="q-card" data-qid="{{ q.id }}" style="animation-delay:{{ loop.index0 * 0.05 }}s">

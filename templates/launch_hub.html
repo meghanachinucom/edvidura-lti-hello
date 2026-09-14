@@ -50,6 +50,7 @@
         <div class="hub-secondary" style="margin-top:var(--sp-md)">
           <a href="/lessons?token={{ quiz_token }}">All lessons</a>
           <a href="/quiz?token={{ quiz_token }}&practice=1">Practice</a>
+          <a href="/quiz?token={{ quiz_token }}&personalized=1">My AI quiz</a>
           {% if last_result_id %}
           <a href="/quiz/result/{{ last_result_id }}?token={{ quiz_token }}">My results</a>
           {% else %}
@@ -147,6 +148,11 @@
       <span class="material-symbols-outlined" style="color:var(--secondary)">fitness_center</span>
       <h3 class="headline-sm" style="margin-top:8px">Practice lane</h3>
       <p class="body-sm text-muted">No Moodle sync — just practice</p>
+    </a>
+    <a href="/quiz?token={{ quiz_token }}&personalized=1" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid #8b5cf6">
+      <span class="material-symbols-outlined" style="color:#8b5cf6">auto_awesome</span>
+      <h3 class="headline-sm" style="margin-top:8px">My AI quiz</h3>
+      <p class="body-sm text-muted">Unique questions at your depth</p>
     </a>
     <a href="/learn/analytics?token={{ quiz_token }}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--tertiary)">
       <span class="material-symbols-outlined" style="color:var(--tertiary)">monitoring</span>
