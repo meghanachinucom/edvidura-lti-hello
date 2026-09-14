@@ -3818,27 +3818,21 @@ async def learner_gap_step_done(request: Request, token: str | None = None):
 
 @router.get("/learn/coach", response_class=HTMLResponse)
 async def learner_coach_get(request: Request, token: str | None = None):
+    from app.modules import ai_tutor
     from app.modules.ai_assessment import ai_status
     from app.modules.ai_tutor.voice import list_voice_languages, normalize_voice_lang
 
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
-    source_count = 0
-    try:
-        from app.modules import sme as sme_mod
-
-        sources = sme_mod.list_sources(session["tenant_id"])
-        source_count = len(sources)
-        if not sources:
-            title, chunks, sources = sme_mod.coach_chunks_for_tenant(
-                session["tenant_id"],
-                course_id=session.get("edvidura_course_id") or None,
-            )
-            source_count = len(sources) or (1 if chunks else 0)
-            del title
-    except Exception:  # noqa: BLE001
-        source_count = 0
+    class_name = str(session.get("class_name") or "")
+    course_title, chunks = ai_tutor.curriculum_chunks_for_session(
+        session["tenant_id"],
+        session.get("edvidura_course_id") or None,
+        list_lessons_fn=content.list_lessons,
+        get_bound_course_fn=content.get_bound_course,
+        class_name=class_name,
+    )
     reply_language = normalize_voice_lang(
         request.query_params.get("lang")
         or session.get("coach_voice_lang")
@@ -3850,12 +3844,17 @@ async def learner_coach_get(request: Request, token: str | None = None):
         session,
         active_page="study_coach",
         page_title="Study coach",
-        page_subtitle=str(session.get("class_name") or session.get("course") or ""),
+        page_subtitle=str(
+            class_name or course_title or session.get("course") or ""
+        ),
         extra={
             "ai": ai_status(),
             "answer": None,
             "question": "",
-            "source_count": source_count,
+            "source_count": len(chunks),
+            "class_lesson_titles": [c.get("title") for c in chunks[:12]],
+            "course_title": course_title,
+            "class_name": class_name,
             "voice_languages": list_voice_languages(),
             "reply_language": reply_language,
         },
@@ -3883,11 +3882,13 @@ async def learner_coach_post(request: Request, token: str | None = None):
             **session,
             "quiz_token": _ensure_token(session),
         }
+    class_name = str(session.get("class_name") or "")
     course_title, chunks = ai_tutor.curriculum_chunks_for_session(
         session["tenant_id"],
         session.get("edvidura_course_id") or None,
         list_lessons_fn=content.list_lessons,
         get_bound_course_fn=content.get_bound_course,
+        class_name=class_name,
     )
     answer = None
     err = ""
@@ -3896,6 +3897,7 @@ async def learner_coach_post(request: Request, token: str | None = None):
             question=question,
             curriculum_chunks=chunks,
             course_title=course_title,
+            class_name=class_name,
             reply_language=reply_language,
         )
     except ValueError as exc:
@@ -3939,13 +3941,18 @@ async def learner_coach_post(request: Request, token: str | None = None):
         session,
         active_page="study_coach",
         page_title="Study coach",
-        page_subtitle=course_title or str(session.get("course") or ""),
+        page_subtitle=str(
+            class_name or course_title or session.get("course") or ""
+        ),
         extra={
             "ai": ai_status(),
             "answer": answer,
             "question": question,
             "error": err,
             "source_count": len(chunks),
+            "class_lesson_titles": [c.get("title") for c in chunks[:12]],
+            "course_title": course_title,
+            "class_name": class_name,
             "voice_languages": list_voice_languages(),
             "reply_language": reply_language,
         },

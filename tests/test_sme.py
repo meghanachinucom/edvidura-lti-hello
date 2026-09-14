@@ -56,9 +56,9 @@ def test_study_coach_empty_sources():
         course_title="Algebra I",
     )
     assert result["grounded"] is False
-    assert result.get("refusal_reason") == "no_sources"
+    assert result.get("refusal_reason") == "no_class_materials"
     assert result.get("retention") == "stateless"
-    assert "SME" in result["answer"] or "teacher" in result["answer"].lower()
+    assert "lesson" in result["answer"].lower() or "teacher" in result["answer"].lower()
 
 
 def test_study_coach_citation_excerpt():

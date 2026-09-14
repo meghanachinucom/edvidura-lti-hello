@@ -14,19 +14,25 @@ Teacher UI: **Teach → SME sources** (`/teacher/sme`)
 
 ## Study coach (learner)
 
-`/learn/coach` answers only from approved registry chunks (manuals preferred).
+`/learn/coach` answers **only from the bound class course’s lessons** (LTI session `edvidura_course_id`).
 
-When the registry is empty, `ensure_default_sources` pins published manuals + course reading lessons once.
+- Corpus = reading lessons on that course (quizzes excluded)
+- If the teacher curated SME **lesson** sources for that course, those are preferred
+- Tenant-wide manuals / other courses are **not** mixed in
+- Off-topic questions → `grounded=false`, `refusal_reason=off_class_materials`
+- Missing course/lessons → `refusal_reason=no_class_materials`
 
 ### Citations UX
 
-Citation cards show title link, kind, pinned version, and a short excerpt.
+Citation cards show title link, kind, pinned version, and a short excerpt. Invented titles are dropped.
 
 ### Guardrails
 
-- Answer only from approved SME chunks
-- `grounded=false` + `refusal_reason` when off-curriculum / empty sources
+- Answer only from this class’s lesson chunks
+- Require at least one in-class citation when `grounded=true`
+- `grounded=false` + `refusal_reason` when off-class / empty materials
 - Never writes Moodle grades
+- LLM prompt forbids general knowledge and other courses
 
 ### Retention
 

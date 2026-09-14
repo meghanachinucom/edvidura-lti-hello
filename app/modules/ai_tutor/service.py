@@ -80,17 +80,7 @@ def _citation_links(
                 None,
             )
         if not c:
-            out.append(
-                {
-                    "title": cite,
-                    "href": "",
-                    "kind": "",
-                    "excerpt": "",
-                    "version": None,
-                    "focus": "",
-                }
-            )
-            continue
+            continue  # drop citations that are not in class materials
         body = str(c.get("body") or "")
         excerpt = re.sub(r"\s+", " ", body).strip()[:180]
         if len(body) > 180:
@@ -108,14 +98,95 @@ def _citation_links(
     return out
 
 
+def _match_chunk_title(chunks: list[dict[str, Any]], cite: str) -> dict[str, Any] | None:
+    cite_l = (cite or "").strip().lower()
+    if not cite_l:
+        return None
+    for c in chunks:
+        title = str(c.get("title") or "")
+        if title.lower() == cite_l:
+            return c
+    for c in chunks:
+        title = str(c.get("title") or "")
+        if cite_l in title.lower() or title.lower() in cite_l:
+            return c
+    return None
+
+
+def _enforce_class_citations(
+    *,
+    chunks: list[dict[str, Any]],
+    answer: str,
+    citations: list[str],
+    grounded: bool,
+    course_title: str,
+    class_name: str,
+) -> dict[str, Any]:
+    """Drop non-class citations; refuse when the model cannot ground in lessons."""
+    valid_cites: list[str] = []
+    for cite in citations:
+        matched = _match_chunk_title(chunks, cite)
+        if matched:
+            title = str(matched["title"])
+            if title not in valid_cites:
+                valid_cites.append(title)
+    scope_label = class_name or course_title or "this class"
+    if grounded and not valid_cites:
+        return {
+            "answer": (
+                f"I can only answer from the lessons for {scope_label}. "
+                "That question is not covered in your class materials — "
+                "try asking about a topic from this class’s lessons."
+            ),
+            "citations": [],
+            "citation_links": [],
+            "grounded": False,
+            "refusal_reason": "off_class_materials",
+        }
+    if not grounded:
+        return {
+            "answer": (
+                str(answer or "").strip()
+                or (
+                    f"I can only help with lessons for {scope_label}. "
+                    "Ask about a topic from this class’s materials."
+                )
+            ),
+            "citations": [],
+            "citation_links": [],
+            "grounded": False,
+            "refusal_reason": "off_class_materials",
+        }
+    return {
+        "answer": str(answer or "").strip(),
+        "citations": valid_cites[:6],
+        "citation_links": _citation_links(chunks, valid_cites[:6]),
+        "grounded": True,
+        "refusal_reason": None,
+    }
+
+
+def _token_overlap_score(question: str, chunk: dict[str, Any]) -> int:
+    """Score question↔chunk overlap (Latin + long Unicode tokens)."""
+    q = question or ""
+    latin = {w.lower() for w in re.findall(r"[A-Za-z]{3,}", q)}
+    indic = {w for w in re.findall(r"[\u0900-\u0D7F]{2,}", q)}
+    body = f"{chunk.get('title') or ''} {chunk.get('body') or ''}".lower()
+    body_raw = f"{chunk.get('title') or ''} {chunk.get('body') or ''}"
+    score = sum(1 for w in latin if w in body)
+    score += sum(1 for w in indic if w in body_raw)
+    return score
+
+
 def study_coach_answer(
     *,
     question: str,
     curriculum_chunks: list[dict[str, Any]],
     course_title: str = "",
+    class_name: str = "",
     reply_language: str = "en-IN",
 ) -> dict[str, Any]:
-    """Answer a student question using only provided curriculum chunks."""
+    """Answer only from this class's lesson materials (no general knowledge)."""
     from app.modules.ai_tutor.voice import (
         normalize_voice_lang,
         reply_language_instruction,
@@ -125,14 +196,14 @@ def study_coach_answer(
 
     q = (question or "").strip()
     if len(q) < 3:
-        raise ValueError("Ask a short question about your course")
+        raise ValueError("Ask a short question about your class lessons")
     lang = normalize_voice_lang(reply_language)
     lang_meta = voice_language_meta(lang)
     lang_instruction = reply_language_instruction(lang)
-    # Retention: coach is intentionally stateless (no turn store by default).
     store_turns = bool(getattr(get_settings(), "coach_store_turns", False))
+    scope_label = (class_name or course_title or "this class").strip()
     chunks: list[dict[str, Any]] = []
-    for c in curriculum_chunks[:16]:
+    for c in curriculum_chunks[:24]:
         title = str(c.get("title") or "Lesson").strip()
         body = str(c.get("body") or c.get("body_md") or "").strip()
         if not body:
@@ -145,90 +216,93 @@ def study_coach_answer(
                 "kind": c.get("kind") or "lesson",
                 "version": c.get("version"),
                 "focus": c.get("focus") or "",
+                "lesson_id": str(c.get("lesson_id") or ""),
+                "course_id": str(c.get("course_id") or ""),
             }
         )
     if not chunks:
         return {
             "answer": (
-                "No approved SME sources yet. Ask your teacher to add manuals "
-                "or lessons under Teach → SME sources."
+                f"No lessons are linked for {scope_label} yet. "
+                "Ask your teacher to publish class lessons (or SME lesson sources) "
+                "for this course."
             ),
             "citations": [],
             "citation_links": [],
             "grounded": False,
-            "refusal_reason": "no_sources",
+            "refusal_reason": "no_class_materials",
             "retention": "stateless" if not store_turns else "session",
             "practice_hint": True,
             "provider": "local",
             "model": "heuristic-v1",
             "reply_language": lang,
             "reply_language_name": lang_meta["name"],
+            "scope": "class_lessons",
+            "course_title": course_title,
+            "class_name": class_name,
         }
+
+    allowed_titles = [c["title"] for c in chunks]
 
     def _openai():
         data = openai_chat_json(
             system=(
-                "You are an SME study coach for one school. "
-                "Answer ONLY from the provided approved manuals and lessons. "
-                "Prefer version-pinned manual sections when present. "
-                "If the answer is not in the material, say you don't know from "
-                "these sources and set grounded=false. "
-                "Do not invent URLs or sources. "
+                "You are a class-scoped study coach. "
+                f"You may ONLY use the provided lessons for “{scope_label}”. "
+                "Do NOT use general knowledge, other courses, or the open web. "
+                "If the question is not clearly answered by those lessons, "
+                "refuse and set grounded=false. "
+                "Every grounded answer MUST cite one or more lesson titles "
+                "exactly as listed. Prefer the most relevant lesson. "
+                "Do not invent URLs or source titles. "
                 f"{lang_instruction} "
                 "Return ONLY JSON: "
-                '{"answer":"...","citations":["source title",...],"grounded":true}'
+                '{"answer":"...","citations":["exact lesson title",...],"grounded":true}'
             ),
             user=(
-                f"Course: {course_title or 'this course'}\n"
+                f"Class: {scope_label}\n"
+                f"Course: {course_title or scope_label}\n"
                 f"Reply language: {lang_meta['name']} ({lang})\n"
+                f"Allowed lesson titles: {allowed_titles}\n"
                 f"Student question: {q}\n"
-                f"Approved sources: {[{'title': c['title'], 'body': c['body']} for c in chunks]}"
+                f"Class lesson materials: "
+                f"{[{'title': c['title'], 'body': c['body']} for c in chunks]}"
             ),
-            temperature=0.3,
+            temperature=0.2,
         )
         cites = [str(x) for x in (data.get("citations") or [])][:6]
-        grounded = bool(data.get("grounded", True))
-        return {
-            "answer": str(data.get("answer") or "").strip(),
-            "citations": cites,
-            "citation_links": _citation_links(chunks, cites),
-            "grounded": grounded,
-            "refusal_reason": None if grounded else "off_curriculum",
-        }
+        grounded = bool(data.get("grounded", False))
+        return _enforce_class_citations(
+            chunks=chunks,
+            answer=str(data.get("answer") or ""),
+            citations=cites,
+            grounded=grounded,
+            course_title=course_title,
+            class_name=class_name,
+        )
 
     def _local():
-        # Match Latin tokens; Indic questions still score via English source text.
-        q_words = {w.lower() for w in re.findall(r"[A-Za-z]{3,}", q)}
-        scored: list[tuple[int, int, dict[str, Any]]] = []
+        scored: list[tuple[int, dict[str, Any]]] = []
         for c in chunks:
-            body_l = c["body"].lower()
-            title_l = c["title"].lower()
-            score = sum(1 for w in q_words if w in body_l or w in title_l)
-            manual_bonus = 1 if c.get("kind") == "manual" else 0
-            scored.append((score, manual_bonus, c))
-        scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
-        best = scored[0][2] if scored else chunks[0]
-        if scored and scored[0][0] < 1 and not q_words:
-            # Non-Latin question with no Latin tokens — still return best manual chunk.
-            pass
-        elif scored and scored[0][0] < 1:
+            scored.append((_token_overlap_score(q, c), c))
+        scored.sort(key=lambda t: t[0], reverse=True)
+        best_score, best = scored[0] if scored else (0, chunks[0])
+        if best_score < 1:
             return {
                 "answer": (
-                    "I couldn't find that in the approved manuals/lessons. "
-                    "Try asking about a topic from your handbook or class reading."
+                    f"I can only answer from the lessons for {scope_label}. "
+                    "That question does not match this class’s materials."
                 ),
                 "citations": [],
                 "citation_links": [],
                 "grounded": False,
-                "refusal_reason": "off_curriculum",
+                "refusal_reason": "off_class_materials",
             }
         excerpt = re.sub(r"\s+", " ", best["body"]).strip()[:280]
         cites = [best["title"]]
         prefix = f"From “{best['title']}”: "
         if not lang.startswith("en"):
-            prefix = (
-                f"[{lang_meta['name']}] From “{best['title']}”: "
-            )
+            prefix = f"[{lang_meta['name']}] From “{best['title']}”: "
         return {
             "answer": (
                 f"{prefix}{excerpt}"
@@ -245,11 +319,30 @@ def study_coach_answer(
         result["citation_links"] = _citation_links(
             chunks, list(result.get("citations") or [])
         )
-    result.setdefault("refusal_reason", None if result.get("grounded") else "off_curriculum")
+    # Final pass: never keep grounded=true without in-class citations.
+    if result.get("grounded") and not (result.get("citations") or []):
+        result = _enforce_class_citations(
+            chunks=chunks,
+            answer=str(result.get("answer") or ""),
+            citations=[],
+            grounded=True,
+            course_title=course_title,
+            class_name=class_name,
+        )
+        if "provider" not in result:
+            result["provider"] = "local"
+            result["model"] = "heuristic-v1"
+    result.setdefault(
+        "refusal_reason",
+        None if result.get("grounded") else "off_class_materials",
+    )
     result["retention"] = "stateless" if not store_turns else "session"
     result["practice_hint"] = True
     result["reply_language"] = lang
     result["reply_language_name"] = lang_meta["name"]
+    result["scope"] = "class_lessons"
+    result["course_title"] = course_title
+    result["class_name"] = class_name
     return result
 
 
@@ -259,26 +352,50 @@ def curriculum_chunks_for_session(
     *,
     list_lessons_fn,
     get_bound_course_fn,
+    class_name: str = "",
 ) -> tuple[str, list[dict[str, Any]]]:
-    """Prefer C13 SME registry; fall back to bound-course lessons."""
-    if tenant_id:
-        try:
-            from app.modules import sme as sme_mod
+    """Load lesson materials for the bound class course only.
 
-            title, chunks, _sources = sme_mod.coach_chunks_for_tenant(
-                tenant_id, course_id=course_id
-            )
-            if chunks:
-                return title, chunks
-        except Exception:  # noqa: BLE001
-            pass
+    Guardrail: never pull lessons from other courses or tenant-wide dumps.
+    If the teacher curated SME lesson sources for this course, prefer those;
+    otherwise use all published reading lessons on the course.
+    """
+    if not tenant_id or not course_id:
+        return "", []
     course = get_bound_course_fn(tenant_id, course_id)
     if not course:
         return "", []
-    lessons = list_lessons_fn(tenant_id, course["id"])
-    chunks = []
+    course_key = str(course["id"])
+    title = str(course.get("title") or "")
+    lessons = list_lessons_fn(tenant_id, course_key) or []
+
+    sme_allowed: set[str] | None = None
+    try:
+        from app.modules import sme as sme_mod
+
+        approved: set[str] = set()
+        for s in sme_mod.list_sources(tenant_id):
+            if s.get("source_kind") != "lesson" or not s.get("lesson_id"):
+                continue
+            approved.add(str(s["lesson_id"]))
+        if approved:
+            course_lesson_ids = {
+                str(L["id"])
+                for L in lessons
+                if L.get("lesson_type") != "quiz"
+            }
+            sme_allowed = approved & course_lesson_ids
+            if not sme_allowed:
+                sme_allowed = None  # fall back to all course lessons
+    except Exception:  # noqa: BLE001
+        sme_allowed = None
+
+    chunks: list[dict[str, Any]] = []
     for L in lessons:
         if L.get("lesson_type") == "quiz":
+            continue
+        lid = str(L.get("id") or "")
+        if sme_allowed is not None and lid not in sme_allowed:
             continue
         body = str(L.get("body_md") or "").strip()
         if len(body) < 20:
@@ -288,10 +405,13 @@ def curriculum_chunks_for_session(
                 "title": str(L.get("title") or "Lesson"),
                 "body": body,
                 "kind": "lesson",
-                "href": f"/lessons/{L['id']}",
+                "href": f"/lessons/{lid}",
+                "lesson_id": lid,
+                "course_id": course_key,
+                "class_name": class_name,
             }
         )
-    return str(course.get("title") or ""), chunks
+    return title, chunks
 
 
 __all__ = [
