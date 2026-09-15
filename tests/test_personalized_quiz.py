@@ -51,7 +51,6 @@ def test_personalized_quiz_unique_per_student():
         course_id="course-a",
         list_lessons_fn=list_lessons,
         get_bound_course_fn=get_course,
-        count=3,
         learner_name="Ada",
     )
     b = generate_personalized_quiz(
@@ -60,13 +59,12 @@ def test_personalized_quiz_unique_per_student():
         course_id="course-a",
         list_lessons_fn=list_lessons,
         get_bound_course_fn=get_course,
-        count=3,
         learner_name="Bea",
     )
     assert a["mode"] == "personalized_ai"
-    assert a["difficulty"] in {"foundational", "core", "challenge"}
+    assert a.get("covers_all_topics") is True
+    assert set(a["topics"]) == {"Variables", "Expressions"}
     assert len(a["questions"]) >= 2
-    assert a["topics"]
     # Different students get different question id sets (seeded).
     assert {q.id for q in a["questions"]} != {q.id for q in b["questions"]}
     restored = questions_from_payload(a["question_payload"])

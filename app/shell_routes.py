@@ -1323,6 +1323,7 @@ async def quiz_form(
     loop: str | None = None,
     personalized: str | None = None,
 ):
+    """Quiz and My AI quiz are the same: unique per-student items covering all topics."""
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
@@ -1333,15 +1334,13 @@ async def quiz_form(
 
     token_s = _ensure_token(session)
     progress = _shell_progress(session, token_s).get("shell_progress")
-    is_personalized = personalized == "1"
-    # Personalized AI quizzes are practice by default (unique per student).
-    is_practice = practice == "1" or is_personalized
+    is_practice = practice == "1"
+    # personalized=1 is an alias for the same unified quiz.
+    _ = personalized
     coach = ghost_coach_gate(
         progress,
         bypass=bool(
-            session.get("is_instructor")
-            or force == "1"
-            or is_practice
+            session.get("is_instructor") or force == "1" or is_practice
         ),
     )
     if coach.get("gate") and force != "1" and not is_practice:
@@ -1357,8 +1356,50 @@ async def quiz_form(
 
     personal_meta: dict[str, Any] = {}
     personal_err = ""
-    questions: list[Any]
-    if is_personalized and not retry:
+    questions: list[Any] = []
+    retry_ids: list[str] = []
+    use_personal = True
+
+    if retry:
+        # Remediation: prefer missed items from this student's last personalized bank.
+        try:
+            prev = db.get_quiz_attempt(session["tenant_id"], UUID(str(retry)))
+        except Exception:  # noqa: BLE001
+            prev = None
+        if prev and str(prev.get("subject")) == str(session.get("subject")):
+            ans = prev.get("answers") if isinstance(prev.get("answers"), dict) else {}
+            retry_ids = failed_question_ids(ans)
+            bank = ans.get("question_bank") if isinstance(ans, dict) else None
+            if retry_ids and isinstance(bank, list) and bank:
+                from app.modules.quiz.personalized import questions_from_payload
+
+                all_q = questions_from_payload(bank)
+                questions = [q for q in all_q if q.id in retry_ids]
+                personal_meta = (
+                    ans.get("personal_meta")
+                    if isinstance(ans.get("personal_meta"), dict)
+                    else {}
+                )
+                session["personal_quiz_bank"] = {
+                    "subject": str(session.get("subject") or ""),
+                    "questions": [
+                        {
+                            "id": q.id,
+                            "prompt": q.prompt,
+                            "choices": list(q.choices),
+                            "correct_index": q.correct_index,
+                        }
+                        for q in questions
+                    ],
+                    "meta": personal_meta,
+                }
+                request.session[SESSION_KEY] = {
+                    **session,
+                    "quiz_token": token_s,
+                }
+                use_personal = False
+
+    if use_personal and not questions:
         try:
             from app.modules import content
             from app.modules import quiz as quiz_mod
@@ -1369,7 +1410,6 @@ async def quiz_form(
                 course_id=session.get("edvidura_course_id") or None,
                 list_lessons_fn=content.list_lessons,
                 get_bound_course_fn=content.get_bound_course,
-                count=4,
                 course_label=str(session.get("course") or ""),
                 learner_name=str(session.get("learner_name") or ""),
             )
@@ -1381,6 +1421,7 @@ async def quiz_form(
                 "provider": built.get("provider"),
                 "model": built.get("model"),
                 "course_title": built.get("course_title"),
+                "covers_all_topics": True,
             }
             session["personal_quiz_bank"] = {
                 "subject": str(session.get("subject") or ""),
@@ -1393,46 +1434,34 @@ async def quiz_form(
             }
         except ValueError as exc:
             personal_err = str(exc)
-            questions = []
-        except Exception as exc:  # noqa: BLE001
-            personal_err = f"Could not build personalized quiz: {exc}"
-            questions = []
-    else:
-        questions = list(
-            questions_for_tenant(
-                session.get("tenant_id"),
-                course_id=session.get("edvidura_course_id") or None,
+            # Fallback to shared bank if no chapter lessons yet.
+            questions = list(
+                questions_for_tenant(
+                    session.get("tenant_id"),
+                    course_id=session.get("edvidura_course_id") or None,
+                )
             )
-        )
-        retry_ids: list[str] = []
-        if retry:
-            try:
-                prev = db.get_quiz_attempt(session["tenant_id"], UUID(str(retry)))
-            except Exception:  # noqa: BLE001
-                prev = None
-            if prev and str(prev.get("subject")) == str(session.get("subject")):
-                retry_ids = failed_question_ids(prev.get("answers"))
-                if retry_ids:
-                    questions = [q for q in questions if q.id in retry_ids]
-        else:
-            retry_ids = []
-
-    if is_personalized:
-        retry_ids = []
+            use_personal = False
+        except Exception as exc:  # noqa: BLE001
+            personal_err = f"Could not build your quiz: {exc}"
+            questions = list(
+                questions_for_tenant(
+                    session.get("tenant_id"),
+                    course_id=session.get("edvidura_course_id") or None,
+                )
+            )
+            use_personal = False
 
     in_loop = loop == "1"
-    if is_personalized:
-        page_title = "My AI quiz"
-        page_subtitle = (
-            f"{personal_meta.get('difficulty') or 'core'} · "
-            "unique for you · class chapters"
-        )
-    elif is_practice and in_loop:
+    is_personalized = bool(
+        use_personal or (session.get("personal_quiz_bank") and questions)
+    )
+    if is_practice and in_loop:
         page_title = "Practice (remediation)"
         page_subtitle = "Sandbox — no Moodle grade sync · then graded retry"
     elif is_practice:
         page_title = "Practice quiz"
-        page_subtitle = "Sandbox — no Moodle grade sync · then graded retry"
+        page_subtitle = "Same quiz engine · unique questions for you · no Moodle sync"
     elif retry_ids and in_loop:
         page_title = "Take the quiz"
         page_subtitle = f"Graded retry · {len(questions)} missed item(s)"
@@ -1441,7 +1470,10 @@ async def quiz_form(
         page_subtitle = f"Retry {len(questions)} missed item(s)"
     else:
         page_title = "Take the quiz"
-        page_subtitle = "Answer each question, then submit"
+        page_subtitle = (
+            f"{personal_meta.get('difficulty') or 'core'} · "
+            "unique for you · all class topics"
+        )
 
     return _shell(
         request,
@@ -1458,7 +1490,7 @@ async def quiz_form(
             "personal_meta": personal_meta,
             "personal_error": personal_err,
             "retry_from": retry or "",
-            "remediation_loop": in_loop and not is_personalized,
+            "remediation_loop": in_loop,
             "coach_warn": coach.get("warn"),
         },
     )

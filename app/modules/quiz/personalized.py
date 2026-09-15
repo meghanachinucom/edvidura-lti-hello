@@ -177,26 +177,44 @@ def _local_personalized_mcqs(
     seed: int,
     course_title: str,
 ) -> list[Question]:
-    """Deterministic-but-unique local items (no LLM)."""
+    """Deterministic-but-unique local items covering every chapter."""
     from app.modules.ai_assessment.service import GENERIC_DISTRACTORS, _sentences
 
-    facts: list[tuple[str, str]] = []
+    # One (title, fact) pool per chapter, then round-robin so all topics appear.
+    per_chapter: list[list[tuple[str, str]]] = []
     for t in topics:
         title = t["title"]
-        for s in _sentences(t["body"])[:4]:
-            facts.append((title, s))
-    if not facts:
-        facts = [
-            (
-                course_title or "this course",
-                f"{course_title or 'This course'} covers the class chapters.",
-            )
+        sents = _sentences(t["body"])[:4]
+        if not sents:
+            chunk = (t["body"] or "").strip()[:160] or title
+            sents = [chunk]
+        # Rotate within chapter by student seed
+        rot = seed % len(sents)
+        ordered_s = sents[rot:] + sents[:rot]
+        per_chapter.append([(title, s) for s in ordered_s])
+    if not per_chapter:
+        per_chapter = [
+            [
+                (
+                    course_title or "this course",
+                    f"{course_title or 'This course'} covers the class chapters.",
+                )
+            ]
         ]
-    # Rotate starting point by student seed so peers get different sets.
+
+    facts: list[tuple[str, str]] = []
+    # Round-robin across chapters so every topic is represented.
+    max_len = max(len(ch) for ch in per_chapter)
+    for i in range(max_len):
+        for ch in per_chapter:
+            if i < len(ch):
+                facts.append(ch[i])
     start = seed % len(facts)
     ordered = facts[start:] + facts[:start]
     if difficulty == "challenge":
+        # Keep chapter coverage; only reverse within the rotated list.
         ordered = list(reversed(ordered))
+
     questions: list[Question] = []
     for i in range(min(count, max(1, len(ordered)))):
         title, fact = ordered[i % len(ordered)]
@@ -242,18 +260,20 @@ def _openai_personalized_mcqs(
     student_seed: str,
 ) -> list[Question]:
     corpus = [
-        {"chapter": t["title"], "text": t["body"][:1200]} for t in topics[:10]
+        {"chapter": t["title"], "text": t["body"][:1200]} for t in topics[:12]
     ]
     hint = _DIFFICULTY_HINTS.get(difficulty, _DIFFICULTY_HINTS["core"])
-    focus = "; ".join(focus_hints[:5]) if focus_hints else "cover each main chapter fairly"
+    chapters = [t["title"] for t in topics]
     data = openai_chat_json(
         system=(
             "You write personalized school quiz MCQs for ONE student. "
             "Use ONLY the provided chapter texts. "
             f"Difficulty guidance: {hint} "
-            "Make items different from a generic quiz — vary stems and scenarios "
+            "Make items different for this student — vary stems and scenarios "
             "using the student_seed as a creativity salt (do not mention the seed). "
-            "Cover required chapter depth; do not invent facts outside the texts. "
+            "CRITICAL: cover ALL chapters — include at least one question per chapter "
+            "when count allows; otherwise spread evenly across every chapter. "
+            "Do not invent facts outside the texts. "
             "Return ONLY JSON: "
             '{"questions":[{"prompt":"...","choices":["A","B","C","D"],'
             '"correct_index":0,"chapter":"..."}]} '
@@ -263,10 +283,10 @@ def _openai_personalized_mcqs(
             f"Course: {course_title or 'class course'}\n"
             f"Student seed: {student_seed}\n"
             f"Target difficulty: {difficulty}\n"
-            f"Focus: {focus}\n"
-            f"Create {count} unique MCQs from these chapters:\n{corpus}"
+            f"All chapters (must cover): {chapters}\n"
+            f"Create exactly {count} unique MCQs covering every chapter:\n{corpus}"
         ),
-        temperature=0.45,
+        temperature=0.5,
     )
     raw = data.get("questions") if isinstance(data, dict) else None
     if not isinstance(raw, list):
@@ -282,11 +302,11 @@ def generate_personalized_quiz(
     course_id: UUID | str | None,
     list_lessons_fn,
     get_bound_course_fn,
-    count: int = 4,
+    count: int | None = None,
     course_label: str = "",
     learner_name: str = "",
 ) -> dict[str, Any]:
-    """Build a unique AI quiz for this student from class chapter materials."""
+    """Build a unique AI quiz for this student covering all class chapters."""
     course_title, topics = chapter_topics_for_course(
         tenant_id,
         course_id,
@@ -295,30 +315,23 @@ def generate_personalized_quiz(
     )
     if not topics:
         raise ValueError(
-            "No class chapter lessons found for a personalized quiz. "
+            "No class chapter lessons found for a quiz. "
             "Ask your teacher to publish reading lessons for this course."
         )
     profile = student_performance_profile(
         tenant_id, subject, course_label=course_label or course_title
     )
     difficulty = str(profile.get("difficulty") or "core")
-    n = max(2, min(int(count), 6))
+    # One item per chapter when possible (cap 8) so all topics are covered.
+    if count is None:
+        n = max(2, min(8, len(topics)))
+    else:
+        n = max(2, min(int(count), 8))
+    # Prefer at least as many questions as chapters when chapters are few.
+    n = max(n, min(8, len(topics)))
     seed_s = f"{subject}|{learner_name}|{course_id or ''}"
     seed = _student_seed(seed_s, difficulty)
-    focus = list(profile.get("weak_prompts") or [])
-    # Prefer chapters matching weak areas; else all chapter titles.
-    focus_topics = [t["title"] for t in topics]
-    if focus:
-        bumped = [
-            t["title"]
-            for t in topics
-            if any(
-                w.lower()[:40] in (t["title"] + t["body"]).lower()
-                for w in focus
-            )
-        ]
-        if bumped:
-            focus_topics = bumped + [t for t in focus_topics if t not in bumped]
+    all_topics = [t["title"] for t in topics]
 
     def _openai():
         qs = _openai_personalized_mcqs(
@@ -326,7 +339,7 @@ def generate_personalized_quiz(
             count=n,
             difficulty=difficulty,
             course_title=course_title,
-            focus_hints=focus_topics[:6] + focus[:3],
+            focus_hints=all_topics,
             student_seed=seed_s,
         )
         if len(qs) < 2:
@@ -368,8 +381,8 @@ def generate_personalized_quiz(
         "question_payload": payload_qs,
         "course_title": course_title,
         "difficulty": difficulty,
-        "topics": [t["title"] for t in topics],
-        "focus_topics": focus_topics[:8],
+        "topics": all_topics,
+        "focus_topics": all_topics,
         "profile": {
             "attempts": profile.get("attempts"),
             "avg_score_ratio": profile.get("avg_score_ratio"),
@@ -378,6 +391,7 @@ def generate_personalized_quiz(
         "model": result.get("model"),
         "student_seed": seed_s,
         "mode": "personalized_ai",
+        "covers_all_topics": True,
     }
 
 

@@ -268,8 +268,6 @@ async def quiz_submit(
         form = await request.form()
         practice_mode = str(form.get("practice_mode") or "") == "1"
         personalized_mode = str(form.get("personalized_mode") or "") == "1"
-        if personalized_mode:
-            practice_mode = True
         all_questions = questions_for_tenant(
             session.get("tenant_id"),
             course_id=session.get("edvidura_course_id") or None,
@@ -297,8 +295,11 @@ async def quiz_submit(
         if practice_mode:
             answers_payload["mode"] = "practice"
         if personalized_mode:
-            answers_payload["mode"] = "personalized_ai"
             answers_payload["personalized"] = True
+            if not practice_mode:
+                answers_payload["mode"] = "personalized_ai"
+            else:
+                answers_payload["mode"] = "practice"
             if personal_bank and isinstance(personal_bank.get("meta"), dict):
                 answers_payload["personal_meta"] = personal_bank["meta"]
             answers_payload["question_bank"] = [
@@ -325,13 +326,9 @@ async def quiz_submit(
             answers=answers_payload,
             grade_sent=False,
             grade_error=(
-                "Personalized AI quiz — practice, not sent to Moodle"
-                if personalized_mode
-                else (
-                    "Practice attempt — not sent to Moodle"
-                    if practice_mode
-                    else "Grade passback queued…"
-                )
+                "Practice attempt — not sent to Moodle"
+                if practice_mode
+                else "Grade passback queued…"
             ),
         )
 

@@ -1,26 +1,25 @@
 {% extends "base_shell.html" %}
 {% block content %}
 <div class="page-wrap quiz-page">
-  {% if personalized_mode %}
-  <div class="quiz-banner quiz-banner--practice">
-    <span class="material-symbols-outlined">auto_awesome</span>
-    <span class="body-md">
-      Personalized AI quiz — unique for you from this class’s chapters
-      {% if personal_meta and personal_meta.difficulty %}
-      · depth: <strong>{{ personal_meta.difficulty }}</strong>
-      {% endif %}
-      · not sent to Moodle
-    </span>
-  </div>
-  {% elif practice_mode %}
+  {% if practice_mode %}
   <div class="quiz-banner quiz-banner--practice">
     <span class="material-symbols-outlined">fitness_center</span>
-    <span class="body-md">Practice lane — scores save here and to xAPI, but <strong>not</strong> to Moodle.{% if remediation_loop %} After this, take the <strong>graded retry</strong>.{% endif %}</span>
+    <span class="body-md">Practice lane — unique questions for you covering all class topics; <strong>not</strong> sent to Moodle.{% if remediation_loop %} After this, take the <strong>graded retry</strong>.{% endif %}</span>
   </div>
   {% elif remediation_loop %}
   <div class="quiz-banner quiz-banner--retry">
     <span class="material-symbols-outlined">replay</span>
     <span class="body-md">Graded remediation retry — missed items only; can sync to Moodle.</span>
+  </div>
+  {% elif personalized_mode %}
+  <div class="quiz-banner quiz-banner--practice" style="background:rgba(139,92,246,.12)">
+    <span class="material-symbols-outlined">auto_awesome</span>
+    <span class="body-md">
+      Your quiz — different questions from classmates, covering all class topics
+      {% if personal_meta and personal_meta.difficulty %}
+      · depth: <strong>{{ personal_meta.difficulty }}</strong>
+      {% endif %}
+    </span>
   </div>
   {% elif coach_warn %}
   <div class="quiz-banner quiz-banner--warn">
@@ -40,18 +39,19 @@
     <div class="quiz-hero-inner">
       <div>
         <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
-          <span class="material-symbols-outlined" style="font-size:13px">{% if personalized_mode %}auto_awesome{% elif practice_mode %}fitness_center{% else %}quiz{% endif %}</span>
-          {% if personalized_mode %}My AI quiz{% elif practice_mode %}Practice lane{% elif retry_from %}Missed items{% else %}Chapter check{% endif %}
+          <span class="material-symbols-outlined" style="font-size:13px">{% if practice_mode %}fitness_center{% else %}quiz{% endif %}</span>
+          {% if practice_mode %}Practice lane{% elif retry_from %}Missed items{% else %}Your quiz{% endif %}
         </div>
         <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">
-          {% if personalized_mode %}Your AI quiz{% elif practice_mode %}Practice check{% elif retry_from %}Retry missed{% else %}Take the quiz{% endif %}
+          {% if practice_mode %}Practice check{% elif retry_from %}Retry missed{% else %}Take the quiz{% endif %}
         </h1>
-        <p class="body-md" style="color:var(--outline-variant);margin-top:4px;max-width:520px">
-          {% if personalized_mode and personal_meta and personal_meta.focus_topics %}
-            Covers: {{ personal_meta.focus_topics[:4]|join(", ") }}{% if personal_meta.focus_topics|length > 4 %}…{% endif %}
+        <p class="body-md" style="color:var(--outline-variant);margin-top:4px;max-width:560px">
+          {% if personal_meta and personal_meta.topics %}
+            {{ questions|length }} question{% if questions|length != 1 %}s{% endif %} unique to you
+            · covers: {{ personal_meta.topics[:6]|join(", ") }}{% if personal_meta.topics|length > 6 %}…{% endif %}
           {% else %}
             {{ questions|length }} question{% if questions|length != 1 %}s{% endif %}
-            · {% if practice_mode or personalized_mode %}no Moodle sync{% elif ags_available %}can sync to Moodle{% else %}saves in EdVidura{% endif %}.
+            · {% if practice_mode %}no Moodle sync{% elif ags_available %}can sync to Moodle{% else %}saves in EdVidura{% endif %}.
           {% endif %}
         </p>
       </div>
