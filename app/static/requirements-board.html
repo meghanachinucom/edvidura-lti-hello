@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0c1210" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>EdVidura — Requirements Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #142018;
+      --paper: #f4f1ea;
+      --done: #1a7a52;
+      --done-bg: #c8f0dc;
+      --wip: #9a6b00;
+      --wip-bg: #ffe4a0;
+      --pend: #b83c28;
+      --pend-bg: #ffcfc2;
+      --board: #173028;
+      --citrus: #f0c01a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      color: var(--paper);
+      background:
+        radial-gradient(ellipse 70% 50% at 0% 0%, #2a4538, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 100%, #3a2818, transparent 50%),
+        #0c1210;
+      padding: max(1rem, env(safe-area-inset-top))
+        max(1rem, env(safe-area-inset-right))
+        max(2rem, env(safe-area-inset-bottom))
+        max(1rem, env(safe-area-inset-left));
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: contain;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: space-between;
+      align-items: end;
+      margin-bottom: 1.25rem;
+    }
+    header h1 {
+      font-family: Caveat, cursive;
+      font-size: clamp(2.4rem, 5vw, 3.4rem);
+      color: var(--citrus);
+      line-height: 1;
+    }
+    header .sub { opacity: 0.75; max-width: 40ch; font-size: 0.95rem; line-height: 1.4; }
+
+    .filters {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.45rem;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 0.25rem;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: linear-gradient(#0c1210 70%, transparent);
+      padding-top: 0.35rem;
+    }
+    .filters button {
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(12,18,16,0.92);
+      color: var(--paper);
+      padding: 0.55rem 1rem;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      min-height: 44px;
+    }
+    .filters button.on { background: var(--citrus); color: var(--ink); border-color: var(--citrus); }
+    .filters .count {
+      margin-left: 0.35rem;
+      opacity: 0.7;
+      font-weight: 500;
+    }
+    .filters button.on .count { opacity: 0.85; }
+
+    .stats {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.1rem;
+    }
+    .stat {
+      padding: 0.65rem 1rem;
+      border-radius: 10px;
+      min-width: 7rem;
+      background: rgba(0,0,0,0.28);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .stat b {
+      display: block;
+      font-family: Caveat, cursive;
+      font-size: 2rem;
+      line-height: 1;
+    }
+    .stat span { font-size: 0.78rem; opacity: 0.75; }
+    .stat.done b { color: #7dffb8; }
+    .stat.wip b { color: #ffd56a; }
+    .stat.pend b { color: #ff9a82; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+      gap: 0.9rem;
+    }
+    .stat { flex: 1 1 5.5rem; min-width: 0; }
+    @media (max-width: 560px) {
+      .stats { gap: 0.5rem; }
+      .stat { padding: 0.55rem 0.7rem; }
+      .stat b { font-size: 1.65rem; }
+      .card-top { padding: 0.9rem; }
+      .row1 { flex-direction: column; align-items: stretch; }
+      .chip { align-self: flex-start; }
+      header .sub { font-size: 0.88rem; }
+      .card:hover { transform: none; }
+    }
+
+    .card {
+      background: var(--board);
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+      text-align: left;
+      color: inherit;
+      font: inherit;
+      width: 100%;
+      display: block;
+    }
+    .card:hover, .card:focus-visible {
+      transform: translateY(-3px);
+      border-color: rgba(240,192,26,0.55);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.45);
+      outline: none;
+    }
+    .card.open {
+      border-color: var(--citrus);
+      grid-column: 1 / -1;
+    }
+    .card-top {
+      padding: 1rem 1.1rem 0.85rem;
+      display: grid;
+      gap: 0.55rem;
+    }
+    .row1 {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: start;
+    }
+    .num {
+      font-family: Caveat, cursive;
+      font-size: 1.5rem;
+      color: var(--citrus);
+      line-height: 1;
+    }
+    .title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      line-height: 1.25;
+      flex: 1;
+    }
+    .chip {
+      flex-shrink: 0;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .chip.done { background: var(--done-bg); color: var(--done); }
+    .chip.wip { background: var(--wip-bg); color: var(--wip); }
+    .chip.pend { background: var(--pend-bg); color: var(--pend); }
+
+    .time {
+      font-family: Caveat, cursive;
+      font-size: 1.25rem;
+      color: #ffe08a;
+    }
+    .blurb {
+      font-size: 0.88rem;
+      line-height: 1.4;
+      opacity: 0.88;
+    }
+
+    .panel {
+      display: none;
+      padding: 0 1.1rem 1.15rem;
+      border-top: 1px dashed rgba(255,255,255,0.15);
+      margin-top: 0.2rem;
+      padding-top: 0.9rem;
+      animation: open 0.3s ease;
+    }
+    .card.open .panel { display: grid; gap: 0.75rem; }
+    @keyframes open {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: none; }
+    }
+    .panel h4 {
+      font-family: Caveat, cursive;
+      font-size: 1.25rem;
+      color: var(--citrus);
+    }
+    .panel ul { padding-left: 1.15rem; font-size: 0.88rem; line-height: 1.45; }
+    .panel li { margin-bottom: 0.25rem; }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.55rem;
+    }
+    .meta div {
+      background: rgba(0,0,0,0.28);
+      border-radius: 8px;
+      padding: 0.55rem 0.7rem;
+      font-size: 0.82rem;
+    }
+    .meta strong {
+      display: block;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      opacity: 0.6;
+      margin-bottom: 0.2rem;
+    }
+
+    footer {
+      margin-top: 1.25rem;
+      opacity: 0.55;
+      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .hidden { display: none !important; }
+
+    @media print {
+      body { background: #fff; color: #111; }
+      .filters, footer { display: none; }
+      .card { break-inside: avoid; border: 1px solid #ccc; box-shadow: none; background: #fff; color: #111; }
+      .card.open .panel { display: grid; }
+      .time { color: #333; }
+      .num, header h1, .panel h4 { color: #111; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Requirements board</h1>
+      <p class="sub">Click a card to expand. Filter by status. Present live — completed, in progress, pending, time frame.</p>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+  <div class="filters" id="filters"></div>
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    <span>EdVidura · 10 requirements · interactive status</span>
+    <span>Click card · filters · Ctrl+P to print</span>
+  </footer>
+
+  <script>
+    const REQS = [
+      {
+        n: 1,
+        title: "Multi-tenancy implementation",
+        status: "done",
+        time: "Done",
+        blurb: "Tenant isolation with RLS — schools don’t see each other’s data.",
+        progress: "Tenants, institutions, SET LOCAL app.tenant_id, capability lookup, isolation proofs.",
+        pending: "None for core SaaS multi-tenancy.",
+        next: "Keep RLS on every new tenant-owned table.",
+      },
+      {
+        n: 2,
+        title: "LTI authorization",
+        status: "done",
+        time: "Done",
+        blurb: "LTI 1.3 launch auth — Moodle people stay SoR; EdVidura maps launch → class.",
+        progress: "OIDC login, platform registry, context bindings, roles from launch, AGS grade passback.",
+        pending: "None for Moodle-first path.",
+        next: "Canvas / other LMS only if a client asks.",
+      },
+      {
+        n: 3,
+        title: "TLA requirements + ADL code review/integrate",
+        status: "wip",
+        time: "In progress · review ongoing",
+        blurb: "CMM maturity mapped; relevant ADL pieces vendored — not a full TLA mesh.",
+        progress: "Maturity API · xi-lite port · CATAPULT requirements.json · catalogue/experiences adapters.",
+        pending: "cmi5 player · Kafka/Keycloak-style mesh (out of SaaS scope) · ELRR.",
+        next: "Finish gap review vs CMM levels; decide cmi5 player yes/no.",
+      },
+      {
+        n: 4,
+        title: "Yet Analytics LRS + Metabase integration",
+        status: "done",
+        time: "Done · live on Railway",
+        blurb: "Local xAPI SoR → optional Yet forward; Metabase embed for school BI.",
+        progress: "Yet + Metabase on Railway · bi_* views · embed dashboard · Riverside demo seed.",
+        pending: "Named ops owner · seed-before-demo habit.",
+        next: "Keep overlays warm for every external demo.",
+      },
+      {
+        n: 5,
+        title: "Micro-learning integration",
+        status: "done",
+        time: "Done",
+        blurb: "Skill-scoped short lessons in the remediation loop.",
+        progress: "/learn/micro · DCT planner · AI draft remediation · skill links · Home entry.",
+        pending: "Richer catalog content per pilot school.",
+        next: "Author micro-lessons for the pilot class.",
+      },
+      {
+        n: 6,
+        title: "PeBL integration/support for e-books",
+        status: "wip",
+        time: "Partial · 4–8 weeks for ebook PeBL depth",
+        blurb: "Versioned manuals / reader exist; full PeBL ebook package not done.",
+        progress: "Manuals TOC · signed standalone reader · focus deep-links · SME citations.",
+        pending: "In-book Discussion EPUB · offline LRS buffer · highlight/bookmark CFIs as xAPI.",
+        next: "Gap analysis vs PeBL ebook spec; prioritize reader vs packaging.",
+      },
+      {
+        n: 7,
+        title: "AI-generated quizzes per student",
+        status: "pend",
+        time: "Pending · 3–6 weeks after design lock",
+        blurb: "Need different quizzes per learner at chapter depth/complexity — not just shared MCQ bank.",
+        progress: "Teacher AI MCQ from text/doc · simplify · grade assist (shared generation).",
+        pending: "Per-student generation · depth/complexity targeting · chapter coverage rules · attempt uniqueness.",
+        next: "Spec: inputs (chapter, mastery, difficulty) → unique quiz per subject.",
+      },
+      {
+        n: 8,
+        title: "Coach voice · multi-language (Indian langs)",
+        status: "done",
+        time: "Done · browser-dependent quality",
+        blurb: "Mic + speak on Study Coach; Indian languages beyond English, Hindi, Telugu.",
+        progress: "Web Speech STT/TTS · lang catalog (hi, te, ta, kn, ml, …) · reply language instruction.",
+        pending: "Device/browser voice pack QA · optional cloud TTS for guaranteed quality.",
+        next: "Pilot QA matrix on Chrome/Edge for target languages.",
+      },
+      {
+        n: 9,
+        title: "Air-gapped · hybrid · full cloud deployment",
+        status: "wip",
+        time: "Cloud done · air-gap/hybrid design 6–10 weeks",
+        blurb: "Cloud (Railway) works today. Air-gap and hybrid need a deployment class, not a schema rewrite.",
+        progress: "Cloud SaaS path · Docker · local heuristics for AI offline demos · decision note: enclave deferred.",
+        pending: "Air-gap package · hybrid topology (on-prem + cloud) · client install runbook · offline model options.",
+        next: "Write deployment matrix: cloud / hybrid / air-gap with constraints.",
+      },
+      {
+        n: 10,
+        title: "xAPI from chat (PeBL discussion)",
+        status: "done",
+        time: "Done for Study Coach chat",
+        blurb: "Chat turns captured as xAPI interacted — aligned to PeBL Discussion fields.",
+        progress: "thread_id · access_level · text/preview · Activity filter · Integrations PeBL mode.",
+        pending: "Full PeBL ebook discussion UI / multi-user forum (see #6).",
+        next: "Keep coach chat as reference when extending ebook PeBL.",
+      },
+    ];
+
+    const label = { done: "Completed", wip: "In progress", pend: "Pending" };
+    let filter = "all";
+    let openId = null;
+
+    function counts() {
+      return {
+        all: REQS.length,
+        done: REQS.filter((r) => r.status === "done").length,
+        wip: REQS.filter((r) => r.status === "wip").length,
+        pend: REQS.filter((r) => r.status === "pend").length,
+      };
+    }
+
+    function renderStats() {
+      const c = counts();
+      document.getElementById("stats").innerHTML = `
+        <div class="stat"><b>${c.all}</b><span>Requirements</span></div>
+        <div class="stat done"><b>${c.done}</b><span>Completed</span></div>
+        <div class="stat wip"><b>${c.wip}</b><span>In progress</span></div>
+        <div class="stat pend"><b>${c.pend}</b><span>Pending</span></div>
+      `;
+    }
+
+    function renderFilters() {
+      const c = counts();
+      const items = [
+        ["all", "All"],
+        ["done", "Completed"],
+        ["wip", "In progress"],
+        ["pend", "Pending"],
+      ];
+      document.getElementById("filters").innerHTML = items
+        .map(
+          ([id, name]) =>
+            `<button type="button" data-f="${id}" class="${filter === id ? "on" : ""}">${name}<span class="count">${c[id]}</span></button>`
+        )
+        .join("");
+      document.getElementById("filters").onclick = (e) => {
+        const b = e.target.closest("button[data-f]");
+        if (!b) return;
+        filter = b.dataset.f;
+        renderFilters();
+        renderGrid();
+      };
+    }
+
+    function renderGrid() {
+      const list = REQS.filter((r) => filter === "all" || r.status === filter);
+      document.getElementById("grid").innerHTML = list
+        .map((r) => {
+          const isOpen = openId === r.n;
+          return `
+          <button type="button" class="card ${isOpen ? "open" : ""}" data-n="${r.n}" aria-expanded="${isOpen}">
+            <div class="card-top">
+              <div class="row1">
+                <div style="display:flex;gap:0.55rem;align-items:start;flex:1">
+                  <span class="num">${r.n}.</span>
+                  <span class="title">${r.title}</span>
+                </div>
+                <span class="chip ${r.status}">${label[r.status]}</span>
+              </div>
+              <div class="time">${r.time}</div>
+              <p class="blurb">${r.blurb}</p>
+            </div>
+            <div class="panel">
+              <div class="meta">
+                <div><strong>Status</strong>${label[r.status]}</div>
+                <div><strong>Time frame</strong>${r.time}</div>
+              </div>
+              <div>
+                <h4>Progress / completed so far</h4>
+                <p class="blurb">${r.progress}</p>
+              </div>
+              <div>
+                <h4>Still pending</h4>
+                <p class="blurb">${r.pending}</p>
+              </div>
+              <div>
+                <h4>Next move</h4>
+                <p class="blurb">${r.next}</p>
+              </div>
+            </div>
+          </button>`;
+        })
+        .join("");
+
+      document.getElementById("grid").onclick = (e) => {
+        const card = e.target.closest(".card[data-n]");
+        if (!card) return;
+        const n = +card.dataset.n;
+        openId = openId === n ? null : n;
+        renderGrid();
+        if (openId) {
+          document.querySelector(`.card[data-n="${openId}"]`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      };
+    }
+
+    renderStats();
+    renderFilters();
+    renderGrid();
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key >= "1" && e.key <= "9") {
+        openId = openId === +e.key ? null : +e.key;
+        filter = "all";
+        renderFilters();
+        renderGrid();
+      }
+      if (e.key === "0") {
+        openId = openId === 10 ? null : 10;
+        filter = "all";
+        renderFilters();
+        renderGrid();
+      }
+    });
+  </script>
+</body>
+</html>

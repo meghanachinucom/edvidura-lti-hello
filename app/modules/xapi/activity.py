@@ -72,6 +72,8 @@ def present_statement_row(row: dict[str, Any]) -> dict[str, Any]:
     refusal = str(ext.get(f"{_EXT}refusal_reason") or "")
     thread_id = str(ext.get(f"{_EXT}thread_id") or "")
     access_level = str(ext.get(f"{_EXT}access_level") or "")
+    channel = str(ext.get(f"{_EXT}channel") or "")
+    pebl_aligned = bool(ext.get(f"{_EXT}pebl_discussion_aligned"))
     actor_name = ""
     actor = stmt.get("actor") if isinstance(stmt.get("actor"), dict) else {}
     if actor.get("name"):
@@ -97,6 +99,8 @@ def present_statement_row(row: dict[str, Any]) -> dict[str, Any]:
         detail_bits.append(f"Thread {thread_id[-12:]}")
     if access_level:
         detail_bits.append(f"Access:{access_level}")
+    if pebl_aligned:
+        detail_bits.append("PeBL Discussion")
     if grounded is True:
         detail_bits.append("Grounded")
     elif grounded is False and verb_id == verbs.VERB_INTERACTED:
@@ -129,6 +133,8 @@ def present_statement_row(row: dict[str, Any]) -> dict[str, Any]:
         "message_text": full_msg,
         "thread_id": thread_id,
         "access_level": access_level,
+        "channel": channel,
+        "pebl_discussion_aligned": pebl_aligned,
         "grounded": grounded,
         "citation_count": citations,
     }
@@ -140,6 +146,7 @@ def activity_feed(
     subject: str | None = None,
     limit: int = 100,
     verb_id: str | None = None,
+    channel: str | None = None,
 ) -> list[dict[str, Any]]:
     """RLS-scoped activity list for learner / teacher / school-admin UI."""
     rows = list_statements(
@@ -151,4 +158,13 @@ def activity_feed(
     if verb_id:
         want = verb_id.strip()
         out = [r for r in out if r["verb_id"] == want]
+    ch = (channel or "").strip().lower()
+    if ch in {"coach", "study_coach", "chat"}:
+        # PeBL Discussion / Study Coach turns
+        out = [
+            r
+            for r in out
+            if str(r.get("channel") or "") == "study_coach"
+            or r.get("verb_id") == verbs.VERB_INTERACTED
+        ]
     return out

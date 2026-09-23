@@ -1,5 +1,6 @@
 {% extends "base_shell.html" %}
 {% block content %}
+<div class="page-wrap">
 <div class="banner-note info">
   <strong>Not sent to Moodle.</strong> {{ result.disclaimer }}
   {% if result.moodle_passback is defined and result.moodle_passback %}
@@ -92,4 +93,5 @@
   });
 })();
 </script>
+</div>
 {% endblock %}

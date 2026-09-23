@@ -40,10 +40,48 @@
         {% endfor %}
       </ol>
       {% if share_path %}
-      <p class="meta" style="margin-top:0.75rem">
-        Standalone link (signed, time-limited):
-        <code class="meta" style="word-break:break-all">{{ share_path }}</code>
-      </p>
+      <div style="margin-top:0.75rem;display:flex;flex-direction:column;gap:8px">
+        <p class="meta" style="margin:0">Standalone link (signed, time-limited)</p>
+        <code id="manual-share-url" class="meta" style="word-break:break-all;display:block;padding:8px;background:rgba(14,43,36,.04);border-radius:8px">{{ share_path }}</code>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button type="button" class="btn btn-surface" id="manual-share-copy" style="font-size:13px;padding:6px 12px">
+            <span class="material-symbols-outlined" style="font-size:15px">content_copy</span>
+            Copy link
+          </button>
+          <a class="btn btn-primary" href="{{ share_path }}" target="_blank" rel="noopener" style="font-size:13px;padding:6px 12px">
+            <span class="material-symbols-outlined" style="font-size:15px">open_in_new</span>
+            Open standalone
+          </a>
+        </div>
+        <p id="manual-share-status" class="body-sm text-muted" role="status" style="margin:0;min-height:1.2em"></p>
+      </div>
+      <script>
+      (function () {
+        var btn = document.getElementById('manual-share-copy');
+        var urlEl = document.getElementById('manual-share-url');
+        var status = document.getElementById('manual-share-status');
+        if (!btn || !urlEl) return;
+        btn.addEventListener('click', function () {
+          var text = (urlEl.textContent || '').trim();
+          if (!text) return;
+          function ok() { if (status) status.textContent = 'Copied.'; }
+          function fail() { if (status) status.textContent = 'Copy failed — select the link manually.'; }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(ok).catch(fail);
+          } else {
+            try {
+              var ta = document.createElement('textarea');
+              ta.value = text;
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              ok();
+            } catch (e) { fail(); }
+          }
+        });
+      })();
+      </script>
       {% endif %}
     </nav>
     {% endif %}

@@ -444,6 +444,7 @@ def course_progress(
         "completed_count": completed_n,
         "total_count": total,
         "percent": int(round(100 * completed_n / total)) if total else 0,
+        "completion_pct": int(round(100 * completed_n / total)) if total else 0,
         "next_lesson": next_lesson,
         "all_lessons_done": completed_n >= total and total > 0,
     }

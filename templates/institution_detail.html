@@ -1,5 +1,6 @@
 {% extends "base_shell.html" %}
 {% block content %}
+<div class="page-wrap">
 <section class="welcome">
   <p class="welcome-kicker">This school workspace</p>
   <h2 class="welcome-title">{{ tenant_name }}</h2>
@@ -133,4 +134,5 @@
   <div class="empty"><p>No quiz attempts in this school yet.</p></div>
   {% endif %}
 </section>
+</div>
 {% endblock %}

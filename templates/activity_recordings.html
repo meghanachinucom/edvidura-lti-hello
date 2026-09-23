@@ -15,10 +15,17 @@
       </div>
       <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
         <a class="btn btn-primary" href="{{ back_href }}?token={{ quiz_token }}">Back to analytics</a>
+        {% if show_channel_filter %}
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn {% if not channel %}btn-primary{% else %}btn-surface{% endif %}" href="{{ request.url.path }}?token={{ quiz_token }}{% if filter_subject %}&subject={{ filter_subject }}{% endif %}">All</a>
+          <a class="btn {% if channel == 'coach' %}btn-primary{% else %}btn-surface{% endif %}" href="{{ request.url.path }}?token={{ quiz_token }}&channel=coach{% if filter_subject %}&subject={{ filter_subject }}{% endif %}">Coach chat</a>
+        </div>
+        {% endif %}
         {% if show_subject_filter %}
         <form method="get" action="{{ request.url.path }}" style="display:flex;gap:8px;align-items:center">
           <input type="hidden" name="token" value="{{ quiz_token }}">
-          <input class="input" name="subject" value="{{ filter_subject or '' }}" placeholder="Filter LMS subject" style="min-width:160px;padding:8px 12px">
+          {% if channel %}<input type="hidden" name="channel" value="{{ channel }}">{% endif %}
+          <input class="input" name="subject" value="{{ filter_subject or '' }}" placeholder="Filter by learner id" style="min-width:160px;padding:8px 12px">
           <button class="btn btn-surface" type="submit">Filter</button>
         </form>
         {% endif %}

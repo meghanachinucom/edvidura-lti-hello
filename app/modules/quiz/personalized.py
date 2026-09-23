@@ -25,6 +25,59 @@ _DIFFICULTY_HINTS = {
     ),
 }
 
+_DIFFICULTY_CACHE_TTL = 90 * 24 * 3600  # 90 days
+
+
+def normalize_difficulty(value: str | None) -> str:
+    from app.modules.ai_assessment.service import normalize_difficulty as _norm
+
+    return _norm(value)
+
+
+def tenant_quiz_difficulty_key(tenant_id: UUID | str) -> str:
+    return f"edvidura:quiz_difficulty:{tenant_id}"
+
+
+def get_tenant_quiz_difficulty(tenant_id: UUID | str) -> str | None:
+    """Teacher-selected difficulty for student quizzes, or None = auto."""
+    from app.launch_cache import LAUNCH_CACHE
+
+    raw = LAUNCH_CACHE.get(tenant_quiz_difficulty_key(tenant_id))
+    if raw is None:
+        return None
+    if isinstance(raw, dict):
+        val = str(raw.get("difficulty") or "").strip().lower()
+    else:
+        val = str(raw).strip().lower()
+    if val in {"", "auto"}:
+        return None
+    if val in DIFFICULTY_LEVELS:
+        return val
+    return normalize_difficulty(val)
+
+
+def set_tenant_quiz_difficulty(
+    tenant_id: UUID | str, difficulty: str | None
+) -> str:
+    """Persist teacher choice: foundational|core|challenge|auto."""
+    from app.launch_cache import LAUNCH_CACHE
+
+    raw = (difficulty or "auto").strip().lower()
+    if raw in {"", "auto"}:
+        LAUNCH_CACHE.set(
+            tenant_quiz_difficulty_key(tenant_id),
+            {"difficulty": "auto"},
+            exp=_DIFFICULTY_CACHE_TTL,
+        )
+        return "auto"
+    level = normalize_difficulty(raw)
+    LAUNCH_CACHE.set(
+        tenant_quiz_difficulty_key(tenant_id),
+        {"difficulty": level},
+        exp=_DIFFICULTY_CACHE_TTL,
+    )
+    return level
+
 
 def infer_difficulty(
     *,
@@ -305,8 +358,13 @@ def generate_personalized_quiz(
     count: int | None = None,
     course_label: str = "",
     learner_name: str = "",
+    difficulty: str | None = None,
 ) -> dict[str, Any]:
-    """Build a unique AI quiz for this student covering all class chapters."""
+    """Build a unique AI quiz for this student covering all class chapters.
+
+    ``difficulty``: teacher override (foundational|core|challenge). When omitted,
+    uses tenant setting if set, else performance-inferred depth.
+    """
     course_title, topics = chapter_topics_for_course(
         tenant_id,
         course_id,
@@ -321,23 +379,32 @@ def generate_personalized_quiz(
     profile = student_performance_profile(
         tenant_id, subject, course_label=course_label or course_title
     )
-    difficulty = str(profile.get("difficulty") or "core")
-    # One item per chapter when possible (cap 8) so all topics are covered.
-    if count is None:
-        n = max(2, min(8, len(topics)))
+    teacher_level = None
+    if difficulty:
+        teacher_level = normalize_difficulty(difficulty)
     else:
-        n = max(2, min(int(count), 8))
-    # Prefer at least as many questions as chapters when chapters are few.
-    n = max(n, min(8, len(topics)))
+        teacher_level = get_tenant_quiz_difficulty(tenant_id)
+    if teacher_level:
+        level = teacher_level
+        difficulty_source = "teacher"
+    else:
+        level = str(profile.get("difficulty") or "core")
+        difficulty_source = "auto"
+    # One item per chapter when possible so all topics are covered end-to-end.
+    if count is None:
+        n = max(2, min(12, len(topics)))
+    else:
+        n = max(2, min(int(count), 12))
+    n = max(n, min(12, len(topics)))
     seed_s = f"{subject}|{learner_name}|{course_id or ''}"
-    seed = _student_seed(seed_s, difficulty)
+    seed = _student_seed(seed_s, level)
     all_topics = [t["title"] for t in topics]
 
     def _openai():
         qs = _openai_personalized_mcqs(
             topics,
             count=n,
-            difficulty=difficulty,
+            difficulty=level,
             course_title=course_title,
             focus_hints=all_topics,
             student_seed=seed_s,
@@ -351,7 +418,7 @@ def generate_personalized_quiz(
             "questions": _local_personalized_mcqs(
                 topics,
                 count=n,
-                difficulty=difficulty,
+                difficulty=level,
                 seed=seed,
                 course_title=course_title,
             )
@@ -363,7 +430,7 @@ def generate_personalized_quiz(
         questions = _local_personalized_mcqs(
             topics,
             count=n,
-            difficulty=difficulty,
+            difficulty=level,
             seed=seed,
             course_title=course_title,
         )
@@ -380,7 +447,8 @@ def generate_personalized_quiz(
         "questions": questions,
         "question_payload": payload_qs,
         "course_title": course_title,
-        "difficulty": difficulty,
+        "difficulty": level,
+        "difficulty_source": difficulty_source,
         "topics": all_topics,
         "focus_topics": all_topics,
         "profile": {
@@ -426,7 +494,10 @@ __all__ = [
     "DIFFICULTY_LEVELS",
     "chapter_topics_for_course",
     "generate_personalized_quiz",
+    "get_tenant_quiz_difficulty",
     "infer_difficulty",
+    "normalize_difficulty",
     "questions_from_payload",
+    "set_tenant_quiz_difficulty",
     "student_performance_profile",
 ]

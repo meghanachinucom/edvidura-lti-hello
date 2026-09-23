@@ -14,6 +14,14 @@
     return (sel && sel.value) || "en-IN";
   }
 
+  function selectedLangLabel() {
+    var sel = $("coach-voice-lang");
+    if (!sel || sel.selectedIndex < 0) return selectedLang();
+    var opt = sel.options[sel.selectedIndex];
+    var label = (opt && opt.textContent) || selectedLang();
+    return label.replace(/\s*·.*$/, "").trim() || selectedLang();
+  }
+
   function setStatus(msg, isErr) {
     var el = $("coach-voice-status");
     if (!el) return;
@@ -69,7 +77,7 @@
   function startListening() {
     var Ctor = SpeechRecognitionCtor();
     if (!Ctor) {
-      setStatus("Voice input needs Chrome or Edge on this device.", true);
+      setStatus("Mic needs Chrome or Edge on this device.", true);
       return;
     }
     var ta = $("coach-question");
@@ -91,7 +99,7 @@
         var icon = btn.querySelector(".material-symbols-outlined");
         if (icon) icon.textContent = "mic_off";
       }
-      setStatus("Listening… speak in " + selectedLang());
+      setStatus("Listening… speak in " + selectedLangLabel());
     };
 
     recognition.onerror = function (ev) {
@@ -131,7 +139,7 @@
       if (final) {
         ta.value = (ta.value ? ta.value.replace(/\s+$/, "") + " " : "") + transcript;
         ta.focus();
-        setStatus("Captured. Review and press Ask.");
+        setStatus("Captured in " + selectedLangLabel() + ". Review and press Ask.");
       } else {
         setStatus(transcript);
       }
@@ -168,7 +176,6 @@
     window.speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
     u.lang = selectedLang();
-    // Prefer a matching voice when the OS/browser has one installed.
     try {
       var voices = window.speechSynthesis.getVoices() || [];
       var lang = selectedLang().toLowerCase();
@@ -183,7 +190,7 @@
       if (match) u.voice = match;
     } catch (e) {}
     u.onstart = function () {
-      setStatus("Speaking…");
+      setStatus("Speaking in " + selectedLangLabel() + "…");
     };
     u.onend = function () {
       setStatus("");
@@ -199,6 +206,17 @@
     setStatus("");
   }
 
+  function initMicAvailability() {
+    var mic = $("coach-mic-btn");
+    if (!mic) return;
+    if (SpeechRecognitionCtor()) return;
+    mic.disabled = true;
+    mic.setAttribute("aria-disabled", "true");
+    mic.title = "Mic needs Chrome or Edge";
+    mic.classList.add("is-disabled");
+    setStatus("Mic unavailable here. Type your question, or use Speak after an answer if voices are installed.");
+  }
+
   function init() {
     restoreLang();
     var sel = $("coach-voice-lang");
@@ -207,7 +225,7 @@
         persistLang();
         stopListening();
         stopSpeak();
-        setStatus("Language: " + sel.value);
+        setStatus("Language: " + selectedLangLabel());
       });
     }
     var mic = $("coach-mic-btn");
@@ -217,7 +235,6 @@
     var stop = $("coach-speak-stop-btn");
     if (stop) stop.addEventListener("click", stopSpeak);
 
-    // Chrome loads voices asynchronously.
     if (window.speechSynthesis) {
       window.speechSynthesis.onvoiceschanged = function () {};
       try {
@@ -225,8 +242,11 @@
       } catch (e) {}
     }
 
-    if (!SpeechRecognitionCtor()) {
-      setStatus("Mic needs Chrome/Edge. Speak still works where voices are installed.");
+    initMicAvailability();
+
+    // Soft nudge: offer Speak after a fresh answer without auto-playing.
+    if (speak && $("coach-answer-text")) {
+      setStatus("Answer ready — tap Speak answer to hear it in " + selectedLangLabel() + ".");
     }
   }
 

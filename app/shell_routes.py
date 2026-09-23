@@ -1414,8 +1414,12 @@ async def quiz_form(
                 learner_name=str(session.get("learner_name") or ""),
             )
             questions = list(built["questions"])
+            from app.modules.ai_assessment import difficulty_label as _diff_label
+
             personal_meta = {
                 "difficulty": built.get("difficulty"),
+                "difficulty_label": _diff_label(built.get("difficulty")),
+                "difficulty_source": built.get("difficulty_source"),
                 "topics": built.get("topics") or [],
                 "focus_topics": built.get("focus_topics") or [],
                 "provider": built.get("provider"),
@@ -2308,11 +2312,79 @@ async def school_admin_analytics(request: Request, token: str | None = None):
     )
 
 
+@router.get("/school-admin/integrations", response_class=HTMLResponse)
+async def school_admin_integrations(
+    request: Request,
+    token: str | None = None,
+    ok: str | None = None,
+    probe: str | None = None,
+):
+    from app.modules import analytics as analytics_mod
+
+    session = require_school_admin(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    do_probe = str(probe or "1").strip().lower() not in {"0", "false", "no"}
+    status = analytics_mod.integration_status(probe=do_probe)
+    embed = analytics_mod.metabase_embed_url(
+        tenant_id=session["tenant_id"],
+        tenant_slug=str(session.get("tenant_slug") or ""),
+    )
+    lrs = status.get("yet_analytics_lrs") or {}
+    endpoint = str(lrs.get("endpoint") or "").rstrip("/")
+    yet_url = ""
+    if endpoint:
+        yet_url = (
+            endpoint[: -len("/xapi")]
+            if endpoint.lower().endswith("/xapi")
+            else endpoint
+        )
+    return _shell(
+        request,
+        "integrations.html",
+        session,
+        active_page="school_admin_analytics",
+        page_title="Charts & learning records",
+        page_subtitle="Metabase · Yet LRS · local activity",
+        extra={
+            "local": status.get("local_xapi_store") or {},
+            "lrs": lrs,
+            "metabase": status.get("metabase") or {},
+            "metabase_embed_url": embed,
+            "yet_url": yet_url,
+            "activity_href": "/school-admin/activity",
+            "can_retry": True,
+            "ok_message": ok,
+        },
+    )
+
+
+@router.post("/school-admin/integrations/retry-lrs", response_class=HTMLResponse)
+async def school_admin_retry_lrs(request: Request, token: str | None = None):
+    from app.modules import xapi as xapi_mod
+
+    session = require_school_admin(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("token") or token or _ensure_token(session))
+    try:
+        result = xapi_mod.retry_failed_lrs(session["tenant_id"])
+        msg = f"Retried+{result.get('retried',0)}+sent+{result.get('sent',0)}"
+    except Exception as exc:  # noqa: BLE001
+        msg = str(exc).replace(" ", "+")[:80]
+    return RedirectResponse(
+        url=f"/school-admin/integrations?token={tok}&ok={msg}",
+        status_code=303,
+    )
+
+
 @router.get("/school-admin/activity", response_class=HTMLResponse)
 async def school_admin_activity(
     request: Request,
     token: str | None = None,
     subject: str | None = None,
+    channel: str | None = None,
 ):
     from app.modules import xapi as xapi_mod
 
@@ -2320,8 +2392,9 @@ async def school_admin_activity(
     if isinstance(session, HTMLResponse):
         return session
     filt = (subject or "").strip() or None
+    ch = (channel or "").strip() or None
     rows = xapi_mod.activity_feed(
-        session["tenant_id"], subject=filt, limit=150
+        session["tenant_id"], subject=filt, limit=150, channel=ch
     )
     return _shell(
         request,
@@ -2332,11 +2405,17 @@ async def school_admin_activity(
         page_subtitle="School xAPI evidence",
         extra={
             "rows": rows,
-            "scope_label": "School admin · all learners",
+            "scope_label": (
+                "School admin · coach chat"
+                if ch in {"coach", "study_coach", "chat"}
+                else "School admin · all learners"
+            ),
             "back_href": "/school-admin/analytics",
             "show_actor": True,
             "show_subject_filter": True,
             "filter_subject": filt or "",
+            "channel": ch or "",
+            "show_channel_filter": True,
         },
     )
 
@@ -2375,15 +2454,23 @@ async def learner_analytics(request: Request, token: str | None = None):
 
 
 @router.get("/learn/activity", response_class=HTMLResponse)
-async def learner_activity(request: Request, token: str | None = None):
+async def learner_activity(
+    request: Request,
+    token: str | None = None,
+    channel: str | None = None,
+):
     from app.modules import xapi as xapi_mod
 
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
     sub = str(session.get("subject") or "").strip()
+    ch = (channel or "").strip() or None
     rows = xapi_mod.activity_feed(
-        session["tenant_id"], subject=sub or None, limit=100
+        session["tenant_id"],
+        subject=sub or None,
+        limit=100,
+        channel=ch,
     )
     return _shell(
         request,
@@ -2394,12 +2481,42 @@ async def learner_activity(request: Request, token: str | None = None):
         page_subtitle="Your xAPI evidence trail",
         extra={
             "rows": rows,
-            "scope_label": "Learner · my recordings",
+            "scope_label": (
+                "Learner · coach chat"
+                if ch in {"coach", "study_coach", "chat"}
+                else "Learner · my recordings"
+            ),
             "back_href": "/learn/analytics",
             "show_actor": False,
             "show_subject_filter": False,
             "filter_subject": "",
+            "channel": ch or "",
+            "show_channel_filter": True,
         },
+    )
+
+
+@router.get("/learn/micro", response_class=HTMLResponse)
+async def learn_micro(request: Request, token: str | None = None):
+    from app.modules import adaptive as adaptive_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    tok = _ensure_token(session)
+    catalog = adaptive_mod.micro_learning_catalog(
+        session["tenant_id"],
+        subject=str(session.get("subject") or ""),
+        quiz_token=tok,
+    )
+    return _shell(
+        request,
+        "micro_learning.html",
+        session,
+        active_page="micro_learning",
+        page_title="Micro-learning",
+        page_subtitle="Short skill lessons",
+        extra={"catalog": catalog},
     )
 
 
@@ -2979,6 +3096,17 @@ async def teacher_analytics(request: Request, token: str | None = None):
         tenant_id=session["tenant_id"],
         tenant_slug=str(session.get("tenant_slug") or ""),
     )
+    integ = analytics_mod.integration_status(probe=False)
+    lrs = integ.get("yet_analytics_lrs") or {}
+    meta = integ.get("metabase") or {}
+    lrs_endpoint = str(lrs.get("endpoint") or "").rstrip("/")
+    yet_url = ""
+    if lrs_endpoint:
+        yet_url = (
+            lrs_endpoint[: -len("/xapi")]
+            if lrs_endpoint.lower().endswith("/xapi")
+            else lrs_endpoint
+        )
     return _shell(
         request,
         "teacher_analytics.html",
@@ -2992,6 +3120,9 @@ async def teacher_analytics(request: Request, token: str | None = None):
             "class_snap": class_snap,
             "metabase_url": settings.metabase_url,
             "metabase_embed_url": embed,
+            "metabase": meta,
+            "lrs": lrs,
+            "yet_url": yet_url,
         },
     )
 
@@ -3001,6 +3132,7 @@ async def teacher_activity(
     request: Request,
     token: str | None = None,
     subject: str | None = None,
+    channel: str | None = None,
 ):
     from app.modules import xapi as xapi_mod
 
@@ -3009,8 +3141,9 @@ async def teacher_activity(
         return session
     _ensure_launch_binding(session)
     filt = (subject or "").strip() or None
+    ch = (channel or "").strip() or None
     rows = xapi_mod.activity_feed(
-        session["tenant_id"], subject=filt, limit=150
+        session["tenant_id"], subject=filt, limit=150, channel=ch
     )
     return _shell(
         request,
@@ -3021,11 +3154,64 @@ async def teacher_activity(
         page_subtitle="Class / school xAPI evidence",
         extra={
             "rows": rows,
-            "scope_label": "Teacher · recordings",
+            "scope_label": (
+                "Teacher · coach chat"
+                if ch in {"coach", "study_coach", "chat"}
+                else "Teacher · recordings"
+            ),
             "back_href": "/teacher/analytics",
             "show_actor": True,
             "show_subject_filter": True,
             "filter_subject": filt or "",
+            "channel": ch or "",
+            "show_channel_filter": True,
+        },
+    )
+
+
+@router.get("/teacher/integrations", response_class=HTMLResponse)
+async def teacher_integrations(
+    request: Request,
+    token: str | None = None,
+    probe: str | None = None,
+):
+    from app.modules import analytics as analytics_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    # Default probe on so teachers see live Yet reachability without ?probe=1
+    do_probe = str(probe or "1").strip().lower() not in {"0", "false", "no"}
+    status = analytics_mod.integration_status(probe=do_probe)
+    embed = analytics_mod.metabase_embed_url(
+        tenant_id=session["tenant_id"],
+        tenant_slug=str(session.get("tenant_slug") or ""),
+    )
+    lrs = status.get("yet_analytics_lrs") or {}
+    endpoint = str(lrs.get("endpoint") or "").rstrip("/")
+    yet_url = ""
+    if endpoint:
+        yet_url = (
+            endpoint[: -len("/xapi")]
+            if endpoint.lower().endswith("/xapi")
+            else endpoint
+        )
+    return _shell(
+        request,
+        "integrations.html",
+        session,
+        active_page="teacher_analytics",
+        page_title="Charts & learning records",
+        page_subtitle="Metabase · Yet LRS · local activity",
+        extra={
+            "local": status.get("local_xapi_store") or {},
+            "lrs": lrs,
+            "metabase": status.get("metabase") or {},
+            "metabase_embed_url": embed,
+            "yet_url": yet_url,
+            "activity_href": "/teacher/activity",
+            "can_retry": False,
+            "ok_message": None,
         },
     )
 
@@ -3133,7 +3319,7 @@ async def teacher_analytics_csv(request: Request, token: str | None = None):
 
 @router.post("/teacher/ai/generate", response_class=HTMLResponse)
 async def teacher_ai_generate(request: Request, token: str | None = None):
-    from app.modules.ai_assessment import generate_mcqs_from_text
+    from app.modules.ai_assessment import difficulty_label, generate_mcqs_from_text
 
     session = require_instructor(request, token=token)
     if isinstance(session, HTMLResponse):
@@ -3145,6 +3331,7 @@ async def teacher_ai_generate(request: Request, token: str | None = None):
         count = int(str(form.get("count") or "3"))
     except ValueError:
         count = 3
+    difficulty = str(form.get("difficulty") or "core").strip()
     lesson = (
         content.get_lesson(
             session["tenant_id"], lesson_id, allow_unpublished=True
@@ -3160,7 +3347,10 @@ async def teacher_ai_generate(request: Request, token: str | None = None):
     body = str(lesson.get("body_md") or "")
     try:
         result = generate_mcqs_from_text(
-            body, count=count, title=str(lesson.get("title") or "")
+            body,
+            count=count,
+            title=str(lesson.get("title") or ""),
+            difficulty=difficulty,
         )
     except ValueError as exc:
         msg = str(exc).replace(" ", "+")
@@ -3168,12 +3358,21 @@ async def teacher_ai_generate(request: Request, token: str | None = None):
             url=f"/teacher/content?token={tok}&ok={msg}",
             status_code=303,
         )
+    segs = result.get("segments") or []
+    level = difficulty_label(result.get("difficulty"))
+    note = result.get("note") or ""
+    if segs:
+        note = (
+            f"Level: {level}. "
+            f"Questions use the whole lesson ({len(segs)} parts) — "
+            f"not only the beginning. {note}"
+        ).strip()
     return _shell(
         request,
         "teacher_ai_preview.html",
         session,
         active_page="teacher_content",
-        page_title="AI quiz draft",
+        page_title="Check quiz questions",
         page_subtitle=str(lesson.get("title") or "Generated questions"),
         extra={
             "lesson": lesson,
@@ -3181,8 +3380,11 @@ async def teacher_ai_generate(request: Request, token: str | None = None):
             "source_kind": "lesson",
             "provider": result.get("provider"),
             "model": result.get("model"),
-            "note": result.get("note") or "",
+            "note": note,
             "drafts": result.get("questions") or [],
+            "difficulty": result.get("difficulty"),
+            "difficulty_label": level,
+            "coverage_topics": segs,
         },
     )
 
@@ -3191,7 +3393,7 @@ async def teacher_ai_generate(request: Request, token: str | None = None):
 async def teacher_ai_generate_from_pdf(
     request: Request, token: str | None = None
 ):
-    from app.modules.ai_assessment import generate_mcqs_from_document
+    from app.modules.ai_assessment import difficulty_label, generate_mcqs_from_document
 
     session = require_instructor(request, token=token)
     if isinstance(session, HTMLResponse):
@@ -3203,6 +3405,7 @@ async def teacher_ai_generate_from_pdf(
     except ValueError:
         count = 3
     title = str(form.get("title") or "").strip()
+    difficulty = str(form.get("difficulty") or "core").strip()
     upload = form.get("document")
     if upload is None or not getattr(upload, "filename", None):
         return RedirectResponse(
@@ -3213,7 +3416,11 @@ async def teacher_ai_generate_from_pdf(
     raw = await upload.read()
     try:
         result = generate_mcqs_from_document(
-            raw, filename=fname, count=count, title=title
+            raw,
+            filename=fname,
+            count=count,
+            title=title,
+            difficulty=difficulty,
         )
     except ValueError as exc:
         return RedirectResponse(
@@ -3221,18 +3428,26 @@ async def teacher_ai_generate_from_pdf(
             status_code=303,
         )
     source_title = title or result.get("source_filename") or fname
-    note = result.get("note") or ""
+    segs = result.get("segments") or []
+    level = difficulty_label(result.get("difficulty") or difficulty)
+    bits = [f"Level: {level}."]
     if result.get("page_count"):
-        note = (
-            f"Extracted ~{result.get('extracted_chars')} chars "
-            f"from {result['page_count']} page(s). {note}"
-        ).strip()
+        bits.append(
+            f"Read about {result.get('extracted_chars')} characters "
+            f"from {result['page_count']} page(s)."
+        )
+    if segs:
+        bits.append(
+            f"Questions use the whole file ({len(segs)} parts) — "
+            "including later pages, not only the start."
+        )
+    note = " ".join(bits)
     return _shell(
         request,
         "teacher_ai_preview.html",
         session,
         active_page="teacher_ai",
-        page_title="AI quiz draft",
+        page_title="Check quiz questions",
         page_subtitle=str(source_title),
         extra={
             "lesson": None,
@@ -3242,6 +3457,9 @@ async def teacher_ai_generate_from_pdf(
             "model": result.get("model"),
             "note": note,
             "drafts": result.get("questions") or [],
+            "difficulty": result.get("difficulty"),
+            "difficulty_label": level,
+            "coverage_topics": segs,
         },
     )
 
@@ -3288,6 +3506,7 @@ async def teacher_ai_hub(
     request: Request, token: str | None = None, ok: str | None = None
 ):
     from app.modules.ai_assessment import ai_status
+    from app.modules import quiz as quiz_mod
     from app.modules import skills as skills_mod
 
     session = require_instructor(request, token=token)
@@ -3308,6 +3527,8 @@ async def teacher_ai_hub(
         skill_rows = skills_mod.ensure_default_skills(session["tenant_id"])
     except Exception:  # noqa: BLE001
         skill_rows = []
+    teacher_diff = quiz_mod.get_tenant_quiz_difficulty(session["tenant_id"])
+    quiz_difficulty = teacher_diff or "auto"
     return _shell(
         request,
         "teacher_ai_hub.html",
@@ -3321,7 +3542,34 @@ async def teacher_ai_hub(
             "skills": skill_rows,
             "course_row": course,
             "ok_message": ok or "",
+            "quiz_difficulty": quiz_difficulty,
+            "difficulty_levels": ("auto", "foundational", "core", "challenge"),
         },
+    )
+
+
+@router.post("/teacher/ai/quiz-settings", response_class=HTMLResponse)
+async def teacher_ai_quiz_settings(
+    request: Request, token: str | None = None
+):
+    """Teacher chooses student quiz difficulty (or auto from performance)."""
+    from app.modules import quiz as quiz_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    chosen = str(form.get("quiz_difficulty") or "auto").strip()
+    saved = quiz_mod.set_tenant_quiz_difficulty(
+        session["tenant_id"], chosen
+    )
+    from app.modules.ai_assessment import difficulty_label
+
+    nice = difficulty_label(saved).replace(" ", "+")
+    return RedirectResponse(
+        url=f"/teacher/ai?token={tok}&ok=Quiz+level+saved+as+{nice}",
+        status_code=303,
     )
 
 
@@ -3935,6 +4183,18 @@ async def learner_coach_get(request: Request, token: str | None = None):
         or session.get("coach_voice_lang")
         or "en-IN"
     )
+    coach_activity: list[Any] = []
+    try:
+        from app.modules import xapi as xapi_mod
+
+        coach_activity = xapi_mod.activity_feed(
+            session["tenant_id"],
+            subject=str(session.get("subject") or "") or None,
+            limit=8,
+            channel="coach",
+        )
+    except Exception:  # noqa: BLE001
+        coach_activity = []
     return _shell(
         request,
         "study_coach.html",
@@ -3954,6 +4214,7 @@ async def learner_coach_get(request: Request, token: str | None = None):
             "class_name": class_name,
             "voice_languages": list_voice_languages(),
             "reply_language": reply_language,
+            "coach_activity": coach_activity,
         },
     )
 
@@ -4032,6 +4293,18 @@ async def learner_coach_post(request: Request, token: str | None = None):
             )
         except Exception as xapi_exc:  # noqa: BLE001
             print(f"xAPI coach record failed: {xapi_exc}", flush=True)
+    coach_activity: list[Any] = []
+    try:
+        from app.modules import xapi as xapi_mod
+
+        coach_activity = xapi_mod.activity_feed(
+            session["tenant_id"],
+            subject=str(session.get("subject") or "") or None,
+            limit=8,
+            channel="coach",
+        )
+    except Exception:  # noqa: BLE001
+        coach_activity = []
     return _shell(
         request,
         "study_coach.html",
@@ -4052,6 +4325,7 @@ async def learner_coach_post(request: Request, token: str | None = None):
             "class_name": class_name,
             "voice_languages": list_voice_languages(),
             "reply_language": reply_language,
+            "coach_activity": coach_activity,
         },
     )
 
@@ -4746,8 +5020,8 @@ async def teacher_dct_planner(
         "teacher_dct.html",
         session,
         active_page="teacher_dct",
-        page_title="DCT lesson planner",
-        page_subtitle="Skills missing remediation lessons → generate pack",
+        page_title="Micro-learning planner",
+        page_subtitle="Skills missing micro-lessons → generate & link",
         extra={
             "missing": pack.get("missing") or [],
             "covered": pack.get("covered") or [],

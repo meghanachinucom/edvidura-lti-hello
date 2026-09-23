@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet"/>
 
-  <link rel="stylesheet" href="/static/css/shell.css?v=stitch13"/>
+  <link rel="stylesheet" href="/static/css/shell.css?v=stitch16"/>
 
   {% if theme %}
   <style>
@@ -90,6 +90,8 @@
              href="/launch-hub?token={{ quiz_token }}">Dashboard</a>
           <a role="menuitem" class="{% if active_page == 'gap_path' %}on{% endif %}"
              href="/learn/gap?token={{ quiz_token }}">My plan</a>
+          <a role="menuitem" class="{% if active_page == 'micro_learning' %}on{% endif %}"
+             href="/learn/micro?token={{ quiz_token }}">Micro-learning</a>
           <a role="menuitem" class="{% if active_page == 'manuals' %}on{% endif %}"
              href="/manuals?token={{ quiz_token }}">Manual</a>
           <a role="menuitem" href="/quiz?token={{ quiz_token }}">Take the quiz</a>
@@ -111,6 +113,7 @@
          href="/school-admin/students?token={{ quiz_token }}">Students</a>
       <a class="nav-link {% if active_page == 'school_admin_analytics' %}on{% endif %}"
          href="/school-admin/analytics?token={{ quiz_token }}">Analytics</a>
+      <a class="nav-link" href="/school-admin/integrations?token={{ quiz_token }}">Integrations</a>
 
       {% else %}
       {# ── TEACHER/INSTRUCTOR NAVIGATION ── #}
@@ -125,11 +128,13 @@
         <div class="nav-dd-panel" role="menu">
           <a role="menuitem" href="/lessons?token={{ quiz_token }}">Preview lessons</a>
           <a role="menuitem" href="/teacher/content?token={{ quiz_token }}">Manage content</a>
+          <a role="menuitem" href="/teacher/dct?token={{ quiz_token }}">Micro-learning planner</a>
           <a role="menuitem" href="/teacher/ai/author?token={{ quiz_token }}">AI authoring</a>
         </div>
       </div>
       <a class="nav-link {% if active_page == 'teacher_analytics' %}on{% endif %}"
          href="/teacher/analytics?token={{ quiz_token }}">Analytics</a>
+      <a class="nav-link" href="/teacher/integrations?token={{ quiz_token }}">Charts &amp; LRS</a>
       {% endif %}
 
     </nav>

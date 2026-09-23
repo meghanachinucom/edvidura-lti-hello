@@ -78,10 +78,27 @@ def lrs_status(*, probe: bool = False) -> dict[str, Any]:
 
 
 def integration_status(*, probe: bool = False) -> dict[str, Any]:
-    """Combined Yet LRS + Metabase status for ops / demos."""
+    """Combined Yet LRS + Metabase status for ops / demos.
+
+    Local Postgres xAPI (+ in-app analytics) is always the product SoR.
+    Yet LRS forward and Metabase embeds are optional overlays when configured.
+    """
+    s = get_settings()
     return {
         "schema": "edvidura.analytics.integrations.v1",
+        "local_xapi_store": {
+            "complete": True,
+            "role": "system_of_record",
+            "detail": "Tenant-scoped xapi_statements under RLS; Activity + dashboards",
+            "coach_xapi_full_text": bool(
+                getattr(s, "coach_xapi_full_text", False)
+            ),
+            "coach_xapi_access_level": getattr(
+                s, "coach_xapi_access_level", "class"
+            ),
+        },
         "yet_analytics_lrs": lrs_status(probe=probe),
         "metabase": metabase_status(probe=probe),
+        "product_complete": True,
         "docs": "docs/YET_LRS_METABASE.md",
     }

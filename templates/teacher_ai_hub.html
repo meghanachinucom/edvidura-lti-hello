@@ -1,5 +1,6 @@
 {% extends "base_shell.html" %}
 {% block content %}
+<div class="page-wrap">
 <section class="welcome">
   <p class="welcome-kicker">Teach · AI</p>
   <h2 class="welcome-title">AI tools</h2>
@@ -32,24 +33,56 @@
 
 <div class="teach-grid">
   <section class="panel">
-    <h2>PDF / text → MCQ draft</h2>
-    <p class="meta">Extract text, draft questions, then you pick what to save.</p>
+    <h2>How hard should student quizzes be?</h2>
+    <p class="meta">
+      Pick Easy, Medium, or Hard for AI quizzes students take.
+      Questions still come from the <strong>whole course</strong> (every chapter — not only the first pages).
+      Choose <strong>Auto</strong> if you want the app to adjust from each student’s recent scores.
+    </p>
+    <form method="post" action="/teacher/ai/quiz-settings" class="teach-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <label>Quiz level
+        <select name="quiz_difficulty">
+          <option value="auto" {% if quiz_difficulty == 'auto' %}selected{% endif %}>Auto — match each student’s level</option>
+          <option value="foundational" {% if quiz_difficulty == 'foundational' %}selected{% endif %}>Easy — basic questions</option>
+          <option value="core" {% if quiz_difficulty == 'core' %}selected{% endif %}>Medium — normal classroom quiz</option>
+          <option value="challenge" {% if quiz_difficulty == 'challenge' %}selected{% endif %}>Hard — deeper thinking</option>
+        </select>
+      </label>
+      <button type="submit" class="btn primary">Save</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Make a quiz from a PDF or text file</h2>
+    <p class="meta">
+      Upload a handbook or notes. AI drafts questions from <strong>the whole file</strong>
+      (including later pages), at the level you pick. You review before saving.
+    </p>
     <form method="post" action="/teacher/ai/generate-from-pdf" enctype="multipart/form-data" class="teach-form">
       <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
       <label>File (PDF, .txt, or .md)
         <input type="file" name="document" accept=".pdf,.txt,.md,.markdown,application/pdf,text/plain" required/>
       </label>
       <label>Title (optional)
-        <input name="title" placeholder="Unit handbook"/>
+        <input name="title" placeholder="e.g. Algebra chapter 3"/>
       </label>
-      <label>How many
-        <select name="count">
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
+      <label>Quiz level
+        <select name="difficulty">
+          <option value="foundational">Easy</option>
+          <option value="core" selected>Medium</option>
+          <option value="challenge">Hard</option>
         </select>
       </label>
-      <button type="submit" class="btn primary">Draft from file</button>
+      <label>About how many questions?
+        <select name="count">
+          <option value="3">About 3 (or one per page if the file is longer)</option>
+          <option value="5">About 5</option>
+          <option value="8">About 8</option>
+          <option value="10">About 10</option>
+        </select>
+      </label>
+      <button type="submit" class="btn primary">Create draft questions</button>
     </form>
   </section>
 
@@ -129,4 +162,5 @@
     <li>Deep Linking launch → AI activity suggestions for Moodle</li>
   </ul>
 </section>
+</div>
 {% endblock %}

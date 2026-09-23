@@ -56,14 +56,15 @@
           ({{ class_name or course_title }})
           {% endif %}.
           Off-topic or other-course questions are refused. Speak or type in Indian languages.
-          Turns are <strong style="color:var(--inverse-on-surface)">not stored</strong>. Grades stay in your LMS.
+          Full chat lives as <strong style="color:var(--inverse-on-surface)">PeBL Discussion xAPI</strong>
+          (thread + message text) under Activity — not a separate chat database. Grades stay in your LMS.
         </p>
       </div>
       <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
         {% if ai and ai.remote_ready %}
-        <span class="chip" style="background:rgba(52,211,153,.16);color:var(--primary-fixed)">AI · {{ ai.provider }} · {{ ai.model }}</span>
+        <span class="chip" style="background:rgba(52,211,153,.16);color:var(--primary-fixed)">AI answers</span>
         {% elif ai %}
-        <span class="chip" style="background:rgba(245,158,11,.2);color:var(--surface-container-lowest)">Heuristic · set OPENAI_API_KEY</span>
+        <span class="chip" style="background:rgba(245,158,11,.2);color:var(--surface-container-lowest)">Guided answers</span>
         {% endif %}
         {% if source_count %}
         <span class="chip" style="background:rgba(255,255,255,.12);color:var(--surface-container-lowest)">{{ source_count }} class lesson{{ 's' if source_count != 1 else '' }}</span>
@@ -164,8 +165,29 @@
       </div>
       <div class="card" style="padding:var(--sp-lg)">
         <h3 class="headline-sm" style="margin-bottom:6px">Privacy</h3>
-        <p class="body-sm text-muted">This coach is stateless. Voice stays in the browser — audio is not uploaded to EdVidura.</p>
+        <p class="body-sm text-muted">
+          Voice stays in the browser — audio is not uploaded.
+          Each ask records a PeBL Discussion–aligned xAPI turn (thread, access level, message text).
+        </p>
+        <a class="btn btn-surface" href="/learn/activity?token={{ quiz_token }}&channel=coach" style="margin-top:var(--sp-sm);justify-content:flex-start;font-size:13px">
+          <span class="material-symbols-outlined" style="font-size:15px">history_edu</span>
+          View coach activity
+        </a>
       </div>
+      {% if coach_activity %}
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Recent coach xAPI</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          {% for r in coach_activity[:5] %}
+          <div class="body-sm">
+            <span class="chip chip-mint" style="font-size:10px">{{ r.verb_label }}</span>
+            <span class="text-muted">{{ r.when[:16] if r.when else "" }}</span>
+            <div style="margin-top:2px">{{ r.detail or r.object_label }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </aside>
   </div>
 
@@ -174,9 +196,6 @@
     <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-md);flex-wrap:wrap;margin-bottom:var(--sp-md)">
       <h2 class="headline-md">Answer</h2>
       <div class="coach-answer-actions">
-        {% if answer.provider %}
-        <span class="chip" style="background:rgba(14,43,36,.06)">{{ answer.provider }}{% if answer.model %} · {{ answer.model }}{% endif %}</span>
-        {% endif %}
         {% if answer.scope %}
         <span class="chip chip-sky">Class lessons only</span>
         {% endif %}
@@ -188,9 +207,9 @@
         {% elif answer.grounded is defined %}
         <span class="chip chip-secondary">Outside class materials</span>
         {% endif %}
-        <button type="button" id="coach-speak-btn" class="btn btn-primary" title="Read the answer aloud">
+        <button type="button" id="coach-speak-btn" class="btn btn-primary" title="Read the answer aloud" data-auto-speak="1">
           <span class="material-symbols-outlined" style="font-size:16px">volume_up</span>
-          Speak
+          Speak answer
         </button>
         <button type="button" id="coach-speak-stop-btn" class="btn btn-surface" title="Stop speaking">
           <span class="material-symbols-outlined" style="font-size:16px">stop</span>
@@ -199,6 +218,11 @@
       </div>
     </div>
     <p id="coach-answer-text" class="body-lg" lang="{{ answer.reply_language or reply_language }}">{{ answer.answer }}</p>
+    {% if is_instructor or is_school_admin %}
+      {% if answer.provider %}
+      <p class="body-sm text-muted" style="margin-top:var(--sp-xs)">Provider: {{ answer.provider }}{% if answer.model %} · {{ answer.model }}{% endif %}</p>
+      {% endif %}
+    {% endif %}
 
     {% if answer.citation_links %}
     <h3 class="headline-sm" style="margin:var(--sp-lg) 0 var(--sp-sm)">Citations</h3>

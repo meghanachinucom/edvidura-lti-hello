@@ -1,32 +1,43 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="panel">
-  <div class="panel-head">
-    <div>
-      <h2>Institutions</h2>
-      <p class="lede">Organizations registered to launch EdVidura from their LMS.</p>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">apartment</span>
+          Orgs
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,44px)">Institutions</h1>
+        <p class="body-md" style="color:var(--outline-variant);max-width:520px;margin-top:4px">
+          Organizations registered to launch EdVidura from their LMS.
+        </p>
+      </div>
+      <a class="btn btn-primary" href="/onboard">Onboard org</a>
     </div>
-    <a class="btn secondary" href="/onboard">Onboard org</a>
-  </div>
-  {% if institutions %}
-  <table>
-    <thead><tr><th>Name</th><th>Code</th><th>Moodle URL</th><th>Status</th></tr></thead>
-    <tbody>
-    {% for i in institutions %}
-      <tr>
-        <td><strong>{{ i.institution_name }}</strong></td>
-        <td><code>{{ i.institution_code }}</code></td>
-        <td class="meta">{{ i.issuer }}</td>
-        <td>{{ i.status }}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty">
-    <p>No institutions registered yet.</p>
-    <a class="btn primary" href="/onboard">Register the first one</a>
-  </div>
-  {% endif %}
-</section>
+  </section>
+
+  <section class="frosted" style="padding:var(--sp-xl)">
+    {% if institutions %}
+    <table>
+      <thead><tr><th>Name</th><th>Code</th><th>Moodle URL</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for i in institutions %}
+        <tr>
+          <td><strong>{{ i.institution_name }}</strong></td>
+          <td><code>{{ i.institution_code }}</code></td>
+          <td class="meta">{{ i.issuer }}</td>
+          <td>{{ i.status }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty" style="text-align:center;padding:var(--sp-xl)">
+      <p class="body-md text-muted">No institutions registered yet.</p>
+      <a class="btn btn-primary" style="margin-top:var(--sp-md)" href="/onboard">Register the first one</a>
+    </div>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}

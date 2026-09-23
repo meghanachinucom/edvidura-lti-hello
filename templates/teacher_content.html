@@ -251,12 +251,17 @@
             </form>
 
             {% if L.lesson_type != 'quiz' and (L.body_md or '')|length > 40 %}
-            <form method="post" action="/teacher/ai/generate" style="display:inline">
+            <form method="post" action="/teacher/ai/generate" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
               <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
               <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
-              <input type="hidden" name="count" value="3"/>
-              <button type="submit" title="Generate MCQs" class="btn" style="font-size:11px;padding:5px 10px;background:linear-gradient(135deg,rgba(153,202,65,.2),rgba(153,202,65,.05));color:var(--tertiary);border:1px solid rgba(153,202,65,.3)">
-                <span class="material-symbols-outlined" style="font-size:13px">auto_awesome</span>AI quiz
+              <input type="hidden" name="count" value="5"/>
+              <select name="difficulty" title="How hard?" style="font-size:11px;padding:4px 6px;border-radius:var(--r-lg);border:1px solid rgba(153,202,65,.35);background:var(--surface-container);color:var(--on-surface)">
+                <option value="foundational">Easy</option>
+                <option value="core" selected>Medium</option>
+                <option value="challenge">Hard</option>
+              </select>
+              <button type="submit" title="Make quiz questions from this whole lesson" class="btn" style="font-size:11px;padding:5px 10px;background:linear-gradient(135deg,rgba(153,202,65,.2),rgba(153,202,65,.05));color:var(--tertiary);border:1px solid rgba(153,202,65,.3)">
+                <span class="material-symbols-outlined" style="font-size:13px">auto_awesome</span>Make quiz
               </button>
             </form>
             <form method="post" action="/teacher/ai/simplify" style="display:inline">

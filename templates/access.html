@@ -1,11 +1,16 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<section class="welcome">
-  <p class="welcome-kicker">Access</p>
-  <h2 class="welcome-title">{{ heading | default("Unavailable") }}</h2>
-  <p class="welcome-lede">{{ message | default("You cannot open this screen.") }}</p>
-  <div class="welcome-actions">
-    <a class="btn primary" href="/launch-hub?token={{ quiz_token }}">Back to Home</a>
-  </div>
-</section>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1">
+      <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+        <span class="material-symbols-outlined" style="font-size:13px">info</span>
+        Access
+      </div>
+      <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,44px)">{{ heading | default("Unavailable") }}</h1>
+      <p class="body-md" style="color:var(--outline-variant);max-width:520px;margin-top:4px">{{ message | default("You cannot open this screen.") }}</p>
+      <a class="btn btn-primary" style="margin-top:var(--sp-lg)" href="/launch-hub?token={{ quiz_token }}">Back to Home</a>
+    </div>
+  </section>
+</div>
 {% endblock %}

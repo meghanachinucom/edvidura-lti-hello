@@ -78,6 +78,7 @@ def test_metabase_embed_url_signed(monkeypatch):
         metabase_embed_dashboard_id = 7
 
     monkeypatch.setattr(settings_mod, "get_settings", lambda: _S())
+    # Default: empty params (matches bootstrap dashboard embedding_params={})
     url = metabase_embed_url(
         tenant_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
         tenant_slug="riverside",
@@ -87,4 +88,14 @@ def test_metabase_embed_url_signed(monkeypatch):
     token = url.split("/embed/dashboard/")[1].split("#")[0]
     payload = jwt.decode(token, "test-secret", algorithms=["HS256"])
     assert payload["resource"]["dashboard"] == 7
-    assert payload["params"]["tenant_slug"] == ["riverside"]
+    assert payload["params"] == {}
+
+    url2 = metabase_embed_url(
+        tenant_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        tenant_slug="riverside",
+        pass_tenant_filters=True,
+    )
+    assert url2 is not None
+    token2 = url2.split("/embed/dashboard/")[1].split("#")[0]
+    payload2 = jwt.decode(token2, "test-secret", algorithms=["HS256"])
+    assert payload2["params"]["tenant_slug"] == ["riverside"]

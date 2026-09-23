@@ -1,0 +1,28 @@
+---
+description: After app changes, deploy live to Railway without waiting to be asked
+alwaysApply: true
+---
+
+# Deploy live after changes
+
+When you finish code/template changes that affect the running app, **deploy to Railway immediately** in the same turn. Do not wait for the user to ask.
+
+## Target
+
+- Service: `edvidura-app`
+- App URL: https://edvidura-app-production.up.railway.app
+- Prefer the current feature branch; push then deploy that branch.
+
+## Steps (after meaningful app changes)
+
+1. Commit only if the user asked for a commit; otherwise deploy working tree as appropriate for this project’s Railway flow.
+2. Push the branch if remote tracking requires it for the deploy path you use.
+3. Deploy with Railway CLI, e.g. `railway up -s edvidura-app --detach` from the repo root (or the project’s documented deploy command).
+4. Confirm health: `GET https://edvidura-app-production.up.railway.app/health`
+5. Tell the user the change is live (or failed) with the URL.
+
+## Skip auto-deploy for
+
+- Docs-only, rules-only, or local scratch/scripts that do not affect production
+- Explicit user request to keep changes local
+- Incomplete/broken work that would break production

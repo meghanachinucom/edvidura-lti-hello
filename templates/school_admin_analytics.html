@@ -16,6 +16,7 @@
       <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
         <a class="btn btn-primary" href="/teacher/analytics?token={{ quiz_token }}">Teacher charts</a>
         <a class="btn" href="/school-admin/activity?token={{ quiz_token }}" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Activity</a>
+        <a class="btn" href="/school-admin/integrations?token={{ quiz_token }}" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Integrations</a>
         {% if metabase_url %}
         <a class="btn" href="{{ metabase_url }}" target="_blank" rel="noopener" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Open Metabase</a>
         {% endif %}

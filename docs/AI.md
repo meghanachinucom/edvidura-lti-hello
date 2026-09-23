@@ -46,9 +46,9 @@ Shows `provider: openai | local_http | local`.
 
 | Feature | Who | Where |
 |---------|-----|--------|
-| **AI quiz** (MCQs from lesson) | Teacher | Upload content → AI quiz |
-| **Personalized AI quiz** | Student | **Take the quiz** / Practice — same engine; each student gets different MCQs covering **all** class chapter topics (depth from prior scores) |
-| **PDF / text → MCQ** | Teacher | AI tools → upload PDF/.txt → review → save |
+| **Make quiz** from a lesson | Teacher | Content → Easy/Medium/Hard → questions from the **whole** lesson |
+| **Student quizzes** | Student | Unique questions from **every chapter**; teacher sets Easy/Medium/Hard (or Auto) on AI tools |
+| **Quiz from PDF / text** | Teacher | AI tools → upload → pick Easy/Medium/Hard → questions from **all pages** → you check before save |
 | **Remediation micro-lesson (DCT)** | Teacher | AI tools → pick skill → review → save draft/published + link skill |
 | **SME authoring assistant (D13)** | Teacher | AI tools → Authoring assistant → draft lesson/manual/MCQ from SME sources → save |
 | **Grade assist** (open response) | Teacher | AI tools → suggest score (**never** auto-sent to Moodle; copy into LMS) |

@@ -118,19 +118,19 @@
       <div style="display:flex;gap:var(--sp-xs);margin-top:auto">
         {% if not is_instructor and not is_school_admin %}
           {% if lesson.completed %}
-          <a href="/lesson/{{ lesson.id }}?token={{ quiz_token }}" class="btn btn-surface" style="flex:1;justify-content:center;font-size:13px">Review</a>
+          <a href="{{ lesson.href or ('/lessons/' ~ lesson.id ~ '?token=' ~ quiz_token) }}" class="btn btn-surface" style="flex:1;justify-content:center;font-size:13px">Review</a>
           <a href="/quiz?token={{ quiz_token }}&lesson={{ lesson.id }}" class="btn btn-primary" style="flex:1;justify-content:center;font-size:13px">
             <span class="material-symbols-outlined" style="font-size:14px">quiz</span>
             Quiz
           </a>
           {% else %}
-          <a href="/lesson/{{ lesson.id }}?token={{ quiz_token }}" class="btn btn-primary" style="flex:1;justify-content:center;font-size:13px">
+          <a href="{{ lesson.href or ('/lessons/' ~ lesson.id ~ '?token=' ~ quiz_token) }}" class="btn btn-primary" style="flex:1;justify-content:center;font-size:13px">
             <span class="material-symbols-outlined" style="font-size:14px">play_arrow</span>
             Start
           </a>
           {% endif %}
         {% else %}
-        <a href="/lesson/{{ lesson.id }}?token={{ quiz_token }}" class="btn btn-surface" style="flex:1;justify-content:center;font-size:13px">
+        <a href="{{ lesson.href or ('/lessons/' ~ lesson.id ~ '?token=' ~ quiz_token) }}" class="btn btn-surface" style="flex:1;justify-content:center;font-size:13px">
           <span class="material-symbols-outlined" style="font-size:14px">visibility</span>
           Preview
         </a>

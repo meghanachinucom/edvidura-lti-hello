@@ -18,7 +18,9 @@
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-md)">
     {% for m in manuals %}
     <a href="/manuals/{{ m.id }}?token={{ quiz_token }}" class="lesson-card" style="text-decoration:none;color:inherit">
-      <div class="lesson-img">📖</div>
+      <div class="lesson-img" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(52,211,153,.18),rgba(64,194,253,.1))">
+        <span class="material-symbols-outlined" style="font-size:36px;color:var(--primary)">menu_book</span>
+      </div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
         <span class="chip chip-mint" style="font-size:10px">Manual</span>
       </div>

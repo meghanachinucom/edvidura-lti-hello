@@ -30,10 +30,19 @@
           <a href="/teacher/activity?token={{ quiz_token }}" class="btn btn-glass" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.2)">
             Activity
           </a>
-          <a href="/launch-hub?token={{ quiz_token }}" class="btn btn-glass" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.2)">
-            <span class="material-symbols-outlined" style="font-size:16px">home</span>
-            Home
+          <a href="/teacher/integrations?token={{ quiz_token }}" class="btn btn-glass" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.2)">
+            Charts &amp; LRS
           </a>
+          {% if metabase_url %}
+          <a href="{{ metabase_url }}" target="_blank" rel="noopener" class="btn btn-glass" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.2)">
+            Open Metabase
+          </a>
+          {% endif %}
+          {% if yet_url %}
+          <a href="{{ yet_url }}/admin" target="_blank" rel="noopener" class="btn btn-glass" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.2)">
+            Open Yet LRS
+          </a>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -255,6 +264,50 @@
       </a>
     </div>
   </div>
+
+  {# Metabase + Yet — same overlays school admin sees #}
+  <section class="frosted" style="padding:var(--sp-xl);margin-top:var(--sp-md)">
+    <div class="section-head" style="margin-bottom:var(--sp-md)">
+      <h2 class="headline-md">Charts &amp; learning records</h2>
+      <a class="btn btn-glass" href="/teacher/integrations?token={{ quiz_token }}" style="font-size:13px">Details</a>
+    </div>
+    <div class="grid-2" style="gap:var(--sp-md);margin-bottom:var(--sp-md)">
+      <div class="metric-tile">
+        <span class="label-caps text-muted">Metabase (school charts)</span>
+        <div class="headline-sm" style="margin-top:8px;color:{% if metabase and metabase.embed_ready %}var(--primary){% else %}var(--outline){% endif %}">
+          {% if metabase and metabase.embed_ready %}Ready{% elif metabase_url %}Link available{% else %}Not connected{% endif %}
+        </div>
+        <p class="body-sm text-muted" style="margin-top:6px">
+          Dashboards for quiz and activity trends.
+          {% if metabase_url %}<a href="{{ metabase_url }}" target="_blank" rel="noopener">Open Metabase</a>{% endif %}
+        </p>
+      </div>
+      <div class="metric-tile">
+        <span class="label-caps text-muted">Yet LRS (learning records)</span>
+        <div class="headline-sm" style="margin-top:8px;color:{% if lrs and lrs.configured %}var(--primary){% else %}var(--outline){% endif %}">
+          {% if lrs and lrs.configured %}Connected{% else %}Not connected{% endif %}
+        </div>
+        <p class="body-sm text-muted" style="margin-top:6px">
+          Stores detailed learning events (xAPI).
+          {% if yet_url %}<a href="{{ yet_url }}/admin" target="_blank" rel="noopener">Open Yet</a>{% endif %}
+        </p>
+      </div>
+    </div>
+    {% if metabase_embed_url %}
+    <iframe
+      title="Metabase class dashboard"
+      src="{{ metabase_embed_url }}"
+      style="width:100%;min-height:480px;border:0;border-radius:var(--r-xl);background:#fff"
+      allowtransparency
+    ></iframe>
+    {% else %}
+    <p class="body-sm text-muted">
+      Metabase chart embed is not set up yet. In-app numbers above still work.
+      Ask an admin to set Metabase embed keys, or open
+      <a href="/teacher/integrations?token={{ quiz_token }}">Integrations</a>.
+    </p>
+    {% endif %}
+  </section>
 
 </div>
 {% endblock %}

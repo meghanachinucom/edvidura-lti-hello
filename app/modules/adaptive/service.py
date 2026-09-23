@@ -730,6 +730,58 @@ def dct_planner_pack(tenant_id: UUID | str) -> dict[str, Any]:
     }
 
 
+def micro_learning_catalog(
+    tenant_id: UUID | str,
+    *,
+    subject: str = "",
+    quiz_token: str = "",
+) -> dict[str, Any]:
+    """Student micro-learning pack: skill-linked short lessons + gap priority.
+
+    Completes the micro-learning surface on top of DCT remediation links.
+    """
+    pack = dct_planner_pack(tenant_id)
+    weak = set(weak_skill_codes_for_subject(tenant_id, subject))
+    tok = (quiz_token or "").strip()
+    items: list[dict[str, Any]] = []
+    for s in pack["covered"]:
+        lid = str(s.get("lesson_id") or "").strip()
+        if not lid:
+            continue
+        code = str(s.get("skill_code") or "")
+        mid = str(s.get("manual_id") or "").strip()
+        focus = str(s.get("manual_focus") or "").strip()
+        prefer = str(s.get("prefer_path") or "lessons")
+        if prefer == "manuals" and mid:
+            href = f"/manuals/{mid}?token={tok}"
+            if focus:
+                href += f"&focus={focus}&loop=1"
+        else:
+            href = f"/lessons/{lid}?token={tok}&loop=1"
+        items.append(
+            {
+                "skill_id": str(s.get("id") or ""),
+                "skill_code": code,
+                "label": str(s.get("label") or code),
+                "description": str(s.get("description") or ""),
+                "lesson_id": lid,
+                "manual_id": mid or None,
+                "href": href,
+                "priority": code in weak,
+                "teleport_hint": str(s.get("teleport_hint") or ""),
+            }
+        )
+    items.sort(key=lambda x: (not x["priority"], x["label"].lower()))
+    return {
+        "lessons": items,
+        "items": items,  # alias; templates should use lessons (items is dict method)
+        "priority_count": sum(1 for i in items if i["priority"]),
+        "available_count": len(items),
+        "missing_count": pack["missing_count"],
+        "missing": pack["missing"],
+    }
+
+
 # --- Dynamic lesson order (DCT display reorder) -----------------------------
 
 

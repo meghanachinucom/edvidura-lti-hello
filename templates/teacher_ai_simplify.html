@@ -1,5 +1,6 @@
 {% extends "base_shell.html" %}
 {% block content %}
+<div class="page-wrap">
 <section class="welcome">
   <p class="welcome-kicker">AI · {{ provider }} / {{ model }}</p>
   <h2 class="welcome-title">Simplified draft</h2>
@@ -17,4 +18,5 @@
     <a class="btn secondary" href="/teacher/ai?token={{ quiz_token }}">Cancel</a>
   </div>
 </form>
+</div>
 {% endblock %}

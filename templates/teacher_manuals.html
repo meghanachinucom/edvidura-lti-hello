@@ -1,5 +1,6 @@
 {% extends "base_shell.html" %}
 {% block content %}
+<div class="page-wrap">
 <section class="welcome">
   <p class="welcome-kicker">Teach · versioned manuals</p>
   <h2 class="welcome-title">Manual versions</h2>
@@ -103,4 +104,5 @@
 {% else %}
 <section class="panel"><div class="empty"><p>No manuals yet — create one above.</p></div></section>
 {% endfor %}
+</div>
 {% endblock %}

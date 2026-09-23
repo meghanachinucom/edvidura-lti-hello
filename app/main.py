@@ -4,7 +4,13 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
+    RedirectResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from pylti1p3.exception import LtiException
@@ -85,6 +91,13 @@ app.include_router(quiz_router)
 _STATIC = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 
+
+@app.get("/requirements-board")
+def requirements_board():
+    """Public interactive requirements status board (phone / tablet / desktop)."""
+    path = _STATIC / "requirements-board.html"
+    return FileResponse(path, media_type="text/html; charset=utf-8")
+
 app.add_middleware(
     RateLimitMiddleware,
     enabled=_boot.rate_limit_enabled,
@@ -133,6 +146,19 @@ def health():
         "platforms": platforms,
         "cache_backend": cache_backend,
         "rate_limit": _boot.rate_limit_enabled,
+        "integrations": {
+            "xapi_lrs_configured": bool(
+                getattr(_boot, "xapi_lrs_endpoint", "")
+                and getattr(_boot, "xapi_lrs_key", "")
+                and getattr(_boot, "xapi_lrs_secret", "")
+            ),
+            "metabase_url_set": bool(getattr(_boot, "metabase_url", "")),
+            "metabase_embed_ready": bool(
+                getattr(_boot, "metabase_url", "")
+                and getattr(_boot, "metabase_secret_key", "")
+                and int(getattr(_boot, "metabase_embed_dashboard_id", 0) or 0) > 0
+            ),
+        },
     }
 
 

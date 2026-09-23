@@ -6,6 +6,7 @@ from app.modules.adaptive.service import (
     build_gap_path,
     complete_open_plan,
     dct_planner_pack,
+    micro_learning_catalog,
     gap_path_from_latest_attempt,
     get_open_plan,
     href_with_token,
@@ -44,4 +45,5 @@ __all__ = [
     "order_lessons_for_gaps",
     "apply_dynamic_lesson_order",
     "dct_planner_pack",
+    "micro_learning_catalog",
 ]

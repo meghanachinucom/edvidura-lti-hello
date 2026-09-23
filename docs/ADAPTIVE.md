@@ -14,7 +14,8 @@ Pilot-sized Dynamic Content (C9) + Difference / gap training (C10 / D23) on top 
 | **C9 adaptive next** | If a weak skill has a linked lesson, Home “Continue” prefers that lesson over linear next |
 | **PLE plan** | Same path stored in `learner_plans` until completed or superseded |
 | **DCT lesson order** | Lessons list + prev/next reordered for gap-linked lessons (display only) |
-| **DCT micro-lessons** | Teacher AI / DCT planner drafts remediation lessons per skill ([DCT.md](DCT.md), [AI.md](AI.md)) |
+| **DCT micro-lessons** | Teacher Micro-learning planner drafts remediation lessons per skill ([MICRO_LEARNING.md](MICRO_LEARNING.md), [DCT.md](DCT.md), [AI.md](AI.md)) |
+| **Student micro-learning** | `/learn/micro` — skill-linked short lessons with gap priority |
 
 ## Module
 

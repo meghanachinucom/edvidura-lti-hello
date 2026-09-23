@@ -1,28 +1,43 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<article>
-  <div class="welcome solo">
-    <div>
-      <p class="welcome-k">
-        {% if lesson.lesson_type == 'video' %}Video{% else %}Reading{% endif %}
-        · Lesson {{ lesson.position }}
-      </p>
-      <h2>{{ lesson.title }}</h2>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">{% if lesson.lesson_type == 'video' %}play_circle{% else %}menu_book{% endif %}</span>
+          {% if lesson.lesson_type == 'video' %}Video{% else %}Reading{% endif %}
+          · Lesson {{ lesson.position }}
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(26px,4vw,42px)">{{ lesson.title }}</h1>
+        {% if context_heading %}
+        <p class="body-md" style="color:var(--outline-variant);margin-top:4px">{{ context_heading }}</p>
+        {% endif %}
+      </div>
+      <a href="/lessons?token={{ quiz_token }}" class="btn" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">
+        <span class="material-symbols-outlined" style="font-size:15px">list</span>
+        All lessons
+      </a>
     </div>
-  </div>
+  </section>
 
   {% if remediation_loop %}
-  <div class="banner-note info">
-    Remediation loop — finish this review, then practice, then graded retry.
-    <div class="actions" style="margin-top:0.65rem">
-      <a class="btn secondary" href="{{ loop_practice_href }}">2 · Practice missed items</a>
-      <a class="btn primary" href="{{ loop_graded_href }}">3 · Graded retry</a>
+  <div class="frosted" style="padding:var(--sp-md) var(--sp-lg);border-left:3px solid var(--secondary)">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-sm)">
+      <div>
+        <span class="chip chip-sky" style="margin-bottom:6px">Remediation loop</span>
+        <p class="body-sm text-muted" style="margin:0">Finish this review, then practice, then graded retry.</p>
+      </div>
+      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+        <a class="btn btn-surface" href="{{ loop_practice_href }}">Practice missed</a>
+        <a class="btn btn-primary" href="{{ loop_graded_href }}">Graded retry</a>
+      </div>
     </div>
   </div>
   {% endif %}
 
   {% if video_url %}
-  <div class="video-frame">
+  <div class="video-frame" style="margin:0">
     <iframe
       src="{{ video_url }}"
       title="{{ lesson.title }}"
@@ -34,21 +49,25 @@
   {% endif %}
 
   {% if body_html %}
-  <div class="lesson-prose">
+  <div class="lesson-prose" style="margin:0">
     {{ body_html | safe }}
   </div>
   {% endif %}
 
-  <div class="lesson-actions">
+  <div class="frosted" style="padding:var(--sp-lg);display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-sm)">
     {% if prev_href %}
-    <a class="btn secondary" href="{{ prev_href }}">← Previous</a>
+    <a class="btn btn-surface" href="{{ prev_href }}">
+      <span class="material-symbols-outlined" style="font-size:15px">arrow_back</span>
+      Previous
+    </a>
     {% else %}
-    <a class="btn secondary" href="/lessons?token={{ quiz_token }}">All lessons</a>
+    <a class="btn btn-surface" href="/lessons?token={{ quiz_token }}">All lessons</a>
     {% endif %}
 
-    <form method="post" action="/lessons/{{ lesson_id }}/complete" class="lesson-complete-form">
+    <form method="post" action="/lessons/{{ lesson_id }}/complete" class="lesson-complete-form" style="margin-left:auto">
       <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-      <button type="submit" class="btn primary btn-lg">
+      <button type="submit" class="btn btn-primary btn-lg">
+        <span class="material-symbols-outlined" style="font-size:16px">check_circle</span>
         {% if next_is_quiz %}Mark done &amp; take quiz
         {% elif next_href %}Mark done &amp; continue
         {% elif is_completed %}Continue
@@ -58,9 +77,15 @@
     {% if is_completed %}
     <form method="post" action="/lessons/{{ lesson_id }}/uncomplete" class="lesson-complete-form">
       <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-      <button type="submit" class="btn secondary">Mark incomplete</button>
+      <button type="submit" class="btn btn-glass">Mark incomplete</button>
     </form>
     {% endif %}
+    {% if next_href and not next_is_quiz %}
+    <a class="btn btn-surface" href="{{ next_href }}">
+      Next
+      <span class="material-symbols-outlined" style="font-size:15px">arrow_forward</span>
+    </a>
+    {% endif %}
   </div>
-</article>
+</div>
 {% endblock %}

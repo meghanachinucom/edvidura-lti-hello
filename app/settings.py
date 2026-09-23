@@ -181,9 +181,7 @@ def get_settings() -> Settings:
         keycloak_client_secret=os.getenv(
             "KEYCLOAK_CLIENT_SECRET", "edvidura-api-dev-secret"
         ).strip(),
-        metabase_url=os.getenv("METABASE_URL", "http://localhost:3001").rstrip(
-            "/"
-        ),
+        metabase_url=os.getenv("METABASE_URL", "").rstrip("/"),
         metabase_secret_key=os.getenv("METABASE_SECRET_KEY", "").strip(),
         metabase_embed_dashboard_id=_safe_int(
             os.getenv("METABASE_EMBED_DASHBOARD_ID", "0"), 0
@@ -194,8 +192,13 @@ def get_settings() -> Settings:
         receipt_signing_key=os.getenv("RECEIPT_SIGNING_KEY", "").strip(),
         coach_store_turns=os.getenv("COACH_STORE_TURNS", "").strip().lower()
         in {"1", "true", "yes", "on"},
-        coach_xapi_full_text=os.getenv("COACH_XAPI_FULL_TEXT", "").strip().lower()
-        in {"1", "true", "yes", "on"},
+        # PeBL Discussion default: capture message text (set COACH_XAPI_FULL_TEXT=0 to opt out)
+        coach_xapi_full_text=(
+            True
+            if not os.getenv("COACH_XAPI_FULL_TEXT", "").strip()
+            else os.getenv("COACH_XAPI_FULL_TEXT", "").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ),
         coach_xapi_access_level=(
             os.getenv("COACH_XAPI_ACCESS_LEVEL", "class").strip() or "class"
         ),

@@ -12,26 +12,164 @@ GENERIC_DISTRACTORS = (
     "The opposite of what the lesson states",
 )
 
+DIFFICULTY_LEVELS = ("foundational", "core", "challenge")
+
+_DIFFICULTY_HINTS = {
+    "foundational": (
+        "Easy recall and basic understanding. Short stems, clear wording, "
+        "one idea per question."
+    ),
+    "core": (
+        "Standard chapter checks: apply ideas, compare terms, simple multi-step "
+        "thinking. Match typical classroom quiz depth."
+    ),
+    "challenge": (
+        "Deeper application and analysis within the provided material. "
+        "Fair secondary-school items — no tricks outside the text."
+    ),
+}
+
+
+def difficulty_label(value: str | None) -> str:
+    """Plain-language label for teachers and students."""
+    raw = (value or "").strip().lower()
+    if raw == "auto":
+        return "Auto"
+    level = normalize_difficulty(raw or "core")
+    return {
+        "foundational": "Easy",
+        "core": "Medium",
+        "challenge": "Hard",
+    }.get(level, "Medium")
+
+
+def normalize_difficulty(value: str | None) -> str:
+    raw = (value or "core").strip().lower()
+    if raw in {"easy", "basic", "beginner"}:
+        return "foundational"
+    if raw in {"hard", "advanced", "expert"}:
+        return "challenge"
+    if raw in {"medium", "normal", "standard"}:
+        return "core"
+    if raw in DIFFICULTY_LEVELS:
+        return raw
+    return "core"
+
+
+def segment_text_for_coverage(
+    text: str,
+    *,
+    title: str = "",
+    max_segments: int = 20,
+) -> list[dict[str, str]]:
+    """Split lesson/text into ordered topic segments for end-to-end coverage.
+
+    Prefers markdown ``##`` / ``#`` headings; otherwise equal-sized chunks so
+    later pages/sections are not skipped.
+    """
+    body = (text or "").strip()
+    if not body:
+        return []
+    # Heading-based chapters
+    parts = re.split(r"(?m)^#{1,3}\s+", body)
+    if len(parts) > 1:
+        segments: list[dict[str, str]] = []
+        # First chunk may be preface before first heading
+        preface = (parts[0] or "").strip()
+        heading_chunks = parts[1:]
+        idx = 0
+        if preface and len(preface) >= 40:
+            idx += 1
+            segments.append(
+                {
+                    "label": f"{title or 'Intro'} · part {idx}".strip(" ·"),
+                    "text": preface[:2500],
+                }
+            )
+        for chunk in heading_chunks:
+            chunk = (chunk or "").strip()
+            if len(chunk) < 40:
+                continue
+            lines = chunk.split("\n", 1)
+            head = lines[0].strip()[:80] or f"Section {idx + 1}"
+            rest = lines[1] if len(lines) > 1 else chunk
+            idx += 1
+            segments.append(
+                {
+                    "label": head,
+                    "text": (rest or chunk)[:2500],
+                }
+            )
+            if len(segments) >= max_segments:
+                break
+        if segments:
+            return segments
+
+    # Equal chunks — covers start→end of long material
+    clean = re.sub(r"\s+", " ", body).strip()
+    if len(clean) < 80:
+        return [{"label": title or "Topic 1", "text": clean}]
+    target = max(3, min(max_segments, max(3, len(clean) // 900)))
+    chunk_size = max(400, len(clean) // target)
+    segments = []
+    for i in range(0, len(clean), chunk_size):
+        piece = clean[i : i + chunk_size].strip()
+        if len(piece) < 40:
+            continue
+        segments.append(
+            {
+                "label": f"{title or 'Part'} {len(segments) + 1}",
+                "text": piece[:2500],
+            }
+        )
+        if len(segments) >= max_segments:
+            break
+    return segments or [{"label": title or "Topic 1", "text": clean[:2500]}]
+
+
+def coverage_question_count(requested: int, segment_count: int, *, cap: int = 12) -> int:
+    """At least one question per segment when possible (end-to-end coverage)."""
+    req = max(1, int(requested or 1))
+    segs = max(1, int(segment_count or 1))
+    return max(req, min(cap, segs))
+
 
 def generate_mcqs_from_text(
     body: str,
     *,
     count: int = 3,
     title: str = "",
+    difficulty: str = "core",
+    segments: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     text = (body or "").strip()
-    if len(text) < 40:
+    if len(text) < 40 and not segments:
         raise ValueError("Lesson text is too short to generate questions")
-    n = max(1, min(int(count), 5))
+    level = normalize_difficulty(difficulty)
+    segs = segments or segment_text_for_coverage(text, title=title)
+    if not segs:
+        raise ValueError("Lesson text is too short to generate questions")
+    n = coverage_question_count(count, len(segs), cap=12)
 
     def _openai():
-        questions = _openai_mcqs(text, count=n, title=title)
+        questions = _openai_mcqs_covered(
+            segs, count=n, title=title, difficulty=level
+        )
         return {"questions": questions}
 
     def _local():
-        return {"questions": _local_mcqs(text, count=n, title=title)}
+        return {
+            "questions": _local_mcqs_covered(
+                segs, count=n, title=title, difficulty=level
+            )
+        }
 
-    return run_ai(openai_fn=_openai, local_fn=_local, feature="mcq")
+    result = run_ai(openai_fn=_openai, local_fn=_local, feature="mcq")
+    result["difficulty"] = level
+    result["segments"] = [s["label"] for s in segs]
+    result["covers_all_topics"] = True
+    result["segment_count"] = len(segs)
+    return result
 
 
 def extract_text_from_bytes(
@@ -39,7 +177,11 @@ def extract_text_from_bytes(
     *,
     filename: str = "",
 ) -> dict[str, Any]:
-    """Extract plain text from PDF / .txt / .md for MCQ drafting."""
+    """Extract plain text from PDF / .txt / .md for MCQ drafting.
+
+    PDFs keep **per-page** text so quizzes can cover pages 1…N end-to-end
+    (not only early pages).
+    """
     raw = data or b""
     if not raw:
         raise ValueError("Empty upload")
@@ -50,11 +192,13 @@ def extract_text_from_bytes(
         text = raw.decode("utf-8", errors="replace").strip()
         if len(text) < 40:
             raise ValueError("Text file is too short to generate questions")
+        segments = segment_text_for_coverage(text, title=filename or "Document")
         return {
             "text": text,
             "source_kind": "text",
             "page_count": None,
             "filename": filename or "upload.txt",
+            "segments": segments,
         }
     if not name.endswith(".pdf"):
         raise ValueError("Upload a PDF or .txt / .md file")
@@ -71,22 +215,34 @@ def extract_text_from_bytes(
     except Exception as exc:  # noqa: BLE001
         raise ValueError(f"Could not read PDF: {exc}") from exc
     pages: list[str] = []
-    for page in reader.pages[:40]:
+    segments: list[dict[str, str]] = []
+    for i, page in enumerate(reader.pages[:40], start=1):
         try:
-            pages.append((page.extract_text() or "").strip())
+            page_text = (page.extract_text() or "").strip()
         except Exception:  # noqa: BLE001
-            continue
-    text = "\n\n".join(p for p in pages if p).strip()
+            page_text = ""
+        if page_text:
+            pages.append(page_text)
+            segments.append(
+                {
+                    "label": f"Page {i}",
+                    "text": page_text[:2500],
+                }
+            )
+    text = "\n\n".join(pages).strip()
     if len(text) < 40:
         raise ValueError(
             "Could not extract enough text from this PDF "
             "(scanned images need OCR — paste text or use a text PDF)"
         )
+    if not segments:
+        segments = segment_text_for_coverage(text, title=filename or "PDF")
     return {
         "text": text[:50000],
         "source_kind": "pdf",
         "page_count": len(reader.pages),
         "filename": filename or "upload.pdf",
+        "segments": segments,
     }
 
 
@@ -96,12 +252,17 @@ def generate_mcqs_from_document(
     filename: str = "",
     count: int = 3,
     title: str = "",
+    difficulty: str = "core",
 ) -> dict[str, Any]:
-    """PDF/text upload → extract → MCQ draft (teacher reviews before save)."""
+    """PDF/text upload → extract → MCQ draft covering all pages/sections."""
     extracted = extract_text_from_bytes(data, filename=filename)
     label = (title or "").strip() or (filename or "Uploaded document")
     result = generate_mcqs_from_text(
-        extracted["text"], count=count, title=label
+        extracted["text"],
+        count=count,
+        title=label,
+        difficulty=difficulty,
+        segments=extracted.get("segments"),
     )
     result["source_kind"] = extracted["source_kind"]
     result["source_filename"] = extracted["filename"]
@@ -536,55 +697,138 @@ def _sentences(text: str) -> list[str]:
 
 
 def _local_mcqs(text: str, *, count: int, title: str) -> list[dict[str, Any]]:
-    sents = _sentences(text)
-    if not sents:
-        chunk = re.sub(r"\s+", " ", text).strip()[:160]
-        sents = [chunk]
-    topic = (title or "this lesson").strip() or "this lesson"
+    segs = segment_text_for_coverage(text, title=title)
+    return _local_mcqs_covered(segs, count=count, title=title, difficulty="core")
+
+
+def _local_mcqs_covered(
+    segments: list[dict[str, str]],
+    *,
+    count: int,
+    title: str,
+    difficulty: str,
+) -> list[dict[str, Any]]:
+    """Round-robin across segments so later pages/topics are always included."""
+    level = normalize_difficulty(difficulty)
+    pools: list[list[tuple[str, str]]] = []
+    for seg in segments:
+        label = seg.get("label") or title or "Topic"
+        sents = _sentences(seg.get("text") or "")
+        if not sents:
+            chunk = re.sub(r"\s+", " ", seg.get("text") or "").strip()[:160]
+            if chunk:
+                sents = [chunk]
+        if sents:
+            pools.append([(label, s) for s in sents[:4]])
+    if not pools:
+        topic = (title or "this lesson").strip() or "this lesson"
+        return [
+            {
+                "prompt": f"According to {topic}, which statement is correct?",
+                "choices": [
+                    f"{topic} is part of this unit.",
+                    GENERIC_DISTRACTORS[0],
+                    GENERIC_DISTRACTORS[1],
+                    GENERIC_DISTRACTORS[2],
+                ],
+                "correct_index": 0,
+                "source_excerpt": topic,
+                "topic": topic,
+                "difficulty": level,
+            }
+        ]
+
+    # Round-robin facts across all segments (page 1 … page N).
+    facts: list[tuple[str, str]] = []
+    max_len = max(len(p) for p in pools)
+    for i in range(max_len):
+        for pool in pools:
+            if i < len(pool):
+                facts.append(pool[i])
+
+    n = min(max(1, count), max(len(facts), len(pools)))
+    # Guarantee first pass hits every segment once when count allows.
+    first_pass = [pool[0] for pool in pools]
+    ordered = first_pass + [f for f in facts if f not in first_pass]
     questions: list[dict[str, Any]] = []
-    for i, fact in enumerate(sents[:count]):
-        others = [s for j, s in enumerate(sents) if j != i]
-        distractors: list[str] = []
-        for s in others:
-            if len(distractors) >= 3:
-                break
-            distractors.append(s[:160])
-        while len(distractors) < 3:
-            distractors.append(GENERIC_DISTRACTORS[len(distractors) % 3])
+    for i in range(min(n, len(ordered))):
+        label, fact = ordered[i]
+        others = [f for j, (_l, f) in enumerate(ordered) if j != i][:3]
+        while len(others) < 3:
+            others.append(GENERIC_DISTRACTORS[len(others) % 3])
         correct_index = i % 4
-        ordered = [""] * 4
-        ordered[correct_index] = fact[:160]
+        ordered_choices = [""] * 4
+        ordered_choices[correct_index] = fact[:160]
         di = 0
         for idx in range(4):
             if idx == correct_index:
                 continue
-            ordered[idx] = distractors[di]
+            ordered_choices[idx] = others[di][:160]
             di += 1
+        if level == "foundational":
+            prompt = f"From “{label}”: which statement is true?"
+        elif level == "challenge":
+            prompt = (
+                f"Based on “{label}”, which choice best applies: "
+                f"“{fact[:70]}…”?"
+            )[:240]
+        else:
+            prompt = f"According to “{label}”, which statement is correct?"
         questions.append(
             {
-                "prompt": f"According to {topic}, which statement is correct?",
-                "choices": ordered,
+                "prompt": prompt,
+                "choices": ordered_choices,
                 "correct_index": correct_index,
                 "source_excerpt": fact[:120],
+                "topic": label,
+                "difficulty": level,
             }
         )
     return questions
 
 
 def _openai_mcqs(text: str, *, count: int, title: str) -> list[dict[str, Any]]:
-    snippet = text[:6000]
+    segs = segment_text_for_coverage(text, title=title)
+    return _openai_mcqs_covered(
+        segs, count=count, title=title, difficulty="core"
+    )
+
+
+def _openai_mcqs_covered(
+    segments: list[dict[str, str]],
+    *,
+    count: int,
+    title: str,
+    difficulty: str,
+) -> list[dict[str, Any]]:
+    level = normalize_difficulty(difficulty)
+    hint = _DIFFICULTY_HINTS.get(level, _DIFFICULTY_HINTS["core"])
+    corpus = [
+        {"topic": s["label"], "text": (s.get("text") or "")[:1500]}
+        for s in segments[:20]
+    ]
+    labels = [s["label"] for s in segments]
     data = openai_chat_json(
         system=(
             "You write multiple-choice quiz items for teachers. "
+            f"Difficulty: {level}. Guidance: {hint} "
+            "CRITICAL COVERAGE RULE: questions must cover the material "
+            "end-to-end. Include at least one question for EVERY topic/page "
+            "listed. Never put all questions on early pages only — later "
+            "pages/topics must appear. Use ONLY the provided texts. "
             "Return ONLY valid JSON: "
-            '{"questions":[{"prompt":"...","choices":["A","B","C","D"],"correct_index":0}]} '
+            '{"questions":[{"prompt":"...","choices":["A","B","C","D"],'
+            '"correct_index":0,"topic":"..."}]} '
             "correct_index is 0-based. Exactly 4 choices each. No markdown."
         ),
         user=(
-            f"Create {count} MCQs from this lesson"
-            + (f' titled "{title}"' if title else "")
-            + f":\n\n{snippet}"
+            f"Source: {title or 'document'}\n"
+            f"Difficulty: {level}\n"
+            f"Create exactly {count} MCQs covering ALL of these topics/pages "
+            f"in order: {labels}\n"
+            f"Corpus:\n{corpus}"
         ),
+        temperature=0.35,
     )
     raw = data.get("questions") if isinstance(data, dict) else None
     if not isinstance(raw, list):
@@ -607,12 +851,15 @@ def _openai_mcqs(text: str, *, count: int, title: str) -> list[dict[str, Any]]:
         prompt = str(item.get("prompt") or "").strip()
         if not prompt:
             continue
+        topic = str(item.get("topic") or "").strip()
         out.append(
             {
                 "prompt": prompt,
                 "choices": choices,
                 "correct_index": ci,
-                "source_excerpt": "",
+                "source_excerpt": topic,
+                "topic": topic,
+                "difficulty": level,
             }
         )
     if not out:

@@ -23,20 +23,20 @@
 
         {# Greeting + headline #}
         <h1 class="display-hero" style="color:var(--on-surface);margin-bottom:var(--sp-xs)">
-          Hi, {{ display_name or user_name or "Student" }}
+          Hi{% if first_name %}, {{ first_name }}{% else %} there{% endif %}
         </h1>
         <p class="body-lg text-muted" style="max-width:480px;margin-bottom:var(--sp-lg)">
           {% if class_snap %}
-            {% set _pct = progress.completion_pct | default(0) if progress else 0 %}
+            {% set _pct = progress.percent | default(progress.completion_pct) | default(0) if progress else 0 %}
             You're {{ _pct }}% through this class path.
           {% else %}
             Ready to continue your learning path?
           {% endif %}
         </p>
 
-        {# Primary CTA #}
+        {# Primary CTAs only — more actions live in the tile grid below #}
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-sm)">
-          <a href="/lessons?token={{ quiz_token }}" class="btn btn-primary">
+          <a href="{{ continue_href or ('/lessons?token=' ~ quiz_token) }}" class="btn btn-primary">
             <span class="material-symbols-outlined" style="font-size:16px">play_arrow</span>
             {{ continue_label or continue_cta_label or "Continue learning" }}
           </a>
@@ -44,19 +44,6 @@
             <span class="material-symbols-outlined" style="font-size:16px">quiz</span>
             Take quiz
           </a>
-        </div>
-
-        {# Secondary links #}
-        <div class="hub-secondary" style="margin-top:var(--sp-md)">
-          <a href="/lessons?token={{ quiz_token }}">All lessons</a>
-          <a href="/quiz?token={{ quiz_token }}">Take quiz</a>
-          <a href="/quiz?token={{ quiz_token }}&practice=1">Practice</a>
-          {% if last_result_id %}
-          <a href="/quiz/result/{{ last_result_id }}?token={{ quiz_token }}">My results</a>
-          {% else %}
-          <a href="/active-quizzes?token={{ quiz_token }}">My results</a>
-          {% endif %}
-          <a href="/learn/coach?token={{ quiz_token }}">Study coach</a>
         </div>
       </div>
 
@@ -139,6 +126,11 @@
       <h3 class="headline-sm" style="margin-top:8px">My plan</h3>
       <p class="body-sm text-muted">Close skill gaps step by step</p>
     </a>
+    <a href="/learn/micro?token={{ quiz_token }}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--primary)">
+      <span class="material-symbols-outlined" style="color:var(--primary)">bolt</span>
+      <h3 class="headline-sm" style="margin-top:8px">Micro-learning</h3>
+      <p class="body-sm text-muted">Short skill lessons for your gaps</p>
+    </a>
     <a href="/manuals?token={{ quiz_token }}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--primary)">
       <span class="material-symbols-outlined" style="color:var(--primary)">menu_book</span>
       <h3 class="headline-sm" style="margin-top:8px">Manual</h3>
@@ -197,7 +189,7 @@
             Done
           </span>
           {% else %}
-          <a href="{{ lesson.href or ('/lesson/' ~ lesson.id ~ '?token=' ~ quiz_token) }}" class="btn btn-primary" style="padding:6px var(--sp-md);font-size:13px">
+          <a href="{{ lesson.href or ('/lessons/' ~ lesson.id ~ '?token=' ~ quiz_token) }}" class="btn btn-primary" style="padding:6px var(--sp-md);font-size:13px">
             {% if lesson.now %}Continue{% else %}Open{% endif %}
           </a>
           {% endif %}
@@ -230,7 +222,7 @@
             <span class="chip" style="background:rgba(0,108,75,.3);color:var(--primary-fixed)">Single Class Scope</span>
           </div>
           <h1 class="display-hero" style="color:var(--surface-container-lowest);margin-bottom:var(--sp-xs)">
-            {{ context_heading }}
+            Hi{% if first_name %}, {{ first_name }}{% else %} there{% endif %}
           </h1>
           <p class="body-md" style="color:var(--outline-variant);max-width:560px">
             <span class="material-symbols-outlined" style="font-size:16px;color:var(--primary-fixed-dim)">verified_user</span>
@@ -271,10 +263,6 @@
           <span class="material-symbols-outlined">groups</span>
         </span>
       </div>
-      <svg class="sparkline" style="margin-top:var(--sp-sm)">
-        <path d="M0,18 L32,16 L64,18 L96,14 L128,14 L160,12" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="160" cy="12" r="3.5" fill="var(--primary)"/>
-      </svg>
     </div>
     <div class="metric-tile">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -289,10 +277,6 @@
           <span class="material-symbols-outlined">menu_book</span>
         </span>
       </div>
-      <svg class="sparkline" style="margin-top:var(--sp-sm)">
-        <path d="M0,22 L40,19 L80,11 L120,8 L160,4" fill="none" stroke="var(--secondary)" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="160" cy="4" r="3.5" fill="var(--secondary)"/>
-      </svg>
     </div>
     <div class="metric-tile">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -307,10 +291,6 @@
           <span class="material-symbols-outlined">bolt</span>
         </span>
       </div>
-      <svg class="sparkline" style="margin-top:var(--sp-sm)">
-        <path d="M0,20 L26,22 L52,15 L78,17 L104,8 L130,12 L160,5" fill="none" stroke="var(--tertiary)" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="160" cy="5" r="3.5" fill="var(--tertiary)"/>
-      </svg>
     </div>
     <div class="metric-tile">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -333,11 +313,8 @@
         </div>
       </div>
       <div style="margin-top:var(--sp-sm);display:flex;align-items:center;gap:var(--sp-xs)">
-        <span class="chip chip-mint" style="font-size:10px">
-          <span class="material-symbols-outlined" style="font-size:11px">arrow_upward</span>
-          Live
-        </span>
-        <span class="body-sm text-muted">class scope only</span>
+        <span class="chip chip-mint" style="font-size:10px">This class</span>
+        <span class="body-sm text-muted">scope only</span>
       </div>
     </div>
   </div>
@@ -358,8 +335,8 @@
             <span style="position:relative;border-radius:50%;width:14px;height:14px;background:var(--primary)"></span>
           </span>
           <div>
-            <h2 class="headline-md" style="line-height:1.1;font-size:18px">Live Assessment Feed</h2>
-            <span class="body-sm text-muted">Auto-filtered to {{ context_heading }}</span>
+            <h2 class="headline-md" style="line-height:1.1;font-size:18px">Recent attempts</h2>
+            <span class="body-sm text-muted">Filtered to {{ context_heading }}</span>
           </div>
         </div>
         <a href="/teacher/attempts?token={{ quiz_token }}" class="btn btn-primary" style="font-size:12px;padding:6px 14px">
@@ -427,8 +404,7 @@
             </div>
           </div>
           <span class="chip chip-mint" style="font-size:10px">
-            <span class="gem gem-primary" style="animation:ping 1.5s infinite"></span>
-            Live
+            Class roster
           </span>
         </div>
         {% set roster = class_snap.roster | default([]) %}
@@ -513,7 +489,9 @@
             <span class="material-symbols-outlined" style="font-size:13px">account_balance</span>
             Campus Administration · {{ tenant_name or "Riverside High" }}
           </div>
-          <h1 class="display-hero" style="line-height:.95;margin-bottom:var(--sp-sm)">{{ tenant_name or "Riverside High" }}</h1>
+          <h1 class="display-hero" style="line-height:.95;margin-bottom:var(--sp-sm)">
+            Hi{% if first_name %}, {{ first_name }}{% else %} there{% endif %}
+          </h1>
           <p class="body-lg text-muted" style="max-width:500px">
             Unified governance across {{ class_count or 10 }} active classes, faculty allocation, student rosters, and real-time LMS synchronization.
           </p>

@@ -19,7 +19,7 @@ Import domain logic from `app.modules.*` — not from FastAPI route files.
 | `app.modules.ai_authoring` | D13 teacher SME authoring assistant (grounded drafts) | Authoring |
 | `app.modules.ai_tutor` | Student hints + SME study coach (citations, retention stance, Indian-language voice catalog) | Tutoring |
 | `app.modules.skills` | C8 competency registry + D23 roles + D08 framework import / TO review | Adaptive / gap / difference |
-| `app.modules.adaptive` | C9/C10 adaptive next + gap/difference paths + PLE + DCT order/planner | Tutoring / remediation |
+| `app.modules.adaptive` | C9/C10 adaptive next + gap/difference paths + PLE + DCT order/planner + **micro-learning catalog** | Tutoring / remediation |
 | `app.modules.sme` | C13 SME source registry: approved manuals/lessons for study coach | Tutoring / RAG grounding |
 | `app.modules.nrps` | LTI Advantage NRPS: Moodle roster cache (awareness only) | Class / membership awareness |
 | `app.modules.receipts` | HMAC-sealed grade receipts for attempt evidence | Audit / verify |

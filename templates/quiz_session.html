@@ -4,27 +4,42 @@
   {% if practice_mode %}
   <div class="quiz-banner quiz-banner--practice">
     <span class="material-symbols-outlined">fitness_center</span>
-    <span class="body-md">Practice lane — unique questions for you covering all class topics; <strong>not</strong> sent to Moodle.{% if remediation_loop %} After this, take the <strong>graded retry</strong>.{% endif %}</span>
+    <span class="body-md">
+      <strong>Practice lane</strong> — unique questions for you ·
+      <strong>does not sync to Moodle</strong>.
+      {% if remediation_loop %} After this, take the <strong>graded retry</strong>.{% endif %}
+    </span>
   </div>
   {% elif remediation_loop %}
   <div class="quiz-banner quiz-banner--retry">
     <span class="material-symbols-outlined">replay</span>
-    <span class="body-md">Graded remediation retry — missed items only; can sync to Moodle.</span>
+    <span class="body-md">Graded remediation retry — missed items only; <strong>can sync to Moodle</strong>.</span>
   </div>
   {% elif personalized_mode %}
-  <div class="quiz-banner quiz-banner--practice" style="background:rgba(139,92,246,.12)">
+  <div class="quiz-banner quiz-banner--graded">
     <span class="material-symbols-outlined">auto_awesome</span>
     <span class="body-md">
-      Your quiz — different questions from classmates, covering all class topics
-      {% if personal_meta and personal_meta.difficulty %}
-      · depth: <strong>{{ personal_meta.difficulty }}</strong>
+      <strong>Graded quiz</strong> — different questions from classmates, covering all class topics
+      {% if personal_meta and personal_meta.difficulty_label %}
+      · level: <strong>{{ personal_meta.difficulty_label }}</strong>{% if personal_meta.difficulty_source == 'teacher' %} (set by teacher){% endif %}
+      {% elif personal_meta and personal_meta.difficulty %}
+      · level: <strong>{{ personal_meta.difficulty }}</strong>
       {% endif %}
+      · {% if ags_available %}<strong>can sync to Moodle</strong>{% else %}saves in EdVidura{% endif %}
     </span>
   </div>
   {% elif coach_warn %}
   <div class="quiz-banner quiz-banner--warn">
     <span class="material-symbols-outlined">info</span>
     <span class="body-md">Ghost coach notes open lessons — you chose to continue anyway.</span>
+  </div>
+  {% else %}
+  <div class="quiz-banner quiz-banner--graded">
+    <span class="material-symbols-outlined">quiz</span>
+    <span class="body-md">
+      <strong>Graded quiz</strong> —
+      {% if ags_available %}can sync to Moodle{% else %}saves in EdVidura{% endif %}.
+    </span>
   </div>
   {% endif %}
 
@@ -40,7 +55,7 @@
       <div>
         <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
           <span class="material-symbols-outlined" style="font-size:13px">{% if practice_mode %}fitness_center{% else %}quiz{% endif %}</span>
-          {% if practice_mode %}Practice lane{% elif retry_from %}Missed items{% else %}Your quiz{% endif %}
+          {% if practice_mode %}Practice · no Moodle sync{% elif retry_from %}Missed items · graded{% else %}Graded quiz{% endif %}
         </div>
         <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">
           {% if practice_mode %}Practice check{% elif retry_from %}Retry missed{% else %}Take the quiz{% endif %}
@@ -113,13 +128,16 @@
 
       <div class="quiz-submit-bar">
         <div class="quiz-submit-meta">
-          <span class="material-symbols-outlined">bolt</span>
-          <span class="body-sm" id="quiz-submit-hint">Answer every question to unlock submit.</span>
+          <span class="material-symbols-outlined">{% if practice_mode %}fitness_center{% else %}school{% endif %}</span>
+          <span class="body-sm" id="quiz-submit-hint">
+            {% if practice_mode %}Practice — will not sync to Moodle.{% elif ags_available %}Graded — can sync to Moodle.{% else %}Graded — saves in EdVidura.{% endif %}
+            Answer every question to unlock submit.
+          </span>
         </div>
         <div class="quiz-submit-actions">
-          <button type="submit" class="btn btn-primary" id="quiz-submit-btn">
+          <button type="submit" class="btn {% if practice_mode %}btn-surface{% else %}btn-primary{% endif %}" id="quiz-submit-btn">
             <span class="material-symbols-outlined" style="font-size:16px">send</span>
-            {% if practice_mode %}Submit practice{% else %}Submit quiz{% endif %}
+            {% if practice_mode %}Submit practice (no Moodle){% else %}Submit graded quiz{% endif %}
           </button>
           <a class="btn btn-glass" href="/lessons?token={{ quiz_token }}">Cancel</a>
           <a class="btn btn-surface" href="/learn/coach?token={{ quiz_token }}">Ask study coach</a>
@@ -177,6 +195,11 @@
     return Object.keys(names).length;
   }
 
+  var practiceMode = {{ 'true' if practice_mode else 'false' }};
+  var syncHint = practiceMode
+    ? 'Practice — will not sync to Moodle.'
+    : ({% if ags_available %}'Graded — can sync to Moodle.'{% else %}'Graded — saves in EdVidura.'{% endif %});
+
   function refresh() {
     var n = answeredCount();
     if (countEl) countEl.textContent = String(n);
@@ -193,8 +216,8 @@
     if (btn) btn.disabled = n < total;
     if (hintEl) {
       hintEl.textContent = n < total
-        ? (total - n) + ' question' + (total - n === 1 ? '' : 's') + ' left'
-        : 'Ready to submit — double-check if you like';
+        ? syncHint + ' ' + (total - n) + ' question' + (total - n === 1 ? '' : 's') + ' left'
+        : syncHint + ' Ready to submit.';
     }
   }
 
@@ -202,7 +225,13 @@
   form.addEventListener('submit', function () {
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Submitting…';
+      var icon = btn.querySelector('.material-symbols-outlined');
+      btn.innerHTML = '';
+      if (icon) {
+        icon.textContent = 'hourglass_top';
+        btn.appendChild(icon);
+      }
+      btn.appendChild(document.createTextNode(' Submitting…'));
     }
   });
   refresh();

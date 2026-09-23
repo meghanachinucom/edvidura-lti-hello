@@ -330,11 +330,17 @@ def metabase_embed_url(
     resource: str = "dashboard",
     resource_id: int | None = None,
     minutes: int = 60,
+    pass_tenant_filters: bool = False,
 ) -> str | None:
     """
     Signed Metabase static embed URL when METABASE_SECRET_KEY + dashboard id set.
 
     Returns None when not configured (UI falls back to external link).
+
+    Important: JWT ``params`` must match the dashboard's ``embedding_params``.
+    Our bootstrap dashboard has ``embedding_params: {}``, so extra keys like
+    ``tenant_id`` cause Metabase to show “There was a problem displaying this chart.”
+    Pass ``pass_tenant_filters=True`` only when the dashboard defines those filters.
     """
     import time
 
@@ -356,10 +362,11 @@ def metabase_embed_url(
         return None
     kind = "dashboard" if resource != "question" else "question"
     params: dict[str, Any] = {}
-    if tenant_id:
-        params["tenant_id"] = [str(tenant_id)]
-    if tenant_slug:
-        params["tenant_slug"] = [str(tenant_slug)]
+    if pass_tenant_filters:
+        if tenant_id:
+            params["tenant_id"] = [str(tenant_id)]
+        if tenant_slug:
+            params["tenant_slug"] = [str(tenant_slug)]
     payload = {
         "resource": {kind: rid_i},
         "params": params,

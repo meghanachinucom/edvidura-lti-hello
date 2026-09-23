@@ -1,14 +1,19 @@
 {% extends "base_shell.html" %}
 {% block content %}
+<div class="page-wrap">
 <section class="welcome">
   <p class="welcome-kicker">Teach · AI draft · {{ provider }} / {{ model }}</p>
-  <h2 class="welcome-title">Review generated questions</h2>
+  <h2 class="welcome-title">Check these questions</h2>
   <p class="welcome-lede">
-    From {% if source_kind == 'pdf' %}PDF{% elif source_kind == 'text' %}text file{% else %}lesson{% endif %}
+    Made from {% if source_kind == 'pdf' %}your PDF{% elif source_kind == 'text' %}your text file{% else %}the lesson{% endif %}
     <strong>{{ source_title or (lesson.title if lesson else 'document') }}</strong>.
-    Select what to save into this school’s quiz bank.
+    {% if difficulty_label %}Level: <strong>{{ difficulty_label }}</strong>.{% elif difficulty %}Level: <strong>{{ difficulty }}</strong>.{% endif %}
+    Tick the ones to save for your school.
     {% if note %}<span class="meta">{{ note }}</span>{% endif %}
   </p>
+  {% if coverage_topics %}
+  <p class="meta">Taken from every part of the material: {{ coverage_topics | join(' · ') }}</p>
+  {% endif %}
 </section>
 
 {% if drafts %}
@@ -19,7 +24,7 @@
   <section class="panel">
     <label class="ai-pick">
       <input type="checkbox" name="selected" value="{{ loop.index0 }}" checked/>
-      Save question {{ loop.index }}
+      Keep question {{ loop.index }}{% if q.topic %} <span class="meta">(from {{ q.topic }})</span>{% endif %}
     </label>
     <p class="lede"><strong>{{ q.prompt }}</strong></p>
     <ol type="A">
@@ -40,4 +45,5 @@
 <p class="meta">No drafts produced.</p>
 <a class="btn secondary" href="/teacher/ai?token={{ quiz_token }}">Back</a>
 {% endif %}
+</div>
 {% endblock %}
