@@ -112,7 +112,7 @@
       {% if review %}
       <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
         {% for item in review %}
-        <div class="card" style="padding:var(--sp-md);border-left:3px solid {{ 'var(--primary)' if item.correct else '#f59e0b' }}">
+        <div class="card" {{ 'style="padding:var(--sp-md);border-left:3px solid ' ~ ('var(--primary)' if item.correct else '#f59e0b') ~ '"' }}>
           <div style="display:flex;justify-content:space-between;gap:var(--sp-sm);align-items:flex-start">
             <div>
               <div class="headline-sm" style="font-size:15px">{{ item.prompt }}</div>
@@ -188,7 +188,7 @@
               <span class="body-sm">{{ c.label }}</span>
               <span class="body-sm text-muted">{% if c.percent is not none %}{{ c.percent }}%{% else %}—{% endif %}</span>
             </div>
-            <div class="progress-track"><div class="progress-fill" style="width:{{ c.percent if c.percent is not none else 0 }}%"></div></div>
+            <div class="progress-track"><div class="progress-fill" {{ 'style="width:' ~ (c.percent if c.percent is not none else 0) ~ '%"' }}></div></div>
           </div>
           {% endfor %}
         </div>

@@ -104,7 +104,7 @@
       {% endif %}
 
       {% for q in questions %}
-      <article class="q-card" data-qid="{{ q.id }}" style="animation-delay:{{ loop.index0 * 0.05 }}s">
+      <article class="q-card" data-qid="{{ q.id }}" {{ 'style="animation-delay:' ~ (loop.index0 * 0.05) ~ 's"' }}>
         <header class="q-card-head">
           <div class="q-num" aria-hidden="true">{{ loop.index }}</div>
           <div class="q-card-meta">
@@ -181,7 +181,7 @@
 (function () {
   var form = document.getElementById('quiz-form');
   if (!form) return;
-  var total = {{ questions|length }};
+  var total = parseInt("{{ questions|length }}", 10);
   var countEl = document.getElementById('quiz-answered-count');
   var fillEl = document.getElementById('quiz-progress-fill');
   var hintEl = document.getElementById('quiz-submit-hint');
@@ -195,10 +195,10 @@
     return Object.keys(names).length;
   }
 
-  var practiceMode = {{ 'true' if practice_mode else 'false' }};
+  var practiceMode = "{{ 'true' if practice_mode else 'false' }}" === "true";
   var syncHint = practiceMode
     ? 'Practice — will not sync to Moodle.'
-    : ({% if ags_available %}'Graded — can sync to Moodle.'{% else %}'Graded — saves in EdVidura.'{% endif %});
+    : "{{ 'Graded — can sync to Moodle.' if ags_available else 'Graded — saves in EdVidura.' }}";
 
   function refresh() {
     var n = answeredCount();

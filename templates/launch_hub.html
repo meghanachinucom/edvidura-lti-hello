@@ -411,11 +411,11 @@
         {% if roster %}
         <div style="display:flex;flex-direction:column;gap:4px">
           {% for s in roster %}
-          <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:8px var(--sp-sm);
-                      border-radius:var(--r-lg);transition:background .15s;
-                      animation:fadeSlideUp .25s ease both;animation-delay:{{ loop.index0 * 0.04 }}s"
+          {% set h1 = (loop.index * 37) % 360 %}
+          {% set h2 = (loop.index * 37 + 40) % 360 %}
+          <div {{ 'style="display:flex;align-items:center;gap:var(--sp-sm);padding:8px var(--sp-sm);border-radius:var(--r-lg);transition:background .15s;animation:fadeSlideUp .25s ease both;animation-delay:' ~ (loop.index0 * 0.04) ~ 's"' }}
                onmouseover="this.style.background='rgba(52,211,153,.08)'" onmouseout="this.style.background='transparent'">
-            <div class="avatar avatar-sm" style="background:linear-gradient(135deg,hsl({{ (loop.index * 37) % 360 }},60%,88%),hsl({{ (loop.index * 37 + 40) % 360 }},50%,82%));color:hsl({{ (loop.index * 37) % 360 }},50%,30%);font-weight:700;flex-shrink:0">
+            <div class="avatar avatar-sm" {{ 'style="background:linear-gradient(135deg,hsl(' ~ h1 ~ ',60%,88%),hsl(' ~ h2 ~ ',50%,82%));color:hsl(' ~ h1 ~ ',50%,30%);font-weight:700;flex-shrink:0"' }}>
               {{ (s.name or "?")[0].upper() }}
             </div>
             <div style="min-width:0;flex:1">

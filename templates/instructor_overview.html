@@ -71,7 +71,7 @@
         </div>
         <span style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,rgba(153,202,65,.25),rgba(153,202,65,.07));display:flex;align-items:center;justify-content:center;color:var(--tertiary)"><span class="material-symbols-outlined">trending_up</span></span>
       </div>
-      <div class="progress-track" style="margin-top:var(--sp-md)"><div class="progress-fill-lime" style="width:{{ avg_percent or 0 }}%"></div></div>
+      <div class="progress-track" style="margin-top:var(--sp-md)"><div class="progress-fill-lime" {{ 'style="width:' ~ (avg_percent or 0) ~ '%"' }}></div></div>
     </div>
     <div class="metric-tile">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -243,7 +243,7 @@
               <span class="body-sm">{{ c.label }}</span>
               <span class="body-sm text-muted">{% if c.percent is not none %}{{ c.percent }}%{% else %}-{% endif %}</span>
             </div>
-            <div class="progress-track"><div class="progress-fill {% if c.status == 'strong' %}{% elif c.status == 'ok' %}progress-fill-sky{% else %}progress-fill-lime{% endif %}" style="width:{{ c.percent if c.percent is not none else 0 }}%"></div></div>
+            <div class="progress-track"><div class="progress-fill {% if c.status == 'strong' %}{% elif c.status == 'ok' %}progress-fill-sky{% else %}progress-fill-lime{% endif %}" {{ 'style="width:' ~ (c.percent if c.percent is not none else 0) ~ '%"' }}></div></div>
           </div>
           {% endfor %}
         </div>
@@ -263,7 +263,7 @@
               <span class="body-sm truncate">{{ item.prompt }}</span>
               <span class="body-sm text-muted">{{ item.fail_rate }}%</span>
             </div>
-            <div class="progress-track"><div class="progress-fill" style="width:{{ item.fail_rate }}%;background:linear-gradient(90deg,#f59e0b,#fbbf24);box-shadow:0 0 6px rgba(245,158,11,.35)"></div></div>
+            <div class="progress-track"><div class="progress-fill" {{ 'style="width:' ~ item.fail_rate ~ '%;background:linear-gradient(90deg,#f59e0b,#fbbf24);box-shadow:0 0 6px rgba(245,158,11,.35)"' }}></div></div>
           </div>
           {% endfor %}
         </div>
