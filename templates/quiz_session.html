@@ -104,7 +104,7 @@
       {% endif %}
 
       {% for q in questions %}
-      <article class="q-card" data-qid="{{ q.id }}" {{ 'style="animation-delay:' ~ (loop.index0 * 0.05) ~ 's"' }}>
+      <article class="q-card" data-qid="{{ q.id }}" style="animation-delay: {{ loop.index0 * 0.05 }}s">
         <header class="q-card-head">
           <div class="q-num" aria-hidden="true">{{ loop.index }}</div>
           <div class="q-card-meta">
