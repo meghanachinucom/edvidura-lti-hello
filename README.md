@@ -2,6 +2,16 @@
 
 EdVidura LTI Hello is a FastAPI-based LTI 1.3 application that integrates with Moodle. This project demonstrates secure LTI launches, tenant (institution) resolution, and institution/student onboarding APIs.
 
+## Architecture (start here)
+
+| Doc | What it covers |
+|-----|----------------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Repo folders, layers, where new code goes |
+| [docs/MODULES.md](docs/MODULES.md) | Domain module catalog |
+| [.github/BRANCHING.md](.github/BRANCHING.md) | Feature branches so errors stay isolated |
+
+**Rule:** domain logic in `app/modules/`, thin routes in `app/*_routes.py`, UI only in `templates/` + `app/static/`.
+
 ## Tech Stack
 
 - FastAPI
