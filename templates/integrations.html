@@ -37,7 +37,7 @@
     </div>
     <div class="metric-tile">
       <span class="label-caps text-muted">Yet LRS</span>
-      <div class="headline-sm" style="margin-top:8px;color:{% if lrs.configured %}var(--primary){% else %}var(--outline){% endif %}">
+      <div class="headline-sm {% if lrs.configured %}text-primary-color{% else %}text-outline-color{% endif %}" style="margin-top:8px">
         {% if lrs.configured %}Connected{% else %}Not connected{% endif %}
       </div>
       <p class="body-sm text-muted" style="margin-top:6px">
@@ -46,7 +46,7 @@
     </div>
     <div class="metric-tile">
       <span class="label-caps text-muted">Metabase charts</span>
-      <div class="headline-sm" style="margin-top:8px;color:{% if metabase.embed_ready %}var(--primary){% else %}var(--outline){% endif %}">
+      <div class="headline-sm {% if metabase.embed_ready %}text-primary-color{% else %}text-outline-color{% endif %}" style="margin-top:8px">
         {% if metabase.embed_ready %}Ready{% else %}Not connected{% endif %}
       </div>
       <p class="body-sm text-muted" style="margin-top:6px">

@@ -47,7 +47,7 @@
   <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-md)">
     <div class="progress-track" style="flex:1;min-width:200px;height:10px">
       {% if total > 0 %}
-      <div class="progress-fill" style="width:{{ (done/total*100) | int }}%"></div>
+      <div class="progress-fill" data-pct="{{ (done/total*100) | int }}"></div>
       {% endif %}
     </div>
     <span class="label-caps text-muted">{{ done }} / {{ total }} completed</span>
@@ -109,7 +109,7 @@
           <span style="color:var(--primary)">{{ lesson.progress }}%</span>
         </div>
         <div class="progress-track" style="margin-top:4px">
-          <div class="progress-fill" style="width:{{ lesson.progress }}%"></div>
+          <div class="progress-fill" data-pct="{{ lesson.progress }}"></div>
         </div>
       </div>
       {% endif %}
@@ -184,5 +184,9 @@
     });
   });
 })();
+</script>
+
+<script>
+  document.querySelectorAll('[data-pct]').forEach(el => { el.style.width = el.dataset.pct + '%'; });
 </script>
 {% endblock %}

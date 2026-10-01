@@ -91,7 +91,7 @@
             class="material-symbols-outlined">trending_up</span></span>
       </div>
       <div class="progress-track" style="margin-top:var(--sp-md)">
-        <div class="progress-fill-lime" style="width:{{ avg_percent or 0 }}%"></div>
+        <div class="progress-fill-lime" data-pct="{{ avg_percent or 0 }}"></div>
       </div>
     </div>
     <div class="metric-tile">
@@ -295,7 +295,7 @@
             <div class="progress-track">
               <div
                 class="progress-fill {% if c.status == 'strong' %}{% elif c.status == 'ok' %}progress-fill-sky{% else %}progress-fill-lime{% endif %}"
-                style="width:{{ c.percent if c.percent is not none else 0 }}%"></div>
+                data-pct="{{ c.percent if c.percent is not none else 0 }}"></div>
             </div>
           </div>
           {% endfor %}
@@ -319,7 +319,7 @@
             </div>
             <div class="progress-track">
               <div class="progress-fill"
-                style="width:{{ item.fail_rate }}%;background:linear-gradient(90deg,#f59e0b,#fbbf24);box-shadow:0 0 6px rgba(245,158,11,.35)">
+                class="progress-fill progress-fill-radar" data-pct="{{ item.fail_rate }}">
               </div>
             </div>
           </div>
@@ -403,4 +403,8 @@
     </section>
   </div>
 </div>
+
+<script>
+  document.querySelectorAll('[data-pct]').forEach(el => { el.style.width = el.dataset.pct + '%'; });
+</script>
 {% endblock %}

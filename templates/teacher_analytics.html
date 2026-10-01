@@ -200,7 +200,7 @@
             </div>
             <div class="progress-track">
               <div class="progress-fill {% if ls.avg_pct >= 80 %}{% elif ls.avg_pct >= 60 %}progress-fill-sky{% else %}{% endif %}"
-                   style="width:{{ ls.avg_pct }}%;{% if ls.avg_pct < 60 %}background:var(--error-container){% endif %}"></div>
+                   class="progress-fill {% if ls.avg_pct < 60 %}bg-error-container{% endif %}" data-pct="{{ ls.avg_pct }}"></div>
             </div>
           </div>
           {% endfor %}
@@ -274,7 +274,7 @@
     <div class="grid-2" style="gap:var(--sp-md);margin-bottom:var(--sp-md)">
       <div class="metric-tile">
         <span class="label-caps text-muted">Metabase (school charts)</span>
-        <div class="headline-sm" style="margin-top:8px;color:{% if metabase and metabase.embed_ready %}var(--primary){% else %}var(--outline){% endif %}">
+        <div class="headline-sm {% if metabase and metabase.embed_ready %}text-primary-color{% else %}text-outline-color{% endif %}" style="margin-top:8px">
           {% if metabase and metabase.embed_ready %}Ready{% elif metabase_url %}Link available{% else %}Not connected{% endif %}
         </div>
         <p class="body-sm text-muted" style="margin-top:6px">
@@ -284,7 +284,7 @@
       </div>
       <div class="metric-tile">
         <span class="label-caps text-muted">Yet LRS (learning records)</span>
-        <div class="headline-sm" style="margin-top:8px;color:{% if lrs and lrs.configured %}var(--primary){% else %}var(--outline){% endif %}">
+        <div class="headline-sm {% if lrs and lrs.configured %}text-primary-color{% else %}text-outline-color{% endif %}" style="margin-top:8px">
           {% if lrs and lrs.configured %}Connected{% else %}Not connected{% endif %}
         </div>
         <p class="body-sm text-muted" style="margin-top:6px">
@@ -310,4 +310,8 @@
   </section>
 
 </div>
+
+<script>
+  document.querySelectorAll('[data-pct]').forEach(el => { el.style.width = el.dataset.pct + '%'; });
+</script>
 {% endblock %}

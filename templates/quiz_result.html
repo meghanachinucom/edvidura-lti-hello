@@ -134,7 +134,7 @@
       <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
         {% for item in review %}
         <div class="card"
-          style="padding:var(--sp-md);border-left:3px solid {% if item.correct %}var(--primary){% else %}#f59e0b{% endif %}">
+          class="card {% if item.correct %}card-correct{% else %}card-missed{% endif %}" style="padding:var(--sp-md)">
           <div style="display:flex;justify-content:space-between;gap:var(--sp-sm);align-items:flex-start">
             <div>
               <div class="headline-sm" style="font-size:15px">{{ item.prompt }}</div>
@@ -220,7 +220,7 @@
                 %}</span>
             </div>
             <div class="progress-track">
-              <div class="progress-fill" style="width:{{ c.percent if c.percent is not none else 0 }}%"></div>
+              <div class="progress-fill" data-pct="{{ c.percent if c.percent is not none else 0 }}"></div>
             </div>
           </div>
           {% endfor %}
@@ -254,4 +254,8 @@
     </aside>
   </div>
 </div>
+
+<script>
+  document.querySelectorAll('[data-pct]').forEach(el => { el.style.width = el.dataset.pct + '%'; });
+</script>
 {% endblock %}
