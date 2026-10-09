@@ -56,7 +56,7 @@ Create/enrol **real Moodle users** for the demo (students & teachers). EdVidura 
 1. Launch as teacher from same course.
 2. **Class results** — bound class filter, radar, at-risk, AI next steps, CSV.
 3. **Skills registry** — competencies linked to quiz items + remediation paths.
-4. **SME sources** — approved manuals for the study coach.
+4. **SME sources** — approved manuals for Ask Vidura.
 5. **Analytics** — school KPIs.
 6. Optional: **AI tools** — PDF→MCQ draft, grade assist (copy only, no Moodle send).
 
@@ -64,8 +64,8 @@ Create/enrol **real Moodle users** for the demo (students & teachers). EdVidura 
 1. Miss an item → result shows **1 Review → 2 Practice → 3 Graded retry**.
 2. Open pinned handbook/lesson → Practice (no Moodle) → Graded retry (AGS).
 
-### Study coach (optional 2 min)
-1. Student → **Study coach** → ask “What is a variable?”
+### Ask Vidura (optional 2 min)
+1. Student → **Ask Vidura** → ask “What is a variable?”
 2. Answer cites handbook section (version-pinned).
 
 ### Gap training / PLE (optional 2 min)
@@ -108,5 +108,6 @@ curl -H "X-Admin-Key: YOUR_ADMIN_API_KEY" http://127.0.0.1:8000/dev/tenancy/cros
 
 ## Out of scope for this pilot
 
-XR, Open edX pack, full TLA mesh, enclave / air-gap.
+XR, Open edX pack, full TLA mesh.
+Air‑gap / hybrid / cloud topologies: [DEPLOYMENT_TOPOLOGIES.md](DEPLOYMENT_TOPOLOGIES.md).
 (Canvas LTI is supported via manual Developer Key — see [CANVAS.md](CANVAS.md).)

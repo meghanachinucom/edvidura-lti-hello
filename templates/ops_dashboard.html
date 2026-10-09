@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura owner console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f4f7f5;
+      --ink: #0e2b24;
+      --muted: #5f6f68;
+      --accent: #0e7a5c;
+      --card: #fff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Outfit, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 22px;
+      background: #0e2b24;
+      color: #fff;
+    }
+    .brand { font-family: Syne, sans-serif; font-weight: 800; font-size: 18px; }
+    .meta { font-size: 13px; opacity: .75; }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    a.btn, button.btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.1);
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    a.btn.primary { background: var(--accent); border-color: transparent; }
+    main { max-width: 1200px; margin: 0 auto; padding: 22px 18px 48px; }
+    h1 { font-family: Syne, sans-serif; font-size: clamp(26px, 4vw, 36px); margin: 0 0 8px; letter-spacing: -0.02em; }
+    .lede { color: var(--muted); max-width: 720px; margin: 0 0 18px; line-height: 1.55; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .tile {
+      background: var(--card);
+      border: 1px solid rgba(14,43,36,.08);
+      border-radius: 16px;
+      padding: 14px 16px;
+    }
+    .tile strong { display: block; font-size: 15px; margin-bottom: 4px; }
+    .tile p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.4; }
+    .ok { color: var(--accent); font-weight: 700; }
+    .off { color: var(--muted); }
+    .panel {
+      background: var(--card);
+      border: 1px solid rgba(14,43,36,.08);
+      border-radius: 18px;
+      padding: 16px 18px;
+      margin-top: 14px;
+    }
+    .panel h2 { margin: 0 0 8px; font-size: 18px; }
+    .panel p.hint { margin: 0 0 12px; font-size: 13px; color: var(--muted); line-height: 1.45; }
+    details.read-guide {
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    details.read-guide summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    details.read-guide ul { margin: 8px 0 0; padding-left: 1.2rem; }
+    details.read-guide li { margin-bottom: 6px; }
+    iframe {
+      width: 100%;
+      min-height: 2200px;
+      border: 0;
+      border-radius: 14px;
+      background: #fff;
+    }
+    form.retry { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    form.retry input {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(14,43,36,.14);
+      font: inherit;
+    }
+    form.retry button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="brand">EdVidura · Owner console</div>
+      <div class="meta">Signed in · {{ ops.via }}{% if ops.email %} · {{ ops.email }}{% endif %}</div>
+    </div>
+    <nav>
+      {% if metabase_url %}
+      <a class="btn" href="{{ metabase_url }}" target="_blank" rel="noopener">Open Metabase</a>
+      {% endif %}
+      {% if yet_url %}
+      <a class="btn" href="{{ yet_url }}/admin" target="_blank" rel="noopener">Open Yet (raw)</a>
+      {% endif %}
+      <a class="btn" href="{{ onboard_href }}">School onboard</a>
+      <a class="btn primary" href="/ops/logout">Sign out</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Platform analytics</h1>
+    <p class="lede">
+      Read top to bottom: <strong>headline numbers</strong> → <strong>school comparison table</strong> →
+      <strong>trends and score bands</strong> → <strong>schools that went quiet</strong> →
+      <strong>latest attempts</strong>. Yet is only for raw export; teachers never use it.
+    </p>
+
+    <div class="grid">
+      <div class="tile">
+        <strong>Metabase</strong>
+        <p class="{% if metabase.embed_ready or metabase_url %}ok{% else %}off{% endif %}">
+          {% if metabase.embed_ready %}Embed ready
+          {% elif metabase_url %}URL set
+          {% else %}Not configured{% endif %}
+        </p>
+        <p>Charts below are from EdVidura Postgres — same data as in-app Analytics.</p>
+      </div>
+      <div class="tile">
+        <strong>Yet LRS</strong>
+        <p class="{% if lrs.configured %}ok{% else %}off{% endif %}">
+          {% if lrs.configured %}
+            {% if lrs.reachable is defined and not lrs.reachable %}Configured · offline
+            {% else %}Connected{% endif %}
+          {% else %}Not configured{% endif %}
+        </p>
+        <p>Optional archive. “LRS forward backlog” on the dashboard should stay near 0.</p>
+      </div>
+      <div class="tile">
+        <strong>Local xAPI store</strong>
+        <p class="ok">Always on</p>
+        <p>{{ local.detail or "Source of truth per school before Yet forward." }}</p>
+      </div>
+    </div>
+
+    {% if metabase_embed_url %}
+    <section class="panel">
+      <h2>EdVidura owner overview</h2>
+      <details class="read-guide">
+        <summary>How to read this dashboard</summary>
+        <ul>
+          <li><strong>Top row</strong> — platform size: schools, attempts, learners, average score.</li>
+          <li><strong>Second row</strong> — pass rate, Moodle grade sync, pending grades, last-7-day pulse.</li>
+          <li><strong>Third row</strong> — Ask Vidura usage, lessons, all events, Yet backlog.</li>
+          <li><strong>Schools at a glance</strong> — compare pass rate and pending Moodle grades per school.</li>
+          <li><strong>Daily lines</strong> — quiz attempts vs all learning events (30 days).</li>
+          <li><strong>Score bands / activity types</strong> — distribution, not mixed KPI pies.</li>
+          <li><strong>Schools quiet this week</strong> — who may need a nudge or pilot check-in.</li>
+        </ul>
+      </details>
+      <iframe src="{{ metabase_embed_url }}" title="Metabase owner dashboard" allowtransparency></iframe>
+    </section>
+    {% elif metabase_url %}
+    <section class="panel">
+      <h2>Metabase</h2>
+      <p class="hint">Embed not signed yet — open Metabase directly.</p>
+      <a class="btn primary" style="display:inline-flex;width:auto;background:var(--accent);color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700" href="{{ metabase_url }}" target="_blank" rel="noopener">Open Metabase</a>
+    </section>
+    {% endif %}
+
+    {% if lrs.configured %}
+    <section class="panel">
+      <h2>Yet learning history</h2>
+      <p class="hint">
+        For audit / CSV export only. Retry failed forwards for one school (tenant UUID from onboard).
+      </p>
+      {% if yet_url %}
+      <p><a href="{{ yet_url }}/admin" target="_blank" rel="noopener">Open Yet admin →</a></p>
+      {% endif %}
+      <form class="retry" method="post" action="/ops/retry-lrs">
+        <input name="tenant_id" placeholder="tenant UUID" required/>
+        <button type="submit">Retry failed LRS posts</button>
+      </form>
+    </section>
+    {% endif %}
+  </main>
+</body>
+</html>

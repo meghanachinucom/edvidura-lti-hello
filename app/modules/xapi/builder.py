@@ -267,11 +267,19 @@ def build_coach_interacted_statement(
     access_level: str = "class",
     include_full_text: bool = False,
     answer_text: str | None = None,
+    strategy: str | None = None,
+    check_question: str | None = None,
+    jev_used: bool = False,
+    jev_model: str | None = None,
+    jev_strategy_source: str | None = None,
+    jev_strategy_confidence: float | None = None,
+    jev_on_topic_p: float | None = None,
+    jev_skipped_remote: bool = False,
     homepage: str = "http://localhost:8085",
     activity_base: str = "http://localhost:8000",
     statement_id: UUID | str | None = None,
 ) -> dict[str, Any]:
-    """Study coach turn → xAPI interacted.
+    """Ask Vidura turn → xAPI interacted.
 
     Default SaaS: preview + hash (privacy-light).
     PeBL Discussion-aligned (``include_full_text=True``): full message text,
@@ -327,6 +335,44 @@ def build_coach_interacted_statement(
         extensions[
             "https://edvidura.local/xapi/extensions/course_label"
         ] = course_title.strip()[:120]
+    strat = (strategy or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if strat:
+        extensions[
+            "https://edvidura.local/xapi/extensions/coach_strategy"
+        ] = strat[:40]
+    cq = (check_question or "").strip()
+    if cq:
+        extensions[
+            "https://edvidura.local/xapi/extensions/check_question_preview"
+        ] = cq[:120] + ("…" if len(cq) > 120 else "")
+    if jev_used:
+        extensions["https://edvidura.local/xapi/extensions/jev_used"] = True
+        if jev_model:
+            extensions[
+                "https://edvidura.local/xapi/extensions/jev_model"
+            ] = str(jev_model)[:64]
+        if jev_strategy_source:
+            extensions[
+                "https://edvidura.local/xapi/extensions/jev_strategy_source"
+            ] = str(jev_strategy_source)[:32]
+        if jev_strategy_confidence is not None:
+            try:
+                extensions[
+                    "https://edvidura.local/xapi/extensions/jev_strategy_confidence"
+                ] = round(float(jev_strategy_confidence), 4)
+            except (TypeError, ValueError):
+                pass
+        if jev_on_topic_p is not None:
+            try:
+                extensions[
+                    "https://edvidura.local/xapi/extensions/jev_on_topic_p"
+                ] = round(float(jev_on_topic_p), 4)
+            except (TypeError, ValueError):
+                pass
+        if jev_skipped_remote:
+            extensions[
+                "https://edvidura.local/xapi/extensions/jev_skipped_remote"
+            ] = True
 
     result: dict[str, Any] = {
         "success": bool(grounded),
@@ -349,7 +395,7 @@ def build_coach_interacted_statement(
                 f"/thread/{_slug(tid)}"
             ),
             "definition": {
-                "name": {"en-US": "EdVidura study coach"},
+                "name": {"en-US": "Ask Vidura"},
                 "description": {
                     "en-US": "SME-grounded tutoring chat turn (PeBL Discussion-aligned fields)",
                 },
@@ -358,6 +404,94 @@ def build_coach_interacted_statement(
             },
         },
         "result": result,
+        "context": {
+            "platform": "EdVidura",
+            "extensions": extensions,
+        },
+        "timestamp": _iso_now(),
+    }
+
+
+def build_coach_feedback_statement(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    rating: str,
+    thread_id: str | None = None,
+    question_preview: str = "",
+    answer_preview: str = "",
+    course_title: str = "",
+    course_id: UUID | str | None = None,
+    homepage: str = "http://localhost:8085",
+    activity_base: str = "http://localhost:8000",
+    statement_id: UUID | str | None = None,
+) -> dict[str, Any]:
+    """Thumbs up/down on an Ask Vidura answer → xAPI responded."""
+    sid = str(statement_id or uuid4())
+    rate = (rating or "").strip().lower()
+    if rate not in {"up", "down", "helpful", "not_helpful"}:
+        rate = "up" if rate in {"1", "true", "yes", "good"} else "down"
+    if rate == "helpful":
+        rate = "up"
+    if rate == "not_helpful":
+        rate = "down"
+    tid = (thread_id or "").strip() or f"coach-{subject or 'anon'}"
+    extensions: dict[str, Any] = {
+        "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
+        "https://edvidura.local/xapi/extensions/channel": "study_coach",
+        "https://edvidura.local/xapi/extensions/thread_id": tid,
+        "https://edvidura.local/xapi/extensions/coach_rating": rate,
+        "https://edvidura.local/xapi/extensions/feedback_kind": "thumbs",
+    }
+    qp = (question_preview or "").strip()
+    if qp:
+        extensions[
+            "https://edvidura.local/xapi/extensions/question_preview"
+        ] = qp[:120]
+    ap = (answer_preview or "").strip()
+    if ap:
+        extensions[
+            "https://edvidura.local/xapi/extensions/answer_preview"
+        ] = ap[:120]
+    if course_id:
+        extensions[
+            "https://edvidura.local/xapi/extensions/course_id"
+        ] = str(course_id)
+    if course_title.strip():
+        extensions[
+            "https://edvidura.local/xapi/extensions/course_label"
+        ] = course_title.strip()[:120]
+
+    return {
+        "id": sid,
+        "actor": build_actor(
+            subject=subject, learner_name=learner_name, homepage=homepage
+        ),
+        "verb": {
+            "id": verbs.VERB_RESPONDED,
+            "display": {"en-US": verbs.VERB_DISPLAY[verbs.VERB_RESPONDED]},
+        },
+        "object": {
+            "objectType": "Activity",
+            "id": (
+                f"{activity_base.rstrip('/')}/xapi/activities/study-coach"
+                f"/feedback/{_slug(tid)}"
+            ),
+            "definition": {
+                "name": {"en-US": "Ask Vidura feedback"},
+                "description": {
+                    "en-US": "Learner thumbs rating on a coach answer",
+                },
+                "type": "http://adlnet.gov/expapi/activities/cmi.interaction",
+                "interactionType": "likert",
+            },
+        },
+        "result": {
+            "success": rate == "up",
+            "response": rate,
+            "score": {"scaled": 1.0 if rate == "up" else 0.0},
+        },
         "context": {
             "platform": "EdVidura",
             "extensions": extensions,

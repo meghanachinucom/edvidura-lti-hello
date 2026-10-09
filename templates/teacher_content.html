@@ -206,7 +206,7 @@
       {% set type_color = 'var(--primary)' if L.lesson_type == 'article' else ('var(--secondary)' if L.lesson_type == 'video' else 'var(--tertiary)') %}
       {% set status_ok = (L.status or 'published') == 'published' %}
 
-      <div style="border:1.5px solid rgba(14,43,36,.07);border-radius:var(--r-xl);overflow:hidden;
+      <div class="lesson-card" style="border:1.5px solid rgba(14,43,36,.07);border-radius:var(--r-xl);
                   animation:fadeSlideUp .3s ease both;animation-delay:{{ loop.index0 * 0.04 }}s;
                   background:{{ 'rgba(255,255,255,.9)' if status_ok else 'rgba(14,43,36,.03)' }}">
 
@@ -251,19 +251,11 @@
             </form>
 
             {% if L.lesson_type != 'quiz' and (L.body_md or '')|length > 40 %}
-            <form method="post" action="/teacher/ai/generate" style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">
-              <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-              <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
-              <input type="hidden" name="count" value="5"/>
-              <select name="difficulty" title="How hard?" style="font-size:11px;padding:4px 6px;border-radius:var(--r-lg);border:1px solid rgba(153,202,65,.35);background:var(--surface-container);color:var(--on-surface)">
-                <option value="foundational">Easy</option>
-                <option value="core" selected>Medium</option>
-                <option value="challenge">Hard</option>
-              </select>
-              <button type="submit" title="Make quiz questions from this whole lesson" class="btn" style="font-size:11px;padding:5px 10px;background:linear-gradient(135deg,rgba(153,202,65,.2),rgba(153,202,65,.05));color:var(--tertiary);border:1px solid rgba(153,202,65,.3)">
-                <span class="material-symbols-outlined" style="font-size:13px">auto_awesome</span>Make quiz
-              </button>
-            </form>
+            <button type="button" class="make-quiz__btn" title="Draft quiz questions from this whole lesson"
+                    onclick="toggleEdit('make-quiz-{{ L.id }}')">
+              <span class="material-symbols-outlined" style="font-size:13px">auto_awesome</span>
+              Make quiz
+            </button>
             <form method="post" action="/teacher/ai/simplify" style="display:inline">
               <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
               <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
@@ -296,6 +288,38 @@
             </button>
           </div>
         </div>
+
+        {% if L.lesson_type != 'quiz' and (L.body_md or '')|length > 40 %}
+        <div id="make-quiz-{{ L.id }}" class="make-quiz__panel" style="display:none">
+          <form method="post" action="/teacher/ai/generate">
+            <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+            <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
+            <input type="hidden" name="count" value="5"/>
+            <p class="make-quiz__lead">Draft questions from <strong>the whole lesson</strong> (every section).</p>
+            <div class="make-quiz__grid">
+              <fieldset class="make-quiz__field">
+                <legend>How hard?</legend>
+                <label><input type="radio" name="difficulty" value="foundational"/> Easy — simple wording</label>
+                <label><input type="radio" name="difficulty" value="core" checked/> Medium — classroom default</label>
+                <label><input type="radio" name="difficulty" value="challenge"/> Hard — stretch thinking</label>
+              </fieldset>
+              <fieldset class="make-quiz__field">
+                <legend>What kind of thinking?</legend>
+                <label><input type="radio" name="complexity" value="recall"/> Remember facts</label>
+                <label><input type="radio" name="complexity" value="apply" checked/> Use the idea</label>
+                <label><input type="radio" name="complexity" value="analyze"/> Explain why / compare</label>
+              </fieldset>
+            </div>
+            <div class="make-quiz__actions">
+              <button type="submit" class="btn btn-primary" style="font-size:12px;padding:7px 14px">
+                Create draft questions
+              </button>
+              <button type="button" class="btn" style="font-size:12px;padding:7px 12px"
+                      onclick="toggleEdit('make-quiz-{{ L.id }}')">Cancel</button>
+            </div>
+          </form>
+        </div>
+        {% endif %}
 
         {# Edit panel (hidden by default) #}
         <div id="edit-{{ L.id }}" style="display:none;border-top:1px solid rgba(14,43,36,.07);padding:var(--sp-lg);background:rgba(213,245,234,.15)">

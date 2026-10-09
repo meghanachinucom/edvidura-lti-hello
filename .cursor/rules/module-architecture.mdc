@@ -21,6 +21,7 @@ EdVidura keeps **domain logic in reusable modules**, not in FastAPI route files 
 1. **New feature domain code** goes in `app/modules/<domain>/` (`service.py` + `__init__.py` public exports). Prefer an existing module over a new one when the responsibility matches.
 2. **Routes stay thin**: validate input → call `app.modules.*` → map result to response. Do not embed SQL or grading/progress/tenant rules in routes.
 3. **Import domain from modules**: `from app.modules.content import …` — not from route modules. Legacy shims (`app.content`, `app.tenancy`, …) are OK for compatibility only; do not grow them.
+3b. **Portable backend**: modules must not import FastAPI/Jinja. Prefer plain-dict facades (`run_coach_turn`, `grade_submitted_form`, `enrich_session_from_launch`). See `app/modules/PORTABILITY.md`.
 4. **Tenant isolation**: any tenant-owned read/write uses `db.tenant_connection` / module helpers that set `app.tenant_id`. Never trust client-supplied `tenant_id`.
 5. **New domain tables**: migration + RLS via `db/rls_template.sql`; grant `edvidura_app`; add CI migration step if tests need the table.
 6. **Update the map** in `docs/MODULES.md` and `app/modules/README.md` when adding a module.
@@ -35,9 +36,11 @@ EdVidura keeps **domain logic in reusable modules**, not in FastAPI route files 
 - `events` — EVENT_ENVELOPE_V1 outbox + D17 webhook drain  
 - `ai_assessment` — MCQs, simplify, grade assist, suggestions; E04 OpenAI / local HTTP  
 - `ai_tutor` — student hints + study coach (citations / retention stance)
+- `jev` — TypeSafe System One decisions (coach strategy / coverage gates)
 - `ai_authoring` — D13 teacher SME authoring assistant (separate from learner coach)
 - `skills` — C8 competency registry; D23 role matrices; D08 framework import / TO review
 - `adaptive` — C9/C10 adaptive next + gap/difference training paths + persisted PLE plans + DCT order/planner
+- `signals` — fuse chatbot + Moodle/LMS + VR xAPI into per-learner plan adaptation
 - `sme` — C13 SME source registry (approved manuals/lessons for study coach)
 - `nrps` — LTI Advantage NRPS Moodle roster cache (awareness only)
 - `receipts` — HMAC-sealed grade receipts for attempt evidence

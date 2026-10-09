@@ -1,0 +1,480 @@
+# Detailed click-through proofs for every Done row on the meetings Google Sheet.
+# Each step: action + caption (what we click) + do (what it does / output).
+#
+# python scripts/auto_lti_storage_state.py --user riverside_alice --password Demo@12345
+# python scripts/auto_lti_storage_state.py --user riverside_priya --password Demo@12345 --out docs/management-proof/videos/storage_state_teacher.json
+# python scripts/record_feature_proofs.py --detailed
+
+base_url: https://edvidura-app-production.up.railway.app
+# Content viewport is fixed in recorder (1280x640); captions sit below UI.
+viewport: { width: 1280, height: 640 }
+hold_sec: 2.0
+fps: 10
+result_hold_sec: 3.0
+
+features:
+  # ── 17/07 · Moodle LTI 1.3 Integration ─────────────────────────────
+  - id: f01-moodle-lti
+    title: Moodle LTI 1.3 Integration
+    sheet: "17/07 · Moodle LTI 1.3 Integration"
+    requires_session: true
+    role: student
+    intro: "Sheet Done: Moodle launches EdVidura via LTI 1.3. We show the live post-launch hub."
+    steps:
+      - action: goto
+        url: /launch-hub
+        caption: "OPEN: Launch hub after Moodle LTI"
+        do: "Moodle posted a signed launch → EdVidura opened a tenant session"
+        wait_ms: 1200
+      - action: click
+        selector: "a:has-text('Take quiz'), a.card:has-text('Take quiz')"
+        caption: "CLICK: Take quiz card"
+        do: "Opens the class quiz (student path from LTI context)"
+        wait_ms: 1200
+        optional: true
+      - action: goto
+        url: /launch-hub
+        caption: "BACK: Launch hub home"
+        do: "Hub is the post-LTI home — quiz, Ask Vidura, lessons, plan"
+        wait_ms: 800
+      - action: click
+        selector: "a:has-text('Ask Vidura'), a.card:has-text('Ask Vidura')"
+        caption: "CLICK: Ask Vidura"
+        do: "Opens course-scoped coach from the same LTI session"
+        wait_ms: 1200
+        optional: true
+
+  # ── 17/07 · Onboarding APIs ────────────────────────────────────────
+  - id: f02-onboarding-apis
+    title: Onboarding APIs
+    sheet: "17/07 · Onboarding APIs"
+    requires_session: false
+    intro: "Sheet Done: /onboard creates a school and Moodle Dynamic Registration link."
+    steps:
+      - action: goto
+        url: /onboard
+        caption: "OPEN: /onboard"
+        do: "School connect UI — create school + get LTI URLs"
+        wait_ms: 1200
+      - action: scroll_into
+        selector: "h2:has-text('Create'), button:has-text('Create connect link')"
+        caption: "SCROLL: Create & get registration URL"
+        do: "Form posts to onboard APIs (school + dynreg invite)"
+        wait_ms: 700
+      - action: scroll_into
+        selector: "text=Tool / launch URL, text=Initiate login URL, text=Public keyset"
+        caption: "SCROLL: LTI 1.3 URL checklist"
+        do: "Launch, login, JWKS, redirect, Dynamic Registration URLs"
+        wait_ms: 900
+      - action: scroll_into
+        selector: "text=Advanced, button:has-text('Advanced')"
+        caption: "SCROLL: Advanced Client ID setup"
+        do: "Manual LMS link API for Canvas / non-dynreg Moodle"
+        wait_ms: 800
+
+  # ── 17/07 · PostgreSQL data isolation ──────────────────────────────
+  - id: f03-data-isolation
+    title: PostgreSQL data isolation
+    sheet: "17/07 · PostgreSQL data isolation"
+    requires_session: false
+    intro: "Sheet Done: Each school is a tenant under Postgres RLS — Riverside ≠ Lakeside."
+    steps:
+      - action: goto
+        url: /
+        caption: "OPEN: Landing"
+        do: "Product promises tenant isolation for school data"
+        wait_ms: 1000
+      - action: goto
+        url: /onboard
+        caption: "OPEN: /onboard school list"
+        do: "Two demo tenants visible: Riverside High + Lakeside Peer"
+        wait_ms: 1200
+      - action: scroll_into
+        selector: "select, text=Riverside, text=Lakeside, text=School"
+        caption: "SCROLL: School selector (multi-tenant)"
+        do: "Save LMS link binds issuer+client_id to ONE tenant row"
+        wait_ms: 900
+
+  # ── 17/07 · 3Q Quiz UI / score / results ───────────────────────────
+  - id: f04-quiz-ui-results
+    title: "3Q Quiz UI, score & results"
+    sheet: "17/07 · 3 Question Quiz UI, Score Calculation, Results page"
+    requires_session: true
+    role: student
+    intro: "Sheet Done: Student answers questions, submits, sees score + results."
+    steps:
+      - action: goto
+        url: /launch-hub
+        caption: "OPEN: Launch hub"
+        do: "Student entry after Moodle launch"
+        wait_ms: 1000
+      - action: click
+        selector: "a:has-text('Take quiz')"
+        caption: "CLICK: Take quiz"
+        do: "Loads personalized / class quiz session"
+        wait_ms: 1500
+        optional: true
+      - action: goto
+        url: /quiz
+        caption: "OPEN: /quiz"
+        do: "Quiz gate or question session for this class"
+        wait_ms: 1500
+      - action: shot
+        caption: "SEE: Quiz profile / questions"
+        do: "Level, Complexity, Coverage, Study plan cards and/or Q cards"
+        wait_ms: 900
+      - action: click
+        selector: "a:has-text('Start'), button:has-text('Start'), a:has-text('Begin'), a:has-text('Continue'), a.btn-primary, button.btn-primary"
+        caption: "CLICK: Start / continue quiz"
+        do: "Enters or continues question cards"
+        wait_ms: 1500
+        optional: true
+      - action: click
+        selector: "article.q-card .q-opts label >> nth=0, article.q-card:first-of-type label"
+        caption: "CLICK: Answer Q1"
+        do: "Selects an option for the first visible question"
+        wait_ms: 700
+        optional: true
+      - action: click
+        selector: "article.q-card:nth-of-type(2) .q-opts label, article.q-card >> nth=1 >> .q-opts label"
+        caption: "CLICK: Answer Q2"
+        do: "Selects an option for question 2"
+        wait_ms: 700
+        optional: true
+      - action: click
+        selector: "article.q-card:nth-of-type(3) .q-opts label, article.q-card >> nth=2 >> .q-opts label"
+        caption: "CLICK: Answer Q3"
+        do: "Selects an option for question 3"
+        wait_ms: 700
+        optional: true
+      - action: click
+        selector: "#quiz-submit-btn, button:has-text('Submit'), button:has-text('Check')"
+        caption: "CLICK: Submit quiz"
+        do: "Grades attempt → score + results page"
+        wait_ms: 3000
+        optional: true
+        result: true
+      - action: shot
+        caption: "OUTPUT: Results / score page"
+        do: "Score calculation, review, receipt evidence (or quiz UI if submit gated)"
+        wait_ms: 1200
+        result: true
+
+  # ── 17/07 · AGS grade passback ─────────────────────────────────────
+  - id: f05-ags-passback
+    title: AGS grade passback
+    sheet: "17/07 · AGS grade passback (Testing: Roadblock)"
+    requires_session: true
+    role: student
+    intro: "Sheet Done with Testing Roadblock — show result grade-sync UI honestly."
+    steps:
+      - action: goto
+        url: /launch-hub
+        caption: "OPEN: Launch hub"
+        do: "Find last result or active quizzes"
+        wait_ms: 900
+      - action: click
+        selector: "a:has-text('Results'), a:has-text('Last result'), a.card:has-text('result')"
+        caption: "CLICK: Results / last attempt"
+        do: "Opens graded attempt that may call Moodle AGS"
+        wait_ms: 1500
+        optional: true
+      - action: goto
+        url: /active-quizzes
+        caption: "OPEN: Active quizzes"
+        do: "Lists attempts — open one with a score"
+        wait_ms: 1000
+      - action: click
+        selector: "a:has-text('View'), a:has-text('Result'), a[href*='/quiz/result/']"
+        caption: "CLICK: Open a result"
+        do: "Result page shows score + grade sync status chip"
+        wait_ms: 1500
+        optional: true
+        result: true
+      - action: shot
+        caption: "OUTPUT: Grade sync / AGS status"
+        do: "Synced chip or roadblock note — Moodle gradebook is SoR"
+        wait_ms: 1200
+        result: true
+
+  # ── 17/07 · Screen Design Ideas ────────────────────────────────────
+  - id: f06-screen-design
+    title: Screen Design Ideas
+    sheet: "17/07 · Screen Design Ideas"
+    requires_session: false
+    intro: "Sheet Done: Branded landing + in-product shell design."
+    steps:
+      - action: goto
+        url: /
+        caption: "OPEN: Product landing"
+        do: "Hero brand, LTI/Moodle messaging, design system"
+        wait_ms: 1400
+      - action: scroll
+        y: 700
+        caption: "SCROLL: Landing body"
+        do: "Isolation / grade sync narrative sections"
+        wait_ms: 900
+      - action: goto
+        url: /onboard
+        caption: "OPEN: Onboard UI polish"
+        do: "Same design language on connect flow"
+        wait_ms: 1000
+
+  # ── 08/09 · Multi-tenancy ──────────────────────────────────────────
+  - id: f07-multi-tenancy
+    title: Multi-tenancy implementation
+    sheet: "08/09 · Multi-tenancy implementation"
+    requires_session: false
+    intro: "Sheet Done: Multiple schools (tenants) on one app — Riverside / Lakeside."
+    steps:
+      - action: goto
+        url: /onboard
+        caption: "OPEN: /onboard"
+        do: "Tenant create + existing school dropdown"
+        wait_ms: 1200
+      - action: scroll_into
+        selector: "select, text=Riverside, text=Lakeside"
+        caption: "SEE: Riverside High vs Lakeside Peer"
+        do: "Each school = tenants row + isolated lti_platforms"
+        wait_ms: 1000
+      - action: goto
+        url: /health
+        caption: "OPEN: /health"
+        do: "Single live service serving all tenants"
+        wait_ms: 800
+
+  # ── 08/09 · LTI authorization ──────────────────────────────────────
+  - id: f08-lti-authorization
+    title: LTI authorization
+    sheet: "08/09 · LTI authorization"
+    requires_session: false
+    intro: "Sheet Done: Moodle trusts EdVidura JWKS; EdVidura verifies Moodle JWT."
+    steps:
+      - action: goto
+        url: /.well-known/jwks.json
+        caption: "OPEN: Public JWKS"
+        do: "RSA public keys Moodle uses to verify the tool"
+        wait_ms: 800
+        result: true
+      - action: goto
+        url: /onboard
+        caption: "OPEN: Auth URL checklist"
+        do: "login / launch / JWKS / register endpoints"
+        wait_ms: 1000
+      - action: scroll
+        y: 900
+        caption: "SEE: Initiate login + launch URLs"
+        do: "OIDC login start + redirect URI for LTI 1.3"
+        wait_ms: 900
+
+  # ── 08/09 · Yet LRS + Metabase ─────────────────────────────────────
+  - id: f09-yet-metabase
+    title: Yet Analytics LRS + Metabase
+    sheet: "08/09 · Yet Analytics LRS and Metabase integration"
+    requires_session: false
+    intro: "Sheet Done: Owner console gates Metabase embeds + Yet LRS."
+    steps:
+      - action: goto
+        url: /ops/login
+        caption: "OPEN: /ops owner login"
+        do: "Schools do not use this — owner key only"
+        wait_ms: 1000
+      - action: shot
+        caption: "SEE: Owner key gate"
+        do: "After sign-in: Metabase charts + Yet learning history"
+        wait_ms: 800
+      - action: goto
+        url: /health
+        caption: "OPEN: /health flags"
+        do: "Live JSON shows LRS / Metabase integration flags"
+        wait_ms: 900
+        result: true
+
+  # ── 08/09 · AI-generated quizzes ───────────────────────────────────
+  - id: f10-ai-quizzes
+    title: AI-generated quizzes (per student)
+    sheet: "08/09 · AI-generated quizzes — depth & complexity per student"
+    requires_session: true
+    role: teacher
+    intro: "Sheet Done: Teacher sets Level/Complexity/Coverage; students get different quizzes."
+    steps:
+      - action: goto
+        url: /launch-hub
+        caption: "OPEN: Teacher launch hub"
+        do: "Teacher LTI session from Moodle"
+        wait_ms: 1200
+      - action: click
+        selector: "a:has-text('AI tools'), a.btn:has-text('AI tools')"
+        caption: "CLICK: AI tools"
+        do: "Opens teacher AI hub"
+        wait_ms: 1500
+        optional: true
+      - action: goto
+        url: /teacher/ai
+        caption: "OPEN: /teacher/ai"
+        do: "AI quiz settings + generation panels"
+        wait_ms: 1200
+      - action: scroll
+        y: 200
+        caption: "SEE: Level / Complexity / Coverage summary"
+        do: "Controls depth for personalized student quizzes"
+        wait_ms: 900
+      - action: click
+        selector: "input[name='quiz_difficulty'][value='core']"
+        caption: "CLICK: Level = Core (Medium)"
+        do: "Sets difficulty for AI quiz generation"
+        wait_ms: 500
+        optional: true
+      - action: click
+        selector: "input[name='quiz_complexity'][value='apply']"
+        caption: "CLICK: Complexity = Apply"
+        do: "Bloom-style complexity for generated items"
+        wait_ms: 500
+        optional: true
+      - action: click
+        selector: "#quiz-settings-form button[type=submit], button:has-text('Save quiz settings')"
+        caption: "CLICK: Save quiz settings"
+        do: "Persists settings for the class"
+        wait_ms: 1500
+        optional: true
+        result: true
+      - action: scroll
+        y: 700
+        caption: "SCROLL: Generate-from-document panel"
+        do: "Optional PDF/text → draft quiz with Level + Complexity"
+        wait_ms: 900
+
+  # ── 08/09 · Coach voice Indian languages ───────────────────────────
+  - id: f11-coach-voice
+    title: Coach voice — Indian languages
+    sheet: "08/09 · Voice option for coach (Indian languages beyond EN/HI/TE)"
+    requires_session: true
+    role: student
+    intro: "Sheet Done: Ask Vidura Mic/Speak + multi-language replies."
+    steps:
+      - action: goto
+        url: /learn/coach
+        caption: "OPEN: Ask Vidura"
+        do: "Course-scoped study coach"
+        wait_ms: 1200
+      - action: shot
+        caption: "SEE: Language select + Mic button"
+        do: "Hindi, Telugu, Tamil, Kannada, … + English"
+        wait_ms: 800
+      - action: select
+        selector: "#coach-voice-lang"
+        value: hi
+        caption: "SELECT: Hindi (hi)"
+        do: "Reply language set to Hindi"
+        wait_ms: 600
+        optional: true
+      - action: fill
+        selector: "#coach-question"
+        text: "What is a variable in algebra?"
+        caption: "TYPE: Class question"
+        do: "Student asks an on-topic class question"
+        wait_ms: 500
+      - action: click
+        selector: "#coach-ask-form button[type=submit], button:has-text('Ask')"
+        caption: "CLICK: Ask / submit"
+        do: "Coach answers with citations (SME-grounded)"
+        wait_ms: 8000
+        result: true
+      - action: shot
+        caption: "OUTPUT: Answer + Speak button"
+        do: "Reply language chip + Speak answer (browser TTS)"
+        wait_ms: 1200
+        result: true
+      - action: select
+        selector: "#coach-voice-lang"
+        value: te
+        caption: "SELECT: Telugu (te)"
+        do: "Switch to another Indian language"
+        wait_ms: 500
+        optional: true
+
+  # ── 08/09 · xAPI from chats ────────────────────────────────────────
+  - id: f12-xapi-chats
+    title: xAPI data from chats
+    sheet: "08/09 · xAPI data from chats (PeBL)"
+    requires_session: true
+    role: student
+    intro: "Sheet Done: Coach turns emit xAPI; activity feed shows evidence."
+    steps:
+      - action: goto
+        url: /learn/coach
+        caption: "OPEN: Ask Vidura"
+        do: "Start a chat turn that will emit xAPI"
+        wait_ms: 1000
+      - action: fill
+        selector: "#coach-question"
+        text: "Explain slope of a line in one sentence."
+        caption: "TYPE: Short coach question"
+        do: "Creates a study_coach interaction"
+        wait_ms: 400
+      - action: click
+        selector: "#coach-ask-form button[type=submit], button:has-text('Ask')"
+        caption: "CLICK: Submit question"
+        do: "Answer generated + xAPI statement stored/forwarded"
+        wait_ms: 8000
+        result: true
+      - action: goto
+        url: /learn/activity
+        caption: "OPEN: Learning activity"
+        do: "Student activity / recordings feed"
+        wait_ms: 1500
+        result: true
+      - action: scroll
+        y: 300
+        caption: "OUTPUT: Chat / xAPI evidence"
+        do: "Coach turns appear as activity (PeBL-aligned xAPI)"
+        wait_ms: 1000
+        result: true
+
+  # ── 22/09 · Quiz multi-model parser ────────────────────────────────
+  - id: f13-quiz-parser
+    title: Quiz multi-model parser (complexity / coverage / plan)
+    sheet: "22/09 · 3-level complexity, coverage, study-plan validation"
+    requires_session: true
+    role: teacher
+    intro: "Sheet Done: Level + Complexity + Coverage + study-plan validation together."
+    steps:
+      - action: goto
+        url: /teacher/ai
+        caption: "OPEN: Teacher AI hub"
+        do: "Multi-model quiz settings live here"
+        wait_ms: 1200
+      - action: scroll
+        y: 180
+        caption: "SEE: 1) Level  2) Complexity  3) Coverage"
+        do: "Three axes of the multi-model parser"
+        wait_ms: 1000
+      - action: click
+        selector: "input[name='quiz_difficulty'][value='challenge']"
+        caption: "CLICK: Level = Challenge (Hard)"
+        do: "Harder item pool for stronger students"
+        wait_ms: 500
+        optional: true
+      - action: click
+        selector: "input[name='quiz_complexity'][value='analyze']"
+        caption: "CLICK: Complexity = Analyze"
+        do: "Highest Bloom band for generated items"
+        wait_ms: 500
+        optional: true
+      - action: shot
+        caption: "SEE: Coverage always on"
+        do: "Full-book / topic coverage gate (Jev judge)"
+        wait_ms: 800
+      - action: click
+        selector: "#quiz-settings-form button[type=submit], button:has-text('Save quiz settings')"
+        caption: "CLICK: Save settings"
+        do: "Persists Level + Complexity + Coverage for class"
+        wait_ms: 1500
+        optional: true
+        result: true
+      - action: goto
+        url: /quiz
+        caption: "OPEN: Student quiz view (teacher probe)"
+        do: "Profile cards show Level / Complexity / Coverage / Study plan"
+        wait_ms: 1500
+        result: true

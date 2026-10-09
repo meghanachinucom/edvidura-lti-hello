@@ -3,7 +3,8 @@
 Pilot-sized Dynamic Content (C9) + Difference / gap training (C10 / D23) on top of the **C8 skills registry**.
 
 **Persisted PLE** (saved personal plan with step progress): see [PLE.md](PLE.md).  
-**Role difference training**: see [DIFFERENCE.md](DIFFERENCE.md).
+**Role difference training**: see [DIFFERENCE.md](DIFFERENCE.md).  
+**Cross-channel adaptation** (chatbot + Moodle + VR): see [SIGNALS.md](SIGNALS.md).
 
 ## What it does
 
@@ -13,6 +14,7 @@ Pilot-sized Dynamic Content (C9) + Difference / gap training (C10 / D23) on top 
 | **D23 difference** | Target role required skills − mastery → same ordered path (`mode=difference`) |
 | **C9 adaptive next** | If a weak skill has a linked lesson, Home “Continue” prefers that lesson over linear next |
 | **PLE plan** | Same path stored in `learner_plans` until completed or superseded |
+| **Signal fusion** | Coach discussions, Moodle progress/quizzes, and VR xAPI update the **same** per-learner plan |
 | **DCT lesson order** | Lessons list + prev/next reordered for gap-linked lessons (display only) |
 | **DCT micro-lessons** | Teacher Micro-learning planner drafts remediation lessons per skill ([MICRO_LEARNING.md](MICRO_LEARNING.md), [DCT.md](DCT.md), [AI.md](AI.md)) |
 | **Student micro-learning** | `/learn/micro` — skill-linked short lessons with gap priority |

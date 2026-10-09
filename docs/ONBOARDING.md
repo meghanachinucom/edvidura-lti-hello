@@ -3,7 +3,7 @@
 ## Happy path (Dynamic Registration)
 
 1. Open http://127.0.0.1:8000/onboard  
-2. Sign in (Keycloak `ops` / `OpsPass123!`) or paste `ADMIN_API_KEY`  
+2. Sign in at `/ops/login` (Keycloak `ops` / `OpsPass123!`) or paste `ADMIN_API_KEY`, then open **School onboard** — or sign in on `/onboard` directly  
 3. Enter **school name** → **Create connect link**  
 4. Copy the registration URL  
 5. In Moodle: **Site administration → Plugins → External tool → Manage tools → Add LTI Advantage** → paste URL  

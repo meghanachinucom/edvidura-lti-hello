@@ -1,4 +1,4 @@
-"""Class-scoped Study Coach guardrails."""
+"""Class-scoped Ask Vidura guardrails."""
 from __future__ import annotations
 
 from app.modules.ai_tutor import curriculum_chunks_for_session, study_coach_answer

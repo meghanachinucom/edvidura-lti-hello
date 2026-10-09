@@ -69,6 +69,19 @@ class Settings:
     coach_xapi_full_text: bool = False
     # Access level recorded on coach statements (PeBL discussion field).
     coach_xapi_access_level: str = "class"
+    # TypeSafe Jev (System One) — optional decision layer beside LLMs.
+    jev_enabled: bool = False
+    typesafe_api_key: str = ""
+    jev_model: str = "jev-latest"
+    jev_min_confidence: float = 0.55
+    # When configured, let Jev skip remote LLM for cheap local paths.
+    jev_route_llm: bool = True
+    # Phase A Ask Vidura — default on; set COACH_*=0 to disable a slice.
+    coach_shortcuts_enabled: bool = True
+    coach_clarify_enabled: bool = True
+    coach_integrity_enabled: bool = True
+    coach_flashcards_enabled: bool = True
+    coach_feedback_enabled: bool = True
 
     @property
     def is_production(self) -> bool:
@@ -96,6 +109,14 @@ def _safe_int(raw: str | None, default: int = 0) -> int:
         return int((raw or "").strip() or default)
     except ValueError:
         return default
+
+
+def _safe_float(raw: str | None, default: float = 0.0) -> float:
+    try:
+        v = float((raw or "").strip() or default)
+    except ValueError:
+        return default
+    return max(0.0, min(1.0, v))
 
 
 def get_settings() -> Settings:
@@ -201,5 +222,48 @@ def get_settings() -> Settings:
         ),
         coach_xapi_access_level=(
             os.getenv("COACH_XAPI_ACCESS_LEVEL", "class").strip() or "class"
+        ),
+        jev_enabled=os.getenv("JEV_ENABLED", "").strip().lower()
+        in {"1", "true", "yes", "on"},
+        typesafe_api_key=os.getenv("TYPESAFE_API_KEY", "").strip(),
+        jev_model=(os.getenv("JEV_MODEL", "jev-latest").strip() or "jev-latest"),
+        jev_min_confidence=_safe_float(
+            os.getenv("JEV_MIN_CONFIDENCE", "0.55"), 0.55
+        ),
+        jev_route_llm=(
+            True
+            if not os.getenv("JEV_ROUTE_LLM", "").strip()
+            else os.getenv("JEV_ROUTE_LLM", "").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        coach_shortcuts_enabled=(
+            True
+            if not os.getenv("COACH_SHORTCUTS_ENABLED", "").strip()
+            else os.getenv("COACH_SHORTCUTS_ENABLED", "").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        coach_clarify_enabled=(
+            True
+            if not os.getenv("COACH_CLARIFY_ENABLED", "").strip()
+            else os.getenv("COACH_CLARIFY_ENABLED", "").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        coach_integrity_enabled=(
+            True
+            if not os.getenv("COACH_INTEGRITY_ENABLED", "").strip()
+            else os.getenv("COACH_INTEGRITY_ENABLED", "").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        coach_flashcards_enabled=(
+            True
+            if not os.getenv("COACH_FLASHCARDS_ENABLED", "").strip()
+            else os.getenv("COACH_FLASHCARDS_ENABLED", "").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        coach_feedback_enabled=(
+            True
+            if not os.getenv("COACH_FEEDBACK_ENABLED", "").strip()
+            else os.getenv("COACH_FEEDBACK_ENABLED", "").strip().lower()
+            in {"1", "true", "yes", "on"}
         ),
     )

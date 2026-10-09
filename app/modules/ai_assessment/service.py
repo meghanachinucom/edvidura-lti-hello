@@ -127,11 +127,16 @@ def segment_text_for_coverage(
     return segments or [{"label": title or "Topic 1", "text": clean[:2500]}]
 
 
-def coverage_question_count(requested: int, segment_count: int, *, cap: int = 12) -> int:
-    """At least one question per segment when possible (end-to-end coverage)."""
+def coverage_question_count(requested: int, segment_count: int, *, cap: int = 40) -> int:
+    """At least one question per page/section; extras allowed up to ``cap``.
+
+    Never drop below ``segment_count`` — later pages must not be skipped to
+    keep the quiz short.
+    """
     req = max(1, int(requested or 1))
     segs = max(1, int(segment_count or 1))
-    return max(req, min(cap, segs))
+    extras_cap = max(segs, int(cap or segs))
+    return max(segs, min(req, extras_cap))
 
 
 def generate_mcqs_from_text(
@@ -140,34 +145,58 @@ def generate_mcqs_from_text(
     count: int = 3,
     title: str = "",
     difficulty: str = "core",
+    complexity: str = "apply",
     segments: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     text = (body or "").strip()
     if len(text) < 40 and not segments:
         raise ValueError("Lesson text is too short to generate questions")
     level = normalize_difficulty(difficulty)
+    from app.modules.quiz.personalized import (
+        complexity_label,
+        normalize_complexity,
+    )
+
+    depth = normalize_complexity(complexity)
     segs = segments or segment_text_for_coverage(text, title=title)
     if not segs:
         raise ValueError("Lesson text is too short to generate questions")
-    n = coverage_question_count(count, len(segs), cap=12)
+    n = coverage_question_count(count, len(segs), cap=40)
 
     def _openai():
         questions = _openai_mcqs_covered(
-            segs, count=n, title=title, difficulty=level
+            segs, count=n, title=title, difficulty=level, complexity=depth
         )
         return {"questions": questions}
 
     def _local():
         return {
             "questions": _local_mcqs_covered(
-                segs, count=n, title=title, difficulty=level
+                segs, count=n, title=title, difficulty=level, complexity=depth
             )
         }
 
-    result = run_ai(openai_fn=_openai, local_fn=_local, feature="mcq")
+    result = run_ai(
+        openai_fn=_openai,
+        local_fn=_local,
+        feature="mcq",
+        route_state={
+            "segment_count": len(segs),
+            "difficulty": level,
+            "complexity": depth,
+            "title": (title or "")[:120],
+            "goal": (
+                "Draft full-coverage MCQs from lesson segments. Prefer local for "
+                "Easy/Recall and few segments; prefer remote for Analyze/Hard."
+            ),
+        },
+    )
     result["difficulty"] = level
+    result["complexity"] = depth
+    result["complexity_label"] = complexity_label(depth)
     result["segments"] = [s["label"] for s in segs]
     result["covers_all_topics"] = True
+    result["covers_all_pages"] = True
     result["segment_count"] = len(segs)
     return result
 
@@ -253,6 +282,7 @@ def generate_mcqs_from_document(
     count: int = 3,
     title: str = "",
     difficulty: str = "core",
+    complexity: str = "apply",
 ) -> dict[str, Any]:
     """PDF/text upload → extract → MCQ draft covering all pages/sections."""
     extracted = extract_text_from_bytes(data, filename=filename)
@@ -262,6 +292,7 @@ def generate_mcqs_from_document(
         count=count,
         title=label,
         difficulty=difficulty,
+        complexity=complexity,
         segments=extracted.get("segments"),
     )
     result["source_kind"] = extracted["source_kind"]
@@ -707,9 +738,13 @@ def _local_mcqs_covered(
     count: int,
     title: str,
     difficulty: str,
+    complexity: str = "apply",
 ) -> list[dict[str, Any]]:
     """Round-robin across segments so later pages/topics are always included."""
+    from app.modules.quiz.personalized import normalize_complexity
+
     level = normalize_difficulty(difficulty)
+    depth = normalize_complexity(complexity)
     pools: list[list[tuple[str, str]]] = []
     for seg in segments:
         label = seg.get("label") or title or "Topic"
@@ -735,10 +770,10 @@ def _local_mcqs_covered(
                 "source_excerpt": topic,
                 "topic": topic,
                 "difficulty": level,
+                "complexity": depth,
             }
         ]
 
-    # Round-robin facts across all segments (page 1 … page N).
     facts: list[tuple[str, str]] = []
     max_len = max(len(p) for p in pools)
     for i in range(max_len):
@@ -747,7 +782,6 @@ def _local_mcqs_covered(
                 facts.append(pool[i])
 
     n = min(max(1, count), max(len(facts), len(pools)))
-    # Guarantee first pass hits every segment once when count allows.
     first_pass = [pool[0] for pool in pools]
     ordered = first_pass + [f for f in facts if f not in first_pass]
     questions: list[dict[str, Any]] = []
@@ -765,7 +799,14 @@ def _local_mcqs_covered(
                 continue
             ordered_choices[idx] = others[di][:160]
             di += 1
-        if level == "foundational":
+        if depth == "recall":
+            prompt = f"From “{label}”: which fact is stated in the lesson?"
+        elif depth == "analyze":
+            prompt = (
+                f"Using “{label}”, which choice best explains why this matters: "
+                f"“{fact[:55]}…”?"
+            )[:240]
+        elif level == "foundational":
             prompt = f"From “{label}”: which statement is true?"
         elif level == "challenge":
             prompt = (
@@ -782,6 +823,7 @@ def _local_mcqs_covered(
                 "source_excerpt": fact[:120],
                 "topic": label,
                 "difficulty": level,
+                "complexity": depth,
             }
         )
     return questions
@@ -800,18 +842,27 @@ def _openai_mcqs_covered(
     count: int,
     title: str,
     difficulty: str,
+    complexity: str = "apply",
 ) -> list[dict[str, Any]]:
+    from app.modules.quiz.personalized import (
+        _COMPLEXITY_HINTS,
+        normalize_complexity,
+    )
+
     level = normalize_difficulty(difficulty)
+    depth = normalize_complexity(complexity)
     hint = _DIFFICULTY_HINTS.get(level, _DIFFICULTY_HINTS["core"])
+    depth_hint = _COMPLEXITY_HINTS.get(depth, _COMPLEXITY_HINTS["apply"])
     corpus = [
-        {"topic": s["label"], "text": (s.get("text") or "")[:1500]}
-        for s in segments[:20]
+        {"topic": s["label"], "text": (s.get("text") or "")[:1200]}
+        for s in segments[:40]
     ]
     labels = [s["label"] for s in segments]
     data = openai_chat_json(
         system=(
             "You write multiple-choice quiz items for teachers. "
             f"Difficulty: {level}. Guidance: {hint} "
+            f"{depth_hint} "
             "CRITICAL COVERAGE RULE: questions must cover the material "
             "end-to-end. Include at least one question for EVERY topic/page "
             "listed. Never put all questions on early pages only — later "
@@ -824,6 +875,7 @@ def _openai_mcqs_covered(
         user=(
             f"Source: {title or 'document'}\n"
             f"Difficulty: {level}\n"
+            f"Complexity: {depth}\n"
             f"Create exactly {count} MCQs covering ALL of these topics/pages "
             f"in order: {labels}\n"
             f"Corpus:\n{corpus}"
@@ -860,6 +912,7 @@ def _openai_mcqs_covered(
                 "source_excerpt": topic,
                 "topic": topic,
                 "difficulty": level,
+                "complexity": depth,
             }
         )
     if not out:

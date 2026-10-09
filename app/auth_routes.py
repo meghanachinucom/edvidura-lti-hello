@@ -52,15 +52,17 @@ def auth_status(request: Request):
 
 
 @router.get("/auth/login")
-def auth_login(request: Request, next: str = "/onboard"):
+def auth_login(request: Request, next: str = "/ops/dashboard"):
     if not keycloak_enabled():
+        dest = "/ops/login" if str(next or "").startswith("/ops") else "/onboard"
         return RedirectResponse(
-            url="/onboard?err="
+            url=dest
+            + "?err="
             + quote("Keycloak is disabled (set KEYCLOAK_ENABLED=1)"),
             status_code=303,
         )
     state = secrets.token_urlsafe(24)
-    nxt = next if next.startswith("/") else "/onboard"
+    nxt = next if next.startswith("/") else "/ops/dashboard"
     redirect_uri = f"{_public_base(request)}/auth/callback"
     # Server-side pending login — avoids oversized session cookies + host mismatch
     LAUNCH_CACHE.set(
@@ -79,12 +81,14 @@ def auth_callback(
     request: Request, code: str | None = None, state: str | None = None
 ):
     if not keycloak_enabled():
-        return RedirectResponse(url="/onboard?err=Keycloak+disabled", status_code=303)
+        return RedirectResponse(
+            url="/ops/login?err=Keycloak+disabled", status_code=303
+        )
 
     pending = LAUNCH_CACHE.get(f"oidc:{state}") if state else None
     if not code or not state or not isinstance(pending, dict):
         return RedirectResponse(
-            url="/onboard?err="
+            url="/ops/login?err="
             + quote(
                 "Invalid login state — click Sign in with Keycloak again "
                 "(link expires after 10 minutes)"
@@ -93,9 +97,10 @@ def auth_callback(
         )
 
     redirect_uri = str(pending.get("redirect_uri") or f"{_public_base(request)}/auth/callback")
-    nxt = str(pending.get("next") or "/onboard")
+    nxt = str(pending.get("next") or "/ops/dashboard")
     if not nxt.startswith("/"):
-        nxt = "/onboard"
+        nxt = "/ops/dashboard"
+    err_dest = "/ops/login" if nxt.startswith("/ops") else "/onboard"
 
     try:
         tokens = exchange_code(code=code, redirect_uri=redirect_uri)
@@ -103,7 +108,7 @@ def auth_callback(
         principal = verify_access_token(access)
         if not principal_has_ops(principal):
             return RedirectResponse(
-                url="/onboard?err=" + quote("Account lacks ops role"),
+                url=err_dest + "?err=" + quote("Account lacks ops role"),
                 status_code=303,
             )
         # Do NOT store JWT in cookie session — tokens blow past browser cookie limits
@@ -116,15 +121,16 @@ def auth_callback(
         }
     except Exception as exc:  # noqa: BLE001
         return RedirectResponse(
-            url="/onboard?err=" + quote(str(exc)[:160]),
+            url=err_dest + "?err=" + quote(str(exc)[:160]),
             status_code=303,
         )
     finally:
         if state:
             LAUNCH_CACHE.set(f"oidc:{state}", None, exp=1)
 
+    sep = "&" if "?" in nxt else "?"
     return RedirectResponse(
-        url=f"{nxt}?ok=" + quote("Signed in with Keycloak"),
+        url=f"{nxt}{sep}ok=" + quote("Signed in with Keycloak"),
         status_code=303,
     )
 
@@ -132,13 +138,14 @@ def auth_callback(
 @router.get("/auth/logout")
 def auth_logout(request: Request):
     request.session.pop("ops_auth", None)
+    request.session.pop("edvidura_ops", None)
     base = _public_base(request)
     if keycloak_enabled():
         return RedirectResponse(
-            url=keycloak_logout_url(redirect_uri=f"{base}/onboard"),
+            url=keycloak_logout_url(redirect_uri=f"{base}/ops/login"),
             status_code=302,
         )
-    return RedirectResponse(url="/onboard", status_code=303)
+    return RedirectResponse(url="/ops/login", status_code=303)
 
 
 @router.get("/auth/me")

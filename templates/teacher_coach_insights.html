@@ -1,0 +1,116 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<div class="page-wrap">
+  <section class="welcome">
+    <p class="welcome-kicker">Teach · Ask Vidura</p>
+    <h2 class="welcome-title">Coach insights</h2>
+    <p class="welcome-lede">
+      What students ask, refuse, and rate — from class xAPI (chatbot + thumbs).
+      Moodle still owns the gradebook.
+    </p>
+  </section>
+
+  <div class="grid-4">
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Learners in feed</span>
+      <div class="metric-counter" style="margin-top:6px">{{ insights.learner_count }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Coach turns</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--primary)">{{ insights.turns }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Grounded</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--secondary)">{{ insights.grounded_pct }}%</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Thumbs</span>
+      <div class="metric-counter" style="margin-top:6px">↑{{ insights.thumbs_up }} · ↓{{ insights.thumbs_down }}</div>
+    </div>
+  </div>
+
+  <div class="grid-4" style="margin-top:var(--sp-md)">
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Refusals</span>
+      <div class="metric-counter" style="margin-top:6px;color:#f59e0b">{{ insights.refusals_total }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Jev used</span>
+      <div class="metric-counter" style="margin-top:6px">{{ insights.jev_used }}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Jev skipped remote</span>
+      <div class="metric-counter" style="margin-top:6px;color:var(--tertiary)">{{ insights.jev_skipped_remote }}</div>
+    </div>
+    <div class="metric-tile">
+      <a class="btn btn-surface" href="/teacher/activity?token={{ quiz_token }}&channel=coach" style="margin-top:var(--sp-sm)">Raw coach activity</a>
+    </div>
+  </div>
+
+  <div class="grid-12-7-5" style="margin-top:var(--sp-lg)">
+    <section class="frosted" style="padding:var(--sp-xl)">
+      <h3 class="headline-sm" style="margin-bottom:var(--sp-md)">Top topics students ask</h3>
+      {% if insights.top_topics %}
+      <ol style="margin:0;padding-left:1.2rem">
+        {% for t in insights.top_topics %}
+        <li class="body-md" style="margin-bottom:8px">
+          {{ t.topic }}
+          <span class="chip chip-sky" style="font-size:10px">{{ t.count }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="body-sm text-muted">No coach questions yet — students can use Ask Vidura from the class launch.</p>
+      {% endif %}
+    </section>
+    <aside style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Refusals</h3>
+        {% if insights.refusals_by_reason %}
+        <ul class="body-sm" style="margin:0;padding-left:1.1rem">
+          {% for r in insights.refusals_by_reason %}
+          <li>{{ r.reason }} · {{ r.count }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="body-sm text-muted">No refusals recorded.</p>
+        {% endif %}
+      </div>
+      <div class="card" style="padding:var(--sp-lg)">
+        <h3 class="headline-sm" style="margin-bottom:var(--sp-sm)">Strategies</h3>
+        {% if insights.strategies %}
+        <ul class="body-sm" style="margin:0;padding-left:1.1rem">
+          {% for s in insights.strategies %}
+          <li>{{ s.strategy }} · {{ s.count }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="body-sm text-muted">No strategy data yet.</p>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+
+  {% if insights.recent %}
+  <section class="frosted" style="padding:var(--sp-xl);margin-top:var(--sp-lg)">
+    <h3 class="headline-sm" style="margin-bottom:var(--sp-md)">Recent turns</h3>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      {% for r in insights.recent %}
+      <div class="body-sm">
+        <span class="chip chip-mint" style="font-size:10px">{{ r.when[:16] if r.when else "" }}</span>
+        {% if r.strategy %}<span class="chip chip-sky" style="font-size:10px">{{ r.strategy }}</span>{% endif %}
+        {% if r.refusal %}<span class="chip chip-secondary" style="font-size:10px">{{ r.refusal }}</span>{% endif %}
+        <div style="margin-top:4px">{{ r.preview or "—" }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:var(--sp-lg)">
+    <a class="btn secondary" href="/teacher/coach/shortcuts?token={{ quiz_token }}">Shortcuts</a>
+    <a class="btn secondary" href="/teacher/attempts?token={{ quiz_token }}">Class results</a>
+    <a class="btn secondary" href="/teacher/ai?token={{ quiz_token }}">AI tools</a>
+  </div>
+</div>
+{% endblock %}

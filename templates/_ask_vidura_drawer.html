@@ -1,0 +1,62 @@
+{# Right-side Ask Vidura drawer — students only #}
+{% if quiz_token and not is_instructor and not is_school_admin %}
+<button type="button" class="askv-fab" id="askv-fab" aria-controls="askv-drawer" aria-expanded="false" title="Ask Vidura">
+  <span class="material-symbols-outlined" aria-hidden="true">psychology</span>
+  <span class="askv-fab__label">Ask Vidura</span>
+</button>
+
+<aside class="askv-drawer" id="askv-drawer" aria-hidden="true" aria-label="Ask Vidura">
+  <div class="askv-drawer__head">
+    <div class="askv-drawer__brand">
+      <span class="material-symbols-outlined" aria-hidden="true">psychology</span>
+      <div>
+        <strong>Ask Vidura</strong>
+        <span>Class lessons only</span>
+      </div>
+    </div>
+    <div class="askv-drawer__head-actions">
+      <a class="askv-drawer__full" href="/learn/coach?token={{ quiz_token }}" title="Open full Ask Vidura page">Open full</a>
+      <button type="button" class="askv-drawer__close" id="askv-close" aria-label="Close Ask Vidura">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="askv-drawer__thread" id="askv-thread" role="log" aria-live="polite">
+    <div class="askv-msg askv-msg--bot">
+      <p>Ask about this class’s lessons. Off-topic and exam-writing requests are refused.</p>
+    </div>
+  </div>
+
+  <div class="askv-chips" id="askv-chips" aria-label="Quick prompts" hidden></div>
+
+  <form class="askv-drawer__form" id="askv-form">
+    <input type="hidden" name="token" value="{{ quiz_token }}"/>
+    <label class="askv-drawer__lang">
+      <span>Language</span>
+      <select name="reply_language" id="askv-lang" aria-label="Reply language">
+        <option value="en-IN">English (India)</option>
+        <option value="hi-IN">Hindi</option>
+        <option value="te-IN">Telugu</option>
+        <option value="ta-IN">Tamil</option>
+        <option value="kn-IN">Kannada</option>
+        <option value="ml-IN">Malayalam</option>
+        <option value="mr-IN">Marathi</option>
+        <option value="gu-IN">Gujarati</option>
+        <option value="bn-IN">Bengali</option>
+        <option value="pa-IN">Punjabi</option>
+        <option value="en-US">English (US)</option>
+      </select>
+    </label>
+    <textarea id="askv-question" name="question" rows="3" required maxlength="2000"
+              placeholder="What is a variable?"></textarea>
+    <button type="submit" class="btn btn-primary askv-drawer__send" id="askv-send">
+      <span class="material-symbols-outlined" style="font-size:16px">send</span>
+      Ask
+    </button>
+    <p class="askv-drawer__status" id="askv-status" role="status"></p>
+  </form>
+</aside>
+<div class="askv-backdrop" id="askv-backdrop" hidden></div>
+<script src="/static/js/ask_vidura_drawer.js?v=2" defer></script>
+{% endif %}

@@ -5,21 +5,19 @@
     <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
       <div>
         <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
-          <span class="material-symbols-outlined" style="font-size:13px">hub</span>
-          Analytics integrations
+          <span class="material-symbols-outlined" style="font-size:13px">insights</span>
+          Charts &amp; history
         </div>
-        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">Charts &amp; learning records</h1>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">See class learning clearly</h1>
         <p class="body-md" style="color:var(--outline-variant);max-width:560px;margin-top:4px">
-          Your class data is saved in EdVidura. Metabase shows charts; Yet LRS keeps a detailed learning history when connected.
+          Three places hold your data. Use this page to know <strong style="color:var(--inverse-on-surface)">what each one is for</strong>
+          and where to look.
         </p>
       </div>
       <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
-        <a class="btn btn-primary" href="{{ activity_href }}?token={{ quiz_token }}">Activity</a>
+        <a class="btn btn-primary" href="{{ activity_href }}?token={{ quiz_token }}">View activity list</a>
         {% if metabase.url %}
-        <a class="btn" href="{{ metabase.url }}" target="_blank" rel="noopener" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Open Metabase</a>
-        {% endif %}
-        {% if yet_url %}
-        <a class="btn" href="{{ yet_url }}/admin" target="_blank" rel="noopener" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Open Yet LRS</a>
+        <a class="btn" href="{{ metabase.url }}" target="_blank" rel="noopener" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Open charts</a>
         {% endif %}
       </div>
     </div>
@@ -29,43 +27,121 @@
   <div style="padding:var(--sp-md) var(--sp-lg);background:rgba(52,211,153,.12);border-radius:var(--r-xl);margin-bottom:var(--sp-md)">{{ ok_message | replace('+',' ') }}</div>
   {% endif %}
 
+  <section class="frosted" style="padding:var(--sp-xl);margin-bottom:var(--sp-md)">
+    <h2 class="headline-md" style="margin-bottom:var(--sp-md)">What am I looking at?</h2>
+    <div class="grid-3" style="gap:var(--sp-md)">
+      <div style="padding:14px 16px;border-radius:14px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25)">
+        <strong style="display:block;margin-bottom:6px">1 · EdVidura (always)</strong>
+        <p class="body-sm text-muted" style="margin:0;line-height:1.5">
+          Quiz scores, lesson progress, and Ask Vidura turns saved for <em>this school</em>.
+          Open <strong>Activity</strong> or <strong>Class results</strong> — easiest place for day-to-day teaching.
+        </p>
+      </div>
+      <div style="padding:14px 16px;border-radius:14px;background:rgba(64,194,253,.1);border:1px solid rgba(64,194,253,.25)">
+        <strong style="display:block;margin-bottom:6px">2 · Charts (Metabase)</strong>
+        <p class="body-sm text-muted" style="margin:0;line-height:1.5">
+          Pretty graphs over the same school data (attempts, daily activity counts).
+          Good for overview — not for grading. Moodle still owns the official gradebook.
+        </p>
+      </div>
+      <div style="padding:14px 16px;border-radius:14px;background:rgba(153,202,65,.12);border:1px solid rgba(153,202,65,.28)">
+        <strong style="display:block;margin-bottom:6px">3 · Learning history (Yet)</strong>
+        <p class="body-sm text-muted" style="margin:0;line-height:1.5">
+          Optional archive of every learning event (“statement”).
+          Use when you need a detailed trail — not for everyday class checks.
+        </p>
+      </div>
+    </div>
+  </section>
+
   <div class="grid-4">
     <div class="metric-tile">
-      <span class="label-caps text-muted">EdVidura records</span>
+      <span class="label-caps text-muted">School records</span>
       <div class="headline-sm" style="margin-top:8px;color:var(--primary)">Always on</div>
-      <p class="body-sm text-muted" style="margin-top:6px">{{ local.detail }}</p>
+      <p class="body-sm text-muted" style="margin-top:6px">
+        {{ local.detail or "Quiz + activity saved in EdVidura for your school." }}
+      </p>
     </div>
     <div class="metric-tile">
-      <span class="label-caps text-muted">Yet LRS</span>
+      <span class="label-caps text-muted">Charts tool</span>
+      <div class="headline-sm" style="margin-top:8px;color:{% if metabase.embed_ready or metabase.url %}var(--primary){% else %}var(--outline){% endif %}">
+        {% if metabase.embed_ready %}Ready below{% elif metabase.url %}Open separately{% else %}Not set up{% endif %}
+      </div>
+      <p class="body-sm text-muted" style="margin-top:6px">
+        {% if metabase.embed_ready %}Scroll down for the school chart panel.
+        {% elif metabase.url %}Use “Open charts” above.
+        {% else %}Ask an admin to connect Metabase — Analytics page still works.{% endif %}
+      </p>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">History archive</span>
       <div class="headline-sm" style="margin-top:8px;color:{% if lrs.configured %}var(--primary){% else %}var(--outline){% endif %}">
-        {% if lrs.configured %}Connected{% else %}Not connected{% endif %}
+        {% if lrs.configured %}{% if lrs.reachable is defined and not lrs.reachable %}Offline{% else %}Connected{% endif %}{% else %}Optional{% endif %}
       </div>
       <p class="body-sm text-muted" style="margin-top:6px">
-        {% if lrs.endpoint %}Sending learning events to Yet{% else %}Optional — ask admin to connect Yet{% endif %}
+        {% if lrs.configured %}Events are copied to Yet when students learn.
+        {% else %}Not required for teaching — skip unless you need raw history.{% endif %}
       </p>
     </div>
     <div class="metric-tile">
-      <span class="label-caps text-muted">Metabase charts</span>
-      <div class="headline-sm" style="margin-top:8px;color:{% if metabase.embed_ready %}var(--primary){% else %}var(--outline){% endif %}">
-        {% if metabase.embed_ready %}Ready{% else %}Not connected{% endif %}
-      </div>
-      <p class="body-sm text-muted" style="margin-top:6px">
-        {% if metabase.url %}School dashboards{% else %}In-app Analytics still works without Metabase{% endif %}
-      </p>
-    </div>
-    <div class="metric-tile">
-      <span class="label-caps text-muted">Study coach chats</span>
+      <span class="label-caps text-muted">Ask Vidura log</span>
       <div class="headline-sm" style="margin-top:8px;color:var(--secondary)">
-        {% if local.coach_xapi_full_text %}Full text saved{% else %}Short preview saved{% endif %}
+        {% if local.coach_xapi_full_text %}Full chat text{% else %}Short preview{% endif %}
       </div>
-      <p class="body-sm text-muted" style="margin-top:6px">Access: {{ local.coach_xapi_access_level or "class" }}</p>
+      <p class="body-sm text-muted" style="margin-top:6px">
+        Coach questions appear in Activity. Visibility: {{ local.coach_xapi_access_level or "class" }}.
+      </p>
     </div>
   </div>
+
+  {% if metabase_embed_url %}
+  <section class="frosted" style="padding:var(--sp-xl);margin-top:var(--sp-md)">
+    <div class="section-head" style="margin-bottom:var(--sp-md)">
+      <div>
+        <h2 class="headline-md" style="margin:0">School charts</h2>
+        <p class="body-sm text-muted" style="margin:6px 0 0">
+          Numbers below come from EdVidura’s database. Read them like this:
+        </p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:var(--sp-md)">
+      <div style="padding:10px 12px;border-radius:12px;background:rgba(14,43,36,.04);border:1px solid rgba(14,43,36,.08)">
+        <strong class="body-sm">Quiz attempts</strong>
+        <p class="body-sm text-muted" style="margin:4px 0 0">How many times students submitted a quiz · score % · pass/fail</p>
+      </div>
+      <div style="padding:10px 12px;border-radius:12px;background:rgba(14,43,36,.04);border:1px solid rgba(14,43,36,.08)">
+        <strong class="body-sm">Daily activity</strong>
+        <p class="body-sm text-muted" style="margin:4px 0 0">Count of learning events per day (lesson open, quiz, Ask Vidura…)</p>
+      </div>
+      <div style="padding:10px 12px;border-radius:12px;background:rgba(14,43,36,.04);border:1px solid rgba(14,43,36,.08)">
+        <strong class="body-sm">School KPIs</strong>
+        <p class="body-sm text-muted" style="margin:4px 0 0">Totals for this school only — not other institutions</p>
+      </div>
+    </div>
+    <iframe
+      src="{{ metabase_embed_url }}"
+      title="School charts"
+      style="width:100%;min-height:520px;border:0;border-radius:var(--r-xl);background:#fff"
+      allowtransparency></iframe>
+    <p class="body-sm text-muted" style="margin-top:10px">
+      Tip: empty charts usually mean few student actions yet — take a quiz or open Ask Vidura, then refresh.
+    </p>
+  </section>
+  {% elif metabase.url %}
+  <section class="frosted" style="padding:var(--sp-lg);margin-top:var(--sp-md)">
+    <h2 class="headline-md" style="margin-bottom:8px">Charts tool</h2>
+    <p class="body-sm text-muted">
+      Charts open in a separate window.
+      <a href="{{ metabase.url }}" target="_blank" rel="noopener">Open charts</a>
+      (an admin can embed them on this page later).
+    </p>
+  </section>
+  {% endif %}
 
   {% if lrs.configured %}
   <section class="frosted" style="padding:var(--sp-xl);margin-top:var(--sp-md)">
     <div class="section-head">
-      <h2 class="headline-md">Yet learning records</h2>
+      <h2 class="headline-md">Learning history archive (Yet)</h2>
       {% if lrs.ok is defined and lrs.ok %}
       <span class="chip chip-mint">Online</span>
       {% elif lrs.reachable is defined %}
@@ -74,16 +150,20 @@
       </span>
       {% endif %}
     </div>
-    <p class="body-sm text-muted">EdVidura can copy activity into Yet so you can browse statements there.</p>
+    <p class="body-sm text-muted" style="margin-top:8px;max-width:640px">
+      Yet stores raw learning events (who did what, when). Teachers normally use
+      <strong>Activity</strong> or <strong>Class results</strong> instead.
+      Open Yet only if you need the technical statement browser.
+    </p>
     {% if yet_url %}
     <p style="margin-top:var(--sp-md)">
-      <a class="btn btn-primary" href="{{ yet_url }}/admin" target="_blank" rel="noopener">Open Yet admin</a>
+      <a class="btn btn-surface" href="{{ yet_url }}/admin" target="_blank" rel="noopener">Open Yet admin</a>
     </p>
     {% endif %}
     {% if can_retry %}
     <form method="post" action="/school-admin/integrations/retry-lrs" style="margin-top:var(--sp-md)">
       <input type="hidden" name="token" value="{{ quiz_token }}"/>
-      <button type="submit" class="btn btn-primary">Retry failed LRS posts</button>
+      <button type="submit" class="btn btn-primary">Retry failed history posts</button>
     </form>
     {% endif %}
     {% if lrs.detail %}
@@ -92,33 +172,13 @@
   </section>
   {% endif %}
 
-  {% if metabase_embed_url %}
-  <section class="frosted" style="padding:var(--sp-md);margin-top:var(--sp-md)">
-    <h2 class="headline-md" style="margin-bottom:var(--sp-md)">Metabase dashboard</h2>
-    <iframe
-      src="{{ metabase_embed_url }}"
-      title="Metabase"
-      style="width:100%;min-height:480px;border:0;border-radius:var(--r-xl);background:#fff"
-      allowtransparency></iframe>
-  </section>
-  {% elif metabase.url %}
   <section class="frosted" style="padding:var(--sp-lg);margin-top:var(--sp-md)">
-    <h2 class="headline-md" style="margin-bottom:8px">Metabase</h2>
-    <p class="body-sm text-muted">
-      Charts open in Metabase.
-      <a href="{{ metabase.url }}" target="_blank" rel="noopener">Open Metabase</a>
-      (embed inside EdVidura needs the embed secret from an admin).
-    </p>
-  </section>
-  {% endif %}
-
-  <section class="frosted" style="padding:var(--sp-lg);margin-top:var(--sp-md)">
-    <h2 class="headline-sm" style="margin-bottom:8px">In plain words</h2>
-    <ul class="body-sm text-muted" style="margin:0;padding-left:1.2rem;line-height:1.7">
-      <li><strong>EdVidura</strong> always keeps quiz and activity records for your school.</li>
-      <li><strong>Metabase</strong> is the chart tool (open from Analytics or the button above).</li>
-      <li><strong>Yet LRS</strong> is the detailed learning-history store when connected.</li>
-      <li>If something says “Not connected”, ask an admin — in-app Analytics still works.</li>
+    <h2 class="headline-sm" style="margin-bottom:8px">Quick map</h2>
+    <ul class="body-sm text-muted" style="margin:0;padding-left:1.2rem;line-height:1.75">
+      <li><strong>“Who scored what?”</strong> → Class results / Activity (EdVidura)</li>
+      <li><strong>“Show me a chart for the school”</strong> → Charts (Metabase) on this page</li>
+      <li><strong>“Show me every raw learning event”</strong> → Yet history (optional)</li>
+      <li><strong>Official Moodle grade</strong> → still Moodle — charts here do not replace the gradebook</li>
     </ul>
   </section>
 </div>

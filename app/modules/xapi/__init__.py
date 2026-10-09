@@ -3,6 +3,7 @@
 from app.modules.xapi.activity import activity_feed, present_statement_row
 from app.modules.xapi.builder import (
     build_actor,
+    build_coach_feedback_statement,
     build_coach_interacted_statement,
     build_lesson_completed_statement,
     build_quiz_attempt_statement,
@@ -18,6 +19,7 @@ from app.modules.xapi.service import (
     forward_to_lrs,
     list_statements,
     promote_tier,
+    record_coach_feedback,
     record_coach_interaction,
     record_lesson_completed,
     record_quiz_attempt,
@@ -39,10 +41,12 @@ __all__ = [
     "build_resource_experienced_statement",
     "build_skill_assessed_statement",
     "build_coach_interacted_statement",
+    "build_coach_feedback_statement",
     "record_quiz_attempt",
     "record_lesson_completed",
     "record_resource_experienced",
     "record_coach_interaction",
+    "record_coach_feedback",
     "record_skill_assessments",
     "store_raw_statement",
     "promote_tier",

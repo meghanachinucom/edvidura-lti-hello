@@ -67,32 +67,24 @@ def _page(title: str, body: str, status_code: int = 200) -> HTMLResponse:
 
 
 def store_quiz_context(data: dict[str, Any], *, ttl_sec: int = 3600) -> str:
-    """Persist launch context (memory + DB so submit survives uvicorn --reload)."""
-    token = uuid4().hex
-    payload = {**dict(data), "quiz_token": token}
-    LAUNCH_CACHE.set(f"{QUIZ_CTX_PREFIX}{token}", payload, exp=ttl_sec)
-    try:
-        db.save_quiz_context(token, payload, ttl_sec=ttl_sec)
-    except Exception as exc:  # noqa: BLE001
-        print(f"Warning: could not persist quiz context: {exc}", flush=True)
-    return token
+    """Persist launch context — portable module + EdVidura cache adapter."""
+    from app.modules import quiz as quiz_mod
+
+    return quiz_mod.store_context(
+        data,
+        ttl_sec=ttl_sec,
+        cache_set=LAUNCH_CACHE.set,
+    )
 
 
 def load_quiz_context(token: str | None) -> dict[str, Any] | None:
-    if not token:
-        return None
-    data = LAUNCH_CACHE.get(f"{QUIZ_CTX_PREFIX}{token}")
-    if isinstance(data, dict):
-        return dict(data)
-    try:
-        data = db.get_quiz_context(token)
-    except Exception as exc:  # noqa: BLE001
-        print(f"Quiz context lookup failed: {exc}", flush=True)
-        return None
-    if isinstance(data, dict):
-        LAUNCH_CACHE.set(f"{QUIZ_CTX_PREFIX}{token}", data, exp=3600)
-        return dict(data)
-    return None
+    from app.modules import quiz as quiz_mod
+
+    return quiz_mod.load_context(
+        token,
+        cache_get=LAUNCH_CACHE.get,
+        cache_set=LAUNCH_CACHE.set,
+    )
 
 
 def resolve_quiz_session(
@@ -265,108 +257,34 @@ async def quiz_submit(
         return session
 
     try:
+        from app.modules import quiz as quiz_mod
+
         form = await request.form()
         practice_mode = str(form.get("practice_mode") or "") == "1"
         personalized_mode = str(form.get("personalized_mode") or "") == "1"
-        all_questions = questions_for_tenant(
-            session.get("tenant_id"),
+        personal_bank = session.get("personal_quiz_bank") if personalized_mode else None
+        graded = quiz_mod.grade_submitted_form(
+            tenant_id=session["tenant_id"],
+            subject=str(session.get("subject") or ""),
             course_id=session.get("edvidura_course_id") or None,
+            form_keys=set(form.keys()),
+            get_answer=lambda qid: form.get(qid),
+            practice_mode=practice_mode,
+            personalized_mode=personalized_mode,
+            personal_bank=personal_bank if isinstance(personal_bank, dict) else None,
+            retry_from=str(form.get("retry_from") or ""),
         )
-        personal_bank = None
-        if personalized_mode:
-            from app.modules.quiz.personalized import questions_from_payload
+        score = int(graded["score"])
+        max_score = int(graded["max_score"])
 
-            bank = session.get("personal_quiz_bank") or {}
-            if str(bank.get("subject") or "") == str(session.get("subject") or ""):
-                personal_bank = bank
-                all_questions = questions_from_payload(bank.get("questions"))
-        form_keys = set(form.keys())
-        questions = tuple(q for q in all_questions if q.id in form_keys)
-        if not questions:
-            questions = all_questions
-        submitted = {q.id: str(form.get(q.id) or "") for q in questions}
-        score, detail = grade_answers(submitted, questions)
-        max_score = len(questions)
-
-        answers_payload: dict[str, Any] = {
-            "submitted": submitted,
-            "detail": detail,
-        }
-        if practice_mode:
-            answers_payload["mode"] = "practice"
-        if personalized_mode:
-            answers_payload["personalized"] = True
-            if not practice_mode:
-                answers_payload["mode"] = "personalized_ai"
-            else:
-                answers_payload["mode"] = "practice"
-            if personal_bank and isinstance(personal_bank.get("meta"), dict):
-                answers_payload["personal_meta"] = personal_bank["meta"]
-            answers_payload["question_bank"] = [
-                {
-                    "id": q.id,
-                    "prompt": q.prompt,
-                    "choices": list(q.choices),
-                    "correct_index": q.correct_index,
-                }
-                for q in questions
-            ]
-        retry_from = str(form.get("retry_from") or "").strip()
-        if retry_from:
-            answers_payload["retry_from"] = retry_from
-
-        # Save + redirect immediately; AGS runs in background so the browser never hangs
-        attempt = db.insert_quiz_attempt(
+        # Domain: save + xAPI/outbox. HTTP: AGS background + redirect.
+        attempt = quiz_mod.record_graded_attempt(
             tenant_id=session["tenant_id"],
             subject=str(session["subject"]),
             learner_name=str(session.get("learner_name") or ""),
             course_label=str(session.get("course") or ""),
-            score=score,
-            max_score=max_score,
-            answers=answers_payload,
-            grade_sent=False,
-            grade_error=(
-                "Practice attempt — not sent to Moodle"
-                if practice_mode
-                else "Grade passback queued…"
-            ),
+            graded=graded,
         )
-
-        try:
-            from app.modules.events import enqueue_quiz_attempt_submitted
-
-            enqueue_quiz_attempt_submitted(
-                tenant_id=session["tenant_id"],
-                subject=str(session["subject"]),
-                attempt_id=attempt["id"],
-                score=score,
-                max_score=max_score,
-                course_label=str(session.get("course") or ""),
-            )
-        except Exception as outbox_exc:  # noqa: BLE001
-            print(f"Outbox enqueue failed (attempt saved): {outbox_exc}", flush=True)
-
-        try:
-            from app.modules.xapi import record_quiz_attempt, record_skill_assessments
-
-            record_quiz_attempt(
-                tenant_id=session["tenant_id"],
-                subject=str(session["subject"]),
-                learner_name=str(session.get("learner_name") or ""),
-                attempt_id=attempt["id"],
-                score=score,
-                max_score=max_score,
-                course_label=str(session.get("course") or ""),
-            )
-            record_skill_assessments(
-                tenant_id=session["tenant_id"],
-                subject=str(session["subject"]),
-                learner_name=str(session.get("learner_name") or ""),
-                attempt_id=attempt["id"],
-                answers=answers_payload,
-            )
-        except Exception as xapi_exc:  # noqa: BLE001
-            print(f"xAPI record failed (attempt saved): {xapi_exc}", flush=True)
 
         if not practice_mode:
             launch_id = str(session.get("launch_id") or "")
@@ -382,31 +300,15 @@ async def quiz_submit(
                 ags_available=session.get("ags_available"),
                 launch_data=launch_data,
             )
-        else:
-            try:
-                db.update_quiz_attempt_grade(
-                    tenant_id=session["tenant_id"],
-                    attempt_id=attempt["id"],
-                    grade_sent=False,
-                    grade_error="Practice attempt — not sent to Moodle",
-                )
-            except Exception:  # noqa: BLE001
-                pass
 
         session["last_result_id"] = str(attempt["id"])
         if quiz_token:
             session["quiz_token"] = quiz_token
-            LAUNCH_CACHE.set(
-                f"{QUIZ_CTX_PREFIX}{quiz_token}",
+            quiz_mod.persist_context(
+                quiz_token,
                 {**session, "quiz_token": quiz_token},
-                exp=3600,
+                cache_set=LAUNCH_CACHE.set,
             )
-            try:
-                db.save_quiz_context(
-                    quiz_token, {**session, "quiz_token": quiz_token}, ttl_sec=3600
-                )
-            except Exception:  # noqa: BLE001
-                pass
         request.session[SESSION_KEY] = session
 
         token_q = f"?token={quiz_token}" if quiz_token else ""

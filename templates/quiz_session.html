@@ -15,16 +15,25 @@
     <span class="material-symbols-outlined">replay</span>
     <span class="body-md">Graded remediation retry — missed items only; <strong>can sync to Moodle</strong>.</span>
   </div>
+  {% elif personalized_mode and personal_meta and personal_meta.source == 'teacher_bank' %}
+  <div class="quiz-banner quiz-banner--graded">
+    <span class="material-symbols-outlined">quiz</span>
+    <span class="body-md">
+      <strong>Graded quiz</strong> —
+      {{ questions|length }} question{% if questions|length != 1 %}s{% endif %}
+      from your teacher’s bank
+      {% if personal_meta.bank_total %}
+      ({{ personal_meta.bank_total }} available)
+      {% endif %}
+      · {% if ags_available %}<strong>can sync to Moodle</strong>{% else %}saves in EdVidura{% endif %}
+    </span>
+  </div>
   {% elif personalized_mode %}
   <div class="quiz-banner quiz-banner--graded">
     <span class="material-symbols-outlined">auto_awesome</span>
     <span class="body-md">
-      <strong>Graded quiz</strong> — different questions from classmates, covering all class topics
-      {% if personal_meta and personal_meta.difficulty_label %}
-      · level: <strong>{{ personal_meta.difficulty_label }}</strong>{% if personal_meta.difficulty_source == 'teacher' %} (set by teacher){% endif %}
-      {% elif personal_meta and personal_meta.difficulty %}
-      · level: <strong>{{ personal_meta.difficulty }}</strong>
-      {% endif %}
+      <strong>Your personal quiz</strong> — level + complexity set for you,
+      and questions from <strong>every page/section</strong> of the class book
       · {% if ags_available %}<strong>can sync to Moodle</strong>{% else %}saves in EdVidura{% endif %}
     </span>
   </div>
@@ -61,14 +70,56 @@
           {% if practice_mode %}Practice check{% elif retry_from %}Retry missed{% else %}Take the quiz{% endif %}
         </h1>
         <p class="body-md" style="color:var(--outline-variant);margin-top:4px;max-width:560px">
-          {% if personal_meta and personal_meta.topics %}
+          {% if personalized_mode and personal_meta and personal_meta.source == 'teacher_bank' %}
+            {{ questions|length }} of {{ personal_meta.bank_total or questions|length }} teacher questions for this attempt
+            · {% if practice_mode %}no Moodle sync{% elif ags_available %}can sync to Moodle{% else %}saves in EdVidura{% endif %}.
+          {% elif personal_meta and personal_meta.topics %}
             {{ questions|length }} question{% if questions|length != 1 %}s{% endif %} unique to you
-            · covers: {{ personal_meta.topics[:6]|join(", ") }}{% if personal_meta.topics|length > 6 %}…{% endif %}
+            · chapters: {{ personal_meta.topics[:6]|join(", ") }}{% if personal_meta.topics|length > 6 %}…{% endif %}
           {% else %}
             {{ questions|length }} question{% if questions|length != 1 %}s{% endif %}
             · {% if practice_mode %}no Moodle sync{% elif ags_available %}can sync to Moodle{% else %}saves in EdVidura{% endif %}.
           {% endif %}
         </p>
+        {% if personalized_mode and personal_meta and personal_meta.source != 'teacher_bank' %}
+        <div class="quiz-profile" role="group" aria-label="Your quiz settings">
+          <div class="quiz-profile__card">
+            <span class="quiz-profile__k">Level</span>
+            <strong>{{ personal_meta.difficulty_label or personal_meta.difficulty or "Medium" }}</strong>
+            <span class="quiz-profile__hint">{% if personal_meta.difficulty_source == 'teacher' %}Teacher{% else %}Auto for you{% endif %}</span>
+          </div>
+          <div class="quiz-profile__card">
+            <span class="quiz-profile__k">Complexity</span>
+            <strong>{{ personal_meta.complexity_label or personal_meta.complexity or "Apply" }}</strong>
+            <span class="quiz-profile__hint">{% if personal_meta.complexity_source == 'teacher' %}Teacher{% else %}Auto for you{% endif %}</span>
+          </div>
+          <div class="quiz-profile__card quiz-profile__card--ok">
+            <span class="quiz-profile__k">Coverage</span>
+            <strong>Full book</strong>
+            <span class="quiz-profile__hint">
+              {% if personal_meta.coverage_unit_count %}
+              {{ personal_meta.covered_unit_count or personal_meta.coverage_unit_count }}/{{ personal_meta.coverage_unit_count }} pages/sections
+              {% else %}
+              Every chapter included
+              {% endif %}
+            </span>
+          </div>
+          {% set sp = personal_meta.study_plan_validation or {} %}
+          <div class="quiz-profile__card {% if personal_meta.study_plan_valid %}quiz-profile__card--ok{% endif %}">
+            <span class="quiz-profile__k">Study plan</span>
+            <strong>{% if personal_meta.study_plan_valid %}Validated{% elif sp.has_plan %}Checking{% else %}From scores{% endif %}</strong>
+            <span class="quiz-profile__hint">
+              {% if sp.has_plan and sp.skills_aligned %}
+              {{ sp.skills_aligned|length }}/{{ sp.skills_targeted|length }} gap skills
+              {% elif sp.message %}
+              {{ sp.message[:90] }}{% if sp.message|length > 90 %}…{% endif %}
+              {% else %}
+              Matched to your performance
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        {% endif %}
       </div>
       <div class="quiz-hero-actions">
         <div class="quiz-progress-pill" id="quiz-progress-pill" aria-live="polite">
@@ -140,7 +191,7 @@
             {% if practice_mode %}Submit practice (no Moodle){% else %}Submit graded quiz{% endif %}
           </button>
           <a class="btn btn-glass" href="/lessons?token={{ quiz_token }}">Cancel</a>
-          <a class="btn btn-surface" href="/learn/coach?token={{ quiz_token }}">Ask study coach</a>
+          <a class="btn btn-surface" href="/learn/coach?token={{ quiz_token }}">Ask Vidura</a>
         </div>
       </div>
     </form>
@@ -162,7 +213,7 @@
         <div style="display:flex;flex-direction:column;gap:8px">
           <a class="btn btn-surface" href="/learn/coach?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">
             <span class="material-symbols-outlined" style="font-size:15px">psychology</span>
-            Study coach
+            Ask Vidura
           </a>
           <a class="btn btn-surface" href="/manuals?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">
             <span class="material-symbols-outlined" style="font-size:15px">menu_book</span>

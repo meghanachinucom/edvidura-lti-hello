@@ -1,0 +1,123 @@
+{
+  "base_url": "https://edvidura-app-production.up.railway.app",
+  "generated_by": "scripts/record_feature_proofs.py (cursor+audio)",
+  "features": [
+    {
+      "id": "f01-moodle-lti",
+      "title": "Moodle LTI 1.3 Integration",
+      "status": "ok",
+      "mp4": "videos/by-feature/f01-moodle-lti.mp4",
+      "frames": 444,
+      "sheet": "17/07 \u00b7 Moodle LTI 1.3 Integration",
+      "audio": true
+    },
+    {
+      "id": "f02-onboarding-apis",
+      "title": "Onboarding APIs",
+      "status": "ok",
+      "mp4": "videos/by-feature/f02-onboarding-apis.mp4",
+      "frames": 453,
+      "sheet": "17/07 \u00b7 Onboarding APIs",
+      "audio": true
+    },
+    {
+      "id": "f03-data-isolation",
+      "title": "PostgreSQL data isolation",
+      "status": "ok",
+      "mp4": "videos/by-feature/f03-data-isolation.mp4",
+      "frames": 356,
+      "sheet": "17/07 \u00b7 PostgreSQL data isolation",
+      "audio": true
+    },
+    {
+      "id": "f04-quiz-ui-results",
+      "title": "3Q Quiz UI, score & results",
+      "status": "ok",
+      "mp4": "videos/by-feature/f04-quiz-ui-results.mp4",
+      "frames": 779,
+      "sheet": "17/07 \u00b7 3 Question Quiz UI, Score Calculation, Results page",
+      "audio": true
+    },
+    {
+      "id": "f05-ags-passback",
+      "title": "AGS grade passback",
+      "status": "ok",
+      "mp4": "videos/by-feature/f05-ags-passback.mp4",
+      "frames": 440,
+      "sheet": "17/07 \u00b7 AGS grade passback (Testing: Roadblock)",
+      "audio": true
+    },
+    {
+      "id": "f06-screen-design",
+      "title": "Screen Design Ideas",
+      "status": "ok",
+      "mp4": "videos/by-feature/f06-screen-design.mp4",
+      "frames": 279,
+      "sheet": "17/07 \u00b7 Screen Design Ideas",
+      "audio": true
+    },
+    {
+      "id": "f07-multi-tenancy",
+      "title": "Multi-tenancy implementation",
+      "status": "ok",
+      "mp4": "videos/by-feature/f07-multi-tenancy.mp4",
+      "frames": 314,
+      "sheet": "08/09 \u00b7 Multi-tenancy implementation",
+      "audio": true
+    },
+    {
+      "id": "f08-lti-authorization",
+      "title": "LTI authorization",
+      "status": "ok",
+      "mp4": "videos/by-feature/f08-lti-authorization.mp4",
+      "frames": 356,
+      "sheet": "08/09 \u00b7 LTI authorization",
+      "audio": true
+    },
+    {
+      "id": "f09-yet-metabase",
+      "title": "Yet Analytics LRS + Metabase",
+      "status": "ok",
+      "mp4": "videos/by-feature/f09-yet-metabase.mp4",
+      "frames": 318,
+      "sheet": "08/09 \u00b7 Yet Analytics LRS and Metabase integration",
+      "audio": true
+    },
+    {
+      "id": "f10-ai-quizzes",
+      "title": "AI-generated quizzes (per student)",
+      "status": "ok",
+      "mp4": "videos/by-feature/f10-ai-quizzes.mp4",
+      "frames": 659,
+      "sheet": "08/09 \u00b7 AI-generated quizzes \u2014 depth & complexity per student",
+      "audio": true
+    },
+    {
+      "id": "f11-coach-voice",
+      "title": "Coach voice \u2014 Indian languages",
+      "status": "ok",
+      "mp4": "videos/by-feature/f11-coach-voice.mp4",
+      "frames": 563,
+      "sheet": "08/09 \u00b7 Voice option for coach (Indian languages beyond EN/HI/TE)",
+      "audio": true
+    },
+    {
+      "id": "f12-xapi-chats",
+      "title": "xAPI data from chats",
+      "status": "ok",
+      "mp4": "videos/by-feature/f12-xapi-chats.mp4",
+      "frames": 448,
+      "sheet": "08/09 \u00b7 xAPI data from chats (PeBL)",
+      "audio": true
+    },
+    {
+      "id": "f13-quiz-parser",
+      "title": "Quiz multi-model parser (complexity / coverage / plan)",
+      "status": "ok",
+      "mp4": "videos/by-feature/f13-quiz-parser.mp4",
+      "frames": 633,
+      "sheet": "22/09 \u00b7 3-level complexity, coverage, study-plan validation",
+      "audio": true
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<div class="page-wrap">
+  <section class="welcome">
+    <p class="welcome-kicker">Teach · Ask Vidura</p>
+    <h2 class="welcome-title">Welcome shortcuts</h2>
+    <p class="welcome-lede">
+      Chips students see on Ask Vidura. Keep labels short; prompts are sent as the question.
+    </p>
+  </section>
+
+  {% if ok_message %}
+  <p class="banner ok">Shortcuts saved.</p>
+  {% endif %}
+  {% if error %}
+  <p class="banner err">{{ error }}</p>
+  {% endif %}
+
+  <section class="panel">
+    <form method="post" action="/teacher/coach/shortcuts" class="teach-form">
+      <input type="hidden" name="token" value="{{ quiz_token }}"/>
+      <div id="sc-rows" style="display:flex;flex-direction:column;gap:12px">
+        {% for row in shortcut_rows %}
+        <div class="sc-row" style="display:grid;grid-template-columns:1fr 2fr;gap:10px">
+          <label>Label
+            <input name="label" value="{{ row.label }}" maxlength="80" required/>
+          </label>
+          <label>Prompt
+            <input name="prompt" value="{{ row.prompt }}" maxlength="500" required/>
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+        <button type="button" class="btn secondary" id="sc-add">Add chip</button>
+        <button type="submit" class="btn primary">Save shortcuts</button>
+        <a class="btn secondary" href="/teacher/ai?token={{ quiz_token }}">Back to AI tools</a>
+      </div>
+    </form>
+  </section>
+</div>
+<script>
+(function () {
+  var rows = document.getElementById("sc-rows");
+  var add = document.getElementById("sc-add");
+  if (!rows || !add) return;
+  add.addEventListener("click", function () {
+    if (rows.children.length >= 8) return;
+    var div = document.createElement("div");
+    div.className = "sc-row";
+    div.style.cssText = "display:grid;grid-template-columns:1fr 2fr;gap:10px";
+    div.innerHTML =
+      '<label>Label<input name="label" maxlength="80" required/></label>' +
+      '<label>Prompt<input name="prompt" maxlength="500" required/></label>';
+    rows.appendChild(div);
+  });
+})();
+</script>
+{% endblock %}

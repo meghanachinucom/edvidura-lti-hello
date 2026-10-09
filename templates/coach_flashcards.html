@@ -1,0 +1,69 @@
+{% extends "base_shell.html" %}
+{% block content %}
+<style>
+  .fc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--sp-md); }
+  .fc-card {
+    min-height: 160px; padding: var(--sp-lg); border-radius: var(--r-xl);
+    background: var(--surface-container-lowest); border: 1.5px solid rgba(14,43,36,.1);
+    cursor: pointer; perspective: 800px;
+  }
+  .fc-card__inner { position: relative; }
+  .fc-card.is-flipped .fc-front { display: none; }
+  .fc-card:not(.is-flipped) .fc-back { display: none; }
+  .fc-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--outline); margin-bottom: 8px; }
+</style>
+<div class="page-wrap">
+  <section class="hero-band">
+    <div style="position:relative;z-index:1">
+      <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">Study</div>
+      <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,44px)">Flashcards</h1>
+      <p class="body-md" style="color:var(--outline-variant);max-width:520px;margin-top:4px">
+        From <strong style="color:var(--inverse-on-surface)">{{ class_name or course_title or "this class" }}</strong> lessons.
+        Tap a card to flip.
+      </p>
+    </div>
+  </section>
+
+  {% if note %}
+  <p class="body-md text-muted">{{ note }}</p>
+  {% endif %}
+
+  {% if cards %}
+  <div class="fc-grid" id="fc-grid">
+    {% for c in cards %}
+    <button type="button" class="fc-card" data-fc>
+      <div class="fc-card__inner">
+        <div class="fc-front">
+          <div class="fc-label">Front · {{ c.lesson_title }}</div>
+          <p class="body-md" style="margin:0;font-weight:600">{{ c.front }}</p>
+        </div>
+        <div class="fc-back">
+          <div class="fc-label">Back · {{ c.lesson_title }}</div>
+          <p class="body-md" style="margin:0">{{ c.back }}</p>
+        </div>
+      </div>
+    </button>
+    {% endfor %}
+  </div>
+  {% else %}
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <p class="body-md">No flashcards yet — ask your teacher to publish class lessons.</p>
+    <a class="btn btn-primary" href="/learn/coach?token={{ quiz_token }}" style="margin-top:var(--sp-md)">Ask Vidura</a>
+  </section>
+  {% endif %}
+
+  <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap;margin-top:var(--sp-lg)">
+    <a class="btn btn-surface" href="/learn/coach?token={{ quiz_token }}">Ask Vidura</a>
+    <a class="btn btn-surface" href="/quiz?token={{ quiz_token }}&practice=1">Practice quiz</a>
+  </div>
+</div>
+<script>
+(function () {
+  document.querySelectorAll("[data-fc]").forEach(function (el) {
+    el.addEventListener("click", function () {
+      el.classList.toggle("is-flipped");
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -18,3 +18,5 @@ Ops auth: `X-Admin-Key` (or Keycloak ops session).
 | `GET /api/v1/profiles/{subject}?tenant_id=` | Learner analytics + competencies |
 
 Module: `app.modules.tla` — see [TLA_REQUIREMENTS.md](TLA_REQUIREMENTS.md).
+
+**Simulation track (later):** HLA → xAPI via Federate — [FEDERATE_HLA.md](FEDERATE_HLA.md).

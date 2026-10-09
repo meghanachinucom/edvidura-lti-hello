@@ -1,84 +1,181 @@
 {% extends "base_shell.html" %}
 {% block content %}
-<div class="page-wrap">
-  <section class="hero-band">
-    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
-      <div>
-        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
-          <span class="material-symbols-outlined" style="font-size:13px">bolt</span>
-          Micro-learning
-        </div>
-        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">Short skill lessons</h1>
-        <p class="body-md" style="color:var(--outline-variant);max-width:560px;margin-top:4px">
-          Focused remediation micro-lessons linked to class skills. Priority items match gaps from your latest plan or quiz.
-        </p>
-      </div>
-      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
-        <a class="btn btn-primary" href="/learn/gap?token={{ quiz_token }}">My plan</a>
-        <a class="btn" href="/quiz?token={{ quiz_token }}&practice=1" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Practice</a>
-      </div>
+<div class="micro-reels-page">
+  <div class="micro-reels-top">
+    <div>
+      <p class="micro-reels-kicker">Micro · Reels</p>
+      <h1 class="micro-reels-title">Swipe skills</h1>
     </div>
-  </section>
-
-  <div class="grid-4">
-    <div class="metric-tile">
-      <span class="label-caps text-muted">Available</span>
-      <div class="metric-counter" style="margin-top:6px;color:var(--primary)">{{ catalog.available_count }}</div>
-    </div>
-    <div class="metric-tile">
-      <span class="label-caps text-muted">Priority for you</span>
-      <div class="metric-counter" style="margin-top:6px;color:var(--secondary)">{{ catalog.priority_count }}</div>
-    </div>
-    <div class="metric-tile">
-      <span class="label-caps text-muted">Still drafting</span>
-      <div class="metric-counter" style="margin-top:6px;color:var(--tertiary)">{{ catalog.missing_count }}</div>
-    </div>
-    <div class="metric-tile">
-      <span class="label-caps text-muted">Next</span>
-      <div class="body-sm" style="margin-top:10px;color:var(--on-surface)">
-        {% if catalog.lessons %}Open a priority lesson{% else %}Ask teacher to publish micro-lessons{% endif %}
-      </div>
+    <div class="micro-reels-top-actions">
+      <a class="btn btn-glass" href="/learn/gap?token={{ quiz_token }}">My plan</a>
+      <a class="btn btn-primary" href="/quiz?token={{ quiz_token }}&practice=1">Practice</a>
     </div>
   </div>
 
   {% if catalog.lessons %}
-  <section class="frosted" style="padding:var(--sp-xl)">
-    <div class="section-head" style="margin-bottom:var(--sp-md)">
-      <h2 class="headline-md">Your micro-lessons</h2>
-      <span class="chip chip-sky">Skill-linked · short</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:0">
+  <p class="micro-reels-hint body-sm text-muted">
+    Watch · swipe up · {{ catalog.available_count }} reels
+  </p>
+
+  <div class="micro-reels-phone">
+    <div class="micro-reels" id="micro-reels" tabindex="0" aria-label="Micro-learning reels">
       {% for item in catalog.lessons %}
-      <div class="lesson-row {% if item.priority %}next{% endif %}">
-        <span class="lesson-num">{{ "%02d" % loop.index }}</span>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:var(--sp-xs);flex-wrap:wrap">
-            <span class="headline-sm truncate">{{ item.label }}</span>
-            {% if item.priority %}<span class="chip chip-tertiary" style="font-size:10px">Priority</span>{% endif %}
-            <span class="chip chip-sky" style="font-size:10px">{{ item.skill_code }}</span>
+      <article class="micro-reel {% if item.priority %}is-priority{% endif %} {% if item.reel_video_url %}has-video{% endif %}"
+               data-index="{{ loop.index0 }}"
+               id="reel-{{ loop.index0 }}">
+        <div class="micro-reel-bg" aria-hidden="true"></div>
+        {% if item.reel_video_url %}
+        <video class="micro-reel-video"
+               src="{{ item.reel_video_url }}"
+               muted
+               loop
+               playsinline
+               preload="auto"
+               autoplay
+               title="{{ item.reel_title or item.label }}"></video>
+        <div class="micro-reel-video-shade" aria-hidden="true"></div>
+        {% endif %}
+        <div class="micro-reel-inner micro-reel-inner--video">
+          <div class="micro-reel-meta">
+            {% if item.priority %}<span class="chip chip-tertiary">Priority</span>{% endif %}
+            <span class="chip chip-sky">{{ item.skill_code }}</span>
+            <span class="micro-reel-count">{{ loop.index }} / {{ catalog.lessons|length }}</span>
           </div>
-          {% if item.description %}
-          <p class="body-sm text-muted" style="margin-top:4px">{{ item.description }}</p>
-          {% elif item.teleport_hint %}
-          <p class="body-sm text-muted" style="margin-top:4px">{{ item.teleport_hint }}</p>
+
+          <h2 class="micro-reel-headline">{{ item.reel_title or item.label }}</h2>
+          {% if item.reel_beats and item.reel_beats[0] %}
+          <p class="micro-reel-caption">{{ item.reel_beats[0] }}</p>
           {% endif %}
+
+          <div class="micro-reel-cta">
+            <a class="btn btn-primary" href="{{ item.practice_href }}">Practice</a>
+            <a class="btn btn-glass" href="{{ item.href }}">Full lesson</a>
+            {% if item.reel_video_url %}
+            <button type="button" class="btn btn-glass micro-reel-mute" data-mute aria-label="Toggle sound">Sound</button>
+            {% endif %}
+          </div>
+          <p class="micro-reel-swipe-cue">Swipe up</p>
         </div>
-        <a href="{{ item.href }}" class="btn btn-primary" style="padding:6px var(--sp-md);font-size:13px">
-          {% if item.priority %}Start{% else %}Open{% endif %}
-        </a>
-      </div>
+      </article>
       {% endfor %}
     </div>
-  </section>
+  </div>
+
+  <div class="micro-reels-dots" id="micro-reels-dots" aria-hidden="true">
+    {% for item in catalog.lessons %}
+    <button type="button" class="micro-reels-dot {% if loop.first %}on{% endif %}"
+            data-go="{{ loop.index0 }}" aria-label="Go to reel {{ loop.index }}"></button>
+    {% endfor %}
+  </div>
   {% else %}
-  <section class="frosted" style="padding:var(--sp-2xl);text-align:center">
-    <span class="material-symbols-outlined" style="font-size:48px;opacity:.4;display:block;margin-bottom:var(--sp-sm)">bolt</span>
-    <p class="headline-sm" style="margin-bottom:8px">No micro-lessons linked yet</p>
+  <section class="frosted micro-reels-empty">
+    <span class="material-symbols-outlined" style="font-size:48px;opacity:.4;display:block;margin-bottom:var(--sp-sm)">videocam</span>
+    <p class="headline-sm" style="margin-bottom:8px">No reels yet</p>
     <p class="body-sm text-muted" style="max-width:420px;margin:0 auto">
-      Teachers publish short skill lessons from the DCT / Micro-learning planner. Until then, use Lessons and Study coach.
+      Your teacher publishes short skill videos from the Micro-learning planner.
     </p>
-    <a class="btn btn-primary" style="margin-top:var(--sp-lg);display:inline-flex" href="/lessons?token={{ quiz_token }}">Open lessons</a>
   </section>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var root = document.getElementById('micro-reels');
+  if (!root) return;
+  var phone = root.closest('.micro-reels-phone');
+  var dots = document.querySelectorAll('#micro-reels-dots .micro-reels-dot');
+  var reels = root.querySelectorAll('.micro-reel');
+
+  function sizeReels() {
+    var h = root.clientHeight;
+    if (h < 120) return;
+    if (phone) phone.style.setProperty('--micro-reel-h', h + 'px');
+    reels.forEach(function (el) {
+      el.style.height = h + 'px';
+      el.style.minHeight = h + 'px';
+      el.style.maxHeight = h + 'px';
+    });
+  }
+
+  function videos() {
+    return root.querySelectorAll('video.micro-reel-video');
+  }
+
+  function playActive(idx) {
+    videos().forEach(function (v, i) {
+      try {
+        if (i === idx) {
+          v.muted = true;
+          var p = v.play();
+          if (p && p.catch) p.catch(function () {});
+        } else {
+          v.pause();
+          try { v.currentTime = 0; } catch (e) {}
+        }
+      } catch (e) {}
+    });
+  }
+
+  function setActive(idx) {
+    dots.forEach(function (d, i) {
+      d.classList.toggle('on', i === idx);
+    });
+    playActive(idx);
+  }
+
+  function currentIndex() {
+    var h = root.clientHeight || 1;
+    return Math.max(0, Math.min(Math.round(root.scrollTop / h), reels.length - 1));
+  }
+
+  root.addEventListener('scroll', function () {
+    setActive(currentIndex());
+  }, { passive: true });
+
+  dots.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var i = parseInt(btn.getAttribute('data-go') || '0', 10);
+      root.scrollTo({ top: i * root.clientHeight, behavior: 'smooth' });
+    });
+  });
+
+  root.querySelectorAll('[data-mute]').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      var reel = btn.closest('.micro-reel');
+      var v = reel && reel.querySelector('video.micro-reel-video');
+      if (!v) return;
+      v.muted = !v.muted;
+      btn.textContent = v.muted ? 'Sound' : 'Mute';
+      if (!v.muted) {
+        var p = v.play();
+        if (p && p.catch) p.catch(function () {});
+      }
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (!e.target.closest || !e.target.closest('.micro-reels-page')) return;
+    var h = root.clientHeight || 1;
+    var cur = currentIndex();
+    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'j') {
+      e.preventDefault();
+      root.scrollTo({ top: Math.min(cur + 1, reels.length - 1) * h, behavior: 'smooth' });
+    }
+    if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'k') {
+      e.preventDefault();
+      root.scrollTo({ top: Math.max(cur - 1, 0) * h, behavior: 'smooth' });
+    }
+  });
+
+  sizeReels();
+  playActive(0);
+  window.addEventListener('resize', function () {
+    sizeReels();
+    playActive(currentIndex());
+  });
+})();
+</script>
 {% endblock %}

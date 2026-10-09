@@ -1,4 +1,4 @@
-"""Student AI tutor: wrong-answer hints + curriculum-grounded study coach."""
+"""Student AI tutor: wrong-answer hints + curriculum-grounded Ask Vidura."""
 from __future__ import annotations
 
 import re
@@ -245,8 +245,29 @@ def study_coach_answer(
     course_title: str = "",
     class_name: str = "",
     reply_language: str = "en-IN",
+    learner_context: dict[str, Any] | None = None,
+    preferred_strategy: str | None = None,
+    skip_clarify: bool = False,
 ) -> dict[str, Any]:
-    """Answer only from this class's lesson materials (no general knowledge)."""
+    """Answer only from this class's lesson materials (no general knowledge).
+
+    Uses an explicit cognitive strategy (socratic / hint / explain /
+    practice_handoff) so the coach behaves like a careful human tutor.
+
+    Phase A gates (before LLM):
+    1. Academic integrity refuse (exam / assignment writing)
+    2. Clarify-once when the question is ambiguous (unless skip_clarify)
+    """
+    from app.modules.ai_tutor.clarify import build_clarify_reply, needs_clarify
+    from app.modules.ai_tutor.cognitive import (
+        context_prompt_block,
+        local_check_question,
+        normalize_coach_strategy,
+        pick_coach_strategy,
+        strategy_instruction,
+        strategy_label,
+    )
+    from app.modules.ai_tutor.integrity import detect_integrity_violation
     from app.modules.ai_tutor.voice import (
         normalize_voice_lang,
         reply_language_instruction,
@@ -262,6 +283,7 @@ def study_coach_answer(
     lang_instruction = reply_language_instruction(lang)
     store_turns = bool(getattr(get_settings(), "coach_store_turns", False))
     scope_label = (class_name or course_title or "this class").strip()
+    ctx = dict(learner_context or {})
     chunks: list[dict[str, Any]] = []
     for c in curriculum_chunks[:24]:
         title = str(c.get("title") or "Lesson").strip()
@@ -280,76 +302,115 @@ def study_coach_answer(
                 "course_id": str(c.get("course_id") or ""),
             }
         )
-    if not chunks:
-        return {
-            "answer": (
-                f"No lessons are linked for {scope_label} yet. "
-                "Ask your teacher to publish class lessons (or SME lesson sources) "
-                "for this course."
-            ),
-            "citations": [],
-            "citation_links": [],
-            "grounded": False,
-            "refusal_reason": "no_class_materials",
-            "retention": "stateless" if not store_turns else "session",
-            "practice_hint": True,
-            "provider": "local",
-            "model": "heuristic-v1",
-            "reply_language": lang,
-            "reply_language_name": lang_meta["name"],
-            "scope": "class_lessons",
-            "course_title": course_title,
-            "class_name": class_name,
-        }
 
-    allowed_titles = [c["title"] for c in chunks]
+    # Phase A — integrity (before any LLM / Jev spend on prose).
+    blocked = detect_integrity_violation(q)
+    if blocked:
+        blocked["reply_language"] = lang
+        blocked["reply_language_name"] = lang_meta["name"]
+        blocked["retention"] = "stateless" if not store_turns else "session"
+        blocked["scope"] = "class_lessons"
+        blocked["course_title"] = course_title
+        blocked["class_name"] = class_name
+        return blocked
 
-    def _openai():
-        data = openai_chat_json(
-            system=(
-                "You are a friendly class study coach for school students. "
-                f"You may ONLY use the provided lessons for “{scope_label}”. "
-                "Do NOT use general knowledge, other courses, or the open web. "
-                "If the question is not clearly answered by those lessons, "
-                "refuse and set grounded=false. "
-                "Every grounded answer MUST cite one or more lesson titles "
-                "exactly as listed. Prefer the most relevant lesson. "
-                "Do not invent URLs or source titles. "
-                f"{_easy_reply_instruction()} "
-                f"{lang_instruction} "
-                "Return ONLY JSON: "
-                '{"answer":"...","citations":["exact lesson title",...],"grounded":true}'
-            ),
-            user=(
-                f"Class: {scope_label}\n"
-                f"Course: {course_title or scope_label}\n"
-                f"Reply language: {lang_meta['name']} ({lang})\n"
-                f"Allowed lesson titles: {allowed_titles}\n"
-                f"Student question: {q}\n"
-                f"Class lesson materials: "
-                f"{[{'title': c['title'], 'body': c['body']} for c in chunks]}"
-            ),
-            temperature=0.2,
-        )
-        cites = [str(x) for x in (data.get("citations") or [])][:6]
-        grounded = bool(data.get("grounded", False))
-        return _enforce_class_citations(
-            chunks=chunks,
-            answer=str(data.get("answer") or ""),
-            citations=cites,
-            grounded=grounded,
-            course_title=course_title,
+    titles = [c["title"] for c in chunks]
+    if not skip_clarify and needs_clarify(q, lesson_titles=titles):
+        clarify = build_clarify_reply(
+            q,
+            lesson_titles=titles,
             class_name=class_name,
+            course_title=course_title,
+        )
+        clarify["reply_language"] = lang
+        clarify["reply_language_name"] = lang_meta["name"]
+        clarify["retention"] = "stateless" if not store_turns else "session"
+        return clarify
+
+    jev_meta: dict[str, Any] = {
+        "used": False,
+        "strategy_source": "heuristic",
+        "on_topic": None,
+        "on_topic_p": None,
+        "strategy_confidence": None,
+        "model": None,
+    }
+    try:
+        from app.modules import jev as jev_mod
+
+        jev_meta = jev_mod.coach_decisions(
+            question=q,
+            lesson_excerpts=[{"title": c["title"], "body": c["body"]} for c in chunks],
+            learner_context=ctx,
+            preferred_strategy=preferred_strategy,
+        )
+    except Exception:  # noqa: BLE001
+        jev_meta = {
+            "used": False,
+            "strategy": pick_coach_strategy(
+                question=q, learner_context=ctx, preferred=preferred_strategy
+            ),
+            "strategy_source": "heuristic",
+            "on_topic": None,
+            "on_topic_p": None,
+            "strategy_confidence": None,
+            "model": None,
+            "fallback_reason": "jev_error",
+        }
+    strategy = normalize_coach_strategy(jev_meta.get("strategy")) or pick_coach_strategy(
+        question=q, learner_context=ctx, preferred=preferred_strategy
+    )
+    src = str(jev_meta.get("strategy_source") or "heuristic")
+    if src == "jev":
+        strategy_reason = (
+            f"Jev chose {strategy_label(strategy)} "
+            f"(confidence {jev_meta.get('strategy_confidence')})"
+        )
+    else:
+        strategy_reason = (
+            f"Chose {strategy_label(strategy)} from learner quiz level "
+            f"({ctx.get('difficulty_label') or 'Medium'}) and question shape."
         )
 
-    def _local():
-        scored: list[tuple[int, dict[str, Any]]] = []
-        for c in chunks:
-            scored.append((_token_overlap_score(q, c), c))
-        scored.sort(key=lambda t: t[0], reverse=True)
-        best_score, best = scored[0] if scored else (0, chunks[0])
-        if best_score < 1:
-            return {
+    def _with_cognitive(payload: dict[str, Any], *, lesson_title: str = "") -> dict[str, Any]:
+        out = dict(payload)
+        chosen = normalize_coach_strategy(out.get("strategy")) or strategy
+        out["strategy"] = chosen
+        out["strategy_label"] = strategy_label(chosen)
+        out["strategy_reason"] = str(
+            out.get("strategy_reason") or strategy_reason
+        ).strip()[:240]
+        check = str(out.get("check_question") or "").strip()
+        if out.get("grounded") and not check:
+            check = local_check_question(
+                strategy=chosen,
+                lesson_title=lesson_title or (chunks[0]["title"] if chunks else ""),
+                question=q,
+            )
+        if not out.get("grounded"):
+            check = ""
+        out["check_question"] = check[:240]
+        out["learner_difficulty"] = str(ctx.get("difficulty") or "core")
+        out["learner_difficulty_label"] = str(
+            ctx.get("difficulty_label") or "Medium"
+        )
+        out["weak_skills"] = list(ctx.get("weak_skills") or [])[:5]
+        out["practice_hint"] = True
+        if chosen == "practice_handoff":
+            out["practice_hint"] = True
+        out["jev_used"] = bool(jev_meta.get("used"))
+        out["jev_model"] = jev_meta.get("model")
+        out["jev_strategy_source"] = jev_meta.get("strategy_source")
+        out["jev_strategy_confidence"] = jev_meta.get("strategy_confidence")
+        out["jev_on_topic_p"] = jev_meta.get("on_topic_p")
+        out["jev_llm_tier"] = jev_meta.get("llm_tier")
+        out["jev_skipped_remote"] = bool(jev_meta.get("skipped_remote"))
+        return out
+
+    # Jev on-topic gate (when confident) — refuse before spending LLM tokens.
+    if jev_meta.get("used") and jev_meta.get("on_topic") is False and chunks:
+        return _with_cognitive(
+            {
                 "answer": (
                     f"I can only help with lessons for {scope_label}. "
                     "Try asking about a topic from this class."
@@ -358,21 +419,170 @@ def study_coach_answer(
                 "citation_links": [],
                 "grounded": False,
                 "refusal_reason": "off_class_materials",
+                "retention": "stateless" if not store_turns else "session",
+                "provider": "jev",
+                "model": str(jev_meta.get("model") or "jev"),
+                "reply_language": lang,
+                "reply_language_name": lang_meta["name"],
+                "scope": "class_lessons",
+                "course_title": course_title,
+                "class_name": class_name,
             }
-        cites = [best["title"]]
-        return {
-            "answer": _simple_plain_answer(
-                question=q,
-                lesson_title=str(best["title"]),
-                body=str(best["body"]),
-            ),
-            "citations": cites,
-            "citation_links": _citation_links(chunks, cites),
-            "grounded": True,
-            "refusal_reason": None,
-        }
+        )
 
-    result = run_ai(openai_fn=_openai, local_fn=_local, feature="coach")
+    if not chunks:
+        return _with_cognitive(
+            {
+                "answer": (
+                    f"No lessons are linked for {scope_label} yet. "
+                    "Ask your teacher to publish class lessons (or SME lesson sources) "
+                    "for this course."
+                ),
+                "citations": [],
+                "citation_links": [],
+                "grounded": False,
+                "refusal_reason": "no_class_materials",
+                "retention": "stateless" if not store_turns else "session",
+                "provider": "local",
+                "model": "heuristic-v1",
+                "reply_language": lang,
+                "reply_language_name": lang_meta["name"],
+                "scope": "class_lessons",
+                "course_title": course_title,
+                "class_name": class_name,
+            }
+        )
+
+    allowed_titles = [c["title"] for c in chunks]
+    learner_block = context_prompt_block(ctx)
+
+    def _openai():
+        data = openai_chat_json(
+            system=(
+                "You are a friendly Ask Vidura tutor for school students. "
+                "Think like a careful human tutor: notice the learner, pick one "
+                "teaching move, then answer. "
+                "Never write exams, assignments, essays, or answer keys — refuse "
+                "those and offer a hint or explanation from the lessons instead. "
+                f"You may ONLY use the provided lessons for “{scope_label}”. "
+                "Do NOT use general knowledge, other courses, or the open web. "
+                "If the question is not clearly answered by those lessons, "
+                "refuse and set grounded=false. "
+                "Every grounded answer MUST cite one or more lesson titles "
+                "exactly as listed. Prefer the most relevant lesson. "
+                "Do not invent URLs or source titles. "
+                f"Use strategy={strategy}. {strategy_instruction(strategy)} "
+                f"{_easy_reply_instruction()} "
+                f"{lang_instruction} "
+                "Return ONLY JSON: "
+                '{"answer":"...","citations":["exact lesson title",...],'
+                '"grounded":true,"strategy":"socratic|hint|explain|practice_handoff",'
+                '"check_question":"...","strategy_reason":"short why"}'
+            ),
+            user=(
+                f"Class: {scope_label}\n"
+                f"Course: {course_title or scope_label}\n"
+                f"Reply language: {lang_meta['name']} ({lang})\n"
+                f"Learner context: {learner_block}\n"
+                f"Chosen strategy: {strategy}\n"
+                f"Allowed lesson titles: {allowed_titles}\n"
+                f"Student question: {q}\n"
+                f"Class lesson materials: "
+                f"{[{'title': c['title'], 'body': c['body']} for c in chunks]}"
+            ),
+            temperature=0.3,
+        )
+        cites = [str(x) for x in (data.get("citations") or [])][:6]
+        grounded = bool(data.get("grounded", False))
+        enforced = _enforce_class_citations(
+            chunks=chunks,
+            answer=str(data.get("answer") or ""),
+            citations=cites,
+            grounded=grounded,
+            course_title=course_title,
+            class_name=class_name,
+        )
+        enforced["strategy"] = data.get("strategy") or strategy
+        enforced["check_question"] = str(data.get("check_question") or "")
+        enforced["strategy_reason"] = str(data.get("strategy_reason") or "")
+        best_title = ""
+        if enforced.get("citations"):
+            best_title = str(enforced["citations"][0])
+        return _with_cognitive(enforced, lesson_title=best_title)
+
+    def _local():
+        scored: list[tuple[int, dict[str, Any]]] = []
+        for c in chunks:
+            scored.append((_token_overlap_score(q, c), c))
+        scored.sort(key=lambda t: t[0], reverse=True)
+        best_score, best = scored[0] if scored else (0, chunks[0])
+        if best_score < 1:
+            return _with_cognitive(
+                {
+                    "answer": (
+                        f"I can only help with lessons for {scope_label}. "
+                        "Try asking about a topic from this class."
+                    ),
+                    "citations": [],
+                    "citation_links": [],
+                    "grounded": False,
+                    "refusal_reason": "off_class_materials",
+                }
+            )
+        cites = [best["title"]]
+        title = str(best["title"])
+        body = str(best["body"])
+        if strategy == "socratic":
+            answer = (
+                f"Let’s think from “{title}” together. "
+                "What clue in that lesson matches your question? "
+                "I’ll explain after you try."
+            )
+        elif strategy == "hint":
+            plain = _simple_plain_answer(question=q, lesson_title=title, body=body)
+            # Keep only the first sentence as a nudge when possible.
+            first = re.split(r"(?<=[.!?])\s+", plain)[0].strip()
+            answer = (
+                f"Hint from “{title}”: {first} "
+                "Look for that idea in the lesson, then answer the check below."
+            )
+        elif strategy == "practice_handoff":
+            answer = (
+                f"Quick pointer from “{title}”: "
+                f"{_simple_plain_answer(question=q, lesson_title=title, body=body)} "
+                "A short practice quiz will lock this in."
+            )
+        else:
+            answer = _simple_plain_answer(question=q, lesson_title=title, body=body)
+        return _with_cognitive(
+            {
+                "answer": answer,
+                "citations": cites,
+                "citation_links": _citation_links(chunks, cites),
+                "grounded": True,
+                "refusal_reason": None,
+            },
+            lesson_title=title,
+        )
+
+    if jev_meta.get("llm_tier") == "local" or jev_meta.get("skipped_remote"):
+        # Honor Jev cost route: skip remote chat when local is enough.
+        result = _local()
+        if isinstance(result, dict):
+            result["provider"] = "local"
+            result["model"] = "heuristic-v1"
+            result["jev_route"] = {
+                "tier": "local",
+                "used": bool(jev_meta.get("used")),
+                "skipped_remote": True,
+                "confidence": jev_meta.get("llm_tier_confidence"),
+                "model": jev_meta.get("model"),
+            }
+            result["note"] = (
+                "Jev routed Ask Vidura to local heuristics — skipped remote LLM."
+            )
+    else:
+        result = run_ai(openai_fn=_openai, local_fn=_local, feature="coach")
     if "citation_links" not in result:
         result["citation_links"] = _citation_links(
             chunks, list(result.get("citations") or [])
@@ -390,6 +600,12 @@ def study_coach_answer(
         if "provider" not in result:
             result["provider"] = "local"
             result["model"] = "heuristic-v1"
+        result = _with_cognitive(result)
+    else:
+        result = _with_cognitive(
+            result,
+            lesson_title=str((result.get("citations") or [""])[0] or ""),
+        )
     # Students should not see technical LLM fallback notes.
     if result.get("note") and (
         "fallback" in str(result.get("note")).lower()
@@ -403,7 +619,6 @@ def study_coach_answer(
         None if result.get("grounded") else "off_class_materials",
     )
     result["retention"] = "stateless" if not store_turns else "session"
-    result["practice_hint"] = True
     result["reply_language"] = lang
     result["reply_language_name"] = lang_meta["name"]
     result["scope"] = "class_lessons"

@@ -12,6 +12,7 @@ from app.modules.xapi.builder import (
     build_quiz_attempt_statement,
     build_resource_experienced_statement,
     build_skill_assessed_statement,
+    build_coach_feedback_statement,
     build_coach_interacted_statement,
 )
 from app.settings import get_settings
@@ -132,6 +133,14 @@ def record_coach_interaction(
     course_id: UUID | str | None = None,
     thread_id: str | None = None,
     answer_text: str | None = None,
+    strategy: str | None = None,
+    check_question: str | None = None,
+    jev_used: bool = False,
+    jev_model: str | None = None,
+    jev_strategy_source: str | None = None,
+    jev_strategy_confidence: float | None = None,
+    jev_on_topic_p: float | None = None,
+    jev_skipped_remote: bool = False,
     access_level: str | None = None,
     include_full_text: bool | None = None,
     homepage: str | None = None,
@@ -163,6 +172,58 @@ def record_coach_interaction(
         access_level=str(level or "class"),
         include_full_text=full,
         answer_text=answer_text,
+        strategy=strategy,
+        check_question=check_question,
+        jev_used=jev_used,
+        jev_model=jev_model,
+        jev_strategy_source=jev_strategy_source,
+        jev_strategy_confidence=jev_strategy_confidence,
+        jev_on_topic_p=jev_on_topic_p,
+        jev_skipped_remote=bool(jev_skipped_remote),
+        homepage=homepage or settings.xapi_actor_homepage,
+        activity_base=settings.app_base_url,
+    )
+    return _store_and_maybe_send(
+        tenant_id=tenant_id,
+        statement=statement,
+        actor_sub=subject,
+        attempt_id=None,
+        source_event_id=None,
+        send_lrs=send_lrs,
+        promote_on_valid=True,
+    )
+
+
+def record_coach_feedback(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    rating: str,
+    thread_id: str | None = None,
+    question_preview: str = "",
+    answer_preview: str = "",
+    course_title: str = "",
+    course_id: UUID | str | None = None,
+    homepage: str | None = None,
+    send_lrs: bool = True,
+) -> dict[str, Any]:
+    """Persist thumbs up/down on Ask Vidura as xAPI responded."""
+    from app.settings import get_settings
+
+    settings = get_settings()
+    if not bool(getattr(settings, "coach_feedback_enabled", True)):
+        return {"ok": False, "skipped": True, "reason": "feedback_disabled"}
+    statement = build_coach_feedback_statement(
+        tenant_id=tenant_id,
+        subject=subject,
+        learner_name=learner_name,
+        rating=rating,
+        thread_id=thread_id,
+        question_preview=question_preview,
+        answer_preview=answer_preview,
+        course_title=course_title,
+        course_id=course_id,
         homepage=homepage or settings.xapi_actor_homepage,
         activity_base=settings.app_base_url,
     )
@@ -455,7 +516,7 @@ def store_raw_statement(
     if not aid:
         ext = ((stmt.get("context") or {}).get("extensions") or {})
         aid = ext.get("https://edvidura.local/xapi/extensions/attempt_id")
-    return _store_and_maybe_send(
+    stored = _store_and_maybe_send(
         tenant_id=tenant_id,
         statement=stmt,
         actor_sub=sub,
@@ -464,6 +525,29 @@ def store_raw_statement(
         send_lrs=send_lrs,
         promote_on_valid=promote_on_valid,
     )
+    # VR / simulation statements adapt the individual's study plan.
+    try:
+        ext = ((stmt.get("context") or {}).get("extensions") or {})
+        channel = str(
+            ext.get("https://edvidura.local/xapi/extensions/channel") or ""
+        ).strip().lower()
+        obj = stmt.get("object") if isinstance(stmt.get("object"), dict) else {}
+        defn = obj.get("definition") if isinstance(obj.get("definition"), dict) else {}
+        type_s = str(defn.get("type") or "").lower()
+        is_vr = channel in {"vr", "sim", "simulation", "hla", "federate"} or (
+            "virtual" in type_s or "/vr" in type_s or "simulation" in type_s
+        )
+        if is_vr:
+            from app.modules import signals as signals_mod
+
+            signals_mod.note_learner_activity(
+                tenant_id,
+                subject=sub,
+                channel="vr",
+            )
+    except Exception:  # noqa: BLE001
+        pass
+    return stored
 
 
 def promote_tier(

@@ -1,34 +1,33 @@
 # Micro-learning
 
-Skill-scoped short lessons (remediation micro-lessons) as a first-class learner path.
+Skill **video reels** students swipe — teachers publish short clips from the planner.
 
 ## Student
 
 | Route | Behavior |
 |-------|----------|
-| `/learn/micro` | Catalog of skill-linked micro-lessons; **Priority** from gap plan / weak skills |
-| Home tile + **More → Micro-learning** | Entry points |
-| My plan / quiz remediation | Same linked lessons via `skill_remediation` |
+| `/learn/micro` | Full-screen video reels (swipe up) — skill title + one caption |
+| Practice / Full lesson | CTAs on each reel |
 
 ## Teacher
 
 | Route | Behavior |
 |-------|----------|
-| `/teacher/dct` (**Micro-learning planner**) | Skills missing a lesson → AI draft → save & link |
-| Teach → AI tools → Remediation micro-lesson | Same generator + save path |
+| `/teacher/dct` → **Publish a skill reel** | Upload mp4/webm/mov (≤40MB) or paste URL → linked to skill |
+| Generate draft | Optional text micro-lesson for skills still missing content |
 
-Domain: `adaptive.micro_learning_catalog` + `dct_planner_pack` + `ai_assessment.generate_remediation_micro_lesson` + `skills.set_skill_remediation`.
+Domain: `adaptive.publish_skill_reel` + `micro_learning_catalog` (reads `lessons.video_url`).
 
 ## Flow
 
 ```
-Weak skill / quiz miss
+Teacher uploads reel for skill
         │
         ▼
- Micro-lesson (short MD lesson linked to skill)
+ Lesson (type=video) + skill_remediation link
         │
         ▼
- Practice → Graded retry (remediation loop)
+ Student /learn/micro → swipe video → Practice
 ```
 
 ## Related
@@ -36,4 +35,3 @@ Weak skill / quiz miss
 - [DCT.md](DCT.md) — planner + display reorder
 - [SKILLS.md](SKILLS.md) — registry + remediation loop
 - [ADAPTIVE.md](ADAPTIVE.md) — gap / PLE paths
-- [AI.md](AI.md) — remediation generator

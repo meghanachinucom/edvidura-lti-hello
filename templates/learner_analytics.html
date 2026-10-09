@@ -23,6 +23,44 @@
     </div>
   </section>
 
+  {% set plan = dash.study_plan %}
+  {% if plan %}
+  <section class="frosted" style="padding:var(--sp-xl);margin-bottom:var(--sp-lg)">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:var(--sp-md)">
+      <div>
+        <h2 class="headline-md" style="margin:0 0 6px">My study plan</h2>
+        <p class="body-sm text-muted" style="margin:0">
+          {% if plan.active %}
+          {{ plan.message }}
+          {% if plan.signal_sources %}
+          · from {% for s in plan.signal_sources %}{{ s }}{% if not loop.last %}, {% endif %}{% endfor %}
+          {% endif %}
+          {% else %}
+          {{ plan.message }}
+          {% endif %}
+        </p>
+        {% if plan.active and plan.skills %}
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+          {% for s in plan.skills[:5] %}
+          <span class="chip chip-sky">{{ s.label or s.code }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        {% if plan.active %}
+        <div class="metric-counter" style="color:var(--primary)">{{ plan.progress_pct }}%</div>
+        <span class="body-sm text-muted">{{ plan.done_count }}/{{ plan.step_count }} steps</span>
+        {% endif %}
+        <a class="btn btn-primary" href="{{ plan.plan_href }}">
+          <span class="material-symbols-outlined" style="font-size:16px">route</span>
+          {% if plan.active %}Open plan{% else %}Build my plan{% endif %}
+        </a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <div class="grid-4">
     <div class="metric-tile">
       <span class="label-caps text-muted">Attempts</span>
@@ -99,7 +137,7 @@
   {% else %}
   <section class="card" style="padding:var(--sp-lg)">
     <h2 class="headline-sm" style="margin-bottom:var(--sp-sm)">Learning evidence</h2>
-    <p class="body-sm text-muted">xAPI recordings appear here after lessons, quizzes, manuals, or coach questions.</p>
+    <p class="body-sm text-muted">xAPI recordings appear here after lessons, quizzes, manuals, or Ask Vidura.</p>
     <a class="btn btn-surface" style="margin-top:var(--sp-md);font-size:13px" href="/learn/activity?token={{ quiz_token }}">Open activity</a>
   </section>
   {% endif %}

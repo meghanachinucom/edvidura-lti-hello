@@ -1,4 +1,4 @@
-# SME sources & study coach (C13 / D01)
+# SME sources & Ask Vidura (C13 / D01)
 
 ## SME source registry
 
@@ -12,7 +12,7 @@ Module: `app.modules.sme`
 
 Teacher UI: **Teach → SME sources** (`/teacher/sme`)
 
-## Study coach (learner)
+## Ask Vidura (learner)
 
 `/learn/coach` answers **only from the bound class course’s lessons** (LTI session `edvidura_course_id`).
 

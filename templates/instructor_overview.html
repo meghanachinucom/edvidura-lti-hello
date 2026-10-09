@@ -17,7 +17,7 @@
         </div>
         <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(30px,4vw,50px)">Results Overview</h1>
         <p class="body-md" style="color:var(--outline-variant);max-width:620px;margin-top:4px">
-          Review attempts, pass rate, Moodle roster awareness, competency signals, and recommended next steps in one place.
+          See who lacks what — quiz, Ask Vidura, and VR signals fused into each learner’s gaps — plus pass rate and next steps.
         </p>
       </div>
       <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
@@ -155,6 +155,65 @@
 
   <div class="grid-12-7-5">
     <section style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      <div class="frosted" style="padding:var(--sp-lg)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md);gap:var(--sp-sm);flex-wrap:wrap">
+          <div>
+            <h2 class="headline-md">Who lacks what</h2>
+            <p class="body-sm text-muted" style="margin-top:4px">Per learner · fused from quiz, chatbot, and VR</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a class="chip chip-mint" href="/teacher/coach/insights?token={{ quiz_token }}">Ask Vidura insights</a>
+            <span class="chip chip-sky">Signals</span>
+          </div>
+        </div>
+        {% if learner_gaps %}
+        <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+          {% for g in learner_gaps %}
+          <div class="attempt-item" style="align-items:flex-start">
+            <div class="avatar avatar-sm" style="font-weight:700">{{ (g.learner_name or '?')[0].upper() }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-sm);flex-wrap:wrap">
+                <div class="headline-sm" style="font-size:14px">{{ g.learner_name }}</div>
+                {% if g.avg_percent is not none %}
+                <span class="body-sm text-muted">{{ g.avg_percent }}% avg</span>
+                {% endif %}
+              </div>
+              {% if g.gaps %}
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                {% for sk in g.gaps %}
+                <span class="chip {% if sk.status == 'weak' %}chip-secondary{% else %}chip-sky{% endif %}" style="font-size:11px">
+                  {{ sk.label }}{% if sk.source %} · {{ sk.source.split('+')[0] }}{% endif %}
+                </span>
+                {% endfor %}
+              </div>
+              {% else %}
+              <p class="body-sm text-muted" style="margin-top:6px">Signals present — no skill gaps tagged yet.</p>
+              {% endif %}
+              {% if g.why %}
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                {% for w in g.why %}
+                <span class="chip" style="font-size:10px;opacity:.9">{{ w }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+              {% if g.sources %}
+              <div class="body-sm text-muted" style="margin-top:6px">
+                Sources:
+                {% for s in g.sources %}<code style="font-size:11px">{{ s }}</code>{% if not loop.last %} · {% endif %}{% endfor %}
+                {% if g.has_plan %} · open plan{% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="body-sm text-muted">
+          No fused gap board yet. After students take a quiz (or Ask Vidura / VR), their missing skills appear here.
+        </p>
+        {% endif %}
+      </div>
+
       <div class="frosted" style="padding:var(--sp-lg)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md)">
           <h2 class="headline-md">At-Risk Coach</h2>

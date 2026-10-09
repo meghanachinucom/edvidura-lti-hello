@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · Done requirements — recordings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --surface: #e6fff5; --surface-2: #d5f5ea; --ink: #032019; --muted: #3c4a42;
+      --primary: #006c4b; --mint: #34d399; --sky: #40c2fd; --citrus: #f0c01a; --coral: #f05a3a;
+      --font-display: "Syne", system-ui, sans-serif; --font-body: "Outfit", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow: hidden; }
+    body { font-family: var(--font-body); color: var(--ink); background: var(--surface); }
+    .viewport { position: fixed; inset: 0; width: 100vw; height: 100dvh; }
+    .slides { position: absolute; inset: 0; }
+    .slide {
+      position: absolute; inset: 0;
+      padding: clamp(28px, 4vw, 56px) clamp(28px, 5vw, 72px) clamp(64px, 8vh, 88px);
+      display: flex; flex-direction: column; justify-content: center;
+      opacity: 0; pointer-events: none; transform: scale(1.03);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+      background:
+        radial-gradient(120% 80% at 100% 0%, rgba(64,194,253,.2), transparent 50%),
+        radial-gradient(90% 70% at 0% 100%, rgba(52,211,153,.25), transparent 55%),
+        linear-gradient(160deg, #f0fff9 0%, var(--surface) 45%, var(--surface-2) 100%);
+    }
+    .slide.on { opacity: 1; pointer-events: auto; transform: scale(1); }
+    .slide.theme-deep {
+      color: #e8f8ec;
+      background: linear-gradient(155deg, #032019 0%, #0e2b24 55%, #071612 100%);
+    }
+    .slide.theme-deep .lede { color: rgba(232,248,236,.8); }
+    .kicker {
+      font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--primary); margin-bottom: 10px; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .theme-deep .kicker { color: var(--mint); }
+    .kicker::before {
+      content: ""; width: 24px; height: 3px; border-radius: 99px;
+      background: linear-gradient(90deg, var(--mint), var(--sky));
+    }
+    h1 {
+      font-family: var(--font-display); font-size: clamp(2.2rem, 5vw, 3.5rem);
+      line-height: 1.05; letter-spacing: -0.03em; font-weight: 800; max-width: 14ch;
+    }
+    h1 .pop {
+      background: linear-gradient(105deg, var(--primary), #059669, var(--sky));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    h2 {
+      font-family: var(--font-display); font-size: clamp(1.4rem, 3vw, 2.1rem);
+      letter-spacing: -0.02em; font-weight: 700; margin-bottom: 6px;
+    }
+    .lede { font-size: clamp(1rem, 1.7vw, 1.15rem); line-height: 1.5; color: var(--muted); max-width: 46ch; margin-top: 12px; }
+    .sheet-line { font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-top: 6px; }
+    .tip { font-size: 0.8rem; color: var(--muted); margin-top: 14px; opacity: 0.85; }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px; margin-top: 22px; max-width: 1100px;
+    }
+    .chip {
+      padding: 12px 14px; border-radius: 14px; background: #fff; border: 1px solid rgba(0,108,75,.12);
+      font-size: 0.82rem; font-weight: 600; box-shadow: 0 6px 18px rgba(14,43,36,.06);
+      opacity: 0; translate: 0 12px; transition: opacity 0.4s, translate 0.4s;
+      cursor: pointer;
+    }
+    .slide.on .chip.show { opacity: 1; translate: 0 0; }
+    .chip small { display: block; font-weight: 500; color: var(--muted); margin-top: 4px; font-size: 0.72rem; }
+
+    .video-layout {
+      display: grid; grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.4fr);
+      gap: clamp(16px, 3vw, 36px); align-items: center; height: 100%;
+    }
+    @media (max-width: 900px) {
+      .video-layout { grid-template-columns: 1fr; overflow: auto; }
+    }
+    .video-frame {
+      background: #0a1612; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,.25);
+      border: 1px solid rgba(0,108,75,.2);
+      aspect-ratio: 16 / 9; max-height: min(62vh, 640px);
+    }
+    .video-frame video { width: 100%; height: 100%; display: block; background: #000; object-fit: contain; }
+
+    .chrome {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 10px clamp(16px, 3vw, 28px);
+      background: linear-gradient(180deg, transparent, rgba(3,32,25,.1));
+    }
+    .dots { display: flex; gap: 5px; flex-wrap: wrap; max-width: 55vw; }
+    .dots button {
+      width: 7px; height: 7px; border: 0; border-radius: 99px;
+      background: rgba(3,32,25,.22); cursor: pointer; padding: 0;
+    }
+    .dots button.on { width: 18px; background: var(--primary); }
+    .hint-text { font-size: 11px; color: var(--muted); }
+    .nav-btns { display: flex; gap: 8px; }
+    .nav-btns button {
+      font-family: var(--font-body); font-weight: 700; font-size: 13px;
+      border: 0; cursor: pointer; padding: 10px 16px; border-radius: 999px;
+      background: var(--primary); color: #fff;
+    }
+    .nav-btns button.ghost {
+      background: rgba(255,255,255,.9); color: var(--primary);
+      border: 1px solid rgba(0,108,75,.2);
+    }
+    @media print {
+      .chrome { display: none !important; }
+      .slide { position: relative; opacity: 1 !important; min-height: 100vh; page-break-after: always; }
+      video { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="viewport">
+  <div class="slides" id="slides">
+
+    <section class="slide on" data-frags="0">
+      <span class="kicker">Management proof · Sheet Done</span>
+      <h1><span class="pop">Requirements</span><br/>as recordings</h1>
+      <p class="lede">Every <strong>Done</strong> row from the meetings sheet — one short narrated video with mouse clicks. Same colourful deck style as JEV / LearnWise. Press <strong>F</strong> for fullscreen.</p>
+      <p class="lede" style="font-size:0.85rem;margin-top:18px;opacity:0.75">13 features · turn sound on</p>
+    </section>
+
+    <section class="slide" data-frags="1">
+      <h2>All Done features</h2>
+      <p class="lede">Click a chip to jump, or use Next through each recording.</p>
+      <div class="grid" id="toc">
+        <button type="button" class="chip" data-frag="1" data-jump="2">Moodle LTI 1.3 Integration<small>17/07 · Moodle LTI 1.3 Integration</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="3">Onboarding APIs<small>17/07 · Onboarding APIs</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="4">PostgreSQL data isolation<small>17/07 · PostgreSQL data isolation</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="5">3Q Quiz UI, score &amp; results<small>17/07 · 3 Question Quiz UI, Score Calculation, Results page</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="6">AGS grade passback<small>17/07 · AGS grade passback (Testing: Roadblock)</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="7">Screen Design Ideas<small>17/07 · Screen Design Ideas</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="8">Multi-tenancy implementation<small>08/09 · Multi-tenancy implementation</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="9">LTI authorization<small>08/09 · LTI authorization</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="10">Yet Analytics LRS + Metabase<small>08/09 · Yet Analytics LRS and Metabase integration</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="11">AI-generated quizzes (per student)<small>08/09 · AI-generated quizzes — depth &amp; complexity per student</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="12">Coach voice — Indian languages<small>08/09 · Voice option for coach (Indian languages beyond EN/HI/TE)</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="13">xAPI data from chats<small>08/09 · xAPI data from chats (PeBL)</small></button>
+        <button type="button" class="chip" data-frag="1" data-jump="14">Quiz multi-model parser (complexity / coverage / plan)<small>22/09 · 3-level complexity, coverage, study-plan validation</small></button>
+      </div>
+    </section>
+
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 1 of 13</span>
+          <h2>Moodle LTI 1.3 Integration</h2>
+          <p class="sheet-line">17/07 · Moodle LTI 1.3 Integration</p>
+          <p class="lede">Student opens EdVidura from Moodle — signed launch, real class session.</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f01-moodle-lti.mp4">
+            <a href="videos/by-feature/f01-moodle-lti.mp4">Open f01-moodle-lti.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 2 of 13</span>
+          <h2>Onboarding APIs</h2>
+          <p class="sheet-line">17/07 · Onboarding APIs</p>
+          <p class="lede">School connect page: create school + get Moodle LTI URLs.</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f02-onboarding-apis.mp4">
+            <a href="videos/by-feature/f02-onboarding-apis.mp4">Open f02-onboarding-apis.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 3 of 13</span>
+          <h2>PostgreSQL data isolation</h2>
+          <p class="sheet-line">17/07 · PostgreSQL data isolation</p>
+          <p class="lede">Each school’s data stays separate (Riverside ≠ Lakeside).</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f03-data-isolation.mp4">
+            <a href="videos/by-feature/f03-data-isolation.mp4">Open f03-data-isolation.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 4 of 13</span>
+          <h2>3Q Quiz UI, score &amp; results</h2>
+          <p class="sheet-line">17/07 · 3 Question Quiz UI, Score Calculation, Results page</p>
+          <p class="lede">Take quiz → submit → see score and results page.</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f04-quiz-ui-results.mp4">
+            <a href="videos/by-feature/f04-quiz-ui-results.mp4">Open f04-quiz-ui-results.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 5 of 13</span>
+          <h2>AGS grade passback</h2>
+          <p class="sheet-line">17/07 · AGS grade passback (Testing: Roadblock)</p>
+          <p class="lede">Grade sync UI after quiz (sheet notes testing roadblock — we show honestly).</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f05-ags-passback.mp4">
+            <a href="videos/by-feature/f05-ags-passback.mp4">Open f05-ags-passback.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 6 of 13</span>
+          <h2>Screen Design Ideas</h2>
+          <p class="sheet-line">17/07 · Screen Design Ideas</p>
+          <p class="lede">Branded landing and in-app look.</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f06-screen-design.mp4">
+            <a href="videos/by-feature/f06-screen-design.mp4">Open f06-screen-design.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 7 of 13</span>
+          <h2>Multi-tenancy implementation</h2>
+          <p class="sheet-line">08/09 · Multi-tenancy implementation</p>
+          <p class="lede">One app, many schools — pick Riverside or Lakeside.</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f07-multi-tenancy.mp4">
+            <a href="videos/by-feature/f07-multi-tenancy.mp4">Open f07-multi-tenancy.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 8 of 13</span>
+          <h2>LTI authorization</h2>
+          <p class="sheet-line">08/09 · LTI authorization</p>
+          <p class="lede">Moodle trusts our keys; we verify Moodle’s login token.</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f08-lti-authorization.mp4">
+            <a href="videos/by-feature/f08-lti-authorization.mp4">Open f08-lti-authorization.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 9 of 13</span>
+          <h2>Yet Analytics LRS + Metabase</h2>
+          <p class="sheet-line">08/09 · Yet Analytics LRS and Metabase integration</p>
+          <p class="lede">Owner console for learning records (Yet) and Metabase reports.</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f09-yet-metabase.mp4">
+            <a href="videos/by-feature/f09-yet-metabase.mp4">Open f09-yet-metabase.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 10 of 13</span>
+          <h2>AI-generated quizzes (per student)</h2>
+          <p class="sheet-line">08/09 · AI-generated quizzes — depth &amp; complexity per student</p>
+          <p class="lede">Teacher sets level/complexity; each student gets a different quiz.</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f10-ai-quizzes.mp4">
+            <a href="videos/by-feature/f10-ai-quizzes.mp4">Open f10-ai-quizzes.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 11 of 13</span>
+          <h2>Coach voice — Indian languages</h2>
+          <p class="sheet-line">08/09 · Voice option for coach (Indian languages beyond EN/HI/TE)</p>
+          <p class="lede">Ask Vidura with mic + speak — many Indian languages.</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f11-coach-voice.mp4">
+            <a href="videos/by-feature/f11-coach-voice.mp4">Open f11-coach-voice.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 12 of 13</span>
+          <h2>xAPI data from chats</h2>
+          <p class="sheet-line">08/09 · xAPI data from chats (PeBL)</p>
+          <p class="lede">Coach chat saves learning evidence (xAPI).</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f12-xapi-chats.mp4">
+            <a href="videos/by-feature/f12-xapi-chats.mp4">Open f12-xapi-chats.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-video" data-frags="0" data-video="1">
+      <div class="video-layout">
+        <div class="video-meta">
+          <span class="kicker">Done · 13 of 13</span>
+          <h2>Quiz multi-model parser (complexity / coverage / plan)</h2>
+          <p class="sheet-line">22/09 · 3-level complexity, coverage, study-plan validation</p>
+          <p class="lede">3 difficulty levels + whole-book coverage + study-plan check.</p>
+          <p class="tip">🔊 Turn sound on · Space / → next feature</p>
+        </div>
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" src="videos/by-feature/f13-quiz-parser.mp4">
+            <a href="videos/by-feature/f13-quiz-parser.mp4">Open f13-quiz-parser.mp4</a>
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-deep" data-frags="0">
+      <span class="kicker">Share</span>
+      <h1 style="max-width:16ch;color:#fff">Proof pack ready</h1>
+      <p class="lede">Email the HTML + <code style="color:var(--mint)">videos/by-feature/</code> folder, or open the PowerPoint and play videos from the links. Rebuild: <code style="color:var(--mint)">python scripts/build_requirements_recordings_deck.py</code></p>
+    </section>
+
+  </div>
+  <div class="chrome">
+    <div class="dots" id="dots"></div>
+    <span class="hint-text" id="counter">1 / 16</span>
+    <div class="nav-btns">
+      <button type="button" class="ghost" id="prev">←</button>
+      <button type="button" id="next">Next →</button>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const slides = [...document.querySelectorAll(".slide")];
+  const total = slides.length;
+  let si = 0;
+  const counter = document.getElementById("counter");
+  const dotsEl = document.getElementById("dots");
+
+  slides.forEach((_, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.title = "Slide " + (i + 1);
+    b.addEventListener("click", () => go(i));
+    dotsEl.appendChild(b);
+  });
+
+  document.querySelectorAll(".chip[data-jump]").forEach((el) => {
+    el.addEventListener("click", () => go(parseInt(el.dataset.jump, 10)));
+  });
+
+  function pauseAll() {
+    document.querySelectorAll("video").forEach((v) => { try { v.pause(); } catch (e) {} });
+  }
+
+  function go(n) {
+    pauseAll();
+    slides[si].classList.remove("on");
+    si = (n + total) % total;
+    slides[si].classList.add("on");
+    [...dotsEl.children].forEach((d, i) => d.classList.toggle("on", i === si));
+    counter.textContent = (si + 1) + " / " + total;
+    slides[si].querySelectorAll(".chip").forEach((c, i) => {
+      setTimeout(() => c.classList.add("show"), 40 + i * 40);
+    });
+    const vid = slides[si].querySelector("video");
+    if (vid) {
+      try { vid.currentTime = 0; vid.play().catch(() => {}); } catch (e) {}
+    }
+  }
+
+  document.getElementById("next").onclick = () => go(si + 1);
+  document.getElementById("prev").onclick = () => go(si - 1);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(si + 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); go(si - 1); }
+    if (e.key === "f" || e.key === "F") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+    if (e.key === "Home") go(0);
+    if (e.key === "End") go(total - 1);
+  });
+
+  go(0);
+})();
+</script>
+</body>
+</html>

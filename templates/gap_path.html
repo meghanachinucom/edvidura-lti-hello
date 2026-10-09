@@ -14,7 +14,7 @@
         {% if gap_path and gap_path.mode == 'difference' %}
         Path from your target role’s required skills minus what you already demonstrated.
         {% else %}
-        Your saved path from the last graded attempt. Home Continue points at the next open step.
+        Your personal plan adapts from chatbot discussions, Moodle/LMS activity, and VR/sim practice — not only the last quiz.
         {% endif %}
       </p>
     </div>
@@ -31,6 +31,12 @@
             {% if gap_path.role_code %}<code>{{ gap_path.role_code }}</code> · {% endif %}
             {{ gap_path.done_count or 0 }}/{{ gap_path.step_count or gap_path.steps|length }} steps
             {% if gap_path.progress_pct is defined %} · {{ gap_path.progress_pct }}%{% endif %}
+            {% if gap_path.signal_sources %}
+            · signals:
+            {% for src in gap_path.signal_sources %}
+            <span class="chip" style="display:inline;padding:2px 8px;font-size:11px">{{ src }}</span>
+            {% endfor %}
+            {% endif %}
           </p>
         </div>
         {% if gap_path.progress_pct is defined %}
@@ -78,9 +84,13 @@
       <div style="text-align:center;padding:var(--sp-xl)">
         <span class="material-symbols-outlined" style="font-size:48px;opacity:.4;display:block;margin-bottom:var(--sp-sm)">route</span>
         <p class="body-md">No open plan yet.</p>
-        <p class="body-sm text-muted">Take the quiz (or finish lessons first). A miss saves a training path here.</p>
-        <div style="display:flex;justify-content:center;gap:var(--sp-sm);margin-top:var(--sp-md)">
+        <p class="body-sm text-muted" style="max-width:420px;margin:0 auto">
+          Miss a few items on the quiz (or ask Ask Vidura about a class topic).
+          Your personal path appears here from chatbot, Moodle, and VR signals.
+        </p>
+        <div style="display:flex;justify-content:center;gap:var(--sp-sm);margin-top:var(--sp-md);flex-wrap:wrap">
           <a class="btn btn-primary" href="/quiz?token={{ quiz_token }}">Take quiz</a>
+          <a class="btn btn-glass" href="/learn/coach?token={{ quiz_token }}">Ask Vidura</a>
           <a class="btn btn-glass" href="/lessons?token={{ quiz_token }}">Lessons</a>
         </div>
       </div>

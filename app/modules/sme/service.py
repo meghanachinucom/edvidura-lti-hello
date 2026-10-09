@@ -1,4 +1,4 @@
-"""C13 SME chatbot — approved source registry for study coach grounding."""
+"""C13 SME chatbot — approved source registry for Ask Vidura grounding."""
 from __future__ import annotations
 
 import re

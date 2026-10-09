@@ -16,10 +16,6 @@
       <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
         <a class="btn btn-primary" href="/teacher/analytics?token={{ quiz_token }}">Teacher charts</a>
         <a class="btn" href="/school-admin/activity?token={{ quiz_token }}" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Activity</a>
-        <a class="btn" href="/school-admin/integrations?token={{ quiz_token }}" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Integrations</a>
-        {% if metabase_url %}
-        <a class="btn" href="{{ metabase_url }}" target="_blank" rel="noopener" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">Open Metabase</a>
-        {% endif %}
       </div>
     </div>
   </section>
@@ -123,24 +119,6 @@
       <div class="metric-counter" style="margin-top:6px;color:#f59e0b">{{ dash.unsynced_count }}</div>
     </div>
   </div>
-
-  <section class="frosted" style="padding:var(--sp-xl)">
-    <div class="section-head">
-      <h2 class="headline-md">Exports &amp; BI</h2>
-    </div>
-    {% if metabase_embed_url %}
-    <iframe
-      title="Metabase school dashboard"
-      src="{{ metabase_embed_url }}"
-      style="width:100%;min-height:480px;border:0;border-radius:var(--r-xl);background:#fff"
-      allowtransparency
-    ></iframe>
-    {% else %}
-    <p class="body-sm text-muted">
-      Set <code>METABASE_SECRET_KEY</code> and <code>METABASE_EMBED_DASHBOARD_ID</code> for a signed embed.
-    </p>
-    {% endif %}
-  </section>
 
   {% if dash.top_learners %}
   <section class="frosted" style="padding:var(--sp-xl)">

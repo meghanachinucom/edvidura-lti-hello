@@ -6,6 +6,7 @@ Personal learning plans store that path per LTI subject until cleared or superse
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -22,11 +23,97 @@ def weak_skills_from_attempt(
     tenant_id: UUID | str | None = None,
     include_developing: bool = True,
 ) -> list[dict[str, Any]]:
-    """Skills that are weak (and optionally developing) on this attempt."""
+    """Skills that are weak (and optionally developing) on this attempt.
+
+    Catalog matches use question_keys (q1/q2/…). Personalized AI items use
+    other ids — those misses are mapped via topic/prompt → skill labels.
+    """
     statuses = {"weak", "developing"} if include_developing else {"weak"}
     rows = competency_profile(answers, tenant_id=tenant_id)
     weak = [r for r in rows if r.get("status") in statuses and int(r.get("total") or 0) > 0]
-    # Prefer weaker first, then lower percent
+    mapped_qids: set[str] = set()
+    if tenant_id:
+        try:
+            for s in skills_mod.ensure_default_skills(tenant_id):
+                for k in s.get("question_keys") or []:
+                    mapped_qids.add(str(k))
+        except Exception:  # noqa: BLE001
+            mapped_qids = {"q1", "q2", "q3"}
+    else:
+        mapped_qids = {"q1", "q2", "q3"}
+
+    detail: dict[str, Any] = {}
+    if isinstance(answers, dict) and isinstance(answers.get("detail"), dict):
+        detail = answers["detail"]
+    unmapped_miss_blob = " ".join(
+        f"{info.get('topic') or ''} {info.get('prompt') or ''}"
+        for qid, info in detail.items()
+        if isinstance(info, dict)
+        and info.get("correct") is False
+        and str(qid) not in mapped_qids
+    ).strip()
+    if unmapped_miss_blob and tenant_id:
+        try:
+            catalog = skills_mod.ensure_default_skills(tenant_id)
+            blob = unmapped_miss_blob.lower()
+            seen = {str(r.get("id") or "") for r in weak}
+            for sk in catalog:
+                code = str(sk.get("skill_code") or "")
+                label = str(sk.get("label") or "")
+                if not code or code in seen:
+                    continue
+                hit = False
+                if label and label.lower() in blob:
+                    hit = True
+                else:
+                    tokens = [
+                        t
+                        for t in re.split(r"[^a-z0-9]+", label.lower())
+                        if len(t) > 3
+                    ]
+                    if tokens and sum(1 for t in tokens if t in blob) >= max(
+                        1, (len(tokens) + 1) // 2
+                    ):
+                        hit = True
+                if hit:
+                    weak.append(
+                        {
+                            "id": code,
+                            "label": label or code,
+                            "status": "weak",
+                            "percent": 0,
+                            "correct": 0,
+                            "total": 1,
+                            "source": "topic_match",
+                        }
+                    )
+                    seen.add(code)
+        except Exception:  # noqa: BLE001
+            pass
+
+    # If there are misses but still no skill rows, attach top catalog skills.
+    miss_count = sum(
+        1
+        for info in detail.values()
+        if isinstance(info, dict) and info.get("correct") is False
+    )
+    if miss_count and not weak and tenant_id:
+        try:
+            for sk in skills_mod.ensure_default_skills(tenant_id)[:3]:
+                weak.append(
+                    {
+                        "id": sk["skill_code"],
+                        "label": sk.get("label") or sk["skill_code"],
+                        "status": "weak",
+                        "percent": 0,
+                        "correct": 0,
+                        "total": 1,
+                        "source": "miss_fallback",
+                    }
+                )
+        except Exception:  # noqa: BLE001
+            pass
+
     weak.sort(
         key=lambda r: (
             0 if r.get("status") == "weak" else 1,
@@ -102,7 +189,7 @@ def build_gap_path(
         weak = weak_skills_from_attempt(
             attempt.get("answers"), tenant_id=tenant_id
         )[: max(1, max_skills)]
-    if not weak or not attempt_id:
+    if not weak:
         return {
             "active": False,
             "mode": path_mode,
@@ -112,7 +199,16 @@ def build_gap_path(
             "practice_href": "",
             "graded_href": "",
         }
-
+    # Signal-only paths may lack a real attempt UUID — still build a plan.
+    real_attempt = False
+    if attempt_id:
+        try:
+            UUID(str(attempt_id))
+            real_attempt = True
+        except (TypeError, ValueError):
+            real_attempt = False
+    if not attempt_id:
+        attempt_id = "signals"
     skill_rows = {s["skill_code"]: s for s in skills_mod.ensure_default_skills(tenant_id)}
     steps: list[dict[str, Any]] = []
     seen_review: set[str] = set()
@@ -157,10 +253,14 @@ def build_gap_path(
             }
         )
 
-    practice_href = (
-        f"/quiz?token={quiz_token}&practice=1&retry={attempt_id}&loop=1"
-    )
-    graded_href = f"/quiz?token={quiz_token}&retry={attempt_id}&loop=1"
+    if real_attempt:
+        practice_href = (
+            f"/quiz?token={quiz_token}&practice=1&retry={attempt_id}&loop=1"
+        )
+        graded_href = f"/quiz?token={quiz_token}&retry={attempt_id}&loop=1"
+    else:
+        practice_href = f"/quiz?token={quiz_token}&practice=1"
+        graded_href = f"/quiz?token={quiz_token}"
     steps.append(
         {
             "kind": "practice",
@@ -174,9 +274,13 @@ def build_gap_path(
         {
             "kind": "graded",
             "n": len(steps) + 1,
-            "label": "Graded retry",
+            "label": "Graded retry" if real_attempt else "Take the quiz",
             "href": graded_href,
-            "meta": "Can sync to Moodle gradebook",
+            "meta": (
+                "Can sync to Moodle gradebook"
+                if real_attempt
+                else "Build evidence for this plan"
+            ),
         }
     )
     first = steps[0]["href"] if steps else ""
@@ -503,6 +607,12 @@ def upsert_open_plan(
     if not steps:
         return None
     attempt_id = str(gap_path.get("attempt_id") or "") or None
+    # source_attempt_id is UUID — ignore synthetic signal ids
+    if attempt_id:
+        try:
+            UUID(str(attempt_id))
+        except (TypeError, ValueError):
+            attempt_id = None
     skills_payload = {
         "items": skills,
         "mode": gap_path.get("mode") or "gap",
@@ -670,11 +780,16 @@ def resolve_learner_plan(
     manual_version: int | None = None,
     persist_if_missing: bool = False,
     role_code: str | None = None,
+    course_id: UUID | str | None = None,
+    course_label: str = "",
+    adapt_from_signals: bool = True,
 ) -> dict[str, Any]:
     """
     Prefer open persisted plan; else derive from latest graded attempt.
     Optionally persist a newly derived active path (Home / gap page).
 
+    When adapt_from_signals is True, fuse chatbot + Moodle + VR evidence so
+    each individual's plan tracks cross-channel performance.
     role_code: when set, build D23 difference path (role required − mastery).
     """
     wanted_role = (role_code or "").strip().lower() or None
@@ -682,6 +797,31 @@ def resolve_learner_plan(
     if existing and existing.get("plan_status") == "open":
         stored_role = str(existing.get("role_code") or "").strip().lower() or None
         if wanted_role is None or stored_role == wanted_role:
+            if adapt_from_signals and not wanted_role:
+                try:
+                    from app.modules import signals as signals_mod
+
+                    refreshed = signals_mod.refresh_open_plan_from_signals(
+                        tenant_id,
+                        subject=subject,
+                        quiz_token=quiz_token,
+                        course_id=course_id,
+                        course_label=course_label,
+                        first_lesson_id=first_lesson_id,
+                        first_manual_id=first_manual_id,
+                        manual_version=manual_version,
+                        force=False,
+                    )
+                    plan = refreshed.get("plan")
+                    if plan and plan.get("active"):
+                        plan = dict(plan)
+                        plan["signal_sources"] = refreshed.get("sources") or (
+                            refreshed.get("profile") or {}
+                        ).get("sources") or []
+                        plan["signal_adapted"] = bool(refreshed.get("adapted"))
+                        return plan
+                except Exception:  # noqa: BLE001
+                    pass
             return existing
 
     attempt = latest_graded_attempt_for_subject(tenant_id, subject)
@@ -695,6 +835,60 @@ def resolve_learner_plan(
             first_manual_id=first_manual_id,
             manual_version=manual_version,
         )
+    elif adapt_from_signals and not wanted_role:
+        try:
+            from app.modules import signals as signals_mod
+
+            refreshed = signals_mod.refresh_open_plan_from_signals(
+                tenant_id,
+                subject=subject,
+                quiz_token=quiz_token,
+                course_id=course_id,
+                course_label=course_label,
+                first_lesson_id=first_lesson_id,
+                first_manual_id=first_manual_id,
+                manual_version=manual_version,
+                force=False,
+            )
+            if refreshed.get("plan") and refreshed["plan"].get("active"):
+                plan = dict(refreshed["plan"])
+                plan["signal_sources"] = refreshed.get("sources") or (
+                    refreshed.get("profile") or {}
+                ).get("sources") or []
+                plan["signal_adapted"] = True
+                return plan
+            if refreshed.get("skill_gaps") and attempt:
+                derived = build_gap_path(
+                    tenant_id,
+                    attempt=attempt,
+                    quiz_token=quiz_token,
+                    first_lesson_id=first_lesson_id,
+                    first_manual_id=first_manual_id,
+                    manual_version=manual_version,
+                    skill_gaps=refreshed["skill_gaps"],
+                )
+                derived["signal_sources"] = (
+                    refreshed.get("profile") or {}
+                ).get("sources") or []
+                derived["signal_adapted"] = True
+            else:
+                derived = gap_path_from_latest_attempt(
+                    tenant_id,
+                    subject=subject,
+                    quiz_token=quiz_token,
+                    first_lesson_id=first_lesson_id,
+                    first_manual_id=first_manual_id,
+                    manual_version=manual_version,
+                )
+        except Exception:  # noqa: BLE001
+            derived = gap_path_from_latest_attempt(
+                tenant_id,
+                subject=subject,
+                quiz_token=quiz_token,
+                first_lesson_id=first_lesson_id,
+                first_manual_id=first_manual_id,
+                manual_version=manual_version,
+            )
     else:
         derived = gap_path_from_latest_attempt(
             tenant_id,
@@ -716,6 +910,82 @@ def resolve_learner_plan(
     return derived
 
 
+def learner_plan_summary(
+    tenant_id: UUID | str,
+    *,
+    subject: str,
+    quiz_token: str,
+    course_id: UUID | str | None = None,
+    course_label: str = "",
+    first_lesson_id: str | None = None,
+    first_manual_id: str | None = None,
+    manual_version: int | None = None,
+    role_code: str | None = None,
+) -> dict[str, Any]:
+    """Compact study-plan card for Home / My progress (portable, no FastAPI)."""
+    plan = resolve_learner_plan(
+        tenant_id,
+        subject=subject,
+        quiz_token=quiz_token,
+        first_lesson_id=first_lesson_id,
+        first_manual_id=first_manual_id,
+        manual_version=manual_version,
+        persist_if_missing=False,
+        role_code=role_code,
+        course_id=course_id,
+        course_label=course_label,
+        adapt_from_signals=True,
+    )
+    tok = (quiz_token or "").strip()
+    plan_href = f"/learn/gap?token={tok}" if tok else "/learn/gap"
+    if not plan or not plan.get("active"):
+        return {
+            "active": False,
+            "plan_href": plan_href,
+            "progress_pct": 0,
+            "done_count": 0,
+            "step_count": 0,
+            "skills": [],
+            "signal_sources": [],
+            "first_href": None,
+            "mode": None,
+            "message": "Take a quiz or ask Vidura — your plan appears when we see gaps.",
+        }
+    steps = list(plan.get("steps") or [])
+    done = int(plan.get("done_count") or 0)
+    total = int(plan.get("step_count") or len(steps))
+    skills = []
+    for s in list(plan.get("skills") or [])[:6]:
+        if isinstance(s, dict):
+            skills.append(
+                {
+                    "code": str(s.get("code") or s.get("skill_code") or ""),
+                    "label": str(s.get("label") or s.get("name") or s.get("code") or ""),
+                }
+            )
+        elif s:
+            skills.append({"code": str(s), "label": str(s)})
+    sources = [str(x) for x in (plan.get("signal_sources") or []) if x][:6]
+    return {
+        "active": True,
+        "plan_href": plan_href,
+        "progress_pct": int(plan.get("progress_pct") or 0),
+        "done_count": done,
+        "step_count": total,
+        "skills": skills,
+        "signal_sources": sources,
+        "signal_adapted": bool(plan.get("signal_adapted")),
+        "first_href": plan.get("first_href") or plan_href,
+        "mode": str(plan.get("mode") or "gap"),
+        "role_code": plan.get("role_code"),
+        "message": (
+            f"Step {min(done + 1, total)} of {total}"
+            if total
+            else "Continue your learning plan"
+        ),
+    }
+
+
 def dct_planner_pack(tenant_id: UUID | str) -> dict[str, Any]:
     """D11: skills missing a linked remediation lesson vs already covered."""
     skills = skills_mod.ensure_default_skills(tenant_id)
@@ -730,6 +1000,104 @@ def dct_planner_pack(tenant_id: UUID | str) -> dict[str, Any]:
     }
 
 
+def _reel_beats(body_md: str, *, limit: int = 4) -> list[str]:
+    """Short lines for a Reels-style card (plain text, no heavy markdown)."""
+    skip_titles = {
+        "welcome to algebra i",
+        "welcome to algebra 1",
+        "algebra i",
+        "algebra 1",
+    }
+    beats: list[str] = []
+    for raw in (body_md or "").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        line = re.sub(r"^#+\s*", "", line)
+        line = re.sub(r"^[-*•]\s+", "", line)
+        line = re.sub(r"\*\*([^*]+)\*\*", r"\1", line)
+        line = re.sub(r"`([^`]+)`", r"\1", line)
+        line = line.strip()
+        if len(line) < 3:
+            continue
+        if line.lower() in skip_titles:
+            continue
+        if len(line) > 120:
+            line = line[:117].rstrip() + "…"
+        if line in beats:
+            continue
+        beats.append(line)
+        if len(beats) >= limit:
+            break
+    return beats
+
+
+def _reel_snippet(body_md: str, *, max_len: int = 220) -> str:
+    beats = _reel_beats(body_md, limit=6)
+    text = " ".join(beats)
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 1].rstrip() + "…"
+
+
+# Public sample clips when a lesson has no video_url (demo Reels)
+_DEMO_REEL_VIDEOS = (
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+)
+
+
+def _demo_reel_video(skill_code: str) -> str:
+    code = (skill_code or "skill").strip().lower() or "skill"
+    idx = sum(ord(c) for c in code) % len(_DEMO_REEL_VIDEOS)
+    return _DEMO_REEL_VIDEOS[idx]
+
+
+def _skill_reel_payload(
+    skill: dict[str, Any],
+    *,
+    lesson: dict[str, Any] | None,
+) -> tuple[str, list[str], str, str | None]:
+    """Headline + beats for one reel — skill-first, not generic course welcome."""
+    code = str(skill.get("skill_code") or "")
+    label = str(skill.get("label") or code).strip() or code
+    desc = str(skill.get("description") or "").strip()
+    hint = str(skill.get("teleport_hint") or "").strip()
+    lesson_title = str((lesson or {}).get("title") or "").strip()
+    body_md = str((lesson or {}).get("body_md") or "")
+    video_url = str((lesson or {}).get("video_url") or "").strip() or None
+    if not video_url:
+        video_url = _demo_reel_video(code)
+
+    # Prefer skill name as the reel headline (Instagram-style one idea per card)
+    title = label
+    body_beats = _reel_beats(body_md, limit=4)
+    beats: list[str] = []
+    for candidate in (desc, *body_beats, hint):
+        c = (candidate or "").strip()
+        if not c:
+            continue
+        if c.lower() == title.lower():
+            continue
+        if c.lower() == lesson_title.lower():
+            continue
+        if c in beats:
+            continue
+        beats.append(c if len(c) <= 120 else c[:117].rstrip() + "…")
+        if len(beats) >= 4:
+            break
+    if not beats:
+        beats = [f"Quick boost for {label}", "Open the lesson, then practice"]
+    # Course lesson title as a quiet caption when it differs
+    caption = ""
+    if lesson_title and lesson_title.lower() != title.lower():
+        caption = lesson_title
+    return title, beats, caption, video_url
+
+
 def micro_learning_catalog(
     tenant_id: UUID | str,
     *,
@@ -739,7 +1107,10 @@ def micro_learning_catalog(
     """Student micro-learning pack: skill-linked short lessons + gap priority.
 
     Completes the micro-learning surface on top of DCT remediation links.
+    Each item includes reel_* fields for the vertical swipe UI.
     """
+    from app.modules import content as content_mod
+
     pack = dct_planner_pack(tenant_id)
     weak = set(weak_skill_codes_for_subject(tenant_id, subject))
     tok = (quiz_token or "").strip()
@@ -758,6 +1129,11 @@ def micro_learning_catalog(
                 href += f"&focus={focus}&loop=1"
         else:
             href = f"/lessons/{lid}?token={tok}&loop=1"
+
+        lesson = content_mod.get_lesson(tenant_id, lid, allow_unpublished=True)
+        title, beats, caption, video_url = _skill_reel_payload(s, lesson=lesson)
+        snippet = " · ".join(beats[:2])
+
         items.append(
             {
                 "skill_id": str(s.get("id") or ""),
@@ -767,8 +1143,14 @@ def micro_learning_catalog(
                 "lesson_id": lid,
                 "manual_id": mid or None,
                 "href": href,
+                "practice_href": f"/quiz?token={tok}&practice=1",
                 "priority": code in weak,
                 "teleport_hint": str(s.get("teleport_hint") or ""),
+                "reel_title": title,
+                "reel_caption": caption,
+                "reel_snippet": snippet,
+                "reel_beats": beats,
+                "reel_video_url": video_url,
             }
         )
     items.sort(key=lambda x: (not x["priority"], x["label"].lower()))
@@ -779,6 +1161,86 @@ def micro_learning_catalog(
         "available_count": len(items),
         "missing_count": pack["missing_count"],
         "missing": pack["missing"],
+    }
+
+
+def publish_skill_reel(
+    tenant_id: UUID | str,
+    skill_id: str,
+    *,
+    video_url: str,
+    caption: str = "",
+    course_id: UUID | str | None = None,
+) -> dict[str, Any]:
+    """Attach a short reel video to a skill (create or update linked micro-lesson).
+
+    Student `/learn/micro` reads ``lessons.video_url`` via the remediation link.
+    """
+    from app.modules import content as content_mod
+    from app.modules import skills as skills_mod
+
+    url = (video_url or "").strip()
+    if not url:
+        raise ValueError("Video required")
+    sid = (skill_id or "").strip()
+    if not sid:
+        raise ValueError("Skill required")
+
+    skills = skills_mod.ensure_default_skills(tenant_id)
+    skill = next((s for s in skills if str(s.get("id")) == sid), None)
+    if not skill:
+        raise ValueError("Skill not found")
+
+    label = str(skill.get("label") or skill.get("skill_code") or "Skill").strip()
+    code = str(skill.get("skill_code") or "").strip()
+    tip = (caption or "").strip() or str(skill.get("description") or "").strip()
+    body_md = (
+        f"# {label}\n\n"
+        f"{tip}\n\n"
+        f"_Micro reel · `{code or 'skill'}` — watch, then practice._\n"
+    )
+    existing_lid = str(skill.get("lesson_id") or "").strip()
+    lesson: dict[str, Any] | None = None
+    if existing_lid:
+        prev = content_mod.get_lesson(tenant_id, existing_lid, allow_unpublished=True)
+        if prev:
+            lesson = content_mod.update_lesson(
+                tenant_id=tenant_id,
+                lesson_id=existing_lid,
+                title=str(prev.get("title") or label),
+                body_md=str(prev.get("body_md") or body_md),
+                video_url=url,
+                lesson_type="video",
+                status="published",
+            )
+    if lesson is None:
+        lesson = content_mod.create_lesson(
+            tenant_id=tenant_id,
+            title=f"Reel · {label}",
+            body_md=body_md,
+            lesson_type="video",
+            video_url=url,
+            status="published",
+            course_id=course_id,
+            insert_before_quiz=True,
+        )
+    lid = str(lesson.get("id") or "")
+    skills_mod.set_skill_remediation(
+        tenant_id,
+        sid,
+        lesson_id=lid,
+        manual_id=str(skill.get("manual_id") or "") or None,
+        manual_focus=str(skill.get("manual_focus") or ""),
+        prefer_path="lessons",
+        teleport_label=f"Reel: {label}",
+        teleport_hint=tip or "Watch the short reel, then practice",
+    )
+    return {
+        "skill_id": sid,
+        "skill_code": code,
+        "label": label,
+        "lesson_id": lid,
+        "video_url": url,
     }
 
 

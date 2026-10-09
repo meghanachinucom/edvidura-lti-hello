@@ -1,28 +1,32 @@
 ---
-description: After app changes, deploy live to Railway without waiting to be asked
+description: Deploy to Railway only when the user explicitly asks
 alwaysApply: true
 ---
 
-# Deploy live after changes
+# Deploy only when asked
 
-When you finish code/template changes that affect the running app, **deploy to Railway immediately** in the same turn. Do not wait for the user to ask.
+**Do not** auto-deploy to Railway after routine coding, UX polish, presentations, docs, tests, or experimental work.
 
-## Target
+## When to deploy
+
+Deploy **only** if the user explicitly asks (e.g. “deploy”, “ship it”, “make it live”) **or** they clearly need a production hotfix they just requested.
+
+## Target (when deploying)
 
 - Service: `edvidura-app`
 - App URL: https://edvidura-app-production.up.railway.app
-- Prefer the current feature branch; push then deploy that branch.
+- Prefer the current feature branch; push only if the user asked to push / save to GitHub.
 
-## Steps (after meaningful app changes)
+## Steps (only after an explicit deploy request)
 
-1. Commit only if the user asked for a commit; otherwise deploy working tree as appropriate for this project’s Railway flow.
-2. Push the branch if remote tracking requires it for the deploy path you use.
-3. Deploy with Railway CLI, e.g. `railway up -s edvidura-app --detach` from the repo root (or the project’s documented deploy command).
-4. Confirm health: `GET https://edvidura-app-production.up.railway.app/health`
-5. Tell the user the change is live (or failed) with the URL.
+1. Commit only if the user asked for a commit.
+2. `railway up -s edvidura-app --detach` from the repo root (or the project’s documented command).
+3. Confirm health: `GET https://edvidura-app-production.up.railway.app/health`
+4. Tell the user the change is live (or failed) with the URL.
 
-## Skip auto-deploy for
+## Never auto-deploy
 
-- Docs-only, rules-only, or local scratch/scripts that do not affect production
-- Explicit user request to keep changes local
-- Incomplete/broken work that would break production
+- Presentations, meeting boards, docs, rules, scratch scripts
+- Teacher/student UX polish unless they asked to go live
+- Incomplete or broken work
+- Anything the user said to keep local

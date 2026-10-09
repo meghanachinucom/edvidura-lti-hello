@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · JEV — manager story</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --surface: #e6fff5;
+      --surface-2: #d5f5ea;
+      --ink: #032019;
+      --muted: #3c4a42;
+      --primary: #006c4b;
+      --mint: #34d399;
+      --mint-glow: #45dfa4;
+      --sky: #40c2fd;
+      --citrus: #f0c01a;
+      --coral: #f05a3a;
+      --violet: #7c5cff;
+      --shadow: 0 24px 60px -12px rgba(14,43,36,.18), 0 8px 24px -8px rgba(52,211,153,.25);
+      --font-display: "Syne", system-ui, sans-serif;
+      --font-body: "Outfit", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow: hidden; margin: 0; }
+    body {
+      font-family: var(--font-body);
+      color: var(--ink);
+      background: var(--surface);
+    }
+
+    canvas#mesh {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+      opacity: 0.35;
+    }
+
+    .viewport {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      border-radius: 0;
+      overflow: hidden;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    .slides { position: absolute; inset: 0; }
+    .slide {
+      position: absolute; inset: 0;
+      padding: clamp(32px, 5vw, 72px) clamp(36px, 6vw, 96px) clamp(72px, 8vh, 96px);
+      display: flex; flex-direction: column; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transform: scale(1.04);
+      transition: opacity 0.65s cubic-bezier(.22,1,.36,1), transform 0.65s cubic-bezier(.22,1,.36,1);
+      background:
+        radial-gradient(120% 80% at 100% 0%, rgba(64,194,253,.22), transparent 50%),
+        radial-gradient(90% 70% at 0% 100%, rgba(52,211,153,.28), transparent 55%),
+        linear-gradient(160deg, #f0fff9 0%, var(--surface) 40%, var(--surface-2) 100%);
+    }
+    .slide.on { opacity: 1; pointer-events: auto; transform: scale(1); }
+    .slide.theme-warm {
+      background:
+        radial-gradient(100% 90% at 80% 20%, rgba(240,192,26,.35), transparent 50%),
+        radial-gradient(80% 60% at 10% 90%, rgba(240,90,58,.12), transparent 45%),
+        linear-gradient(165deg, #fff9eb 0%, #fff5d6 100%);
+    }
+    .slide.theme-deep {
+      color: #e8f8ec;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% 0%, rgba(69,223,164,.25), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(64,194,253,.2), transparent 50%),
+        linear-gradient(155deg, #032019 0%, #0e2b24 55%, #071612 100%);
+    }
+    .slide.theme-deep .muted { color: rgba(232,248,236,.72); }
+    .slide.theme-deep h1, .slide.theme-deep h2 { color: #fff; }
+
+    .kicker {
+      font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--primary); margin-bottom: 12px;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .kicker::before {
+      content: ""; width: 28px; height: 3px; border-radius: 99px;
+      background: linear-gradient(90deg, var(--mint), var(--sky));
+      animation: kicker-grow 1.2s ease infinite alternate;
+    }
+    @keyframes kicker-grow { from { width: 18px; opacity: .6; } to { width: 36px; opacity: 1; } }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 5.5vw, 4rem);
+      line-height: 1.02; letter-spacing: -0.03em; font-weight: 800;
+      max-width: 11ch;
+    }
+    h1 .pop {
+      display: inline-block;
+      background: linear-gradient(105deg, var(--primary) 0%, #059669 40%, var(--sky) 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: title-shimmer 4s ease-in-out infinite;
+      background-size: 200% auto;
+    }
+    @keyframes title-shimmer {
+      0%, 100% { background-position: 0% center; }
+      50% { background-position: 100% center; }
+    }
+
+    h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.65rem, 3.8vw, 2.65rem);
+      letter-spacing: -0.02em; font-weight: 700; margin-bottom: 8px;
+    }
+    .lede {
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
+      line-height: 1.55; color: var(--muted); max-width: 46ch; margin-top: 14px;
+    }
+    .theme-deep .lede { color: rgba(232,248,236,.78); }
+
+    /* Sticky wall */
+    .stickies {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(12px, 2vw, 22px);
+      margin-top: clamp(16px, 3vw, 32px); max-width: min(920px, 100%);
+    }
+    @media (max-width: 640px) { .stickies { grid-template-columns: 1fr; } }
+    .sticky {
+      position: relative; padding: 22px 20px 20px;
+      border-radius: 4px; font-size: 0.95rem; line-height: 1.45;
+      box-shadow: var(--shadow);
+      transform: rotate(var(--rot, 0deg));
+      opacity: 0; translate: 0 24px;
+      transition: opacity 0.5s ease, translate 0.55s cubic-bezier(.22,1,.36,1);
+    }
+    .slide.on .sticky.show { opacity: 1; translate: 0 0; }
+    .sticky::before {
+      content: ""; position: absolute; top: -10px; left: 50%; translate: -50% 0;
+      width: 52px; height: 18px; background: rgba(255,224,138,.85);
+      box-shadow: 0 2px 6px rgba(0,0,0,.12); border-radius: 2px;
+    }
+    .sticky.s1 { --rot: -2.5deg; background: #fff4b8; color: #3d3200; }
+    .sticky.s2 { --rot: 1.8deg; background: #c8f0dc; color: #0a3d28; }
+    .sticky.s3 { --rot: -1.2deg; background: #c4e7ff; color: #003d55; }
+    .sticky.s4 { --rot: 2.4deg; background: #ffd4cc; color: #5a1808; }
+    .sticky b { display: block; font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 6px; }
+
+    /* Metaphor split */
+    .split {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: clamp(12px, 2vw, 24px);
+      align-items: center; margin-top: 28px; max-width: min(1000px, 100%);
+    }
+    @media (max-width: 720px) {
+      .split { grid-template-columns: 1fr; }
+      .split .vs { display: none; }
+    }
+    .role {
+      padding: 28px 24px; border-radius: 20px; text-align: center;
+      border: 2px solid rgba(0,108,75,.15);
+      background: #fff;
+      box-shadow: var(--shadow);
+      opacity: 0; scale: 0.92;
+      transition: opacity 0.55s ease, scale 0.55s cubic-bezier(.22,1,.36,1);
+    }
+    .slide.on .role.show { opacity: 1; scale: 1; }
+    .role .emoji { font-size: 2.8rem; display: block; margin-bottom: 10px; animation: bob 2.5s ease-in-out infinite; }
+    .role.head { border-color: var(--citrus); background: linear-gradient(180deg, #fff9e6, #fff); }
+    .role.writer { border-color: var(--sky); background: linear-gradient(180deg, #eef9ff, #fff); }
+    @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .vs {
+      font-family: var(--font-display); font-weight: 800; font-size: 1.4rem;
+      color: var(--primary); opacity: 0; transition: opacity 0.4s 0.3s;
+    }
+    .slide.on .vs.show { opacity: 1; }
+
+    /* Pipeline SVG */
+    .pipe-wrap { margin-top: 20px; max-width: min(1100px, 100%); width: 100%; }
+    .pipe-wrap svg { width: 100%; height: auto; overflow: visible; }
+    .pipe-node { opacity: 0; transform-origin: center; }
+    .slide.on .pipe-node.show { animation: node-in 0.6s cubic-bezier(.22,1,.36,1) forwards; }
+    .pipe-node:nth-child(1) { animation-delay: 0.05s; }
+    .pipe-node:nth-child(2) { animation-delay: 0.15s; }
+    .pipe-node:nth-child(3) { animation-delay: 0.25s; }
+    .pipe-node:nth-child(4) { animation-delay: 0.35s; }
+    @keyframes node-in {
+      from { opacity: 0; transform: scale(0.7); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .flow-dot {
+      fill: var(--citrus);
+      filter: drop-shadow(0 0 6px rgba(240,192,26,.8));
+    }
+
+    /* Bento jobs */
+    .bento {
+      display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px;
+      margin-top: 22px; max-width: min(1100px, 100%);
+    }
+    .tile {
+      grid-column: span 6; padding: 20px 22px; border-radius: 18px;
+      background: rgba(255,255,255,.72); border: 1px solid rgba(0,108,75,.12);
+      box-shadow: 0 8px 24px rgba(14,43,36,.06);
+      opacity: 0; translate: 0 16px;
+      transition: opacity 0.45s ease, translate 0.5s cubic-bezier(.22,1,.36,1);
+    }
+    .theme-deep .tile { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.12); color: #e8f8ec; }
+    .slide.on .tile.show { opacity: 1; translate: 0 0; }
+    .tile.wide { grid-column: span 12; }
+    .tile .num {
+      font-family: var(--font-display); font-size: 2rem; font-weight: 800;
+      line-height: 1; color: var(--mint); opacity: .9;
+    }
+    .theme-deep .tile .num { color: var(--mint-glow); }
+    .tile h3 { font-size: 1.05rem; margin: 6px 0 4px; font-weight: 700; }
+    .tile p { font-size: 0.88rem; color: var(--muted); line-height: 1.45; }
+    .theme-deep .tile p { color: rgba(232,248,236,.7); }
+
+    /* Steps vertical */
+    .steps { margin-top: 18px; max-width: 640px; position: relative; padding-left: 28px; }
+    .steps::before {
+      content: ""; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 4px;
+      border-radius: 99px; background: linear-gradient(180deg, var(--mint), var(--sky));
+      transform-origin: top; transform: scaleY(0);
+      transition: transform 0.8s cubic-bezier(.22,1,.36,1);
+    }
+    .slide.on .steps.drawn::before { transform: scaleY(1); }
+    .step {
+      position: relative; padding: 12px 0 12px 20px;
+      opacity: 0; translate: -12px 0;
+      transition: opacity 0.45s ease, translate 0.45s ease;
+    }
+    .slide.on .step.show { opacity: 1; translate: 0 0; }
+    .step::before {
+      content: ""; position: absolute; left: -24px; top: 18px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--citrus); border: 3px solid var(--surface);
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+    .theme-deep .step::before { border-color: #0e2b24; }
+    .step strong { display: block; font-size: 1.02rem; }
+
+    /* Cost bars */
+    .bars { margin-top: 28px; max-width: 520px; }
+    .bar-row { margin-bottom: 22px; opacity: 0; translate: 0 12px; transition: opacity 0.5s, translate 0.5s; }
+    .slide.on .bar-row.show { opacity: 1; translate: 0 0; }
+    .bar-label { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; }
+    .bar-track {
+      height: 36px; border-radius: 12px; background: rgba(0,0,0,.06); overflow: hidden;
+      position: relative;
+    }
+    .theme-deep .bar-track { background: rgba(0,0,0,.35); }
+    .bar-fill {
+      height: 100%; border-radius: 12px; width: 0;
+      transition: width 1.2s cubic-bezier(.22,1,.36,1);
+    }
+    .slide.on .bar-fill.grow { width: var(--w, 50%); }
+    .bar-fill.jev { background: linear-gradient(90deg, var(--mint), #059669); }
+    .bar-fill.llm { background: linear-gradient(90deg, var(--violet), var(--coral)); }
+
+    /* Status board */
+    .kanban { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 24px; max-width: min(1000px, 100%); }
+    .col {
+      flex: 1; min-width: 200px; padding: 16px; border-radius: 16px;
+      background: rgba(255,255,255,.65); border: 2px dashed rgba(0,108,75,.2);
+    }
+    .theme-deep .col { background: rgba(0,0,0,.2); border-color: rgba(255,255,255,.15); }
+    .col h4 {
+      font-size: 0.75rem; letter-spacing: .12em; text-transform: uppercase;
+      margin-bottom: 12px; font-weight: 700;
+    }
+    .col.done h4 { color: var(--primary); }
+    .col.wait h4 { color: #9a6b00; }
+    .pill-card {
+      padding: 14px; border-radius: 12px; margin-bottom: 10px; font-size: 0.88rem;
+      font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,.08);
+      opacity: 0; scale: 0.95; transition: opacity 0.4s, scale 0.4s cubic-bezier(.22,1,.36,1);
+    }
+    .slide.on .pill-card.show { opacity: 1; scale: 1; }
+    .col.done .pill-card { background: var(--mint); color: #032019; }
+    .col.wait .pill-card { background: #ffe4a0; color: #3d2800; }
+
+    /* Final */
+    .finale {
+      text-align: center; align-items: center;
+    }
+    .finale h1 { max-width: none; font-size: clamp(2rem, 4.5vw, 3.2rem); }
+    .burst {
+      position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+    }
+    .confetti {
+      position: absolute; width: 10px; height: 14px; border-radius: 2px;
+      opacity: 0; animation: fall 4s linear infinite;
+    }
+    @keyframes fall {
+      0% { opacity: 0; transform: translateY(-10vh) rotate(0deg); }
+      10% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(110vh) rotate(720deg); }
+    }
+
+    /* Chrome */
+    .chrome {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px clamp(16px, 3vw, 28px);
+      background: linear-gradient(180deg, transparent, rgba(3,32,25,.08));
+    }
+    .theme-deep ~ .chrome, .viewport:has(.theme-deep.on) .chrome {
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,.35));
+    }
+    .dots { display: flex; gap: 6px; flex-wrap: wrap; }
+    .dots button {
+      width: 8px; height: 8px; border: 0; border-radius: 99px;
+      background: rgba(3,32,25,.2); cursor: pointer; padding: 0;
+      transition: width 0.25s, background 0.25s;
+    }
+    .dots button.on { width: 22px; background: var(--primary); }
+    .hint-text { font-size: 11px; color: var(--muted); opacity: .85; }
+    .nav-btns { display: flex; gap: 8px; }
+    .nav-btns button {
+      font-family: var(--font-body); font-weight: 700; font-size: 13px;
+      border: 0; cursor: pointer; padding: 10px 18px; border-radius: 999px;
+      background: var(--primary); color: #fff;
+      box-shadow: 0 4px 16px rgba(0,108,75,.35);
+      transition: transform 0.15s, filter 0.15s;
+    }
+    .nav-btns button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .nav-btns button.ghost {
+      background: rgba(255,255,255,.85); color: var(--primary);
+      box-shadow: none; border: 1px solid rgba(0,108,75,.2);
+    }
+    .frag-hint {
+      position: absolute; top: 18px; right: clamp(16px, 3vw, 28px);
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      background: rgba(255,255,255,.7); padding: 6px 12px; border-radius: 999px;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .frag-hint.visible { opacity: 1; }
+
+    @media print {
+      body { background: #fff; }
+      canvas, .chrome, .frag-hint, .burst { display: none !important; }
+      .viewport { position: static; width: 100%; height: auto; }
+      .slide { position: relative; opacity: 1 !important; transform: none !important; min-height: 100vh; page-break-after: always; }
+      .sticky, .role, .tile, .step, .bar-row, .pill-card { opacity: 1 !important; translate: none !important; scale: 1 !important; }
+      .bar-fill { width: var(--w) !important; }
+    }
+  </style>
+</head>
+<body>
+<canvas id="mesh" aria-hidden="true"></canvas>
+
+<div class="viewport">
+  <p class="frag-hint" id="fragHint">Space → reveal next</p>
+
+  <div class="slides" id="slides">
+
+    <section class="slide on" data-frags="0">
+      <span class="kicker">For managers · JEV</span>
+      <h1><span class="pop">Decide first.</span><br/>Write second.</h1>
+      <p class="lede"><strong>JEV</strong> (from TypeSafe) helps Ask Vidura and AI quizzes stay on topic, cover the full book, and spend less on AI. Moodle still holds grades.</p>
+      <p class="lede" style="font-size:0.85rem;margin-top:20px;opacity:0.75">October 2026 · Sheet item: JEV + lower AI cost</p>
+    </section>
+
+    <section class="slide theme-warm" data-frags="4">
+      <h2>Why we need it</h2>
+      <p class="lede">Four problems we keep seeing.</p>
+      <div class="stickies">
+        <div class="sticky s1" data-frag="1"><b>Cost</b>Every long AI chat and quiz costs money — both the question we send and the answer we get.</div>
+        <div class="sticky s2" data-frag="2"><b>Focus</b>Students can ask things outside the class. The coach must answer only from approved lessons.</div>
+        <div class="sticky s3" data-frag="3"><b>Coverage</b>AI quizzes must use the <strong>whole book</strong>, not only the first chapters.</div>
+        <div class="sticky s4" data-frag="4"><b>Trust</b>Teachers need to see what the AI decided. We save that in learning records (xAPI) — not a black box.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-frags="2">
+      <h2>Two jobs — easy to remember</h2>
+      <div class="split">
+        <div class="role head" data-frag="1">
+          <span class="emoji">🎯</span>
+          <strong>JEV</strong>
+          <p class="lede" style="margin-top:8px;font-size:0.9rem">The boss: Is this on topic? How should we teach? Cheap AI or full AI? Did the quiz cover everything?</p>
+        </div>
+        <div class="vs" data-frag="1">&amp;</div>
+        <div class="role writer" data-frag="2">
+          <span class="emoji">✍️</span>
+          <strong>Chat AI</strong>
+          <p class="lede" style="margin-top:8px;font-size:0.9rem">The writer: Writes the answer or quiz questions — only when JEV says yes.</p>
+        </div>
+      </div>
+      <p class="lede" style="margin-top:24px">JEV replies in a split second with a short yes/no style answer. Students never see that message.</p>
+    </section>
+
+    <section class="slide theme-deep" data-frags="5">
+      <h2>What JEV is not</h2>
+      <p class="lede muted">Clear limits — so nobody expects the wrong thing.</p>
+      <div class="steps" id="notSteps">
+        <div class="step" data-frag="1"><strong>Not</strong> another school chatbot or campus help widget</div>
+        <div class="step" data-frag="2"><strong>Not</strong> Moodle — students and grades still live there</div>
+        <div class="step" data-frag="3"><strong>Not</strong> the thing that marks work or sends scores back</div>
+        <div class="step" data-frag="4"><strong>Not</strong> needed for demos — EdVidura still works if JEV is off</div>
+        <div class="step" data-frag="5"><strong>Not</strong> a new content team — it only guides the AI before it writes</div>
+      </div>
+    </section>
+
+    <section class="slide" data-frags="4">
+      <h2>Where it sits</h2>
+      <p class="lede">Student opens EdVidura from Moodle. JEV decides before we call the expensive AI.</p>
+      <div class="pipe-wrap">
+        <svg viewBox="0 0 880 120" role="img" aria-label="Moodle to EdVidura to JEV to optional AI">
+          <defs>
+            <linearGradient id="gM" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f97316"/><stop offset="100%" stop-color="#ea580c"/></linearGradient>
+            <linearGradient id="gE" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#006c4b"/></linearGradient>
+            <linearGradient id="gJ" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f0c01a"/><stop offset="100%" stop-color="#ca8a04"/></linearGradient>
+            <linearGradient id="gL" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#4f46e5"/></linearGradient>
+          </defs>
+          <path id="rail" d="M 120 60 H 760" fill="none" stroke="rgba(0,108,75,.25)" stroke-width="6" stroke-linecap="round"/>
+          <circle class="flow-dot" r="8" cy="60">
+            <animateMotion dur="2.2s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1">
+              <mpath href="#rail"/>
+            </animateMotion>
+          </circle>
+          <g class="pipe-node" data-frag="1"><rect x="20" y="28" width="140" height="64" rx="14" fill="url(#gM)"/><text x="90" y="68" text-anchor="middle" fill="#fff" font-family="Outfit,sans-serif" font-weight="700" font-size="15">Moodle</text></g>
+          <g class="pipe-node" data-frag="2"><rect x="240" y="28" width="140" height="64" rx="14" fill="url(#gE)"/><text x="310" y="68" text-anchor="middle" fill="#fff" font-family="Outfit,sans-serif" font-weight="700" font-size="15">EdVidura</text></g>
+          <g class="pipe-node" data-frag="3"><rect x="460" y="28" width="140" height="64" rx="14" fill="url(#gJ)"/><text x="530" y="68" text-anchor="middle" fill="#1a1a1a" font-family="Outfit,sans-serif" font-weight="700" font-size="15">JEV decides</text></g>
+          <g class="pipe-node" data-frag="4"><rect x="680" y="28" width="160" height="64" rx="14" fill="url(#gL)"/><text x="760" y="62" text-anchor="middle" fill="#fff" font-family="Outfit,sans-serif" font-weight="700" font-size="14">AI writes</text><text x="760" y="78" text-anchor="middle" fill="rgba(255,255,255,.85)" font-family="Outfit,sans-serif" font-size="11">only if needed</text></g>
+        </svg>
+      </div>
+      <p class="lede" style="margin-top:12px;font-size:0.88rem">Code: <code>app/modules/jev</code> · Guide: <code>docs/JEV.md</code></p>
+    </section>
+
+    <section class="slide theme-deep" data-frags="4">
+      <h2>Four jobs we already built</h2>
+      <div class="bento">
+        <div class="tile" data-frag="1"><div class="num">01</div><h3>Ask Vidura</h3><p>Is the question on class? Hint, explain, or practice? Cheap local reply or full AI?</p></div>
+        <div class="tile" data-frag="2"><div class="num">02</div><h3>Quiz coverage</h3><p>After questions are made — did they touch every chapter? If not, make more.</p></div>
+        <div class="tile" data-frag="3"><div class="num">03</div><h3>Save money</h3><p>For easy recall questions, use the cheap path when JEV is sure enough.</p></div>
+        <div class="tile" data-frag="4"><div class="num">04</div><h3>Health check</h3><p>AI status page shows whether JEV is set up (API key present).</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-frags="5">
+      <h2>What happens in Ask Vidura</h2>
+      <div class="steps">
+        <div class="step" data-frag="1"><strong>Load</strong> the approved class lessons</div>
+        <div class="step" data-frag="2"><strong>Ask JEV</strong> — on topic? how to teach? cheap or full AI?</div>
+        <div class="step" data-frag="3"><strong>Off topic</strong> → polite “please stay on class” — no AI cost</div>
+        <div class="step" data-frag="4"><strong>Easy path</strong> → short local answer</div>
+        <div class="step" data-frag="5"><strong>Full AI</strong> → longer answer with lesson citations, saved to learning records</div>
+      </div>
+    </section>
+
+    <section class="slide theme-warm" data-frags="4">
+      <h2>AI quizzes (matches the sheet)</h2>
+      <p class="lede">Three difficulty levels · whole-book coverage · checks the study plan.</p>
+      <div class="bento">
+        <div class="tile wide" data-frag="1"><h3>Teacher sets options</h3><p>Level, how hard, and how much of the book to cover — before making questions.</p></div>
+        <div class="tile" data-frag="2"><h3>Make questions</h3><p>AI or local path builds a quiz for each student.</p></div>
+        <div class="tile" data-frag="3"><h3>JEV checks</h3><p>Do the questions cover all the section titles?</p></div>
+        <div class="tile wide" data-frag="4"><h3>Fix gaps</h3><p>If coverage is weak → auto second pass adds questions across the missing units.</p></div>
+      </div>
+    </section>
+
+    <section class="slide theme-deep" data-frags="2">
+      <h2>Money story (simple)</h2>
+      <div class="bars">
+        <div class="bar-row" data-frag="1">
+          <div class="bar-label"><span>JEV decision (tiny call)</span><span>~1×</span></div>
+          <div class="bar-track"><div class="bar-fill jev" style="--w:8%"></div></div>
+        </div>
+        <div class="bar-row" data-frag="2">
+          <div class="bar-label"><span>Full AI answer (when we skip it)</span><span>~100–400×</span></div>
+          <div class="bar-track"><div class="bar-fill llm" style="--w:92%"></div></div>
+        </div>
+      </div>
+      <p class="lede muted" style="margin-top:20px">After we turn it on, we can count how often JEV saved a full AI call (<code>jev_skipped_remote</code> in our learning records).</p>
+    </section>
+
+    <section class="slide" data-frags="5">
+      <h2>How we turn it on</h2>
+      <div class="steps">
+        <div class="step" data-frag="1"><strong>Get</strong> the TypeSafe API key</div>
+        <div class="step" data-frag="2"><strong>Set</strong> on Railway: <code>JEV_ENABLED=1</code> and the key</div>
+        <div class="step" data-frag="3"><strong>Check</strong> AI status shows JEV is ready</div>
+        <div class="step" data-frag="4"><strong>Try</strong> on Riverside — coach chat + quiz</div>
+        <div class="step" data-frag="5"><strong>Adjust</strong> the confidence setting after teachers review</div>
+      </div>
+    </section>
+
+    <section class="slide" data-frags="4">
+      <h2>Where we are on the sheet</h2>
+      <div class="kanban">
+        <div class="col done">
+          <h4>Done</h4>
+          <div class="pill-card" data-frag="1">JEV code connected in EdVidura</div>
+          <div class="pill-card" data-frag="2">Tests + learning-record fields</div>
+        </div>
+        <div class="col wait">
+          <h4>Waiting</h4>
+          <div class="pill-card" data-frag="3">Live API key + turn on in Railway</div>
+          <div class="pill-card" data-frag="4">Pilot OK from teachers + final settings</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide finale theme-deep" data-frags="0">
+      <div class="burst" id="burst" aria-hidden="true"></div>
+      <span class="kicker" style="color:var(--mint-glow)">One line to remember</span>
+      <h1>JEV decides. AI writes.</h1>
+      <p class="lede" style="max-width:38ch;margin:16px auto 0">Stays on class. Covers the book. Costs less. Moodle still owns grades.</p>
+      <p class="lede" style="margin-top:28px;font-size:0.9rem;color:var(--mint-glow)">Press <strong>F</strong> for fullscreen · ← → for slides · Space to reveal · Ctrl+P for PDF</p>
+    </section>
+
+  </div>
+
+  <div class="chrome">
+    <div class="dots" id="dots"></div>
+    <span class="hint-text" id="counter">1 / 12</span>
+    <div class="nav-btns">
+      <button type="button" class="ghost" id="prev">←</button>
+      <button type="button" id="next">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const slides = [...document.querySelectorAll(".slide")];
+  const total = slides.length;
+  let si = 0;
+  let frag = 0;
+  const counter = document.getElementById("counter");
+  const fragHint = document.getElementById("fragHint");
+  const dotsEl = document.getElementById("dots");
+
+  slides.forEach((_, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.title = "Slide " + (i + 1);
+    b.addEventListener("click", () => goSlide(i));
+    dotsEl.appendChild(b);
+  });
+
+  function maxFrag(slide) {
+    return parseInt(slide.dataset.frags || "0", 10);
+  }
+
+  function applyFrag() {
+    const slide = slides[si];
+    const max = maxFrag(slide);
+    slide.querySelectorAll("[data-frag]").forEach((el) => {
+      const need = parseInt(el.dataset.frag, 10);
+      const show = need <= frag;
+      el.classList.toggle("show", show);
+      const fill = el.querySelector?.(".bar-fill");
+      if (fill) fill.classList.toggle("grow", show);
+    });
+    slide.querySelectorAll(".steps").forEach((steps) => {
+      steps.classList.toggle("drawn", frag > 0);
+    });
+
+    const more = frag < max;
+    fragHint.classList.toggle("visible", more && max > 0);
+    fragHint.textContent = more ? "Space or → — reveal (" + frag + "/" + max + ")" : "";
+  }
+
+  function goSlide(n, resetFrag = true) {
+    slides[si].classList.remove("on");
+    si = (n + total) % total;
+    if (resetFrag) frag = 0;
+    slides[si].classList.add("on");
+    [...dotsEl.children].forEach((d, i) => d.classList.toggle("on", i === si));
+    counter.textContent = (si + 1) + " / " + total;
+    applyFrag();
+    if (si === total - 1) spawnConfetti();
+  }
+
+  function next() {
+    const max = maxFrag(slides[si]);
+    if (frag < max) {
+      frag++;
+      applyFrag();
+      return;
+    }
+    goSlide(si + 1);
+  }
+
+  function prev() {
+    if (frag > 0) {
+      frag--;
+      applyFrag();
+      return;
+    }
+    const prevSlide = (si - 1 + total) % total;
+    goSlide(prevSlide, false);
+    frag = maxFrag(slides[si]);
+    applyFrag();
+  }
+
+  document.getElementById("next").onclick = next;
+  document.getElementById("prev").onclick = prev;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); next(); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); prev(); }
+    if (e.key === "f" || e.key === "F") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+    if (e.key === "Home") goSlide(0);
+    if (e.key === "End") goSlide(total - 1);
+  });
+
+  /* Ambient mesh */
+  const canvas = document.getElementById("mesh");
+  const ctx = canvas.getContext("2d");
+  let W, H, blobs;
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    blobs = Array.from({ length: 14 }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: 40 + Math.random() * 90,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+      c: Math.random() > 0.5 ? "52,211,153" : "64,194,253"
+    }));
+  }
+  function drawMesh() {
+    ctx.fillStyle = "#0a1612";
+    ctx.fillRect(0, 0, W, H);
+    blobs.forEach((b) => {
+      b.x += b.vx; b.y += b.vy;
+      if (b.x < -b.r) b.x = W + b.r;
+      if (b.x > W + b.r) b.x = -b.r;
+      if (b.y < -b.r) b.y = H + b.r;
+      if (b.y > H + b.r) b.y = -b.r;
+      const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+      g.addColorStop(0, "rgba(" + b.c + ",0.12)");
+      g.addColorStop(1, "rgba(" + b.c + ",0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    requestAnimationFrame(drawMesh);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+  drawMesh();
+
+  function spawnConfetti() {
+    const burst = document.getElementById("burst");
+    if (!burst || burst.dataset.done) return;
+    burst.dataset.done = "1";
+    const colors = ["#34d399", "#40c2fd", "#f0c01a", "#f05a3a", "#7c5cff"];
+    for (let i = 0; i < 48; i++) {
+      const p = document.createElement("div");
+      p.className = "confetti";
+      p.style.left = Math.random() * 100 + "%";
+      p.style.background = colors[i % colors.length];
+      p.style.animationDelay = Math.random() * 2 + "s";
+      p.style.animationDuration = 3 + Math.random() * 3 + "s";
+      burst.appendChild(p);
+    }
+  }
+
+  goSlide(0);
+})();
+</script>
+</body>
+</html>

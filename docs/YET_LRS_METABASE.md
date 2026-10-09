@@ -3,31 +3,44 @@
 **Product status: complete.** EdVidura’s local xAPI store (RLS) is the analytics SoR.
 Yet Analytics LRS and Metabase are **optional overlays** when the operator configures them.
 
+## For teachers & schools (plain words)
+
+| Question | Where to look |
+|----------|----------------|
+| Who scored what on the quiz? | **Class results** / **Analytics** / **Activity** in EdVidura |
+| Official grade in Moodle? | Moodle gradebook |
+| Raw learning-event archive / Metabase BI? | **EdVidura owners only** at `/ops` (not school UI) |
+
+Metabase charts use EdVidura Postgres (`quiz_attempts`, `xapi_statements`, `lesson_progress`, `tenants`).
+The owner dashboard (**EdVidura owner overview**) shows separate number cards, a per-school table, daily activity, and recent attempts — not a pie of mixed KPIs. Empty panels usually mean little student activity yet.
+
 ## Architecture
 
 ```
-Quiz / lesson / manual / Study Coach
+Quiz / lesson / manual / Ask Vidura
         │
         ▼
   app.modules.xapi  ──store──►  Postgres (xapi_statements + tiers)  ← SoR
         │
         └──forward──►  Yet SQL LRS  (/xapi/statements)   [optional]
         
-  In-app Analytics / Activity  ← always available
-  Metabase embed / BI views    ← optional when METABASE_* set
+  In-app Analytics / Activity  ← always available to schools
+  Metabase / Yet admin         ← EdVidura owners at /ops
 ```
 
-Moodle AGS remains the **gradebook** SoR. LRS/Metabase are analytics.
+Moodle AGS remains the **gradebook** SoR. LRS/Metabase are owner analytics overlays.
 
-## In-app Integrations UI
+**Next (simulations):** [FEDERATE_HLA.md](FEDERATE_HLA.md) — Federate xAPI bridges HLA sims into the same Yet LRS; not needed for school LTI today.
+
+## Owner console (not school UI)
 
 | Role | Route |
 |------|--------|
-| School admin | `/school-admin/integrations` (+ Retry failed LRS) |
-| Teacher | `/teacher/integrations` |
+| EdVidura owner login | `/ops/login` (`ADMIN_API_KEY` or Keycloak ops) |
+| Owner dashboard | `/ops/dashboard` (Metabase embed + Yet retry) |
 | Ops API | `GET /api/v1/analytics/integrations?probe=true` |
 
-Shows local store completeness, Yet forward config/probe, Metabase embed readiness, coach PeBL xAPI mode.
+School `/teacher/integrations` and `/school-admin/integrations` redirect to **Activity**.
 
 ## Local Docker
 
@@ -66,7 +79,7 @@ railway up -s edvidura-app --detach   # if bootstrap did not already redeploy
 1. Yet admin (`/admin`) — Basic auth key/secret from deploy script defaults.
 2. Metabase bootstrap creates admin, connects EdVidura Postgres, enables embedding, publishes **EdVidura overview** dashboard, and sets:
    `METABASE_URL`, `METABASE_SECRET_KEY`, `METABASE_EMBED_DASHBOARD_ID` on `edvidura-app`.
-3. Confirm: `/health` → `integrations.metabase_embed_ready: true` and Integrations UI embed iframe.
+3. Confirm: `/health` → `integrations.metabase_embed_ready: true` and `/ops/dashboard` embed iframe.
 
 ### Demo seed (Metabase + Yet)
 

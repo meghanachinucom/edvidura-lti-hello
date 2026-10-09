@@ -116,7 +116,17 @@ def ai_status() -> dict[str, Any]:
         "provider": provider,
         "model": model,
         "how_to_enable": how,
+        "jev": _jev_status_safe(),
     }
+
+
+def _jev_status_safe() -> dict[str, Any]:
+    try:
+        from app.modules.jev import jev_status
+
+        return jev_status()
+    except Exception:  # noqa: BLE001
+        return {"enabled": False, "configured": False}
 
 
 def _parse_json_object(content: str) -> dict[str, Any]:
@@ -259,15 +269,36 @@ def run_ai(
     openai_fn,
     local_fn,
     feature: str,
+    route_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Prefer remote LLM when ready; always fall back to local heuristics."""
+    """Prefer remote LLM when ready; Jev may skip remote to save cost.
+
+    When ``route_state`` is set and Jev is configured with ``JEV_ROUTE_LLM``,
+    a cheap System One call can choose ``local`` and avoid chat LLM tokens.
+    """
     status = ai_status()
-    if status["remote_ready"]:
+    jev_route: dict[str, Any] | None = None
+    force_local = False
+    if route_state is not None:
+        try:
+            from app.modules.jev import route_llm_tier
+
+            jev_route = route_llm_tier(feature=feature, state=route_state)
+            force_local = bool(
+                jev_route.get("used") and jev_route.get("tier") == "local"
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("%s Jev route failed: %s", feature, exc)
+            jev_route = {"used": False, "fallback_reason": "jev_error"}
+
+    if status["remote_ready"] and not force_local:
         try:
             result = openai_fn()
             if isinstance(result, dict):
                 result.setdefault("provider", status["provider"])
                 result.setdefault("model", status["model"])
+                if jev_route:
+                    result["jev_route"] = jev_route
                 return result
         except Exception as exc:  # noqa: BLE001
             logger.warning("%s remote LLM failed, local fallback: %s", feature, exc)
@@ -275,10 +306,16 @@ def run_ai(
     if isinstance(result, dict):
         result.setdefault("provider", "local")
         result.setdefault("model", "heuristic-v1")
-        result.setdefault(
-            "note",
-            status["how_to_enable"]
-            if not status["remote_ready"]
-            else "Used local fallback after remote LLM error",
-        )
+        if force_local and jev_route:
+            result["jev_route"] = jev_route
+            result["note"] = (
+                "Jev routed to local heuristics — skipped remote LLM for cost."
+            )
+        else:
+            result.setdefault(
+                "note",
+                status["how_to_enable"]
+                if not status["remote_ready"]
+                else "Used local fallback after remote LLM error",
+            )
     return result

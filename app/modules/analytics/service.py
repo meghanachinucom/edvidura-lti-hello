@@ -320,6 +320,168 @@ def learner_dashboard(
             }
             for r in verbs
         ],
+        "study_plan": None,
+    }
+
+
+def attach_study_plan(
+    dash: dict[str, Any],
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    quiz_token: str,
+    course_id: UUID | str | None = None,
+    course_label: str = "",
+    first_lesson_id: str | None = None,
+    role_code: str | None = None,
+) -> dict[str, Any]:
+    """Phase B1: attach portable study-plan summary onto learner_dashboard."""
+    out = dict(dash or {})
+    try:
+        from app.modules.adaptive import learner_plan_summary
+
+        out["study_plan"] = learner_plan_summary(
+            tenant_id,
+            subject=subject,
+            quiz_token=quiz_token,
+            course_id=course_id,
+            course_label=course_label,
+            first_lesson_id=first_lesson_id,
+            role_code=role_code,
+        )
+    except Exception:  # noqa: BLE001
+        out["study_plan"] = {
+            "active": False,
+            "plan_href": f"/learn/gap?token={quiz_token}" if quiz_token else "/learn/gap",
+            "message": "Plan unavailable right now.",
+        }
+    return out
+
+
+def class_coach_insights(
+    tenant_id: UUID | str,
+    *,
+    subjects: list[str] | set[str] | None = None,
+    limit: int = 400,
+) -> dict[str, Any]:
+    """Phase B2: roll up Ask Vidura xAPI for a class (portable, no FastAPI).
+
+    Topics = question previews; refusals; thumbs; strategies; JEV skipped-remote.
+    """
+    from collections import Counter
+
+    from app.modules.xapi import verbs
+    from app.modules.xapi.service import list_statements
+
+    want_subs = {str(s).strip() for s in (subjects or []) if str(s).strip()}
+    rows = list_statements(tenant_id, limit=max(1, min(int(limit), 500)))
+    ext_base = "https://edvidura.local/xapi/extensions/"
+
+    turns = 0
+    grounded = 0
+    refusals: Counter[str] = Counter()
+    strategies: Counter[str] = Counter()
+    topics: Counter[str] = Counter()
+    thumbs_up = 0
+    thumbs_down = 0
+    jev_used = 0
+    jev_skipped = 0
+    actors: set[str] = set()
+    recent: list[dict[str, Any]] = []
+
+    for row in rows:
+        actor = str(row.get("actor_sub") or "").strip()
+        if want_subs and actor and actor not in want_subs:
+            continue
+        stmt = row.get("statement")
+        if isinstance(stmt, str):
+            import json
+
+            try:
+                stmt = json.loads(stmt)
+            except Exception:  # noqa: BLE001
+                stmt = {}
+        if not isinstance(stmt, dict):
+            stmt = {}
+        ctx = stmt.get("context") if isinstance(stmt.get("context"), dict) else {}
+        ext = ctx.get("extensions") if isinstance(ctx.get("extensions"), dict) else {}
+        channel = str(ext.get(f"{ext_base}channel") or "")
+        verb_id = str(row.get("verb_id") or (stmt.get("verb") or {}).get("id") or "")
+
+        is_coach = channel == "study_coach" or verb_id in {
+            verbs.VERB_INTERACTED,
+            verbs.VERB_RESPONDED,
+        }
+        if not is_coach and "/study-coach" not in str(row.get("object_id") or ""):
+            continue
+        if actor:
+            actors.add(actor)
+
+        if verb_id == verbs.VERB_RESPONDED or ext.get(f"{ext_base}feedback_kind"):
+            rating = str(ext.get(f"{ext_base}coach_rating") or "").lower()
+            if rating in {"up", "helpful"}:
+                thumbs_up += 1
+            elif rating in {"down", "not_helpful"}:
+                thumbs_down += 1
+            continue
+
+        # interacted / chat turns
+        if channel != "study_coach" and verb_id != verbs.VERB_INTERACTED:
+            continue
+        turns += 1
+        if ext.get(f"{ext_base}grounded") is True:
+            grounded += 1
+        refusal = str(ext.get(f"{ext_base}refusal_reason") or "").strip()
+        if refusal:
+            refusals[refusal] += 1
+        strat = str(ext.get(f"{ext_base}coach_strategy") or "").strip()
+        if strat:
+            strategies[strat] += 1
+        preview = str(ext.get(f"{ext_base}question_preview") or "").strip()
+        if preview:
+            topics[preview[:80]] += 1
+        if ext.get(f"{ext_base}jev_used"):
+            jev_used += 1
+        if ext.get(f"{ext_base}jev_skipped_remote"):
+            jev_skipped += 1
+
+        if len(recent) < 8:
+            when = row.get("created_at")
+            recent.append(
+                {
+                    "when": (
+                        when.isoformat()
+                        if hasattr(when, "isoformat")
+                        else str(when or "")
+                    ),
+                    "actor": actor,
+                    "preview": preview[:100],
+                    "strategy": strat,
+                    "refusal": refusal,
+                    "grounded": bool(ext.get(f"{ext_base}grounded")),
+                }
+            )
+
+    return {
+        "learner_count": len(actors),
+        "turns": turns,
+        "grounded": grounded,
+        "grounded_pct": int(round(100.0 * grounded / turns)) if turns else 0,
+        "refusals_total": sum(refusals.values()),
+        "refusals_by_reason": [
+            {"reason": k, "count": v} for k, v in refusals.most_common(8)
+        ],
+        "thumbs_up": thumbs_up,
+        "thumbs_down": thumbs_down,
+        "strategies": [
+            {"strategy": k, "count": v} for k, v in strategies.most_common(8)
+        ],
+        "top_topics": [
+            {"topic": k, "count": v} for k, v in topics.most_common(10)
+        ],
+        "jev_used": jev_used,
+        "jev_skipped_remote": jev_skipped,
+        "recent": recent,
     }
 
 

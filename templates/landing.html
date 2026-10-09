@@ -96,13 +96,13 @@
       <h2>What’s live in this spike</h2>
       <p class="section-lede">Newer platform pieces — open them from here (not only from Moodle).</p>
       <div class="stack-grid">
-        <a class="stack-card" href="/onboard">
-          <strong>Keycloak ops login</strong>
-          <span>{% if keycloak_enabled %}Enabled — sign in on Connect{% else %}Off — set KEYCLOAK_ENABLED=1{% endif %}</span>
+        <a class="stack-card" href="/ops/login">
+          <strong>Owner console</strong>
+          <span>Metabase + Yet — EdVidura owners only (`/ops`)</span>
         </a>
-        <a class="stack-card" href="{% if metabase_url %}{{ metabase_url }}{% else %}#stack{% endif %}" {% if metabase_url %}target="_blank" rel="noopener"{% endif %}>
-          <strong>Metabase BI</strong>
-          <span>{% if metabase_url %}Open dashboards →{% else %}Set METABASE_URL{% endif %}</span>
+        <a class="stack-card" href="/onboard">
+          <strong>School onboard</strong>
+          <span>{% if keycloak_enabled %}Keycloak ops ready{% else %}Paste ADMIN_API_KEY on Connect{% endif %}</span>
         </a>
         <div class="stack-card">
           <strong>xAPI tiers + LRS</strong>

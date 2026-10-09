@@ -46,22 +46,26 @@ Shows `provider: openai | local_http | local`.
 
 | Feature | Who | Where |
 |---------|-----|--------|
-| **Make quiz** from a lesson | Teacher | Content → Easy/Medium/Hard → questions from the **whole** lesson |
-| **Student quizzes** | Student | Unique questions from **every chapter**; teacher sets Easy/Medium/Hard (or Auto) on AI tools |
-| **Quiz from PDF / text** | Teacher | AI tools → upload → pick Easy/Medium/Hard → questions from **all pages** → you check before save |
+| **Make quiz** from a lesson | Teacher | Content → Easy/Medium/Hard + Recall/Apply/Analyze → questions from the **whole** lesson |
+| **Student quizzes** | Student | Unique questions from **every page/section**; teacher sets level + complexity (or Auto); open **study plan** gap skills are validated per learner from scores |
+| **Quiz from PDF / text** (multi-model parser) | Teacher | AI tools → upload → pick level + complexity → OpenAI or local LLM parses all pages → you check before save |
 | **Remediation micro-lesson (DCT)** | Teacher | AI tools → pick skill → review → save draft/published + link skill |
 | **SME authoring assistant (D13)** | Teacher | AI tools → Authoring assistant → draft lesson/manual/MCQ from SME sources → save |
 | **Grade assist** (open response) | Teacher | AI tools → suggest score (**never** auto-sent to Moodle; copy into LMS) |
 | **AI next steps** | Teacher | Class results |
 | **Deep-link suggestions** | Teacher | LTI Deep Linking picker |
 | **AI hint** on missed items | Student | Quiz result → AI hint |
-| **Study coach (D01)** | Student | Study coach — citations + practice handoff; answers from approved SME sources |
-| **Coach voice (Indian languages)** | Student | Study coach — Mic (STT) + Speak (TTS) via browser Web Speech; reply language picker (Hindi, Telugu, Tamil, Kannada, Malayalam, Marathi, Gujarati, Bengali, Punjabi, Odia, Urdu, Assamese, Sanskrit, Nepali, English) |
+| **Ask Vidura (D01)** | Student | Ask Vidura — citations + practice handoff; answers from approved SME sources |
+| **Shortcuts / clarify / integrity / thumbs / flashcards (Phase A)** | Student + Teacher | Welcome chips (`/teacher/coach/shortcuts`); clarify-once; refuse exam/assignment writing; thumbs → xAPI `responded`; `/learn/flashcards` |
+| **Cognitive tutor moves** | Student | Ask Vidura picks socratic / hint / explain / practice from quiz level + weak skills; shows a check question; xAPI records `coach_strategy` |
+| **Jev decisions (optional)** | System | TypeSafe System One: on-topic + strategy + **local/remote LLM routing** for coach; quiz/MCQ cost gate + full-book coverage judge (`JEV_ENABLED` + `TYPESAFE_API_KEY`; see [JEV.md](JEV.md)) |
+| **Coach voice (Indian languages)** | Student | Ask Vidura — Mic (STT) + Speak (TTS) via browser Web Speech; reply language picker (Hindi, Telugu, Tamil, Kannada, Malayalam, Marathi, Gujarati, Bengali, Punjabi, Odia, Urdu, Assamese, Sanskrit, Nepali, English) |
 
 ## Modules
 
 - `app.modules.ai_assessment` — teacher drafting & suggestions  
-- `app.modules.ai_tutor` — student hints & coach (`voice.py` Indian language catalog)
+- `app.modules.ai_tutor` — student hints & coach (`voice`, `cognitive`, `integrity`, `clarify`, `shortcuts`, `flashcards`)
+- `app.modules.jev` — optional TypeSafe Jev decisions (see [JEV.md](JEV.md))
 - `app.modules.ai_authoring` — D13 teacher SME authoring assistant  
 - `app.modules.sme` — C13 approved source registry  
 
@@ -70,6 +74,8 @@ Shows `provider: openai | local_http | local`.
 - No auto grade passback from AI — teacher confirms / copies into Moodle  
 - Grade assist sets `moodle_passback: false` and never calls AGS  
 - Coach only uses teacher-approved SME sources (version-pinned manuals / lessons)  
+- Integrity mode refuses writing exams / assignments / answer keys (`COACH_INTEGRITY_ENABLED`)  
+
 - Authoring assistant is a **different** persona from the learner coach  
 - Tenant isolation unchanged (RLS)  
 - Coach retention default: **stateless** (`COACH_STORE_TURNS`)

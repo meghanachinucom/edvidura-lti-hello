@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · What we can do (LearnWise ideas)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --surface: #e6fff5;
+      --surface-2: #d5f5ea;
+      --ink: #032019;
+      --muted: #3c4a42;
+      --primary: #006c4b;
+      --mint: #34d399;
+      --mint-glow: #45dfa4;
+      --sky: #40c2fd;
+      --citrus: #f0c01a;
+      --coral: #f05a3a;
+      --shadow: 0 24px 60px -12px rgba(14,43,36,.18), 0 8px 24px -8px rgba(52,211,153,.25);
+      --font-display: "Syne", system-ui, sans-serif;
+      --font-body: "Outfit", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow: hidden; }
+    body { font-family: var(--font-body); color: var(--ink); background: var(--surface); }
+    canvas#mesh { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.35; }
+    .viewport {
+      position: fixed; inset: 0; z-index: 1;
+      width: 100vw; height: 100vh; height: 100dvh;
+      overflow: hidden;
+    }
+    .slides { position: absolute; inset: 0; }
+    .slide {
+      position: absolute; inset: 0;
+      padding: clamp(32px, 5vw, 72px) clamp(36px, 6vw, 96px) clamp(72px, 8vh, 96px);
+      display: flex; flex-direction: column; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transform: scale(1.04);
+      transition: opacity 0.65s cubic-bezier(.22,1,.36,1), transform 0.65s cubic-bezier(.22,1,.36,1);
+      background:
+        radial-gradient(120% 80% at 100% 0%, rgba(64,194,253,.22), transparent 50%),
+        radial-gradient(90% 70% at 0% 100%, rgba(52,211,153,.28), transparent 55%),
+        linear-gradient(160deg, #f0fff9 0%, var(--surface) 40%, var(--surface-2) 100%);
+    }
+    .slide.on { opacity: 1; pointer-events: auto; transform: scale(1); }
+    .slide.theme-warm {
+      background:
+        radial-gradient(100% 90% at 80% 20%, rgba(240,192,26,.35), transparent 50%),
+        radial-gradient(80% 60% at 10% 90%, rgba(240,90,58,.12), transparent 45%),
+        linear-gradient(165deg, #fff9eb 0%, #fff5d6 100%);
+    }
+    .slide.theme-deep {
+      color: #e8f8ec;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% 0%, rgba(69,223,164,.25), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(64,194,253,.2), transparent 50%),
+        linear-gradient(155deg, #032019 0%, #0e2b24 55%, #071612 100%);
+    }
+    .slide.theme-deep .lede { color: rgba(232,248,236,.78); }
+    .slide.theme-deep h1, .slide.theme-deep h2 { color: #fff; }
+
+    .kicker {
+      font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--primary); margin-bottom: 12px;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .kicker::before {
+      content: ""; width: 28px; height: 3px; border-radius: 99px;
+      background: linear-gradient(90deg, var(--mint), var(--sky));
+      animation: kicker-grow 1.2s ease infinite alternate;
+    }
+    @keyframes kicker-grow { from { width: 18px; opacity: .6; } to { width: 36px; opacity: 1; } }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      line-height: 1.05; letter-spacing: -0.03em; font-weight: 800;
+      max-width: 14ch;
+    }
+    h1 .pop {
+      display: inline-block;
+      background: linear-gradient(105deg, var(--primary) 0%, #059669 40%, var(--sky) 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      background-size: 200% auto;
+      animation: title-shimmer 4s ease-in-out infinite;
+    }
+    @keyframes title-shimmer {
+      0%, 100% { background-position: 0% center; }
+      50% { background-position: 100% center; }
+    }
+    h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.55rem, 3.6vw, 2.5rem);
+      letter-spacing: -0.02em; font-weight: 700; margin-bottom: 8px;
+    }
+    .lede {
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
+      line-height: 1.55; color: var(--muted); max-width: 48ch; margin-top: 14px;
+    }
+
+    .stickies {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(12px, 2vw, 22px);
+      margin-top: clamp(16px, 3vw, 32px); max-width: min(920px, 100%);
+    }
+    @media (max-width: 640px) { .stickies { grid-template-columns: 1fr; } }
+    .sticky {
+      position: relative; padding: 22px 20px 20px;
+      border-radius: 4px; font-size: 0.95rem; line-height: 1.45;
+      box-shadow: var(--shadow);
+      transform: rotate(var(--rot, 0deg));
+      opacity: 0; translate: 0 24px;
+      transition: opacity 0.5s ease, translate 0.55s cubic-bezier(.22,1,.36,1);
+    }
+    .slide.on .sticky.show { opacity: 1; translate: 0 0; }
+    .sticky::before {
+      content: ""; position: absolute; top: -10px; left: 50%; translate: -50% 0;
+      width: 52px; height: 18px; background: rgba(255,224,138,.85);
+      box-shadow: 0 2px 6px rgba(0,0,0,.12); border-radius: 2px;
+    }
+    .sticky.s1 { --rot: -2.5deg; background: #fff4b8; color: #3d3200; }
+    .sticky.s2 { --rot: 1.8deg; background: #c8f0dc; color: #0a3d28; }
+    .sticky.s3 { --rot: -1.2deg; background: #c4e7ff; color: #003d55; }
+    .sticky.s4 { --rot: 2.4deg; background: #ffd4cc; color: #5a1808; }
+    .sticky b { display: block; font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 6px; }
+
+    .split {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: clamp(12px, 2vw, 24px);
+      align-items: center; margin-top: 28px; max-width: min(1000px, 100%);
+    }
+    @media (max-width: 720px) {
+      .split { grid-template-columns: 1fr; }
+      .split .vs { display: none; }
+    }
+    .role {
+      padding: 28px 24px; border-radius: 20px; text-align: center;
+      border: 2px solid rgba(0,108,75,.15); background: #fff;
+      box-shadow: var(--shadow);
+      opacity: 0; scale: 0.92;
+      transition: opacity 0.55s ease, scale 0.55s cubic-bezier(.22,1,.36,1);
+    }
+    .slide.on .role.show { opacity: 1; scale: 1; }
+    .role .emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; animation: bob 2.5s ease-in-out infinite; }
+    .role.take { border-color: var(--mint); background: linear-gradient(180deg, #e8fff4, #fff); }
+    .role.skip { border-color: var(--coral); background: linear-gradient(180deg, #fff0ed, #fff); }
+    @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .vs { font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; color: var(--primary);
+      opacity: 0; transition: opacity 0.4s 0.3s; }
+    .slide.on .vs.show { opacity: 1; }
+
+    .bento {
+      display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px;
+      margin-top: 22px; max-width: min(1100px, 100%);
+    }
+    .tile {
+      grid-column: span 6; padding: 20px 22px; border-radius: 18px;
+      background: rgba(255,255,255,.72); border: 1px solid rgba(0,108,75,.12);
+      box-shadow: 0 8px 24px rgba(14,43,36,.06);
+      opacity: 0; translate: 0 16px;
+      transition: opacity 0.45s ease, translate 0.5s cubic-bezier(.22,1,.36,1);
+    }
+    .theme-deep .tile { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.12); color: #e8f8ec; }
+    .slide.on .tile.show { opacity: 1; translate: 0 0; }
+    .tile.wide { grid-column: span 12; }
+    .tile .num {
+      font-family: var(--font-display); font-size: 1.8rem; font-weight: 800;
+      line-height: 1; color: var(--mint);
+    }
+    .theme-deep .tile .num { color: var(--mint-glow); }
+    .tile h3 { font-size: 1.05rem; margin: 6px 0 4px; font-weight: 700; }
+    .tile p { font-size: 0.88rem; color: var(--muted); line-height: 1.45; }
+    .theme-deep .tile p { color: rgba(232,248,236,.7); }
+
+    .steps { margin-top: 18px; max-width: 720px; position: relative; padding-left: 28px; }
+    .steps::before {
+      content: ""; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 4px;
+      border-radius: 99px; background: linear-gradient(180deg, var(--mint), var(--sky));
+      transform-origin: top; transform: scaleY(0);
+      transition: transform 0.8s cubic-bezier(.22,1,.36,1);
+    }
+    .slide.on .steps.drawn::before { transform: scaleY(1); }
+    .step {
+      position: relative; padding: 12px 0 12px 20px;
+      opacity: 0; translate: -12px 0;
+      transition: opacity 0.45s ease, translate 0.45s ease;
+    }
+    .slide.on .step.show { opacity: 1; translate: 0 0; }
+    .step::before {
+      content: ""; position: absolute; left: -24px; top: 18px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--citrus); border: 3px solid var(--surface);
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+    .theme-deep .step::before { border-color: #0e2b24; }
+    .step strong { display: block; font-size: 1.02rem; }
+
+    .kanban { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 24px; max-width: min(1100px, 100%); }
+    .col {
+      flex: 1; min-width: 200px; padding: 16px; border-radius: 16px;
+      background: rgba(255,255,255,.65); border: 2px dashed rgba(0,108,75,.2);
+    }
+    .theme-deep .col { background: rgba(0,0,0,.2); border-color: rgba(255,255,255,.15); }
+    .col h4 {
+      font-size: 0.75rem; letter-spacing: .12em; text-transform: uppercase;
+      margin-bottom: 12px; font-weight: 700;
+    }
+    .col.now h4 { color: var(--primary); }
+    .col.next h4 { color: #00668a; }
+    .col.later h4 { color: #9a6b00; }
+    .col.nope h4 { color: #b83c28; }
+    .pill-card {
+      padding: 12px 14px; border-radius: 12px; margin-bottom: 10px; font-size: 0.88rem;
+      font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,.08);
+      opacity: 0; scale: 0.95; transition: opacity 0.4s, scale 0.4s cubic-bezier(.22,1,.36,1);
+    }
+    .slide.on .pill-card.show { opacity: 1; scale: 1; }
+    .col.now .pill-card { background: var(--mint); color: #032019; }
+    .col.next .pill-card { background: #c4e7ff; color: #003d55; }
+    .col.later .pill-card { background: #ffe4a0; color: #3d2800; }
+    .col.nope .pill-card { background: #ffcfc2; color: #5a1808; }
+
+    .finale { text-align: center; align-items: center; }
+    .finale h1 { max-width: none; font-size: clamp(2rem, 4.5vw, 3.2rem); }
+    .burst { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .confetti {
+      position: absolute; width: 10px; height: 14px; border-radius: 2px;
+      opacity: 0; animation: fall 4s linear infinite;
+    }
+    @keyframes fall {
+      0% { opacity: 0; transform: translateY(-10vh) rotate(0deg); }
+      10% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(110vh) rotate(720deg); }
+    }
+
+    .chrome {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px clamp(16px, 3vw, 28px);
+      background: linear-gradient(180deg, transparent, rgba(3,32,25,.08));
+    }
+    .dots { display: flex; gap: 6px; flex-wrap: wrap; }
+    .dots button {
+      width: 8px; height: 8px; border: 0; border-radius: 99px;
+      background: rgba(3,32,25,.2); cursor: pointer; padding: 0;
+      transition: width 0.25s, background 0.25s;
+    }
+    .dots button.on { width: 22px; background: var(--primary); }
+    .hint-text { font-size: 11px; color: var(--muted); opacity: .85; }
+    .nav-btns { display: flex; gap: 8px; }
+    .nav-btns button {
+      font-family: var(--font-body); font-weight: 700; font-size: 13px;
+      border: 0; cursor: pointer; padding: 10px 18px; border-radius: 999px;
+      background: var(--primary); color: #fff;
+      box-shadow: 0 4px 16px rgba(0,108,75,.35);
+    }
+    .nav-btns button.ghost {
+      background: rgba(255,255,255,.85); color: var(--primary);
+      box-shadow: none; border: 1px solid rgba(0,108,75,.2);
+    }
+    .frag-hint {
+      position: absolute; top: 18px; right: clamp(16px, 3vw, 28px);
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      background: rgba(255,255,255,.7); padding: 6px 12px; border-radius: 999px;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .frag-hint.visible { opacity: 1; }
+
+    @media print {
+      body { background: #fff; }
+      canvas, .chrome, .frag-hint, .burst { display: none !important; }
+      .viewport { position: static; width: 100%; height: auto; }
+      .slide { position: relative; opacity: 1 !important; transform: none !important; min-height: 100vh; page-break-after: always; }
+      .sticky, .role, .tile, .step, .pill-card { opacity: 1 !important; translate: none !important; scale: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+<canvas id="mesh" aria-hidden="true"></canvas>
+
+<div class="viewport">
+  <p class="frag-hint" id="fragHint">Space → reveal next</p>
+
+  <div class="slides" id="slides">
+
+    <section class="slide on" data-frags="0">
+      <span class="kicker">Manager briefing · LearnWise ideas</span>
+      <h1><span class="pop">What we can do</span><br/>with those features</h1>
+      <p class="lede">We reviewed the LearnWise feature list. We will <strong>not</strong> copy the whole product. We take the parts that help students and teachers <strong>inside a Moodle class</strong> — and build them into EdVidura.</p>
+      <p class="lede" style="font-size:0.85rem;margin-top:20px;opacity:0.75">October 2026 · Plan: docs/LEARNWISE_IMPLEMENTATION_PLAN.md</p>
+    </section>
+
+    <section class="slide" data-frags="2">
+      <h2>Two different products</h2>
+      <div class="split">
+        <div class="role take" data-frag="1">
+          <span class="emoji">🏫</span>
+          <strong>EdVidura</strong>
+          <p class="lede" style="margin-top:8px;font-size:0.9rem">Opens from Moodle. Helps with this class — Ask Vidura, quizzes, study path, learning records.</p>
+        </div>
+        <div class="vs" data-frag="1">≠</div>
+        <div class="role skip" data-frag="2">
+          <span class="emoji">🏛️</span>
+          <strong>LearnWise</strong>
+          <p class="lede" style="margin-top:8px;font-size:0.9rem">Campus help widget + tutor + grader + ops agent across many systems.</p>
+        </div>
+      </div>
+      <p class="lede" style="margin-top:24px">Same ideas sometimes. Different job. We borrow tutor ideas — we do not rebuild their campus suite.</p>
+    </section>
+
+    <section class="slide theme-warm" data-frags="4">
+      <h2>What students get today</h2>
+      <p class="lede">Already live or nearly ready in EdVidura.</p>
+      <div class="stickies">
+        <div class="sticky s1" data-frag="1"><b>Ask Vidura</b>Answers from this class’s lessons only — with source titles you can check.</div>
+        <div class="sticky s2" data-frag="2"><b>Smart quizzes</b>Different questions per student. Whole book. Difficulty levels. Study-plan check.</div>
+        <div class="sticky s3" data-frag="3"><b>Voice</b>Talk and listen in many Indian languages + English.</div>
+        <div class="sticky s4" data-frag="4"><b>Learning trail</b>Chat and quiz events saved (xAPI) for teachers and reports.</div>
+      </div>
+    </section>
+
+    <section class="slide theme-deep" data-frags="4">
+      <h2>What we will add next (Phase A)</h2>
+      <p class="lede">Small, safe upgrades to Ask Vidura — high value, low risk.</p>
+      <div class="bento">
+        <div class="tile" data-frag="1"><div class="num">01</div><h3>Quick buttons</h3><p>Teacher sets 3–5 starter questions so students know what to ask.</p></div>
+        <div class="tile" data-frag="2"><div class="num">02</div><h3>Ask again clearly</h3><p>If the question is fuzzy, coach asks one short clarifying question first.</p></div>
+        <div class="tile" data-frag="3"><div class="num">03</div><h3>Thumbs up / down</h3><p>Students rate answers. We save that for teachers and reports.</p></div>
+        <div class="tile" data-frag="4"><div class="num">04</div><h3>Flashcards + integrity</h3><p>Study cards from lessons. Coach won’t write exams or whole assignments.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-frags="5">
+      <h2>A day in the student’s shoes</h2>
+      <div class="steps">
+        <div class="step" data-frag="1"><strong>Open Moodle</strong> → launch EdVidura for this course</div>
+        <div class="step" data-frag="2"><strong>Tap a quick button</strong> or ask Ask Vidura in their language</div>
+        <div class="step" data-frag="3"><strong>Get a grounded answer</strong> with lesson sources — or a polite “stay on class”</div>
+        <div class="step" data-frag="4"><strong>Practice</strong> — quiz or flashcards on weak spots</div>
+        <div class="step" data-frag="5"><strong>Thumb the answer</strong> — teacher later sees what helped</div>
+      </div>
+    </section>
+
+    <section class="slide theme-warm" data-frags="4">
+      <h2>What teachers get</h2>
+      <div class="bento">
+        <div class="tile wide" data-frag="1"><h3>Approve the knowledge</h3><p>Pick which lessons and manuals the coach may use (SME sources).</p></div>
+        <div class="tile" data-frag="2"><h3>Set the coach</h3><p>Shortcuts, welcome tone, integrity “don’t do the homework.”</p></div>
+        <div class="tile" data-frag="3"><h3>Quiz control</h3><p>Level, how hard, how much of the book to cover.</p></div>
+        <div class="tile wide" data-frag="4"><h3>Grade help (draft only)</h3><p>AI suggests feedback — teacher edits. Nothing auto-sent to Moodle grades.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-frags="4">
+      <h2>What comes after (Phase B)</h2>
+      <p class="lede">When Phase A works in Riverside.</p>
+      <div class="bento">
+        <div class="tile" data-frag="1"><div class="num">B1</div><h3>Study plan on screen</h3><p>Student sees “what to do next” from adaptive + chat + LMS signals.</p></div>
+        <div class="tile" data-frag="2"><div class="num">B2</div><h3>Coach insights</h3><p>Teacher view: what students ask, refusals, thumbs, money saved by JEV.</p></div>
+        <div class="tile" data-frag="3"><div class="num">B3</div><h3>Better grade assist</h3><p>Clearer drafts from rubrics — still copy into Moodle yourself.</p></div>
+        <div class="tile" data-frag="4"><div class="num">B4</div><h3>Optional Moodle files</h3><p>Pull more course files into the approved knowledge list.</p></div>
+      </div>
+    </section>
+
+    <section class="slide theme-deep" data-frags="4">
+      <h2>What we will not build (for now)</h2>
+      <p class="lede">Say this clearly in meetings — saves months of wrong work.</p>
+      <div class="kanban">
+        <div class="col nope" style="flex:1;min-width:280px">
+          <h4>Not now</h4>
+          <div class="pill-card" data-frag="1">Campus helpdesk chatbot / ticket systems</div>
+          <div class="pill-card" data-frag="2">Auto-write grades into Moodle</div>
+          <div class="pill-card" data-frag="3">Ops agent that bulk-changes the LMS</div>
+          <div class="pill-card" data-frag="4">Teams / SharePoint / 400-tool help library</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-frags="4">
+      <h2>How we build (safe rules)</h2>
+      <div class="steps">
+        <div class="step" data-frag="1"><strong>Reuse modules</strong> — coach, SME, quiz, JEV, xAPI — don’t invent a parallel app</div>
+        <div class="step" data-frag="2"><strong>Decide first, write second</strong> — JEV / rules gate; AI writes only when needed</div>
+        <div class="step" data-frag="3"><strong>One slice at a time</strong> — feature flag + test + Riverside demo + sheet update</div>
+        <div class="step" data-frag="4"><strong>Teacher stays in charge</strong> of grades and approved content</div>
+      </div>
+    </section>
+
+    <section class="slide theme-warm" data-frags="4">
+      <h2>Roadmap at a glance</h2>
+      <div class="kanban">
+        <div class="col now">
+          <h4>Now · A</h4>
+          <div class="pill-card" data-frag="1">Shortcuts, clarify, thumbs, flashcards, integrity, JEV key</div>
+        </div>
+        <div class="col next">
+          <h4>Next · B</h4>
+          <div class="pill-card" data-frag="2">Study plan UI, coach insights, grade-assist polish</div>
+        </div>
+        <div class="col later">
+          <h4>Later · C</h4>
+          <div class="pill-card" data-frag="3">Role-play, video jump-to, nicer extras</div>
+        </div>
+        <div class="col nope">
+          <h4>Only if asked · D</h4>
+          <div class="pill-card" data-frag="4">Campus widget, help desks, ops writes</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide theme-deep" data-frags="0">
+      <div class="burst" id="burst" aria-hidden="true"></div>
+      <span class="kicker" style="color:var(--mint-glow)">Ask for the room</span>
+      <h1 style="max-width:16ch;margin:0 auto;text-align:center">Approve Phase A?</h1>
+      <p class="lede" style="max-width:40ch;margin:16px auto 0;text-align:center">Start with shortcuts, clarify, thumbs, flashcards, and integrity — inside Ask Vidura. Keep Moodle as the gradebook.</p>
+      <p class="lede" style="margin-top:28px;font-size:0.9rem;color:var(--mint-glow);text-align:center">Press <strong>F</strong> fullscreen · ← → slides · Space reveals · Ctrl+P → PDF</p>
+    </section>
+
+  </div>
+
+  <div class="chrome">
+    <div class="dots" id="dots"></div>
+    <span class="hint-text" id="counter">1 / 11</span>
+    <div class="nav-btns">
+      <button type="button" class="ghost" id="prev">←</button>
+      <button type="button" id="next">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const slides = [...document.querySelectorAll(".slide")];
+  const total = slides.length;
+  let si = 0;
+  let frag = 0;
+  const counter = document.getElementById("counter");
+  const fragHint = document.getElementById("fragHint");
+  const dotsEl = document.getElementById("dots");
+
+  slides.forEach((_, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.title = "Slide " + (i + 1);
+    b.addEventListener("click", () => goSlide(i));
+    dotsEl.appendChild(b);
+  });
+
+  function maxFrag(slide) {
+    return parseInt(slide.dataset.frags || "0", 10);
+  }
+
+  function applyFrag() {
+    const slide = slides[si];
+    const max = maxFrag(slide);
+    slide.querySelectorAll("[data-frag]").forEach((el) => {
+      const need = parseInt(el.dataset.frag, 10);
+      el.classList.toggle("show", need <= frag);
+    });
+    slide.querySelectorAll(".steps").forEach((steps) => {
+      steps.classList.toggle("drawn", frag > 0);
+    });
+    const more = frag < max;
+    fragHint.classList.toggle("visible", more && max > 0);
+    fragHint.textContent = more ? "Space or → — reveal (" + frag + "/" + max + ")" : "";
+  }
+
+  function goSlide(n, resetFrag = true) {
+    slides[si].classList.remove("on");
+    si = (n + total) % total;
+    if (resetFrag) frag = 0;
+    slides[si].classList.add("on");
+    [...dotsEl.children].forEach((d, i) => d.classList.toggle("on", i === si));
+    counter.textContent = (si + 1) + " / " + total;
+    applyFrag();
+    if (si === total - 1) spawnConfetti();
+  }
+
+  function next() {
+    const max = maxFrag(slides[si]);
+    if (frag < max) { frag++; applyFrag(); return; }
+    goSlide(si + 1);
+  }
+
+  function prev() {
+    if (frag > 0) { frag--; applyFrag(); return; }
+    goSlide((si - 1 + total) % total, false);
+    frag = maxFrag(slides[si]);
+    applyFrag();
+  }
+
+  document.getElementById("next").onclick = next;
+  document.getElementById("prev").onclick = prev;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); next(); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); prev(); }
+    if (e.key === "f" || e.key === "F") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+    if (e.key === "Home") goSlide(0);
+    if (e.key === "End") goSlide(total - 1);
+  });
+
+  const canvas = document.getElementById("mesh");
+  const ctx = canvas.getContext("2d");
+  let W, H, blobs;
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    blobs = Array.from({ length: 14 }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: 40 + Math.random() * 90,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+      c: Math.random() > 0.5 ? "52,211,153" : "64,194,253"
+    }));
+  }
+  function drawMesh() {
+    ctx.fillStyle = "#0a1612";
+    ctx.fillRect(0, 0, W, H);
+    blobs.forEach((b) => {
+      b.x += b.vx; b.y += b.vy;
+      if (b.x < -b.r) b.x = W + b.r;
+      if (b.x > W + b.r) b.x = -b.r;
+      if (b.y < -b.r) b.y = H + b.r;
+      if (b.y > H + b.r) b.y = -b.r;
+      const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+      g.addColorStop(0, "rgba(" + b.c + ",0.12)");
+      g.addColorStop(1, "rgba(" + b.c + ",0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    requestAnimationFrame(drawMesh);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+  drawMesh();
+
+  function spawnConfetti() {
+    const burst = document.getElementById("burst");
+    if (!burst || burst.dataset.done) return;
+    burst.dataset.done = "1";
+    const colors = ["#34d399", "#40c2fd", "#f0c01a", "#f05a3a", "#7c5cff"];
+    for (let i = 0; i < 48; i++) {
+      const p = document.createElement("div");
+      p.className = "confetti";
+      p.style.left = Math.random() * 100 + "%";
+      p.style.background = colors[i % colors.length];
+      p.style.animationDelay = Math.random() * 2 + "s";
+      p.style.animationDuration = 3 + Math.random() * 3 + "s";
+      burst.appendChild(p);
+    }
+  }
+
+  goSlide(0);
+})();
+</script>
+</body>
+</html>

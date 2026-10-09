@@ -7,8 +7,9 @@ VERB_FAILED = "http://adlnet.gov/expapi/verbs/failed"
 VERB_EXPERIENCED = "http://adlnet.gov/expapi/verbs/experienced"
 # ADL mastery / competency assessment
 VERB_MASTERED = "http://adlnet.gov/expapi/verbs/mastered"
-# Study coach / chat turns
+# Ask Vidura / chat turns
 VERB_INTERACTED = "http://adlnet.gov/expapi/verbs/interacted"
+VERB_RESPONDED = "http://adlnet.gov/expapi/verbs/responded"
 
 VERB_DISPLAY = {
     VERB_COMPLETED: "completed",
@@ -18,4 +19,5 @@ VERB_DISPLAY = {
     VERB_EXPERIENCED: "experienced",
     VERB_MASTERED: "mastered",
     VERB_INTERACTED: "interacted",
+    VERB_RESPONDED: "responded",
 }

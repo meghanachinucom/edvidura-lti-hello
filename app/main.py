@@ -37,6 +37,7 @@ from app.lti_fastapi import (
 )
 from app.onboard_routes import router as onboard_router
 from app.auth_routes import router as auth_router
+from app.ops_routes import router as ops_router
 from app.deep_link_routes import router as deep_link_router
 from app.lti_register_routes import router as lti_register_router
 from app.quiz_routes import SESSION_KEY as QUIZ_SESSION_KEY
@@ -74,6 +75,7 @@ app = FastAPI(
 
 app.include_router(admin_tenants_router)
 app.include_router(auth_router)
+app.include_router(ops_router)
 app.include_router(onboard_router)
 app.include_router(deep_link_router)
 app.include_router(lti_register_router)
@@ -96,6 +98,13 @@ app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 def requirements_board():
     """Public interactive requirements status board (phone / tablet / desktop)."""
     path = _STATIC / "requirements-board.html"
+    return FileResponse(path, media_type="text/html; charset=utf-8")
+
+
+@app.get("/session-today")
+def session_today_deck():
+    """Public slide deck for the 26 Sep 2026 working session."""
+    path = _STATIC / "session-today.html"
     return FileResponse(path, media_type="text/html; charset=utf-8")
 
 app.add_middleware(

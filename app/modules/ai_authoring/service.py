@@ -15,7 +15,7 @@ def author_assist(
     course_title: str = "",
 ) -> dict[str, Any]:
     """
-    Teacher-facing authoring help (separate from learner study coach).
+    Teacher-facing authoring help (separate from Ask Vidura).
 
     mode: lesson | manual | mcq
     Returns draft_md + citations; never writes grades or publishes alone.

@@ -5,14 +5,49 @@
   <p class="welcome-kicker">Teach · AI</p>
   <h2 class="welcome-title">AI tools</h2>
   <p class="welcome-lede">
-    Draft quizzes, remediation micro-lessons, simplify lessons, and get grade suggestions.
-    You always review — nothing is sent to Moodle automatically.
+    Four jobs — tutor settings, feedback assist, remediation, and ops insights — always teacher-reviewed before Moodle.
   </p>
 </section>
 
 {% if ok_message %}
 <p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
 {% endif %}
+
+<section class="panel ai-roles" aria-label="AI roles">
+  <h2 class="ai-roles__title">What AI does here</h2>
+  <div class="ai-roles__grid">
+    <a class="ai-roles__card" href="/teacher/ai?token={{ quiz_token }}#quiz-settings">
+      <span class="material-symbols-outlined">school</span>
+      <strong>Tutor</strong>
+      <span>Student quiz level, complexity, full-book coverage, study-plan checks</span>
+    </a>
+    <a class="ai-roles__card" href="/teacher/coach/shortcuts?token={{ quiz_token }}">
+      <span class="material-symbols-outlined">prompt_suggestion</span>
+      <strong>Ask Vidura chips</strong>
+      <span>Welcome shortcuts students tap on Ask Vidura</span>
+    </a>
+    <a class="ai-roles__card" href="/teacher/coach/insights?token={{ quiz_token }}">
+      <span class="material-symbols-outlined">insights</span>
+      <strong>Coach insights</strong>
+      <span>Topics, refusals, thumbs, Jev skip counts</span>
+    </a>
+    <a class="ai-roles__card" href="/teacher/ai?token={{ quiz_token }}#grade-assist">
+      <span class="material-symbols-outlined">rate_review</span>
+      <strong>Feedback</strong>
+      <span>Grade suggestions you copy into Moodle — never auto-sent</span>
+    </a>
+    <a class="ai-roles__card" href="/teacher/dct?token={{ quiz_token }}">
+      <span class="material-symbols-outlined">auto_stories</span>
+      <strong>Remediation</strong>
+      <span>Micro-lessons and DCT paths for skills students lack</span>
+    </a>
+    <a class="ai-roles__card" href="/teacher/attempts?token={{ quiz_token }}">
+      <span class="material-symbols-outlined">insights</span>
+      <strong>Insights</strong>
+      <span>Class results — who lacks what from quiz, chatbot, and VR</span>
+    </a>
+  </div>
+</section>
 
 <section class="panel">
   <h2>AI access</h2>
@@ -32,24 +67,132 @@
 </section>
 
 <div class="teach-grid">
-  <section class="panel">
-    <h2>How hard should student quizzes be?</h2>
+  <section class="panel quiz-settings-panel" id="quiz-settings">
+    <h2>Student quiz customisation</h2>
     <p class="meta">
-      Pick Easy, Medium, or Hard for AI quizzes students take.
-      Questions still come from the <strong>whole course</strong> (every chapter — not only the first pages).
-      Choose <strong>Auto</strong> if you want the app to adjust from each student’s recent scores.
+      Multi-model quiz generation (PDF/text parser + OpenAI or local LLM):
+      <strong>1) Level</strong> (Easy / Medium / Hard),
+      <strong>2) Complexity</strong> (Recall / Apply / Analyze),
+      <strong>3) Full-book coverage</strong> (every page/section — always on),
+      <strong>4) Study-plan validation</strong> (each student’s open gap plan + scores).
+      Tap a card to save. Auto matches each student from their performance.
     </p>
-    <form method="post" action="/teacher/ai/quiz-settings" class="teach-form">
+
+    <div class="quiz-settings-summary" aria-live="polite">
+      <div class="quiz-settings-summary__item">
+        <span class="quiz-settings-summary__k">Level</span>
+        <strong>
+          {% if quiz_difficulty == 'auto' %}Auto
+          {% elif quiz_difficulty == 'foundational' %}Easy
+          {% elif quiz_difficulty == 'challenge' %}Hard
+          {% else %}Medium{% endif %}
+        </strong>
+      </div>
+      <div class="quiz-settings-summary__item">
+        <span class="quiz-settings-summary__k">Complexity</span>
+        <strong>
+          {% if quiz_complexity == 'auto' %}Auto
+          {% elif quiz_complexity == 'recall' %}Recall
+          {% elif quiz_complexity == 'analyze' %}Analyze
+          {% else %}Apply{% endif %}
+        </strong>
+      </div>
+      <div class="quiz-settings-summary__item quiz-settings-summary__item--ok">
+        <span class="quiz-settings-summary__k">Coverage</span>
+        <strong>Full book</strong>
+      </div>
+    </div>
+
+    <form method="post" action="/teacher/ai/quiz-settings" class="teach-form" id="quiz-settings-form">
       <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-      <label>Quiz level
-        <select name="quiz_difficulty">
-          <option value="auto" {% if quiz_difficulty == 'auto' %}selected{% endif %}>Auto — match each student’s level</option>
-          <option value="foundational" {% if quiz_difficulty == 'foundational' %}selected{% endif %}>Easy — basic questions</option>
-          <option value="core" {% if quiz_difficulty == 'core' %}selected{% endif %}>Medium — normal classroom quiz</option>
-          <option value="challenge" {% if quiz_difficulty == 'challenge' %}selected{% endif %}>Hard — deeper thinking</option>
-        </select>
-      </label>
-      <button type="submit" class="btn primary">Save</button>
+
+      <p class="quiz-settings-label">1 · How hard? (level)</p>
+      <div class="diff-pick" role="radiogroup" aria-label="Student quiz level">
+        <label class="diff-pick__card {% if quiz_difficulty == 'auto' %}is-on{% endif %}">
+          <input type="radio" name="quiz_difficulty" value="auto"
+                 {% if quiz_difficulty == 'auto' %}checked{% endif %}
+                 onchange="this.form.requestSubmit()"/>
+          <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">tune</span></span>
+          <span class="diff-pick__title">Auto</span>
+          <span class="diff-pick__hint">Per student from scores</span>
+        </label>
+        <label class="diff-pick__card {% if quiz_difficulty == 'foundational' %}is-on{% endif %}">
+          <input type="radio" name="quiz_difficulty" value="foundational"
+                 {% if quiz_difficulty == 'foundational' %}checked{% endif %}
+                 onchange="this.form.requestSubmit()"/>
+          <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">sentiment_satisfied</span></span>
+          <span class="diff-pick__title">Easy</span>
+          <span class="diff-pick__hint">Basic wording</span>
+        </label>
+        <label class="diff-pick__card {% if quiz_difficulty == 'core' %}is-on{% endif %}">
+          <input type="radio" name="quiz_difficulty" value="core"
+                 {% if quiz_difficulty == 'core' %}checked{% endif %}
+                 onchange="this.form.requestSubmit()"/>
+          <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">school</span></span>
+          <span class="diff-pick__title">Medium</span>
+          <span class="diff-pick__hint">Classroom default</span>
+        </label>
+        <label class="diff-pick__card {% if quiz_difficulty == 'challenge' %}is-on{% endif %}">
+          <input type="radio" name="quiz_difficulty" value="challenge"
+                 {% if quiz_difficulty == 'challenge' %}checked{% endif %}
+                 onchange="this.form.requestSubmit()"/>
+          <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">psychology</span></span>
+          <span class="diff-pick__title">Hard</span>
+          <span class="diff-pick__hint">Stretch thinking</span>
+        </label>
+      </div>
+
+      <p class="quiz-settings-label">2 · How complex? (thinking type)</p>
+      <div class="diff-pick" role="radiogroup" aria-label="Student quiz complexity">
+        <label class="diff-pick__card {% if quiz_complexity == 'auto' %}is-on{% endif %}">
+          <input type="radio" name="quiz_complexity" value="auto"
+                 {% if quiz_complexity == 'auto' %}checked{% endif %}
+                 onchange="this.form.requestSubmit()"/>
+          <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">auto_awesome</span></span>
+          <span class="diff-pick__title">Auto</span>
+          <span class="diff-pick__hint">Per student from scores</span>
+        </label>
+        <label class="diff-pick__card {% if quiz_complexity == 'recall' %}is-on{% endif %}">
+          <input type="radio" name="quiz_complexity" value="recall"
+                 {% if quiz_complexity == 'recall' %}checked{% endif %}
+                 onchange="this.form.requestSubmit()"/>
+          <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">menu_book</span></span>
+          <span class="diff-pick__title">Recall</span>
+          <span class="diff-pick__hint">Facts &amp; definitions</span>
+        </label>
+        <label class="diff-pick__card {% if quiz_complexity == 'apply' %}is-on{% endif %}">
+          <input type="radio" name="quiz_complexity" value="apply"
+                 {% if quiz_complexity == 'apply' %}checked{% endif %}
+                 onchange="this.form.requestSubmit()"/>
+          <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">handyman</span></span>
+          <span class="diff-pick__title">Apply</span>
+          <span class="diff-pick__hint">Use the idea</span>
+        </label>
+        <label class="diff-pick__card {% if quiz_complexity == 'analyze' %}is-on{% endif %}">
+          <input type="radio" name="quiz_complexity" value="analyze"
+                 {% if quiz_complexity == 'analyze' %}checked{% endif %}
+                 onchange="this.form.requestSubmit()"/>
+          <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">account_tree</span></span>
+          <span class="diff-pick__title">Analyze</span>
+          <span class="diff-pick__hint">Compare &amp; explain why</span>
+        </label>
+      </div>
+
+      <p class="quiz-settings-label">3 · Coverage (always on)</p>
+      <div class="quiz-coverage-lock">
+        <span class="material-symbols-outlined">verified</span>
+        <div>
+          <strong>Full book for every student</strong>
+          <p class="meta" style="margin:4px 0 0">
+            Each quiz includes at least one question from every page/section so
+            studying only early pages cannot help.
+          </p>
+        </div>
+      </div>
+      <div class="quiz-settings-actions">
+        <button type="submit" class="btn primary">Save quiz settings</button>
+        <p class="meta" style="margin:0">Or tap any card — saves automatically.</p>
+      </div>
     </form>
   </section>
 
@@ -67,13 +210,53 @@
       <label>Title (optional)
         <input name="title" placeholder="e.g. Algebra chapter 3"/>
       </label>
-      <label>Quiz level
-        <select name="difficulty">
-          <option value="foundational">Easy</option>
-          <option value="core" selected>Medium</option>
-          <option value="challenge">Hard</option>
-        </select>
-      </label>
+      <div>
+        <span class="meta" style="font-weight:600;display:block;margin-bottom:6px">Quiz level</span>
+        <div class="diff-pick diff-pick--3" role="radiogroup" aria-label="Draft quiz level">
+          <label class="diff-pick__card">
+            <input type="radio" name="difficulty" value="foundational"/>
+            <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">sentiment_satisfied</span></span>
+            <span class="diff-pick__title">Easy</span>
+            <span class="diff-pick__hint">Basic questions</span>
+          </label>
+          <label class="diff-pick__card is-on">
+            <input type="radio" name="difficulty" value="core" checked/>
+            <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">school</span></span>
+            <span class="diff-pick__title">Medium</span>
+            <span class="diff-pick__hint">Classroom default</span>
+          </label>
+          <label class="diff-pick__card">
+            <input type="radio" name="difficulty" value="challenge"/>
+            <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">psychology</span></span>
+            <span class="diff-pick__title">Hard</span>
+            <span class="diff-pick__hint">Deeper thinking</span>
+          </label>
+        </div>
+      </div>
+      <div>
+        <span class="meta" style="font-weight:600;display:block;margin-bottom:6px">Complexity</span>
+        <div class="diff-pick diff-pick--3" role="radiogroup" aria-label="Draft quiz complexity">
+          <label class="diff-pick__card">
+            <input type="radio" name="complexity" value="recall"/>
+            <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">menu_book</span></span>
+            <span class="diff-pick__title">Recall</span>
+            <span class="diff-pick__hint">Facts</span>
+          </label>
+          <label class="diff-pick__card is-on">
+            <input type="radio" name="complexity" value="apply" checked/>
+            <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">handyman</span></span>
+            <span class="diff-pick__title">Apply</span>
+            <span class="diff-pick__hint">Use ideas</span>
+          </label>
+          <label class="diff-pick__card">
+            <input type="radio" name="complexity" value="analyze"/>
+            <span class="diff-pick__icon" aria-hidden="true"><span class="material-symbols-outlined">account_tree</span></span>
+            <span class="diff-pick__title">Analyze</span>
+            <span class="diff-pick__hint">Why / compare</span>
+          </label>
+        </div>
+      </div>
+      <p class="meta">Draft always tries to cover <strong>all pages</strong> in the file.</p>
       <label>About how many questions?
         <select name="count">
           <option value="3">About 3 (or one per page if the file is longer)</option>
@@ -132,7 +315,7 @@
   </section>
 </div>
 
-<section class="panel">
+<section class="panel" id="grade-assist">
   <h2>Open-response grade assist</h2>
   <p class="banner-note info">
     Suggestions are <strong>never</strong> sent to Moodle. Copy and enter the official score in the LMS yourself.
@@ -149,7 +332,7 @@
 
 <section class="panel">
   <h2>SME authoring assistant (D13)</h2>
-  <p class="meta">Chat-style drafts from approved SME sources — separate from the learner study coach.</p>
+  <p class="meta">Chat-style drafts from approved SME sources — separate from Ask Vidura.</p>
   <a class="btn primary" href="/teacher/ai/author?token={{ quiz_token }}">Open authoring assistant</a>
 </section>
 

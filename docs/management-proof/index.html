@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura — Management proof (Done requirements)</title>
+  <style>
+    :root { --ink:#0e2b24; --muted:#5a6b66; --line:rgba(14,43,36,.12); --ok:#0d7a5f; --bg:#f4f7f5; }
+    body { margin:0; font-family: "Segoe UI", system-ui, sans-serif; color:var(--ink); background:var(--bg); line-height:1.45; }
+    header { background:#0e2b24; color:#fff; padding:28px 24px; }
+    header h1 { margin:0 0 8px; font-size:1.6rem; }
+    header p { margin:0; opacity:.85; max-width:720px; }
+    main { max-width:960px; margin:0 auto; padding:24px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 20px; margin:0 0 16px; }
+    .card h2 { margin:0 0 8px; font-size:1.1rem; }
+    .meta { color:var(--muted); font-size:.9rem; margin-bottom:10px; }
+    .badge { display:inline-block; background:rgba(13,122,95,.12); color:var(--ok); font-weight:700; font-size:.75rem; padding:3px 8px; border-radius:999px; margin-right:6px; }
+    .badge.warn { background:rgba(245,158,11,.15); color:#b45309; }
+    .badge.rec { background:rgba(64,194,253,.15); color:#0369a1; }
+    img { max-width:100%; border:1px solid var(--line); border-radius:10px; margin-top:10px; }
+    ol.script { margin:8px 0 0; padding-left:1.2rem; }
+    a { color:var(--ok); }
+    table { width:100%; border-collapse:collapse; font-size:.92rem; }
+    th, td { border-bottom:1px solid var(--line); text-align:left; padding:8px 6px; vertical-align:top; }
+    footer { padding:24px; text-align:center; color:var(--muted); font-size:.85rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>EdVidura — proof pack for management</h1>
+  <p>
+    Requirements marked <strong>Done</strong> on the meetings sheet, with live screenshots where no Moodle login is required,
+    plus a short recording script for student/teacher flows.
+  </p>
+</header>
+<main>
+  <div class="card">
+    <h2>Source</h2>
+    <p class="meta">
+      Sheet: <a href="https://docs.google.com/spreadsheets/d/1n39jx3aQ_pHLpz_BGHo198WrUKZDeEWqG_lAN8WQ4so/edit?usp=sharing">EdVidura Requirements List (Meetings)</a><br/>
+      Live: <a href="https://edvidura-app-production.up.railway.app">edvidura-app-production.up.railway.app</a> ·
+      Health: <a href="https://edvidura-app-production.up.railway.app/health">/health</a>
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Done checklist (13)</h2>
+    <table>
+      <thead><tr><th>Meeting</th><th>Requirement</th><th>Proof type</th></tr></thead>
+      <tbody>
+        <tr><td>17/07</td><td>Moodle LTI 1.3 Integration</td><td><span class="badge">Screenshot</span> + onboard LTI URLs</td></tr>
+        <tr><td>17/07</td><td>Onboarding APIs</td><td><span class="badge">Screenshot</span> /onboard</td></tr>
+        <tr><td>17/07</td><td>PostgreSQL data isolation</td><td><span class="badge">Screenshot</span> multi-tenant schools</td></tr>
+        <tr><td>17/07</td><td>3Q Quiz UI / score / results</td><td><span class="badge rec">Record §A</span></td></tr>
+        <tr><td>17/07</td><td>AGS grade passback</td><td><span class="badge warn">Roadblock</span> <span class="badge rec">Record §A</span></td></tr>
+        <tr><td>17/07</td><td>Screen Design Ideas</td><td><span class="badge">Screenshot</span> landing</td></tr>
+        <tr><td>08/09</td><td>Multi-tenancy</td><td><span class="badge">Screenshot</span> riverside / lakeside</td></tr>
+        <tr><td>08/09</td><td>LTI authorization</td><td><span class="badge">Screenshot</span> JWKS</td></tr>
+        <tr><td>08/09</td><td>Yet LRS + Metabase</td><td><span class="badge">Screenshot</span> /ops owner login</td></tr>
+        <tr><td>08/09</td><td>AI-generated quizzes</td><td><span class="badge rec">Record §B</span></td></tr>
+        <tr><td>08/09</td><td>Coach voice (Indian languages)</td><td><span class="badge rec">Record §C</span></td></tr>
+        <tr><td>08/09</td><td>xAPI from chats</td><td><span class="badge rec">Record §C</span></td></tr>
+        <tr><td>22/09</td><td>Quiz multi-model parser (complexity / coverage / study plan)</td><td><span class="badge rec">Record §B</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>1 · Production health</h2>
+    <p class="meta">Proves the live service + DB + xAPI LRS + Metabase flags.</p>
+    <img src="screens/00-health.png" alt="Production health JSON"/>
+  </div>
+
+  <div class="card">
+    <h2>2 · Landing — LTI / isolation / design</h2>
+    <p class="meta">Covers: Moodle LTI messaging, screen design, grade sync narrative.</p>
+    <img src="screens/01-landing-lti-branding.png" alt="EdVidura landing"/>
+  </div>
+
+  <div class="card">
+    <h2>3 · Owner console — Yet + Metabase</h2>
+    <p class="meta">Covers: Yet Analytics LRS and Metabase integration (owner-only /ops).</p>
+    <img src="screens/02-ops-metabase-owner-login.png" alt="Ops owner login"/>
+  </div>
+
+  <div class="card">
+    <h2>4 · Onboarding + multi-tenancy + LTI URLs</h2>
+    <p class="meta">Covers: Onboarding APIs, multi-tenancy (Riverside / Lakeside), LTI 1.3 registration URLs, first-launch status.</p>
+    <img src="screens/03-onboarding-apis-lti-urls.png" alt="Onboard page"/>
+  </div>
+
+  <div class="card">
+    <h2>5 · LTI authorization — JWKS</h2>
+    <p class="meta">Public keyset used by Moodle/Canvas for LTI 1.3.</p>
+    <img src="screens/04-lti-jwks-authorization.png" alt="JWKS JSON"/>
+  </div>
+
+  <div class="card">
+    <h2>JEV manager deck (animated HTML slides)</h2>
+    <p class="meta">Bright EdVidura-style stage: sticky notes, animated pipeline, step reveals (Space), F fullscreen, Print → PDF. Same story also as PowerPoint (click builds, not CSS motion).</p>
+    <p><a href="jev-manager-deck.html">jev-manager-deck.html</a> · <a href="jev-manager-deck.pptx">jev-manager-deck.pptx</a></p>
+  </div>
+
+  <div class="card">
+    <h2>LearnWise → EdVidura deck (what we can do)</h2>
+    <p class="meta">Easy-language story: what we take from LearnWise, what we skip, Phase A/B capabilities for students &amp; teachers. Full-screen HTML + PowerPoint.</p>
+    <p><a href="learnwise-edvidura-deck.html">learnwise-edvidura-deck.html</a> · <a href="learnwise-edvidura-deck.pptx">learnwise-edvidura-deck.pptx</a></p>
+  </div>
+
+  <div class="card">
+    <h2>Requirements recordings deck (sheet Done)</h2>
+    <p class="meta">Same colourful full-screen deck — one slide per Done row with the narrated MP4 embedded. F fullscreen · sound on.</p>
+    <p><a href="requirements-recordings-deck.html">requirements-recordings-deck.html</a> · <a href="requirements-recordings-deck.pptx">requirements-recordings-deck.pptx</a> · <a href="videos/by-feature/index.html">video index</a></p>
+  </div>
+
+  <div class="card">
+    <h2>Detailed per-feature recordings (sheet Done rows)</h2>
+    <p class="meta">One MP4 per Google Sheet Done requirement — mouse path, spoken narration, and cleaner full-viewport frames. Turn sound on.</p>
+    <p>
+      <a href="videos/by-feature/index.html">videos/by-feature/index.html</a> ·
+      catalog <a href="features.yaml">features.yaml</a> ·
+      <code>python scripts/record_feature_proofs.py --refresh-session</code>
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Agent walkthrough video (public surfaces)</h2>
+    <p class="meta">Silent clip of live production pages — no Moodle session required.</p>
+    <p><a href="videos/edvidura-done-public-walkthrough.mp4">videos/edvidura-done-public-walkthrough.mp4</a> · landing → health → onboard → ops → JWKS → this pack</p>
+  </div>
+
+  <div class="card">
+    <h2>Recording scripts (attach Loom links to the sheet)</h2>
+    <h3>§A — Quiz UI / results / AGS</h3>
+    <ol class="script">
+      <li>Launch EdVidura from Moodle.</li>
+      <li>Take quiz → submit → show score, results, receipt.</li>
+      <li>Show Moodle grade sync or narrate AGS roadblock honestly.</li>
+    </ol>
+    <h3>§B — AI quizzes + multi-model parser</h3>
+    <ol class="script">
+      <li>Teacher → AI tools: Level, Complexity, Full-book coverage.</li>
+      <li>Optional: PDF/text quiz draft.</li>
+      <li>Student quiz: show Level / Complexity / Coverage / Study plan cards.</li>
+    </ol>
+    <h3>§C — Coach voice + xAPI chats</h3>
+    <ol class="script">
+      <li>Ask Vidura → pick Indian language → ask class question.</li>
+      <li>Show Mic/Speak if available.</li>
+      <li>Show activity/xAPI evidence for the chat turn.</li>
+    </ol>
+  </div>
+</main>
+<footer>EdVidura management proof · generated from Done rows on the meetings sheet</footer>
+</body>
+</html>

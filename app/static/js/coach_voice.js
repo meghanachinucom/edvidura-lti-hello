@@ -1,5 +1,5 @@
 /**
- * Study coach voice: mic (STT) + speak answer (TTS) via Web Speech API.
+ * Ask Vidura voice: mic (STT) + speak answer (TTS) via Web Speech API.
  * Language select drives BCP-47 tags for Indian locales (hi-IN, te-IN, ta-IN, …).
  */
 (function () {

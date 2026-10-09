@@ -1,5 +1,6 @@
 """School organization roster and workspace snapshot."""
 
+from app.modules.school.launch_binding import enrich_session_from_launch
 from app.modules.school.service import (
     class_moodle_filter_labels,
     class_roster_match_keys,
@@ -24,6 +25,7 @@ from app.modules.school.service import (
 )
 
 __all__ = [
+    "enrich_session_from_launch",
     "list_school_admins",
     "find_school_admin",
     "list_teachers",

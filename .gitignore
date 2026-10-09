@@ -36,3 +36,17 @@ app/static/uploads/
 backups/
 *.dump
 
+# Playwright LTI session export (cookies — do not commit)
+docs/management-proof/videos/storage_state.json
+docs/management-proof/videos/storage_state_teacher.json
+docs/management-proof/videos/by-feature/_audio/
+docs/management-proof/videos/by-feature/*.silent.mp4
+
+# Local packaging / scratch
+edvidura-lti-hello-starter.zip
+_bind.py
+moodle/_*.php
+moodle/_cj.txt
+scripts/_set_db_url.py
+scripts/_set_railway_app_vars.py
+

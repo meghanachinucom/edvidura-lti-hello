@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet"/>
 
-  <link rel="stylesheet" href="/static/css/shell.css?v=stitch16"/>
+  <link rel="stylesheet" href="/static/css/shell.css?v=ai-inspire1"/>
 
   {% if theme %}
   <style>
@@ -62,13 +62,15 @@
       <a class="nav-link {% if active_page == 'quiz_session' %}on{% endif %}"
          href="/quiz?token={{ quiz_token }}">Quiz</a>
 
-      <div class="nav-dd {% if active_page in ['study_coach','ai_hint'] %}active{% endif %}">
+      <div class="nav-dd {% if active_page in ['study_coach','ai_hint','flashcards'] %}active{% endif %}">
         <button class="nav-dd-btn" type="button" aria-expanded="false">
           Help <span class="caret" aria-hidden="true">▾</span>
         </button>
         <div class="nav-dd-panel" role="menu">
           <a role="menuitem" class="{% if active_page == 'study_coach' %}on{% endif %}"
-             href="/learn/coach?token={{ quiz_token }}">Study coach</a>
+             href="/learn/coach?token={{ quiz_token }}">Ask Vidura</a>
+          <a role="menuitem" class="{% if active_page == 'flashcards' %}on{% endif %}"
+             href="/learn/flashcards?token={{ quiz_token }}">Flashcards</a>
           {% if last_result_id %}
           <a role="menuitem" href="/quiz/result/{{ last_result_id }}?token={{ quiz_token }}">My results</a>
           {% else %}
@@ -113,7 +115,7 @@
          href="/school-admin/students?token={{ quiz_token }}">Students</a>
       <a class="nav-link {% if active_page == 'school_admin_analytics' %}on{% endif %}"
          href="/school-admin/analytics?token={{ quiz_token }}">Analytics</a>
-      <a class="nav-link" href="/school-admin/integrations?token={{ quiz_token }}">Integrations</a>
+      <a class="nav-link" href="/school-admin/activity?token={{ quiz_token }}">Activity</a>
 
       {% else %}
       {# ── TEACHER/INSTRUCTOR NAVIGATION ── #}
@@ -130,11 +132,15 @@
           <a role="menuitem" href="/teacher/content?token={{ quiz_token }}">Manage content</a>
           <a role="menuitem" href="/teacher/dct?token={{ quiz_token }}">Micro-learning planner</a>
           <a role="menuitem" href="/teacher/ai/author?token={{ quiz_token }}">AI authoring</a>
+          <a role="menuitem" class="{% if active_page == 'teacher_coach_shortcuts' %}on{% endif %}"
+             href="/teacher/coach/shortcuts?token={{ quiz_token }}">Ask Vidura shortcuts</a>
+          <a role="menuitem" class="{% if active_page == 'teacher_coach_insights' %}on{% endif %}"
+             href="/teacher/coach/insights?token={{ quiz_token }}">Ask Vidura insights</a>
         </div>
       </div>
       <a class="nav-link {% if active_page == 'teacher_analytics' %}on{% endif %}"
          href="/teacher/analytics?token={{ quiz_token }}">Analytics</a>
-      <a class="nav-link" href="/teacher/integrations?token={{ quiz_token }}">Charts &amp; LRS</a>
+      <a class="nav-link" href="/teacher/activity?token={{ quiz_token }}">Activity</a>
       {% endif %}
 
     </nav>
@@ -202,6 +208,8 @@
     </div>
   </footer>
 </div>
+
+{% include "_ask_vidura_drawer.html" %}
 
 {# ── Dropdown & burger JS ── #}
 <script>

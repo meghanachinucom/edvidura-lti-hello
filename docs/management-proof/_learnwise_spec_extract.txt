@@ -1,0 +1,796 @@
+LearnWise AI
+Product Development Feature Specification
+Reverse-engineered requirements for replicating the platform
+Compiled from public sources: learnwise.ai, help.learnwise.ai, product.learnwise.ai changelog (through 21 Sep 2026), integration marketplaces, and an independent Jisc pilot evaluation. Version 1.0, 1 October 2026.
+
+Contents
+TOC \h \o &quot;1-2&quot;
+
+1. Purpose and how to read this document
+This specification lists every feature, capability, integration, and non-functional requirement observed in the LearnWise AI platform, organized so an engineering team can plan a replication. Each feature carries an ID, description, user story, acceptance criteria, build priority, and an evidence tag.
+Priority: P0 = required for a credible first release of that product; P1 = needed for parity; P2 = differentiating or recent.
+Evidence: Confirmed = seen on a public page, help article, or changelog; Inferred = implied by confirmed behavior; Claim = marketing statement not verified; Roadmap = announced for 2026.
+Treat all performance figures (ticket reduction, questions answered, ROI) as vendor claims.
+2. Platform overview
+LearnWise is a multi-tenant, LLM-agnostic retrieval and agent platform for higher education. It is delivered as four independently licensed products on one administrative console (admin.learnwise.ai) and embeds into the systems a campus already runs rather than operating as a separate destination.
+Product
+Purpose
+Primary surfaces
+Status
+AI Campus Support
+24/7 answers on admissions, services, IT, and EdTech tools; routes to human desks
+JavaScript widget, Teams app, SharePoint web part, LMS navigation
+Generally available
+AI Student Tutor
+Course-scoped study help with study plans, quizzes, flashcards, role-play, H5P
+LTI 1.3 launch in a course, Moodle block, Teams Classwork
+Generally available
+AI Feedback & Grader
+Rubric-aligned feedback and suggested grades inside LMS grading; automated mode
+SpeedGrader, Brightspace Grader, Moodle, Teams Grading Studio
+Generally available
+AI Ops Assistant
+Agent that queries live LMS data and takes approved bulk actions
+Conversational panel inside the LMS
+Beta
+
+Shared platform capabilities: LLM-agnostic routing across multiple models, agentic multi-pass search with a reasoning trace, a walled-garden content boundary, weekly knowledge refresh, a 400+ EdTech tool content library, role-aware responses, 100+ languages, and a no-code Flows and Help Desk workflow layer.
+3. Personas and jobs to be done
+Persona
+Job to be done
+Entry point
+Key workflow
+Student
+Get an answer now; study without leaving the course
+Widget, LTI tool, Teams
+Ask, receive cited answer or clarifying question, use shortcuts, escalate with context
+Teaching faculty
+Grade faster and consistently; see how students use AI
+LMS grading screen; Teacher Insights
+Open submission, review AI draft, edit and approve, release; customize course assistant
+Instructional designer
+Course QA and readiness before term
+Ops Assistant
+Ask in plain language, review report, approve bulk fixes
+LMS admin
+Install, scope, and govern
+Admin console; LMS admin
+LTI keys, credentials, course allow/block lists, role templates, content toggles
+IT and support
+Reduce Tier-1 tickets; keep knowledge current
+Help Desks, Knowledge Bank, Improvements
+Create desks, map ticketing fields, review gaps, update sources
+Student services
+Route sensitive cases safely
+Flows, Inbox
+Build flows with triggers and conditions; review flagged conversations
+Leadership
+Evidence for accreditation; at-risk detection; ROI
+Insights, Ops Assistant
+Dashboards and cross-program reports
+4. AI Campus Support features
+ID
+Feature
+Description
+User story
+Acceptance criteria
+Prio
+Evidence
+CS-01
+Grounded Q&A with citations
+Answers only from institution-approved sources; every answer lists its sources; out-of-scope questions get a refusal or request to rephrase.
+As a student, I get a trustworthy answer with the source so I can verify it.
+No answer without ≥1 retrieved source; refusal path tested; citation links resolve.
+P0
+Confirmed
+CS-02
+Inline clickable citations
+Citation markers embedded in the answer text that open the source document, page, or video timestamp.
+As a user, I click a citation and land on the exact passage.
+Each citation opens source within 1 click; video citations deep-link to timestamp.
+P1
+Roadmap 2026
+CS-03
+Shortcut buttons
+Admin-defined quick-question buttons on the welcome screen and optionally during conversation; assignable per role.
+As an admin, I guide students to the top 5 questions.
+Up to 5+ buttons per assistant; role filter; toggle for in-conversation display.
+P0
+Confirmed
+CS-04
+Role-aware answers
+Detects role (student, instructor, admin, staff) from LTI, SSO, or API and tailors content and tone.
+As an instructor, I see faculty-only guidance for the same question a student asks.
+Role resolved on every session; role-restricted sources never appear for other roles.
+P0
+Confirmed
+CS-05
+Clarifying questions
+When the query is ambiguous the assistant asks a clarifying question instead of guessing.
+As a student, I get asked which program I mean before getting a wrong answer.
+Ambiguity detector triggers on test set; max 1 clarification per turn.
+P1
+Confirmed
+CS-06
+Multi-pass agentic search
+Reasons about the question, searches in several passes, evaluates sufficiency, and composes the answer.
+As an admin, I see that complex questions are answered from multiple documents.
+Loop bounded (≤4 passes); trace recorded per pass.
+P1
+Confirmed
+CS-07
+Reasoning trace visibility
+Three display levels for end users: full, abbreviated, hidden. Admins always see the full trace in Inbox.
+As an admin, I choose how much reasoning students see.
+Org-level setting; Inbox always full.
+P1
+Confirmed
+CS-08
+Escalation to help desks
+Hands off to a human via phone, email, live chat, link, or ticket with full context attached.
+As a student, I reach the right team without repeating myself.
+Payload includes summary, transcript with timestamps, metadata, page URL at escalation.
+P0
+Confirmed
+CS-09
+Sensitive-topic routing
+Flows and keyword flags route mental-health, integrity, withdrawal, and financial-aid intents to designated paths.
+As student services, I ensure at-risk students get a human quickly.
+Flagged conversations surface in Inbox; Flow fires on intent.
+P0
+Confirmed
+CS-10
+Multilingual chat
+100+ response languages, auto-detected; RTL layout for Hebrew and Arabic; localized UI (incl. Finnish).
+As an international student, I ask and receive in my language.
+Language detection accuracy on test set; RTL rendering checked.
+P1
+Confirmed
+CS-11
+File uploads in chat
+Users attach files; content parsed and used for grounding; attachments shown in Inbox; off by default.
+As a student, I upload my form and ask what to do next.
+Supported types parsed; org toggle; downloads saved as .txt.
+P2
+Confirmed
+CS-12
+Proactive messaging
+Page-load and time-on-page triggers push timely messages inside the widget.
+As an institution, I remind students of deadlines where they are.
+Trigger fires once per session per rule; conditions respected.
+P2
+Confirmed
+CS-13
+Copy answer with formatting
+Copy button under each answer preserving tables and formatting.
+As a staff member, I paste an answer into a document.
+Markdown/HTML preserved on paste.
+P2
+Confirmed
+CS-14
+Pre-trained EdTech tool library
+Vendor-maintained knowledge for 400+ tools (Canvas, Zoom, Turnitin, etc.) enabled per assistant.
+As an admin, I turn on Zoom help without writing content.
+Library toggle per tool; content updated by vendor.
+P1
+Confirmed (depth inferred)
+CS-15
+Feedback on answers
+Thumbs up/down and CSAT prompts feed Insights and Improvements.
+As a student, I rate an answer.
+Rating stored per message; aggregated in Insights.
+P1
+Inferred
+5. AI Student Tutor features
+ID
+Feature
+Description
+User story
+Acceptance criteria
+Prio
+Evidence
+TU-01
+Course-scoped assistant via LTI 1.3
+Launches inside a course and answers only from that course&apos;s content; new conversation per course.
+As a student, I ask about this week&apos;s reading without noise from other courses.
+LTI context binds course ID; retrieval filtered by course.
+P0
+Confirmed
+TU-02
+Course content sync
+Pulls pages, files, modules, assignments, syllabus, discussions, H5P; per-type scrape toggles; manual add; weekly refresh.
+As an admin, I decide which content types the tutor reads.
+Sync status visible; manual re-run; honors Moodle availability and Brightspace past-course rules.
+P0
+Confirmed
+TU-03
+Course Files upload
+Instructors or admins upload supplementary PDFs to a specific course.
+As an instructor, I add a reading not in the LMS.
+File appears in course knowledge within sync window.
+P1
+Confirmed
+TU-04
+Cross-course chat
+Optional scope across all enrolled courses; scoped by instance, Canvas sub-account (incl. nested), or CSV list.
+As a student, I build a study plan across three courses.
+Scope settings enforced; CSV filter combinable.
+P1
+Confirmed
+TU-05
+Study Mode: study plans
+Generates personalized study plans from due dates and topics.
+As a student, I get a plan for next week with 2 hours per day.
+Plan references real course items and dates.
+P1
+Confirmed
+TU-06
+Study Mode: quizzes and flashcards
+Multiple choice, true/false, flashcards generated from course content or uploaded files; aligned to Bloom&apos;s levels.
+As a student, I quiz myself on chapter 4.
+Questions grounded in source; answer key with explanation and citation.
+P1
+Confirmed
+TU-07
+Role-play practice
+Conversational scenarios such as presentations or language practice.
+As a student, I rehearse a presentation and get feedback.
+Scenario stays in course context; integrity rules apply.
+P2
+Confirmed
+TU-08
+H5P interactives
+Delivers interactive activities in H5P format inside chat; Moodle H5P ingestible as knowledge.
+As a student, I complete an interactive quiz in chat.
+H5P renders in widget; results optionally logged.
+P2
+Confirmed
+TU-09
+Academic-integrity guardrails
+Will not write assignments or give exam answers; redirects to the learning process; answering style configurable.
+As faculty, I trust the tutor will not do the work for students.
+Red-team prompts refused; style setting respected.
+P0
+Confirmed
+TU-10
+Teacher customization in LTI
+Instructor sets assistant name, up to 5 shortcuts, course files, welcome message, answering style, instructor info; admin gates by LTI role.
+As an instructor, I personalize my course assistant.
+Institution settings and disclaimers override; role gating enforced.
+P1
+Confirmed
+TU-11
+Teacher Insights
+Course-level analytics: users, conversations, shortcut usage, conversation log (optional, anonymizable), trend reports; section isolation.
+As an instructor, I see what students struggle with.
+Role-gated; section filter in Brightspace.
+P1
+Confirmed
+TU-12
+Video grounding
+Kaltura and Panopto transcripts with timestamps; citations show video title and deep-link.
+As a student, I jump to the lecture moment that answers my question.
+Timestamp accuracy within 5 s.
+P1
+Confirmed
+TU-13
+Moodle course block
+Persistent side-panel block added by the professor from Moodle&apos;s add-block menu.
+As a professor, I keep the tutor open beside content.
+No admin setup required; respects course scope.
+P2
+Confirmed
+TU-14
+Teams Classwork tutor
+Reads Teams assignments, pages, files, SharePoint, OneDrive, OneNote; study tools in Teams.
+As a Teams-based school, I get the same tutor in Teams.
+Marketplace app; Classwork items selectable.
+P2
+Confirmed
+6. AI Feedback & Grader features
+ID
+Feature
+Description
+User story
+Acceptance criteria
+Prio
+Evidence
+GR-01
+Rubric-aligned feedback draft
+Per-criterion commentary plus an overall comment generated from the submission and rubric.
+As faculty, I get a draft I can edit rather than a blank box.
+Every rubric row addressed; shows which criteria drove the score.
+P0
+Confirmed
+GR-02
+Suggested grades
+Per-criterion score suggestion; institution toggle to disable.
+As an institution, I decide whether AI suggests grades.
+When off, feedback cannot be sent until manual grades are entered.
+P0
+Confirmed
+GR-03
+Instructor notes to feedback
+Expands typed notes or annotations into full comments.
+As faculty, I write three bullet points and get a full comment.
+Notes preserved in meaning; tone matches profile.
+P0
+Confirmed
+GR-04
+Voice-note feedback
+Record a voice note that is transcribed and expanded into feedback.
+As faculty, I talk through my reaction and get written feedback.
+Transcription accuracy; expansion keeps intent.
+P1
+Confirmed
+GR-05
+Feedback Profile Builder
+Learns the instructor&apos;s tone, depth, and phrasing; custom instructions per instructor.
+As faculty, feedback sounds like me.
+Profile applied to all drafts; editable.
+P1
+Confirmed
+GR-06
+Section rating and inline annotation
+Rate each rubric section as helpful or not; annotate directly on the submission.
+As faculty, I improve the AI over time and mark the text.
+Ratings feed Insights; annotations saved to LMS.
+P1
+Confirmed
+GR-07
+Multimodal submissions
+PDF, DOCX, images (incl. HEIC/HEIF), audio, video.
+As faculty, I grade a video presentation.
+Each type parsed; video transcribed.
+P1
+Confirmed
+GR-08
+Course-content references
+Optional toggle to cite relevant course materials in feedback.
+As a student, feedback points me to the reading.
+Citations resolve to course items.
+P2
+Confirmed
+GR-09
+Automated assessment
+Grades on arrival without instructor action: Canvas via LTI Asset Processor (PNS), Brightspace; general, rubric-level, and grade outputs toggleable.
+As a coordinator of a self-paced course, students get feedback immediately.
+Triggered on submit; coordinator visibility retained.
+P1
+Confirmed
+GR-10
+Org-level assignment mapping
+Assign the feedback tool to courses and assignments centrally; connected-assignments table with search and filter.
+As an admin, I stop maintaining a CSV mapping.
+Mapping updates propagate; table filters by course and teacher.
+P1
+Confirmed
+GR-11
+LMS grading UI embeds
+Canvas SpeedGrader, Brightspace Grader, Moodle, Teams Grading Studio.
+As faculty, I never leave my grading screen.
+Feedback and grade written back to LMS.
+P0
+Confirmed
+GR-12
+Grading Studio
+Dedicated space: submissions inbox by status, document viewer, three feedback starts (notes, voice, rubric).
+As faculty, I process a queue of submissions efficiently.
+Status filters; viewer supports all file types.
+P2
+Confirmed (Teams only)
+GR-13
+Grading consistency layer
+Same rubric blueprint applied to every submission; consistency controls across runs.
+As an institution, grading is uniform across sections.
+Score variance on repeated runs within tolerance.
+P0
+Confirmed (mechanism inferred)
+GR-14
+Grading time insights
+Active instructor time per assignment, session, submission; idle time excluded.
+As an admin, I quantify time saved.
+Timer pauses on idle and tab switch.
+P2
+Confirmed
+7. AI Ops Assistant features
+ID
+Feature
+Description
+User story
+Acceptance criteria
+Prio
+Evidence
+OP-01
+Plain-language LMS queries
+Ask about courses, enrollments, assignments, activity across the catalog.
+As a dean, I ask which courses have no graded items yet.
+Reads live via LMS API; respects role permissions.
+P1
+Confirmed
+OP-02
+Course quality audit
+Audit courses against uploaded QA standards or accreditation frameworks; flags issues by category.
+As T&L, I check readiness before term start.
+Report lists issue, course, category, fix.
+P1
+Confirmed
+OP-03
+At-risk student identification
+Surfaces at-risk students at course and program level.
+As faculty, I see who to reach out to before the midterm.
+Signals documented and configurable.
+P1
+Confirmed (signals unknown)
+OP-04
+Bulk write actions with approval
+Bulk deadline updates, enrollment management, term rollover; every write requires human approval.
+As an admin, I move all due dates one week with one approval.
+Preview, approve, execute, log; rollback path.
+P1
+Confirmed
+OP-05
+Permission templates
+Preset templates for Teaching Faculty, Course Operations, Leadership; editable under LMS capabilities.
+As IT, I limit what each role can do.
+Template enforced on every tool call.
+P1
+Confirmed
+OP-06
+External data sources
+Connect SIS, HR, accreditation frameworks, internal repositories as approved sources.
+As leadership, I combine LMS and SIS data in one question.
+Source registry; access by role.
+P2
+Claim
+OP-07
+Evidence reports
+TEF, accreditation, VPAT, teaching-presence reports.
+As a dean, I produce evidence packs for review.
+Report templates exportable.
+P2
+Claim
+8. Administration console features
+The console is the entire control plane; every product is configured here rather than inside the LMS.
+ID
+Area
+Settings and workflows
+Priority
+AD-01
+Organization settings
+Reasoning visibility, metadata privacy, anonymized logs, disclaimers, UI language, org-level LMS credentials, per-assistant admin permissions.
+P0
+AD-02
+Assistant builder
+Create, duplicate, brand, welcome message, placeholder text, shortcuts, answering style, course dashboard toggle, help desks, flows, test console, publish.
+P0
+AD-03
+Knowledge Bank (org) and per-assistant knowledge
+Files, websites (auto-update toggle), FAQs, CSV import, SharePoint, LMS courses, video, H5P, ticketing KBs, tool library; role restrictions per source; sync status and re-run.
+P0
+AD-04
+Courses management
+LMS connection, content-type toggles, course list, Course Files, CSV allow/block lists, cross-course scope.
+P0
+AD-05
+Help Desks
+Desks with channels, hours, custom form fields, ticketing field mapping, chat notifications, conversation-data settings.
+P0
+AD-06
+Flows
+Default and custom flows; triggers, conditions with include/exclude, composable actions, priority.
+P0
+AD-07
+Publish
+JS snippet, LTI 1.3 config (JSON block), Moodle plugin/block, Blackboard UEF, SharePoint web part, Teams app, teacher-customization role access.
+P0
+AD-08
+Inbox
+Conversation logs with reasoning, keyword flags, attachments, escalation record with URL, cleaned exports.
+P0
+AD-09
+Insights
+Org dashboards, Teacher Insights, Feedback and grading dashboard with instructor time.
+P1
+AD-10
+Improvements
+Gaps and unanswerable questions, team tagging, status tracking, re-run with human in the loop, CSV/JSON export with IDs.
+P1
+AD-11
+AI Feedback tab
+Enable tool, org-level assignment mapping, feedback toggles, automated assessment, connected-assignments table.
+P1
+AD-12
+AI Tutor tab
+Study Mode, answering style, integrity guardrails, teacher customization enable.
+P1
+AD-13
+LMS capabilities
+Ops permission templates and approval settings.
+P1
+9. Workflow engines
+9.1 Flows (rules engine)
+One always-on default flow per assistant; custom flows evaluated in priority order.
+Triggers: user message (intent or keyword), chat window open, page load, time on page.
+Conditions with include and exclude: URL pattern, user role, course ID, external data, date range.
+Actions, composable and repeatable: search knowledge, answer with guidelines or custom instructions, hand over to a desk, run a quiz, follow-up prompts.
+Inferred: message triggers are LLM-classified; an alternative is embedding similarity against example utterances.
+9.2 Help Desks (escalation router)
+A desk is a team plus channels, hours, a form schema, and a ticketing binding; at least one channel is mandatory.
+The assistant selects the desk from context and flow rules.
+Payload: conversation summary, transcript with per-message timestamps, start and end time, user metadata unless hidden, page URL at escalation, form fields mapped to the ticketing system&apos;s real custom fields.
+Live-agent handover supported for Salesforce Service Cloud; similar for other live-chat tools is inferred.
+9.3 Ops Assistant (tool agent)
+Tools map to LMS REST endpoints for reads (courses, users, enrollments, assignments, activity) and writes (dates, enrollments, settings).
+Every write requires explicit human approval; permissions come from editable role templates.
+Audits apply an uploaded rubric across a course set and return flagged issues by category.
+9.4 Grader pipeline (inferred from confirmed behavior)
+Ingest submission: text, image including HEIC, audio, or video transcribed.
+Condition on rubric rows, instructor notes or voice note, feedback profile, custom instructions, optional course content.
+Produce structured per-criterion score and comment plus an overall comment.
+Return to the LMS grading UI for editing, section rating, annotation, and approval; log active grading time.
+Automated path: LTI Asset Processor on Canvas or submission webhook on Brightspace triggers the pipeline on submit.
+10. Knowledge and retrieval requirements
+Requirement
+Detail
+Evidence
+Source connectors
+Web crawler with auto-update flag; file upload; FAQ/CSV; SharePoint pages and documents; LMS content APIs; Kaltura and Panopto transcripts; Moodle H5P; ticketing knowledge bases
+Confirmed
+Refresh
+Weekly automatic sync; manual re-run per source; change detection
+Confirmed (mechanism inferred)
+Access control on chunks
+Tenant, assistant, role allow-list, course ID, LMS availability conditions, past-course rules stored as metadata and filtered at retrieval
+Behavior confirmed; implementation inferred
+Walled garden
+No open-web fallback; refusal or clarifying question when nothing relevant is retrieved
+Confirmed
+Agentic search
+Rewrite, retrieve, judge sufficiency, retrieve again, ask the user if ambiguous; emits a reasoning trace
+Behavior confirmed; loop design inferred
+Citations
+Inline clickable citations (2026); real document and video titles; deep links to timestamps
+Confirmed
+Model routing
+Multiple LLMs with per-query selection; consistency layer for grading
+Confirmed; providers unknown
+Chunking and embeddings
+Not published
+Unknown
+Shared vs local knowledge
+Org-level Knowledge Bank feeding many assistants plus assistant-local sources
+Confirmed
+11. Integration requirements
+System
+Placement and auth
+Data read
+Data written
+Canvas
+Theme-editor JS; LTI 1.3 (one-block JSON); REST token; SpeedGrader; LTI Asset Processor
+Pages, files, modules, assignments, syllabus, discussions, rubrics, submissions, sub-accounts
+Feedback, grades, bulk operations
+Moodle
+Plugin; LTI; API client ID/secret; course block
+Course content incl. H5P; availability conditions
+Grades, bulk operations
+Blackboard
+Ultra Extension Framework; base navigation; LTI 1.3; REST
+Learning Modules, Documents, Content Collection
+Grades (inferred)
+Brightspace
+LTI 1.3; D2L API; Grader
+Course content; past-course rules
+Grades; automated feedback
+Microsoft Teams
+Marketplace app
+Classwork, SharePoint, OneDrive, OneNote
+Grading Studio feedback
+SharePoint
+App-store web part by assistant ID
+Modern pages and documents
+None
+Kaltura / Panopto
+Scoped application token
+Transcripts with timestamps
+None
+Ticketing (ServiceNow, TOPdesk, Salesforce, Zendesk, Freshdesk, Jira)
+API credentials; custom field mapping
+Knowledge-base articles
+Tickets; live-agent handover
+Slack, Teams, Google Chat
+Webhook or app
+None
+Escalation notifications
+SSO
+SAML, OAuth
+Identity, role
+None
+Student portals (MyDay, CampusGroups, campusM)
+JS embed
+None
+None
+12. Analytics requirements
+Dashboard or export
+Metrics and fields
+Insights (organization)
+Users, conversations, AI resolution rate, CSAT, top topics, trends over time, shortcut usage, knowledge gaps
+Teacher Insights
+Usage counts, optional anonymizable conversation log, FAQ and usage-type trends, section isolation
+Feedback and grading
+Adoption per instructor, feedback used as-is versus edited, active grading time per assignment, session, and submission
+Improvements
+Unanswerable questions, gap topics, assigned team, status; export with assistant, conversation, and student IDs
+Inbox
+Full logs with reasoning, attachments, escalation records, keyword flags; cleaned export
+Ops reports
+Course quality audit, at-risk students, term rollover, bulk enrollment, teaching presence, accreditation evidence
+Topic detection
+Automatic clustering of conversation topics (method inferred: embed, cluster, LLM label)
+13. Non-functional requirements
+Requirement
+What LearnWise states
+Engineering implication
+Security certifications
+SOC 2 Type II, ISO 27001, Cyber Essentials Plus; pen-test results; HECVAT on request
+Audit program, access reviews, change management, logging; 6 to 12 months
+Privacy regulations
+GDPR, FERPA, FIPPA, PIPEDA; institution owns data; DPA
+Residency per tenant, deletion and export, subprocessor register, purpose limits
+Data residency
+Hosted in the institution&apos;s region
+Multi-region data plane; region pinned at tenant creation
+No training on customer data
+No customer data used to train any model; not shared with providers for training
+Zero-retention API terms; fine-tuned grading model trained on non-customer data
+Accessibility
+WCAG 2.1 AA (2.2 AA fixes shipping); VPAT
+Screen-reader labels, focus order, contrast, reflow, no color-only indicators
+RBAC and audit
+Org, assistant, course, and role permissions; full audit logs; admin override
+Immutable event log; per-assistant admin rights
+Privacy controls
+Hide metadata; anonymized logs; downloads as .txt
+PII masking at display and export
+Multi-tenancy
+Central governance with departmental assistants
+Inherited settings; institution-wide overrides
+Localization
+100+ languages; admin UI in several languages; RTL
+i18n framework; bidi layout
+Performance and scale
+Hundreds of thousands of conversations per institution
+Bounded retrieval loops; caching; cost per query tracked
+Deployment
+Setup 3 to 7 business days; onboarding 3 to 5 weeks
+Self-serve LTI config; guided onboarding
+14. Replication plan
+14.1 Phases
+Phase
+Timing
+Scope
+Exit gate
+1. Campus Support
+Months 1 to 4
+Widget, knowledge base with citations, Help Desks with one ticketing integration, Flows v1, Insights, Inbox
+80% AI resolution in a pilot
+2. Student Tutor
+Months 4 to 8
+LTI 1.3 launch, course sync for Canvas and Moodle, Study Mode, Teacher Insights
+Two LMSs live with real courses
+3. Feedback & Grader
+Months 8 to 13
+Rubric pipeline, feedback profiles, SpeedGrader embed, automated assessment
+Faculty acceptance rate target met
+4. Ops Assistant
+Months 13 to 18
+Tool agent over LMS APIs, approval gates, permission templates, audits, at-risk reports
+Safe write actions in production
+Compliance (parallel)
+From month 1
+SOC 2, ISO 27001, GDPR and FERPA, WCAG, regional hosting
+Certifications in hand before enterprise sales
+14.2 Suggested technology stack (inferred; LearnWise&apos;s own stack is not public)
+Layer
+Choice
+Rationale
+API and workers
+Python (FastAPI); Temporal or Celery
+Long-running syncs, retries, scheduled crawls
+Storage
+Postgres + pgvector (Qdrant at scale); regional object store
+Tenant, role, course filters beside vectors
+Retrieval
+Hybrid BM25 + vector, reranker, bounded LLM query-rewrite loop
+Reproduces agentic search and trace
+LLM access
+Router (LiteLLM or custom); 2 to 3 providers with zero-retention terms
+Model-agnostic routing; regional endpoints
+Parsing
+Docling or Unstructured; Whisper-class ASR
+PDF, DOCX, HEIC, transcripts with timestamps
+LTI
+pylti1p3 or ltijs; NRPS, AGS, Deep Linking, Asset Processor
+Identity, roles, grade passback, submission triggers
+Front end
+React widget as one script tag with shadow DOM; React admin
+Theme-editor and SharePoint embeds
+Observability
+Langfuse or OpenTelemetry
+Reasoning trace; cost per query
+Workflow engine
+JSON rules per message; LLM intent classifier
+Flows
+14.3 Team and effort
+Five to seven engineers (two backend and retrieval, one integrations, one front end, one ML for grading, one platform and security) plus a product manager and a compliance lead. Twelve to eighteen months to parity on the four products, excluding the 400-tool content library, which is a content-operations effort.
+14.4 Top risks
+LMS API drift and per-institution customizations (Blackboard UEF placement limits and ticketing custom fields are real examples).
+Grading accuracy and liability; requires calibration sets per rubric and a hard approval gate.
+Compliance lead time blocking sales regardless of feature parity.
+Agentic write actions in production LMSs; requires dry-run, approval, and rollback.
+Pre-trained tool library and ticketing breadth are moats of effort, not technology.
+Role-scoped retrieval bugs leaking faculty content to students; requires tests per role per source.
+Multilingual quality and RTL layouts across widget and admin.
+Cost control on multi-pass retrieval at campus scale.
+Accessibility regressions in embedded contexts.
+Single-provider lock-in undermining no-training and residency claims.
+15. Open questions and demo checklist
+Open question
+Why it matters
+How to resolve
+LLM providers and regions
+Residency and no-training claims
+Subprocessor list from trust center
+Chunking, embeddings, reranking
+Retrieval quality and cost
+Technical demo
+Grade passback mechanism per LMS
+Build complexity
+Integration guide; Developer Key scopes
+Fine-tuned grading model details
+Consistency and compliance
+Model card
+Ops action catalog, dry-run, rollback
+Write safety
+Demo a bulk change and undo
+At-risk signals and thresholds
+Report validity
+Sandbox demo
+Report templates (TEF, VPAT)
+Prompts vs products
+Sample report
+Public API surface
+Custom integrations
+API docs
+400-tool library contents
+Content-ops scope
+Tool list
+Pricing and licensing
+Business model
+Sales call
+Pedagogy controls
+Tutor behavior
+Trial account
+Technology stack
+Architecture choices
+Engineering job posts
+
+Demo checklist
+Ask an ambiguous question; expect a clarifying question and the full reasoning trace.
+Ask a faculty-only question as a student role; expect refusal.
+Build a Flow with role and URL conditions and an exclude rule.
+Escalate to a ticketing system and inspect the payload fields.
+Grade one submission with notes, one with voice, one rubric-only; toggle grade suggestions off.
+Trigger automated assessment on a Canvas sandbox assignment.
+Run a course audit against an uploaded standard and attempt a write action.
+Export conversations and Improvements; inspect columns.
+Review Insights definitions for grading time and resolution rate.
+Request HECVAT, VPAT, pen-test summary, DPA, and subprocessor list.
+16. Sources
+learnwise.ai (homepage, how-it-works, features, products, integrations, use-cases, about, business-schools, usa)
+help.learnwise.ai knowledge base (assistant creation, help desks, escalation options, flows, course insights, Canvas course assistant, Blackboard integration, SharePoint publishing, introduction)
+product.learnwise.ai/changelog (releases through 21 September 2026) and roadmap
+learnwise.ai/news-insights (2025 year in review, Ops Assistant announcement, grading announcements, LMS guides)
+Brightspace Integration Hub listing; Microsoft Teams marketplace listing; Chest agreement listing
+Jisc National Centre for AI, LearnWise end-of-pilot report (April 2025)
+join.learnwise.ai (company facts)

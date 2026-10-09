@@ -18,6 +18,7 @@ _VERB_LABELS = {
     verbs.VERB_EXPERIENCED: "Opened",
     verbs.VERB_MASTERED: "Mastered",
     verbs.VERB_INTERACTED: "Coach chat",
+    verbs.VERB_RESPONDED: "Coach feedback",
 }
 
 
@@ -38,7 +39,7 @@ def _short_object(object_id: str) -> str:
     if not oid:
         return "—"
     if "/study-coach" in oid:
-        return "Study coach"
+        return "Ask Vidura"
     parts = oid.split("/")
     if len(parts) >= 2 and parts[-2] in {
         "lesson",
@@ -109,6 +110,9 @@ def present_statement_row(row: dict[str, Any]) -> dict[str, Any]:
         detail_bits.append(f"{citations} citations")
     if refusal:
         detail_bits.append(f"Refusal: {refusal}")
+    rating = str(ext.get(f"{_EXT}coach_rating") or "")
+    if rating:
+        detail_bits.append(f"Thumbs {rating}")
     if course:
         detail_bits.append(course)
     score = result.get("score") if isinstance(result.get("score"), dict) else None
@@ -160,11 +164,12 @@ def activity_feed(
         out = [r for r in out if r["verb_id"] == want]
     ch = (channel or "").strip().lower()
     if ch in {"coach", "study_coach", "chat"}:
-        # PeBL Discussion / Study Coach turns
+        # PeBL Discussion / Ask Vidura turns + thumbs feedback
         out = [
             r
             for r in out
             if str(r.get("channel") or "") == "study_coach"
-            or r.get("verb_id") == verbs.VERB_INTERACTED
+            or r.get("verb_id")
+            in {verbs.VERB_INTERACTED, verbs.VERB_RESPONDED}
         ]
     return out

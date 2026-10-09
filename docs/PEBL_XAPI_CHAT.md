@@ -2,13 +2,13 @@
 
 Source: `PeBL Technical Specification.docx` (Communication tracking + Discussion Extension).
 
-**Product status: complete for Study Coach Discussion tracking.**
+**Product status: complete for Ask Vidura Discussion tracking.**
 
 ## Spec requirements
 
 | PeBL rule | Requirement | EdVidura |
 |-----------|-------------|----------|
-| Communication tracking | All IM/chat sent/delivered **shall** be captured as xAPI | Each Study Coach turn → `interacted` |
+| Communication tracking | All IM/chat sent/delivered **shall** be captured as xAPI | Each Ask Vidura turn → `interacted` |
 | Discussion data | User ID, Timestamp, **Thread ID**, **Access level**, **Text of the message** | All captured (full text default) |
 | Ask an Expert | Message content **may** be collected | Default on; opt out with `COACH_XAPI_FULL_TEXT=0` |
 | LRS path | Server may use xAPI as a chat/protocol workflow | Local store + optional Yet forward |
@@ -33,7 +33,7 @@ COACH_XAPI_ACCESS_LEVEL=class   # or team / all
 
 ## Where to see it
 
-- Study coach → **Recent coach xAPI** + **View coach activity**
+- Ask Vidura → **Recent Ask Vidura xAPI** + **View Ask Vidura activity**
 - Activity → filter **Coach chat** (`?channel=coach`)
 - Integrations page shows PeBL full-text mode
 

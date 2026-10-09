@@ -12,9 +12,9 @@ EdVidura emits **xAPI 1.0.3 statements** for learning analytics. **Moodle AGS re
 | Skill profile (quiz) | `mastered` / `failed` / `attempted` | D15 competency statements per skill |
 | Lesson complete | `completed` | Activity id includes lesson UUID |
 | Manual open | `experienced` | Resource activity |
-| Study coach turn | `interacted` | PeBL Discussion-aligned fields (see below) |
+| Ask Vidura turn | `interacted` | PeBL Discussion-aligned fields (see below) |
 
-### Study coach ↔ PeBL Discussion (Technical Specification)
+### Ask Vidura ↔ PeBL Discussion (Technical Specification)
 
 PeBL requires discussion/chat capture: **User ID, Timestamp, Thread ID, Access level, Text of the message**.
 

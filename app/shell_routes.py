@@ -40,6 +40,15 @@ from app.settings import get_settings
 
 router = APIRouter(tags=["shell"])
 
+
+def _opt_float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
 _TEMPLATES = Jinja2Templates(
     directory=str(Path(__file__).resolve().parents[1] / "templates")
 )
@@ -81,146 +90,11 @@ def _persist_session(request: Request, session: dict[str, Any]) -> str:
 
 
 def _ensure_launch_binding(session: dict[str, Any]) -> dict[str, Any]:
-    """Resolve LTI context → class/course on the session (class-scoped UX)."""
-    tid = session.get("tenant_id")
-    if not tid:
-        return session
+    """Resolve LTI context → class/course (delegates to portable school module)."""
+    from app.modules.school import enrich_session_from_launch
 
-    class_id = str(session.get("class_id") or "").strip()
-    course_id = str(session.get("edvidura_course_id") or "").strip()
-    ctx = str(session.get("lti_context_id") or "").strip()
-    course_title = str(session.get("course") or "").strip()
-    label_hint = str(
-        session.get("class_code")
-        or session.get("class_name")
-        or course_title
-        or ""
-    ).strip()
-
-    def _apply_class(cls: dict[str, Any]) -> None:
-        nonlocal class_id, course_id
-        class_id = str(cls.get("id") or class_id or "")
-        session["class_id"] = class_id
-        session["class_code"] = cls.get("class_code") or session.get("class_code") or ""
-        session["class_name"] = cls.get("class_name") or session.get("class_name") or ""
-        session["academic_subject"] = (
-            cls.get("subject") or session.get("academic_subject") or ""
-        )
-        if cls.get("course_id"):
-            course_id = str(cls["course_id"])
-            session["edvidura_course_id"] = course_id
-
-    binding = None
-    if ctx:
-        try:
-            binding = get_lti_context_binding(tid, ctx)
-        except Exception:  # noqa: BLE001
-            binding = None
-        if not binding:
-            try:
-                binding = resolve_lti_context_binding(
-                    tid,
-                    lti_context_id=ctx,
-                    context_label=label_hint,
-                    context_title=course_title or label_hint,
-                    auto_bind=True,
-                )
-            except Exception:  # noqa: BLE001
-                binding = None
-
-    if binding:
-        session["class_id"] = str(binding.get("class_id") or class_id or "")
-        session["class_code"] = binding.get("class_code") or session.get("class_code") or ""
-        session["class_name"] = binding.get("class_name") or session.get("class_name") or ""
-        session["academic_subject"] = (
-            binding.get("subject") or session.get("academic_subject") or ""
-        )
-        bound_course = (
-            binding.get("course_id")
-            or binding.get("resolved_course_id")
-            or course_id
-            or ""
-        )
-        if bound_course:
-            session["edvidura_course_id"] = str(bound_course)
-        return session
-
-    if not str(session.get("class_id") or "").strip():
-        matched = None
-        try:
-            matched = match_class_for_context(
-                tid,
-                context_label=label_hint,
-                context_title=course_title or label_hint,
-            )
-        except Exception:  # noqa: BLE001
-            matched = None
-        # Classic Moodle Algebra teacher (riverside_priya) → Class 8
-        if not matched:
-            given = str(
-                session.get("given_name") or session.get("learner_name") or ""
-            ).lower()
-            email = str(session.get("email") or "").lower()
-            if "priya" in given or "priya" in email or "riverside_priya" in email:
-                try:
-                    matched = match_class_for_context(
-                        tid, context_label="RHS-C08", context_title="Class 8"
-                    )
-                except Exception:  # noqa: BLE001
-                    matched = None
-        if not matched and (
-            session.get("is_instructor") or session.get("is_school_admin")
-        ):
-            try:
-                matched = find_lead_class_for_teacher(
-                    tid,
-                    email=str(session.get("email") or ""),
-                    name=str(session.get("learner_name") or ""),
-                )
-            except Exception:  # noqa: BLE001
-                matched = None
-        # Last resort for instructors: Class 8 Algebra demo (always exists in seed)
-        if not matched and (
-            session.get("is_instructor") or session.get("is_school_admin")
-        ):
-            try:
-                matched = match_class_for_context(
-                    tid, context_label="RHS-C08", context_title="Class 8"
-                )
-            except Exception:  # noqa: BLE001
-                matched = None
-        if matched:
-            _apply_class(matched)
-            if ctx:
-                try:
-                    upsert_lti_context_binding(
-                        tid,
-                        lti_context_id=ctx,
-                        class_id=matched["id"],
-                        course_id=matched.get("course_id"),
-                        context_label=label_hint or matched.get("class_code") or "",
-                        context_title=course_title
-                        or matched.get("class_name")
-                        or "",
-                    )
-                except Exception:  # noqa: BLE001
-                    pass
-            return session
-
-    # Class known but course missing — pull from class row
-    class_id = str(session.get("class_id") or "").strip()
-    if class_id and not str(session.get("edvidura_course_id") or "").strip():
-        try:
-            snap = class_workspace_snapshot(tid, class_id)
-        except Exception:  # noqa: BLE001
-            snap = None
-        if snap and snap.get("course"):
-            session["edvidura_course_id"] = str(snap["course"]["id"])
-            session["class_name"] = snap.get("class_name") or session.get("class_name") or ""
-            session["class_code"] = snap.get("class_code") or session.get("class_code") or ""
-            session["academic_subject"] = (
-                snap.get("subject") or session.get("academic_subject") or ""
-            )
+    enriched = enrich_session_from_launch(session)
+    session.update(enriched)
     return session
 
 
@@ -485,6 +359,8 @@ def _shell_progress(session: dict[str, Any], token: str) -> dict[str, Any]:
                 manual_version=manual_version,
                 persist_if_missing=False,
                 role_code=str(session.get("target_role") or "") or None,
+                course_id=session.get("edvidura_course_id") or None,
+                course_label=str(session.get("course") or ""),
             )
             latest = adaptive_mod.latest_graded_attempt_for_subject(
                 session["tenant_id"], str(session.get("subject") or "")
@@ -495,13 +371,16 @@ def _shell_progress(session: dict[str, Any], token: str) -> dict[str, Any]:
                 attempt=latest,
                 linear_next=nxt,
             )
-            if gap_path and gap_path.get("active") and gap_path.get("first_href"):
+            if gap_path and gap_path.get("active"):
                 done = int(gap_path.get("done_count") or 0)
                 total = int(gap_path.get("step_count") or len(gap_path.get("steps") or []))
                 up_next_title = "My learning plan"
-                up_next_href = gap_path["first_href"]
+                # Prefer full plan page for discoverability (Phase B1)
+                up_next_href = f"/learn/gap?token={token}"
                 up_next_meta = (
-                    f"Step {done + 1} of {total}" if total else "Continue your plan"
+                    f"Step {done + 1} of {total} · open plan"
+                    if total
+                    else "Open your plan"
                 )
             elif (
                 adaptive_next
@@ -1230,6 +1109,20 @@ async def lesson_complete(
             )
         except Exception as xapi_exc:  # noqa: BLE001
             print(f"xAPI lesson record failed: {xapi_exc}", flush=True)
+        try:
+            from app.modules import signals as signals_mod
+
+            signals_mod.note_learner_activity(
+                session["tenant_id"],
+                subject=subject,
+                channel="moodle",
+                quiz_token=qtok,
+                course_id=lesson.get("course_id"),
+                course_label=str(session.get("course") or ""),
+                first_lesson_id=str(lesson.get("id") or "") or None,
+            )
+        except Exception:  # noqa: BLE001
+            pass
     lessons = content.list_lessons(session["tenant_id"], lesson["course_id"])
     try:
         from app.modules import adaptive as adaptive_mod
@@ -1323,10 +1216,13 @@ async def quiz_form(
     loop: str | None = None,
     personalized: str | None = None,
 ):
-    """Quiz and My AI quiz are the same: unique per-student items covering all topics."""
+    """Serve the teacher question bank; AI personal quiz only when bank is empty
+    or ``personalized=1`` is requested.
+    """
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
+    from app.modules.quiz.service import tenant_authored_questions
     from app.modules.specials import (
         failed_question_ids,
         ghost_coach_gate,
@@ -1335,8 +1231,7 @@ async def quiz_form(
     token_s = _ensure_token(session)
     progress = _shell_progress(session, token_s).get("shell_progress")
     is_practice = practice == "1"
-    # personalized=1 is an alias for the same unified quiz.
-    _ = personalized
+    force_personal = personalized == "1"
     coach = ghost_coach_gate(
         progress,
         bypass=bool(
@@ -1358,10 +1253,14 @@ async def quiz_form(
     personal_err = ""
     questions: list[Any] = []
     retry_ids: list[str] = []
-    use_personal = True
+    use_personal = False
+    course_id = session.get("edvidura_course_id") or None
+    authored = tenant_authored_questions(
+        session.get("tenant_id"), course_id=course_id
+    )
 
     if retry:
-        # Remediation: prefer missed items from this student's last personalized bank.
+        # Remediation: prefer missed items from this student's last attempt bank.
         try:
             prev = db.get_quiz_attempt(session["tenant_id"], UUID(str(retry)))
         except Exception:  # noqa: BLE001
@@ -1397,39 +1296,99 @@ async def quiz_form(
                     **session,
                     "quiz_token": token_s,
                 }
-                use_personal = False
+                use_personal = True
 
-    if use_personal and not questions:
+    # Teacher bank wins (what they edited in Content). Serve ~5–6 items per
+    # student attempt (not the whole bank). AI personal only if bank is empty
+    # or personalized=1 was requested.
+    if not questions and authored and not force_personal:
+        from app.modules.quiz.service import sample_questions_for_student
+
+        questions = sample_questions_for_student(
+            authored,
+            subject=str(session.get("subject") or ""),
+            salt=str(course_id or ""),
+        )
+        personal_meta = {
+            "source": "teacher_bank",
+            "bank_total": len(authored),
+            "served_count": len(questions),
+        }
+        session["personal_quiz_bank"] = {
+            "subject": str(session.get("subject") or ""),
+            "questions": [
+                {
+                    "id": q.id,
+                    "prompt": q.prompt,
+                    "choices": list(q.choices),
+                    "correct_index": q.correct_index,
+                }
+                for q in questions
+            ],
+            "meta": personal_meta,
+        }
+        request.session[SESSION_KEY] = {
+            **session,
+            "quiz_token": token_s,
+        }
+        # Session bank required so grading uses this subset, not all 22.
+        use_personal = True
+
+    if not questions and (force_personal or not authored):
+        use_personal = True
         try:
             from app.modules import content
             from app.modules import quiz as quiz_mod
+            from app.modules.quiz.service import STUDENT_QUIZ_SIZE
 
             built = quiz_mod.generate_personalized_quiz(
                 tenant_id=session["tenant_id"],
                 subject=str(session.get("subject") or ""),
-                course_id=session.get("edvidura_course_id") or None,
+                course_id=course_id,
                 list_lessons_fn=content.list_lessons,
                 get_bound_course_fn=content.get_bound_course,
                 course_label=str(session.get("course") or ""),
                 learner_name=str(session.get("learner_name") or ""),
+                count=STUDENT_QUIZ_SIZE,
             )
             questions = list(built["questions"])
             from app.modules.ai_assessment import difficulty_label as _diff_label
 
             personal_meta = {
                 "difficulty": built.get("difficulty"),
-                "difficulty_label": _diff_label(built.get("difficulty")),
+                "difficulty_label": built.get("difficulty_label")
+                or _diff_label(built.get("difficulty")),
                 "difficulty_source": built.get("difficulty_source"),
+                "complexity": built.get("complexity"),
+                "complexity_label": built.get("complexity_label"),
+                "complexity_source": built.get("complexity_source"),
                 "topics": built.get("topics") or [],
                 "focus_topics": built.get("focus_topics") or [],
+                "coverage_units": built.get("coverage_units") or [],
+                "coverage_unit_count": built.get("coverage_unit_count") or 0,
+                "covered_unit_count": built.get("covered_unit_count") or 0,
+                "covers_all_pages": bool(built.get("covers_all_pages")),
+                "covers_all_topics": bool(built.get("covers_all_topics", True)),
                 "provider": built.get("provider"),
                 "model": built.get("model"),
                 "course_title": built.get("course_title"),
-                "covers_all_topics": True,
+                "source": "personalized_ai",
+                "served_count": len(questions),
+                "study_plan_valid": bool(built.get("study_plan_valid")),
+                "study_plan_validation": built.get("study_plan_validation") or {},
             }
             session["personal_quiz_bank"] = {
                 "subject": str(session.get("subject") or ""),
-                "questions": built.get("question_payload") or [],
+                "questions": built.get("question_payload") or [
+                    {
+                        "id": q.id,
+                        "prompt": q.prompt,
+                        "choices": list(q.choices),
+                        "correct_index": q.correct_index,
+                        "topic": getattr(q, "topic", "") or "",
+                    }
+                    for q in questions
+                ],
                 "meta": personal_meta,
             }
             request.session[SESSION_KEY] = {
@@ -1438,11 +1397,10 @@ async def quiz_form(
             }
         except ValueError as exc:
             personal_err = str(exc)
-            # Fallback to shared bank if no chapter lessons yet.
             questions = list(
                 questions_for_tenant(
                     session.get("tenant_id"),
-                    course_id=session.get("edvidura_course_id") or None,
+                    course_id=course_id,
                 )
             )
             use_personal = False
@@ -1451,33 +1409,49 @@ async def quiz_form(
             questions = list(
                 questions_for_tenant(
                     session.get("tenant_id"),
-                    course_id=session.get("edvidura_course_id") or None,
+                    course_id=course_id,
                 )
             )
             use_personal = False
 
+    if not questions:
+        questions = list(
+            questions_for_tenant(
+                session.get("tenant_id"),
+                course_id=course_id,
+            )
+        )
+        use_personal = False
+
     in_loop = loop == "1"
-    is_personalized = bool(
-        use_personal or (session.get("personal_quiz_bank") and questions)
-    )
+    is_personalized = bool(use_personal)
     if is_practice and in_loop:
         page_title = "Practice (remediation)"
         page_subtitle = "Sandbox — no Moodle grade sync · then graded retry"
     elif is_practice:
         page_title = "Practice quiz"
-        page_subtitle = "Same quiz engine · unique questions for you · no Moodle sync"
+        page_subtitle = f"{len(questions)} question(s) · no Moodle sync"
     elif retry_ids and in_loop:
         page_title = "Take the quiz"
         page_subtitle = f"Graded retry · {len(questions)} missed item(s)"
     elif retry_ids:
         page_title = "Take the quiz"
         page_subtitle = f"Retry {len(questions)} missed item(s)"
-    else:
+    elif is_personalized and personal_meta.get("source") == "teacher_bank":
         page_title = "Take the quiz"
         page_subtitle = (
-            f"{personal_meta.get('difficulty') or 'core'} · "
+            f"{len(questions)} of {personal_meta.get('bank_total') or len(questions)} "
+            "from your teacher"
+        )
+    elif is_personalized:
+        page_title = "Take the quiz"
+        page_subtitle = (
+            f"{personal_meta.get('difficulty_label') or personal_meta.get('difficulty') or 'core'} · "
             "unique for you · all class topics"
         )
+    else:
+        page_title = "Take the quiz"
+        page_subtitle = f"{len(questions)} question(s) from your teacher"
 
     return _shell(
         request,
@@ -1645,6 +1619,24 @@ async def quiz_result(request: Request, attempt_id: UUID, token: str | None = No
             gap_path=gap_path,
             is_practice=is_practice,
         )
+        if not is_practice:
+            try:
+                from app.modules import signals as signals_mod
+
+                fused = signals_mod.note_learner_activity(
+                    session["tenant_id"],
+                    subject=str(session.get("subject") or attempt.get("subject") or ""),
+                    channel="quiz",
+                    quiz_token=token_s,
+                    course_id=session.get("edvidura_course_id") or None,
+                    course_label=str(session.get("course") or ""),
+                    first_lesson_id=first_lesson_id,
+                )
+                if fused.get("plan") and fused["plan"].get("steps"):
+                    gap_path = fused["plan"]
+                    saved = fused["plan"]
+            except Exception:  # noqa: BLE001
+                pass
         if saved and saved.get("steps"):
             # Prefer persisted progress view (tokens re-applied)
             opened = adaptive_mod.get_open_plan(
@@ -1877,6 +1869,21 @@ async def teacher_attempts(
         avg_percent=summary.get("avg_percent"),
         course_title=(course_row or {}).get("title") or "",
     )
+    learner_gaps: list[Any] = []
+    try:
+        from app.modules import signals as signals_mod
+
+        learner_gaps = signals_mod.class_learner_gap_board(
+            session["tenant_id"],
+            learners=learners,
+            course_id=(course_row or {}).get("id")
+            or session.get("edvidura_course_id"),
+            course_label=(course or "").strip()
+            or str((course_row or {}).get("title") or ""),
+            limit=20,
+        )
+    except Exception:  # noqa: BLE001
+        learner_gaps = []
     return _shell(
         request,
         "instructor_overview.html",
@@ -1890,6 +1897,7 @@ async def teacher_attempts(
             "radar": radar,
             "competency_map": competency_map,
             "at_risk": at_risk,
+            "learner_gaps": learner_gaps,
             "ai_actions": ai_actions,
             "learner_count": summary["learner_count"],
             "avg_percent": summary["avg_percent"],
@@ -2284,18 +2292,12 @@ async def school_admin_home(request: Request, token: str | None = None):
 @router.get("/school-admin/analytics", response_class=HTMLResponse)
 async def school_admin_analytics(request: Request, token: str | None = None):
     from app.modules import analytics as analytics_mod
-    from app.settings import get_settings
 
     session = require_school_admin(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
     dash = analytics_mod.tenant_dashboard(session["tenant_id"])
     live = analytics_mod.live_school_users(session["tenant_id"])
-    settings = get_settings()
-    embed = analytics_mod.metabase_embed_url(
-        tenant_id=session["tenant_id"],
-        tenant_slug=str(session.get("tenant_slug") or ""),
-    )
     return _shell(
         request,
         "school_admin_analytics.html",
@@ -2306,8 +2308,6 @@ async def school_admin_analytics(request: Request, token: str | None = None):
         extra={
             "dash": dash,
             "live": live,
-            "metabase_url": settings.metabase_url,
-            "metabase_embed_url": embed,
         },
     )
 
@@ -2319,62 +2319,29 @@ async def school_admin_integrations(
     ok: str | None = None,
     probe: str | None = None,
 ):
-    from app.modules import analytics as analytics_mod
-
+    """Metabase/Yet moved to /ops — school admins use Activity."""
+    _ = ok
+    _ = probe
     session = require_school_admin(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
-    do_probe = str(probe or "1").strip().lower() not in {"0", "false", "no"}
-    status = analytics_mod.integration_status(probe=do_probe)
-    embed = analytics_mod.metabase_embed_url(
-        tenant_id=session["tenant_id"],
-        tenant_slug=str(session.get("tenant_slug") or ""),
-    )
-    lrs = status.get("yet_analytics_lrs") or {}
-    endpoint = str(lrs.get("endpoint") or "").rstrip("/")
-    yet_url = ""
-    if endpoint:
-        yet_url = (
-            endpoint[: -len("/xapi")]
-            if endpoint.lower().endswith("/xapi")
-            else endpoint
-        )
-    return _shell(
-        request,
-        "integrations.html",
-        session,
-        active_page="school_admin_analytics",
-        page_title="Charts & learning records",
-        page_subtitle="Metabase · Yet LRS · local activity",
-        extra={
-            "local": status.get("local_xapi_store") or {},
-            "lrs": lrs,
-            "metabase": status.get("metabase") or {},
-            "metabase_embed_url": embed,
-            "yet_url": yet_url,
-            "activity_href": "/school-admin/activity",
-            "can_retry": True,
-            "ok_message": ok,
-        },
+    tok = _ensure_token(session)
+    return RedirectResponse(
+        url=f"/school-admin/activity?token={tok}",
+        status_code=303,
     )
 
 
 @router.post("/school-admin/integrations/retry-lrs", response_class=HTMLResponse)
 async def school_admin_retry_lrs(request: Request, token: str | None = None):
-    from app.modules import xapi as xapi_mod
-
+    """LRS retry is owner-only at POST /ops/retry-lrs."""
     session = require_school_admin(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
     form = await request.form()
     tok = str(form.get("token") or token or _ensure_token(session))
-    try:
-        result = xapi_mod.retry_failed_lrs(session["tenant_id"])
-        msg = f"Retried+{result.get('retried',0)}+sent+{result.get('sent',0)}"
-    except Exception as exc:  # noqa: BLE001
-        msg = str(exc).replace(" ", "+")[:80]
     return RedirectResponse(
-        url=f"/school-admin/integrations?token={tok}&ok={msg}",
+        url=f"/school-admin/activity?token={tok}",
         status_code=303,
     )
 
@@ -2439,8 +2406,29 @@ async def learner_analytics(request: Request, token: str | None = None):
     session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
+    qtok = _ensure_token(session)
     dash = analytics_mod.learner_dashboard(
         session["tenant_id"], str(session.get("subject") or "")
+    )
+    first_lesson_id = None
+    try:
+        course = _bound_course(session)
+        if course:
+            for L in content.list_lessons(session["tenant_id"], course["id"]) or []:
+                if L.get("lesson_type") != "quiz":
+                    first_lesson_id = str(L["id"])
+                    break
+    except Exception:  # noqa: BLE001
+        first_lesson_id = None
+    dash = analytics_mod.attach_study_plan(
+        dash,
+        tenant_id=session["tenant_id"],
+        subject=str(session.get("subject") or ""),
+        quiz_token=qtok,
+        course_id=session.get("edvidura_course_id") or None,
+        course_label=str(session.get("course") or ""),
+        first_lesson_id=first_lesson_id,
+        role_code=str(session.get("target_role") or "") or None,
     )
     return _shell(
         request,
@@ -2448,7 +2436,7 @@ async def learner_analytics(request: Request, token: str | None = None):
         session,
         active_page="learner_analytics",
         page_title="My progress",
-        page_subtitle="Your attempts and learning evidence",
+        page_subtitle="Your attempts, plan, and learning evidence",
         extra={"dash": dash},
     )
 
@@ -2515,7 +2503,7 @@ async def learn_micro(request: Request, token: str | None = None):
         session,
         active_page="micro_learning",
         page_title="Micro-learning",
-        page_subtitle="Short skill lessons",
+        page_subtitle="Swipe short skill reels",
         extra={"catalog": catalog},
     )
 
@@ -3089,24 +3077,6 @@ async def teacher_analytics(request: Request, token: str | None = None):
         live = analytics_mod.live_school_users(session["tenant_id"])
         subtitle = "Live people + attempts for this school"
 
-    from app.settings import get_settings
-
-    settings = get_settings()
-    embed = analytics_mod.metabase_embed_url(
-        tenant_id=session["tenant_id"],
-        tenant_slug=str(session.get("tenant_slug") or ""),
-    )
-    integ = analytics_mod.integration_status(probe=False)
-    lrs = integ.get("yet_analytics_lrs") or {}
-    meta = integ.get("metabase") or {}
-    lrs_endpoint = str(lrs.get("endpoint") or "").rstrip("/")
-    yet_url = ""
-    if lrs_endpoint:
-        yet_url = (
-            lrs_endpoint[: -len("/xapi")]
-            if lrs_endpoint.lower().endswith("/xapi")
-            else lrs_endpoint
-        )
     return _shell(
         request,
         "teacher_analytics.html",
@@ -3118,11 +3088,6 @@ async def teacher_analytics(request: Request, token: str | None = None):
             "dash": dash,
             "live": live,
             "class_snap": class_snap,
-            "metabase_url": settings.metabase_url,
-            "metabase_embed_url": embed,
-            "metabase": meta,
-            "lrs": lrs,
-            "yet_url": yet_url,
         },
     )
 
@@ -3175,44 +3140,15 @@ async def teacher_integrations(
     token: str | None = None,
     probe: str | None = None,
 ):
-    from app.modules import analytics as analytics_mod
-
+    """Metabase/Yet moved to /ops — teachers use Activity."""
+    _ = probe
     session = require_instructor(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
-    # Default probe on so teachers see live Yet reachability without ?probe=1
-    do_probe = str(probe or "1").strip().lower() not in {"0", "false", "no"}
-    status = analytics_mod.integration_status(probe=do_probe)
-    embed = analytics_mod.metabase_embed_url(
-        tenant_id=session["tenant_id"],
-        tenant_slug=str(session.get("tenant_slug") or ""),
-    )
-    lrs = status.get("yet_analytics_lrs") or {}
-    endpoint = str(lrs.get("endpoint") or "").rstrip("/")
-    yet_url = ""
-    if endpoint:
-        yet_url = (
-            endpoint[: -len("/xapi")]
-            if endpoint.lower().endswith("/xapi")
-            else endpoint
-        )
-    return _shell(
-        request,
-        "integrations.html",
-        session,
-        active_page="teacher_analytics",
-        page_title="Charts & learning records",
-        page_subtitle="Metabase · Yet LRS · local activity",
-        extra={
-            "local": status.get("local_xapi_store") or {},
-            "lrs": lrs,
-            "metabase": status.get("metabase") or {},
-            "metabase_embed_url": embed,
-            "yet_url": yet_url,
-            "activity_href": "/teacher/activity",
-            "can_retry": False,
-            "ok_message": None,
-        },
+    tok = _ensure_token(session)
+    return RedirectResponse(
+        url=f"/teacher/activity?token={tok}",
+        status_code=303,
     )
 
 
@@ -3332,6 +3268,7 @@ async def teacher_ai_generate(request: Request, token: str | None = None):
     except ValueError:
         count = 3
     difficulty = str(form.get("difficulty") or "core").strip()
+    complexity = str(form.get("complexity") or "apply").strip()
     lesson = (
         content.get_lesson(
             session["tenant_id"], lesson_id, allow_unpublished=True
@@ -3351,6 +3288,7 @@ async def teacher_ai_generate(request: Request, token: str | None = None):
             count=count,
             title=str(lesson.get("title") or ""),
             difficulty=difficulty,
+            complexity=complexity,
         )
     except ValueError as exc:
         msg = str(exc).replace(" ", "+")
@@ -3406,6 +3344,7 @@ async def teacher_ai_generate_from_pdf(
         count = 3
     title = str(form.get("title") or "").strip()
     difficulty = str(form.get("difficulty") or "core").strip()
+    complexity = str(form.get("complexity") or "apply").strip()
     upload = form.get("document")
     if upload is None or not getattr(upload, "filename", None):
         return RedirectResponse(
@@ -3421,6 +3360,7 @@ async def teacher_ai_generate_from_pdf(
             count=count,
             title=title,
             difficulty=difficulty,
+            complexity=complexity,
         )
     except ValueError as exc:
         return RedirectResponse(
@@ -3527,8 +3467,9 @@ async def teacher_ai_hub(
         skill_rows = skills_mod.ensure_default_skills(session["tenant_id"])
     except Exception:  # noqa: BLE001
         skill_rows = []
-    teacher_diff = quiz_mod.get_tenant_quiz_difficulty(session["tenant_id"])
-    quiz_difficulty = teacher_diff or "auto"
+    teacher_settings = quiz_mod.get_tenant_quiz_settings(session["tenant_id"])
+    quiz_difficulty = teacher_settings.get("difficulty") or "auto"
+    quiz_complexity = teacher_settings.get("complexity") or "auto"
     return _shell(
         request,
         "teacher_ai_hub.html",
@@ -3543,7 +3484,9 @@ async def teacher_ai_hub(
             "course_row": course,
             "ok_message": ok or "",
             "quiz_difficulty": quiz_difficulty,
+            "quiz_complexity": quiz_complexity,
             "difficulty_levels": ("auto", "foundational", "core", "challenge"),
+            "complexity_levels": ("auto", "recall", "apply", "analyze"),
         },
     )
 
@@ -3552,23 +3495,29 @@ async def teacher_ai_hub(
 async def teacher_ai_quiz_settings(
     request: Request, token: str | None = None
 ):
-    """Teacher chooses student quiz difficulty (or auto from performance)."""
+    """Teacher chooses student quiz difficulty + complexity (or auto)."""
     from app.modules import quiz as quiz_mod
+    from app.modules.ai_assessment import difficulty_label
+    from app.modules.quiz import complexity_label
 
     session = require_instructor(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
     form = await request.form()
     tok = str(form.get("quiz_token") or token or _ensure_token(session))
-    chosen = str(form.get("quiz_difficulty") or "auto").strip()
-    saved = quiz_mod.set_tenant_quiz_difficulty(
-        session["tenant_id"], chosen
+    saved = quiz_mod.set_tenant_quiz_settings(
+        session["tenant_id"],
+        difficulty=str(form.get("quiz_difficulty") or "auto").strip(),
+        complexity=str(form.get("quiz_complexity") or "auto").strip(),
     )
-    from app.modules.ai_assessment import difficulty_label
-
-    nice = difficulty_label(saved).replace(" ", "+")
+    d_nice = difficulty_label(saved["difficulty"]).replace(" ", "+")
+    c_nice = complexity_label(saved["complexity"]).replace(" ", "+")
     return RedirectResponse(
-        url=f"/teacher/ai?token={tok}&ok=Quiz+level+saved+as+{nice}",
+        url=(
+            f"/teacher/ai?token={tok}"
+            f"&ok=Student+quizzes:+level+{d_nice},+complexity+{c_nice}"
+            f"+·+full+book+coverage+on"
+        ),
         status_code=303,
     )
 
@@ -4045,53 +3994,52 @@ async def learner_gap_path(
     elif "target_role" not in session:
         session["target_role"] = ""
 
-    # Rebuild shell progress after possible role change
+    # Always re-resolve + persist so My plan is never stuck empty when
+    # quiz/coach/VR evidence exists (shell home uses persist_if_missing=False).
     shell_bits = _shell_progress(session, token_s)
     gap_path = shell_bits.get("gap_path") or {
         "active": False,
         "steps": [],
         "skills": [],
     }
-    # If role selected but open plan is stale / inactive, derive + persist
     wanted = str(session.get("target_role") or "").strip().lower()
-    if wanted and (
-        not gap_path.get("active")
-        or str(gap_path.get("role_code") or "").lower() != wanted
-    ):
+    try:
+        progress = shell_bits.get("shell_progress") or {}
+        first_lesson_id = None
+        first_manual_id = None
+        manual_version = None
+        for L in progress.get("lessons") or []:
+            if L.get("lesson_type") != "quiz":
+                first_lesson_id = str(L["id"])
+                break
         try:
-            progress = shell_bits.get("shell_progress") or {}
-            first_lesson_id = None
-            first_manual_id = None
-            manual_version = None
-            for L in progress.get("lessons") or []:
-                if L.get("lesson_type") != "quiz":
-                    first_lesson_id = str(L["id"])
-                    break
-            try:
-                from app.modules import manuals as manuals_mod
+            from app.modules import manuals as manuals_mod
 
-                mans = manuals_mod.list_manuals(session["tenant_id"])
-                if mans:
-                    first_manual_id = str(mans[0]["id"])
-                    pub = manuals_mod.latest_published_version(
-                        session["tenant_id"], mans[0]["id"]
-                    )
-                    if pub:
-                        manual_version = int(pub["version"])
-            except Exception:  # noqa: BLE001
-                pass
-            gap_path = adaptive_mod.resolve_learner_plan(
-                session["tenant_id"],
-                subject=str(session.get("subject") or ""),
-                quiz_token=token_s,
-                first_lesson_id=first_lesson_id,
-                first_manual_id=first_manual_id,
-                manual_version=manual_version,
-                persist_if_missing=True,
-                role_code=wanted,
-            )
+            mans = manuals_mod.list_manuals(session["tenant_id"])
+            if mans:
+                first_manual_id = str(mans[0]["id"])
+                pub = manuals_mod.latest_published_version(
+                    session["tenant_id"], mans[0]["id"]
+                )
+                if pub:
+                    manual_version = int(pub["version"])
         except Exception:  # noqa: BLE001
             pass
+        gap_path = adaptive_mod.resolve_learner_plan(
+            session["tenant_id"],
+            subject=str(session.get("subject") or ""),
+            quiz_token=token_s,
+            first_lesson_id=first_lesson_id,
+            first_manual_id=first_manual_id,
+            manual_version=manual_version,
+            persist_if_missing=True,
+            role_code=wanted or None,
+            course_id=session.get("edvidura_course_id") or None,
+            course_label=str(session.get("course") or ""),
+            adapt_from_signals=True,
+        )
+    except Exception:  # noqa: BLE001
+        pass
     roles = []
     try:
         roles = skills_mod.ensure_default_roles(session["tenant_id"])
@@ -4161,6 +4109,16 @@ async def learner_gap_step_done(request: Request, token: str | None = None):
     )
 
 
+def _persist_coach_session(
+    request: Request, session: dict[str, Any]
+) -> dict[str, Any]:
+    """HTTP-only: write coach session_patch back to Starlette session."""
+    qtok = _ensure_token(session)
+    session["quiz_token"] = qtok
+    request.session[SESSION_KEY] = {**session, "quiz_token": qtok}
+    return session
+
+
 @router.get("/learn/coach", response_class=HTMLResponse)
 async def learner_coach_get(request: Request, token: str | None = None):
     from app.modules import ai_tutor
@@ -4195,12 +4153,13 @@ async def learner_coach_get(request: Request, token: str | None = None):
         )
     except Exception:  # noqa: BLE001
         coach_activity = []
+    shortcuts = ai_tutor.shortcuts_view(session=session)
     return _shell(
         request,
         "study_coach.html",
         session,
         active_page="study_coach",
-        page_title="Study coach",
+        page_title="Ask Vidura",
         page_subtitle=str(
             class_name or course_title or session.get("course") or ""
         ),
@@ -4215,6 +4174,9 @@ async def learner_coach_get(request: Request, token: str | None = None):
             "voice_languages": list_voice_languages(),
             "reply_language": reply_language,
             "coach_activity": coach_activity,
+            "coach_shortcuts": shortcuts,
+            "flashcards_enabled": ai_tutor.flashcards_enabled(),
+            "feedback_enabled": True,
         },
     )
 
@@ -4234,65 +4196,21 @@ async def learner_coach_post(request: Request, token: str | None = None):
     reply_language = normalize_voice_lang(
         str(form.get("reply_language") or session.get("coach_voice_lang") or "")
     )
-    if reply_language != session.get("coach_voice_lang"):
-        session["coach_voice_lang"] = reply_language
-        request.session[SESSION_KEY] = {
-            **session,
-            "quiz_token": _ensure_token(session),
-        }
-    class_name = str(session.get("class_name") or "")
-    course_title, chunks = ai_tutor.curriculum_chunks_for_session(
-        session["tenant_id"],
-        session.get("edvidura_course_id") or None,
+    session["quiz_token"] = _ensure_token(session)
+    turn = ai_tutor.run_coach_turn(
+        session=session,
+        question=question,
+        reply_language=reply_language,
         list_lessons_fn=content.list_lessons,
         get_bound_course_fn=content.get_bound_course,
-        class_name=class_name,
     )
-    answer = None
-    err = ""
-    try:
-        answer = ai_tutor.study_coach_answer(
-            question=question,
-            curriculum_chunks=chunks,
-            course_title=course_title,
-            class_name=class_name,
-            reply_language=reply_language,
-        )
-    except ValueError as exc:
-        err = str(exc)
-    if answer is not None and question:
-        try:
-            from uuid import uuid4
-
-            from app.modules import xapi as xapi_mod
-
-            cites = answer.get("citations") or answer.get("citation_links") or []
-            thread_id = str(session.get("coach_thread_id") or "").strip()
-            if not thread_id:
-                thread_id = f"coach-{session.get('subject') or 'anon'}-{uuid4().hex[:10]}"
-                session["coach_thread_id"] = thread_id
-                request.session[SESSION_KEY] = {
-                    **session,
-                    "quiz_token": _ensure_token(session),
-                }
-            ans_body = str(answer.get("answer") or "")
-            xapi_mod.record_coach_interaction(
-                tenant_id=session["tenant_id"],
-                subject=str(session.get("subject") or ""),
-                learner_name=str(session.get("learner_name") or ""),
-                question=question,
-                grounded=bool(answer.get("grounded")),
-                refusal_reason=(
-                    str(answer.get("refusal_reason") or "") or None
-                ),
-                citation_count=len(cites) if isinstance(cites, list) else 0,
-                course_title=course_title or str(session.get("course") or ""),
-                course_id=session.get("edvidura_course_id") or None,
-                thread_id=thread_id,
-                answer_text=ans_body or None,
-            )
-        except Exception as xapi_exc:  # noqa: BLE001
-            print(f"xAPI coach record failed: {xapi_exc}", flush=True)
+    session = _persist_coach_session(request, turn["session_patch"])
+    answer = turn.get("answer")
+    err = str(turn.get("error") or "")
+    course_title = str(turn.get("course_title") or "")
+    class_name = str(turn.get("class_name") or "")
+    chunks_n = int(turn.get("chunks_count") or 0)
+    reply_language = str(turn.get("reply_language") or reply_language)
     coach_activity: list[Any] = []
     try:
         from app.modules import xapi as xapi_mod
@@ -4305,12 +4223,19 @@ async def learner_coach_post(request: Request, token: str | None = None):
         )
     except Exception:  # noqa: BLE001
         coach_activity = []
+    _, chunks = ai_tutor.curriculum_chunks_for_session(
+        session["tenant_id"],
+        session.get("edvidura_course_id") or None,
+        list_lessons_fn=content.list_lessons,
+        get_bound_course_fn=content.get_bound_course,
+        class_name=class_name,
+    )
     return _shell(
         request,
         "study_coach.html",
         session,
         active_page="study_coach",
-        page_title="Study coach",
+        page_title="Ask Vidura",
         page_subtitle=str(
             class_name or course_title or session.get("course") or ""
         ),
@@ -4319,14 +4244,280 @@ async def learner_coach_post(request: Request, token: str | None = None):
             "answer": answer,
             "question": question,
             "error": err,
-            "source_count": len(chunks),
+            "source_count": chunks_n or len(chunks),
             "class_lesson_titles": [c.get("title") for c in chunks[:12]],
             "course_title": course_title,
             "class_name": class_name,
             "voice_languages": list_voice_languages(),
             "reply_language": reply_language,
             "coach_activity": coach_activity,
+            "coach_shortcuts": ai_tutor.shortcuts_view(session=session),
+            "flashcards_enabled": ai_tutor.flashcards_enabled(),
+            "feedback_enabled": True,
         },
+    )
+
+
+@router.post("/learn/coach/ask")
+async def learner_coach_ask_json(request: Request, token: str | None = None):
+    """JSON Ask Vidura for the right-side drawer (AJAX) — thin HTTP over portable turn."""
+    from app.modules import ai_tutor
+    from app.modules.ai_tutor.voice import normalize_voice_lang
+
+    ctype = (request.headers.get("content-type") or "").lower()
+    if "application/json" in ctype:
+        try:
+            body = await request.json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        tok = str(body.get("token") or body.get("quiz_token") or token or "")
+        question = str(body.get("question") or "").strip()
+        reply_language = normalize_voice_lang(str(body.get("reply_language") or ""))
+    else:
+        form = await request.form()
+        tok = str(form.get("token") or form.get("quiz_token") or token or "")
+        question = str(form.get("question") or "").strip()
+        reply_language = normalize_voice_lang(str(form.get("reply_language") or ""))
+
+    session = require_session(request, token=tok or None)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"ok": False, "error": "auth"}, status_code=401)
+    if not question:
+        return JSONResponse(
+            {"ok": False, "error": "Type a question first."}, status_code=400
+        )
+
+    session["quiz_token"] = _ensure_token(session)
+    try:
+        turn = ai_tutor.run_coach_turn(
+            session=session,
+            question=question,
+            reply_language=reply_language
+            or str(session.get("coach_voice_lang") or "en-IN"),
+            list_lessons_fn=content.list_lessons,
+            get_bound_course_fn=content.get_bound_course,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return JSONResponse(
+            {"ok": False, "error": f"Ask Vidura could not answer: {exc}"},
+            status_code=500,
+        )
+    if turn.get("error"):
+        return JSONResponse({"ok": False, "error": turn["error"]}, status_code=400)
+    _persist_coach_session(request, turn["session_patch"])
+    return JSONResponse(ai_tutor.coach_json_payload(question=question, turn=turn))
+
+
+@router.get("/learn/coach/shortcuts")
+async def learner_coach_shortcuts_json(
+    request: Request, token: str | None = None
+):
+    from app.modules import ai_tutor
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"ok": False, "error": "auth"}, status_code=401)
+    return JSONResponse(
+        {"ok": True, "shortcuts": ai_tutor.shortcuts_view(session=session)}
+    )
+
+
+@router.post("/learn/coach/feedback")
+async def learner_coach_feedback(request: Request, token: str | None = None):
+    """Thumbs up/down — thin HTTP over portable ai_tutor.submit_coach_feedback."""
+    from app.modules import ai_tutor
+
+    ctype = (request.headers.get("content-type") or "").lower()
+    if "application/json" in ctype:
+        try:
+            body = await request.json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        tok = str(body.get("token") or body.get("quiz_token") or token or "")
+        rating = str(body.get("rating") or "").strip().lower()
+        question_preview = str(body.get("question") or "")[:120]
+        answer_preview = str(body.get("answer") or "")[:120]
+    else:
+        form = await request.form()
+        tok = str(form.get("token") or form.get("quiz_token") or token or "")
+        rating = str(form.get("rating") or "").strip().lower()
+        question_preview = str(form.get("question") or "")[:120]
+        answer_preview = str(form.get("answer") or "")[:120]
+
+    session = require_session(request, token=tok or None)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"ok": False, "error": "auth"}, status_code=401)
+    result = ai_tutor.submit_coach_feedback(
+        session=session,
+        rating=rating,
+        question_preview=question_preview,
+        answer_preview=answer_preview,
+    )
+    if not result.get("ok"):
+        code = 403 if result.get("error") == "feedback_disabled" else 400
+        return JSONResponse(result, status_code=code)
+    return JSONResponse(result)
+
+
+@router.get("/learn/flashcards", response_class=HTMLResponse)
+async def learner_flashcards_get(request: Request, token: str | None = None):
+    from app.modules import ai_tutor
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    if not ai_tutor.flashcards_enabled():
+        return _shell(
+            request,
+            "access.html",
+            session,
+            active_page="flashcards",
+            page_title="Flashcards",
+            extra={
+                "heading": "Flashcards off",
+                "message": "Ask your teacher — flashcards are disabled for this school.",
+            },
+        )
+    pack = ai_tutor.flashcards_for_session(
+        session=session,
+        list_lessons_fn=content.list_lessons,
+        get_bound_course_fn=content.get_bound_course,
+    )
+    return _shell(
+        request,
+        "coach_flashcards.html",
+        session,
+        active_page="flashcards",
+        page_title="Flashcards",
+        page_subtitle=str(
+            pack.get("class_name") or pack.get("course_title") or ""
+        ),
+        extra={
+            "cards": pack.get("cards") or [],
+            "card_count": pack.get("count") or 0,
+            "course_title": pack.get("course_title"),
+            "class_name": pack.get("class_name"),
+            "provider": pack.get("provider"),
+            "note": pack.get("note"),
+        },
+    )
+
+
+@router.get("/teacher/coach/insights", response_class=HTMLResponse)
+async def teacher_coach_insights_get(
+    request: Request, token: str | None = None
+):
+    """Phase B2: Ask Vidura class rollups — thin over analytics.class_coach_insights."""
+    from app.modules import analytics as analytics_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    subjects: list[str] = []
+    try:
+        summary = db.quiz_attempt_class_summary(
+            session["tenant_id"],
+            course_labels=None,
+            limit=200,
+        )
+        for row in summary.get("learners") or []:
+            sub = str(row.get("subject") or "").strip()
+            if sub:
+                subjects.append(sub)
+    except Exception:  # noqa: BLE001
+        subjects = []
+    insights = analytics_mod.class_coach_insights(
+        session["tenant_id"],
+        subjects=subjects or None,
+        limit=400,
+    )
+    return _shell(
+        request,
+        "teacher_coach_insights.html",
+        session,
+        active_page="teacher_coach_insights",
+        page_title="Ask Vidura insights",
+        page_subtitle="What students ask, refuse, and rate",
+        extra={"insights": insights},
+    )
+
+
+@router.get("/teacher/coach/shortcuts", response_class=HTMLResponse)
+async def teacher_coach_shortcuts_get(
+    request: Request, token: str | None = None
+):
+    from app.modules import ai_tutor
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    course_id = session.get("edvidura_course_id") or None
+    rows = []
+    try:
+        rows = ai_tutor.list_shortcuts(
+            session["tenant_id"], course_id=course_id
+        )
+    except Exception:  # noqa: BLE001
+        rows = []
+    if not rows:
+        rows = [
+            {"label": s["label"], "prompt": s["prompt"]}
+            for s in ai_tutor.DEFAULT_SHORTCUTS
+        ]
+    return _shell(
+        request,
+        "teacher_coach_shortcuts.html",
+        session,
+        active_page="teacher_coach_shortcuts",
+        page_title="Ask Vidura shortcuts",
+        page_subtitle="Welcome chips for students",
+        extra={"shortcut_rows": rows, "ok_message": request.query_params.get("ok")},
+    )
+
+
+@router.post("/teacher/coach/shortcuts", response_class=HTMLResponse)
+async def teacher_coach_shortcuts_post(
+    request: Request, token: str | None = None
+):
+    from app.modules import ai_tutor
+
+    form = await request.form()
+    tok = str(form.get("token") or form.get("quiz_token") or token or "")
+    session = require_instructor(request, token=tok or None)
+    if isinstance(session, HTMLResponse):
+        return session
+    labels = form.getlist("label") if hasattr(form, "getlist") else []
+    prompts = form.getlist("prompt") if hasattr(form, "getlist") else []
+    items: list[dict[str, str]] = []
+    for i, label in enumerate(labels):
+        prompt = prompts[i] if i < len(prompts) else ""
+        items.append({"label": str(label), "prompt": str(prompt)})
+    try:
+        ai_tutor.replace_shortcuts(
+            session["tenant_id"],
+            course_id=session.get("edvidura_course_id") or None,
+            items=items,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _shell(
+            request,
+            "teacher_coach_shortcuts.html",
+            session,
+            active_page="teacher_coach_shortcuts",
+            page_title="Ask Vidura shortcuts",
+            extra={
+                "shortcut_rows": items or ai_tutor.DEFAULT_SHORTCUTS,
+                "error": str(exc),
+            },
+        )
+    qtok = _ensure_token(session)
+    return RedirectResponse(
+        url=f"/teacher/coach/shortcuts?token={qtok}&ok=saved",
+        status_code=303,
     )
 
 
@@ -4555,7 +4746,7 @@ async def teacher_sme_sources(
         session,
         active_page="teacher_sme",
         page_title="SME sources",
-        page_subtitle="Approved manuals & lessons for the study coach",
+        page_subtitle="Approved manuals & lessons for Ask Vidura",
         extra={
             "sources": sources,
             "lessons": lessons,
@@ -5021,14 +5212,88 @@ async def teacher_dct_planner(
         session,
         active_page="teacher_dct",
         page_title="Micro-learning planner",
-        page_subtitle="Skills missing micro-lessons → generate & link",
+        page_subtitle="Upload skill reels · students swipe them in Micro-learning",
         extra={
             "missing": pack.get("missing") or [],
             "covered": pack.get("covered") or [],
             "missing_count": pack.get("missing_count") or 0,
             "covered_count": pack.get("covered_count") or 0,
             "ok_message": ok or "",
+            "all_skills": (pack.get("missing") or []) + (pack.get("covered") or []),
         },
+    )
+
+
+@router.post("/teacher/dct/reel", response_class=HTMLResponse)
+async def teacher_dct_reel_upload(request: Request, token: str | None = None):
+    """Upload or link a short reel video for a skill → student Micro Reels."""
+    from app.modules import adaptive as adaptive_mod
+    from uuid import uuid4
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    skill_id = str(form.get("skill_id") or "").strip()
+    caption = str(form.get("caption") or "").strip()
+    video_url = str(form.get("video_url") or "").strip()
+    tid = str(session["tenant_id"])
+
+    upload = form.get("video_file") or form.get("reel_file")
+    if upload is not None and getattr(upload, "filename", None):
+        fname = _safe_upload_name(str(upload.filename))
+        lower = fname.lower()
+        if not any(lower.endswith(ext) for ext in (".mp4", ".webm", ".mov", ".m4v")):
+            return RedirectResponse(
+                url=f"/teacher/dct?token={tok}&ok=Use+mp4+webm+or+mov",
+                status_code=303,
+            )
+        raw = await upload.read()
+        max_bytes = 40 * 1024 * 1024
+        if len(raw) > max_bytes:
+            return RedirectResponse(
+                url=f"/teacher/dct?token={tok}&ok=Video+too+large+(max+40MB)",
+                status_code=303,
+            )
+        if len(raw) < 64:
+            return RedirectResponse(
+                url=f"/teacher/dct?token={tok}&ok=Empty+video+file",
+                status_code=303,
+            )
+        dest_dir = (
+            Path(__file__).resolve().parents[1] / "static" / "uploads" / tid / "reels"
+        )
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        stored = f"{uuid4().hex[:12]}-{fname}"
+        (dest_dir / stored).write_bytes(raw)
+        video_url = f"/static/uploads/{tid}/reels/{stored}"
+
+    if not skill_id or not video_url:
+        return RedirectResponse(
+            url=f"/teacher/dct?token={tok}&ok=Pick+a+skill+and+upload+or+paste+a+video",
+            status_code=303,
+        )
+
+    course = _bound_course(session) or content.ensure_primary_course(
+        session["tenant_id"]
+    )
+    try:
+        adaptive_mod.publish_skill_reel(
+            session["tenant_id"],
+            skill_id,
+            video_url=video_url,
+            caption=caption,
+            course_id=(course or {}).get("id"),
+        )
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/teacher/dct?token={tok}&ok={str(exc).replace(' ', '+')[:80]}",
+            status_code=303,
+        )
+    return RedirectResponse(
+        url=f"/teacher/dct?token={tok}&ok=Reel+saved+—+students+see+it+in+Micro-learning",
+        status_code=303,
     )
 
 

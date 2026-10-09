@@ -56,7 +56,7 @@ METABASE_SECRET_KEY=...          # from Metabase Admin → Embedding
 METABASE_EMBED_DASHBOARD_ID=1    # published dashboard id
 ```
 
-When set, teacher + school-admin Analytics show a static embed iframe (`metabase_embed_url`) with optional `tenant_id` / `tenant_slug` locked params. Otherwise the pages link out to Metabase.
+When set, EdVidura **owners** see a static embed at `/ops/dashboard` (`metabase_embed_url`). The bootstrap dashboard **EdVidura owner overview** includes: headline KPIs (including 7-day pulse and Moodle sync pending), per-school comparison table, daily quiz vs activity trends, score bands, readable activity-type bars, quiet-school list, and recent attempts. Rebuild with `python scripts/bootstrap_metabase_railway.py`. Schools use in-app Analytics / Activity only.
 
 ## Yet Analytics SQL LRS
 
