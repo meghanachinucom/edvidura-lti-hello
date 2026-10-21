@@ -18,7 +18,12 @@ _VERB_LABELS = {
     verbs.VERB_EXPERIENCED: "Opened",
     verbs.VERB_MASTERED: "Mastered",
     verbs.VERB_INTERACTED: "Coach chat",
+    verbs.VERB_INITIALIZED: "Reader initialized",
+    verbs.VERB_PROGRESSED: "Reading progressed",
+    verbs.VERB_BOOKMARKED: "Bookmarked",
+    verbs.VERB_ANNOTATED: "Annotated",
 }
+
 
 
 def _as_dict(value: Any) -> dict[str, Any]:

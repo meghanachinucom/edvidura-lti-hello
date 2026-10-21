@@ -1,39 +1,225 @@
 {% extends "base_shell.html" %}
 {% block content %}
 <div class="page-wrap">
-  <section class="hero-band">
-    <div style="position:relative;z-index:1">
-      <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
-        <span class="material-symbols-outlined" style="font-size:13px">menu_book</span>
-        Manual · this school only
+
+  {# ── Page Header (aligned with lessons.html & launch_hub.html) ── #}
+  <section class="frosted" style="padding:var(--sp-xl);position:relative;overflow:hidden">
+    <div style="position:absolute;top:-40px;right:-20px;width:280px;height:280px;background:rgba(52,211,153,.12);border-radius:50%;filter:blur(50px);pointer-events:none"></div>
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div style="display:flex;align-items:center;gap:var(--sp-xs);margin-bottom:var(--sp-xs);flex-wrap:wrap">
+          <span class="label-caps text-muted">Manuals</span>
+          {% if context_heading %}
+          <span class="chip chip-primary" style="font-size:10px">{{ context_heading }}</span>
+          {% endif %}
+          <span class="chip chip-mint" style="font-size:10px">4 Curated eBooks</span>
+          <span class="chip chip-sky" style="font-size:10px">xAPI Telemetry</span>
+        </div>
+        <h1 class="headline-xl">Technical Manuals &amp; eBooks</h1>
+        <p class="path-blurb card-variant" style="max-width:600px;margin-top:var(--sp-sm)">
+          Published interactive curriculum manuals and EPUB3 eBook chapters featuring embedded diagrams, speech narration, and progress tracking.
+        </p>
       </div>
-      <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">Technical manuals</h1>
-      <p class="body-md" style="color:var(--outline-variant);max-width:520px;margin-top:4px">
-        Published versions of school manuals and eBook chapters.
-      </p>
+      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+        {% if is_instructor %}
+        <a href="/teacher/manuals?token={{ quiz_token }}" class="btn btn-primary">
+          <span class="material-symbols-outlined" style="font-size:16px">tune</span>
+          Manage eBooks
+        </a>
+        <a href="/teacher/content?token={{ quiz_token }}" class="btn btn-surface">
+          <span class="material-symbols-outlined" style="font-size:16px">edit_note</span>
+          Content Studio
+        </a>
+        {% elif not is_school_admin %}
+        <a href="/lessons?token={{ quiz_token }}" class="btn btn-surface">
+          <span class="material-symbols-outlined" style="font-size:16px">menu_book</span>
+          Lessons
+        </a>
+        <a href="/quiz?token={{ quiz_token }}" class="btn btn-primary">
+          <span class="material-symbols-outlined" style="font-size:16px">quiz</span>
+          Go to quiz
+        </a>
+        {% endif %}
+        <a href="/launch-hub?token={{ quiz_token }}" class="btn btn-glass">
+          <span class="material-symbols-outlined" style="font-size:16px">home</span>
+          Dashboard
+        </a>
+      </div>
     </div>
   </section>
 
   {% if manuals %}
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-md)">
+  {# ── Progress summary strip (matching lessons.html) ── #}
+  {% set total_manuals = manuals | length %}
+  {% set done_manuals = manuals | selectattr('progress_percent', 'equalto', 100) | list | length %}
+  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-md)">
+    <div class="progress-track" style="flex:1;min-width:200px;height:10px">
+      {% if total_manuals > 0 %}
+      <div class="progress-fill" data-pct="{{ ((done_manuals / total_manuals) * 100) | int }}" style="width:{{ ((done_manuals / total_manuals) * 100) | int }}%"></div>
+      {% endif %}
+    </div>
+    <span class="label-caps text-muted">{{ done_manuals }} / {{ total_manuals }} completed</span>
+  </div>
+
+  {# ── Topic filter chips & search (matching lessons.html filter chips) ── #}
+  <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-md)">
+    <div style="display:flex;gap:var(--sp-xs);overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+      <button type="button" class="chip chip-dark filter-chip active" data-filter="all">All ({{ total_manuals }})</button>
+      <button type="button" class="chip chip-sky filter-chip" data-filter="welding">Vocational &amp; Welding</button>
+      <button type="button" class="chip chip-mint filter-chip" data-filter="science">Physical Sciences</button>
+      <button type="button" class="chip chip-sky filter-chip" data-filter="algebra">Mathematics</button>
+      <button type="button" class="chip chip-mint filter-chip" data-filter="biology">Life Sciences</button>
+    </div>
+
+    <div style="position:relative;min-width:200px;max-width:300px;flex:1">
+      <span class="material-symbols-outlined" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--outline);pointer-events:none">search</span>
+      <input type="text" id="ebook-search-input" placeholder="Search manuals…"
+             style="width:100%;padding:6px 12px 6px 32px;border-radius:var(--r-full);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);font-size:12px;font-family:inherit;color:var(--on-surface);outline:none"/>
+    </div>
+  </div>
+
+  {# ── Manual cards grid (using standard .lesson-card) ── #}
+  <div id="manuals-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-md)">
     {% for m in manuals %}
-    <a href="/manuals/{{ m.id }}?token={{ quiz_token }}" class="lesson-card" style="text-decoration:none;color:inherit">
-      <div class="lesson-img" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(52,211,153,.18),rgba(64,194,253,.1))">
-        <span class="material-symbols-outlined" style="font-size:36px;color:var(--primary)">menu_book</span>
+    <div class="lesson-card" data-topic="{{ m.subject_tag | default('general') }}" data-title="{{ m.title | lower }}" data-desc="{{ m.description | lower }}">
+
+      {# Header emoji icon with tailored subject gradient #}
+      <div class="lesson-img" style="background: {{ m.gradient or 'var(--surface-container)' }}; position: relative; overflow: hidden">
+        <div style="position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25) 0%, transparent 70%); pointer-events: none"></div>
+        <span style="font-size: 42px; position: relative; z-index: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.22))">
+          {% if m.subject_tag == 'welding' %}⚙️
+          {% elif m.subject_tag == 'science' %}🔬
+          {% elif m.subject_tag == 'algebra' %}📐
+          {% elif m.subject_tag == 'biology' %}🧬
+          {% else %}📖{% endif %}
+        </span>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-        <span class="chip chip-mint" style="font-size:10px">Manual</span>
+
+      {# Badges row #}
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-xs);margin-bottom:var(--sp-xs)">
+        <span class="chip chip-sky" style="font-size:10px">
+          {{ m.category | default('Manual') }} · {{ m.chapters_count | default(4) }} chaps
+        </span>
+        {% if m.progress_percent and m.progress_percent >= 100 %}
+        <span class="chip chip-mint" style="font-size:10px">
+          <span class="material-symbols-outlined" style="font-size:11px">check</span> Done
+        </span>
+        {% elif m.progress_percent and m.progress_percent > 0 %}
+        <span class="chip chip-dark" style="font-size:10px">In progress</span>
+        {% else %}
+        <span class="chip chip-mint" style="font-size:10px">
+          <span class="material-symbols-outlined" style="font-size:11px">auto_stories</span> Ready
+        </span>
+        {% endif %}
       </div>
-      <h3 class="headline-sm">{{ m.title }}</h3>
-      <p class="body-sm text-muted" style="margin-top:4px">{{ m.description or m.slug }}</p>
-    </a>
+
+      {# Title & summary #}
+      <h3 class="headline-md" style="margin-bottom:var(--sp-xs)">{{ m.title }}</h3>
+      <p class="body-sm text-muted" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:var(--sp-md)">
+        {{ m.description or 'Curriculum manual with interactive diagrams, audio narration, and progress tracking.' }}
+      </p>
+
+      {% if m.course_align %}
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:var(--sp-xs)">
+        <span class="material-symbols-outlined" style="font-size:13px;color:var(--primary)">school</span>
+        <span class="label-caps text-muted" style="font-size:10px">{{ m.course_align }}</span>
+      </div>
+      {% endif %}
+
+      {# Progress bar #}
+      <div style="margin-bottom:var(--sp-sm)">
+        <div style="display:flex;justify-content:space-between" class="label-caps text-muted">
+          <span>Reading Progress</span>
+          <span style="color:var(--primary);font-weight:700">{{ m.progress_percent | default(0) }}%</span>
+        </div>
+        <div class="progress-track" style="margin-top:4px">
+          <div class="progress-fill" data-pct="{{ m.progress_percent | default(0) }}" style="width:{{ m.progress_percent | default(0) }}%"></div>
+        </div>
+      </div>
+
+      {# CTAs #}
+      <div style="display:flex;gap:var(--sp-xs);margin-top:auto">
+        <a href="/manuals/{{ m.id }}?token={{ quiz_token }}" class="btn btn-primary" style="flex:1;justify-content:center;font-size:13px">
+          <span class="material-symbols-outlined" style="font-size:14px">menu_book</span>
+          Read Chapter
+        </a>
+        <a href="/manuals/{{ m.id }}?token={{ quiz_token }}&autoplay=1" class="btn btn-surface" title="Listen with audio narration" style="justify-content:center;font-size:13px">
+          <span class="material-symbols-outlined" style="font-size:15px">headphones</span>
+        </a>
+      </div>
+    </div>
     {% endfor %}
   </div>
+
+  {# Empty search results #}
+  <div id="no-manuals-msg" class="card" style="display:none;padding:var(--sp-2xl);text-align:center">
+    <span class="material-symbols-outlined" style="font-size:48px;color:var(--outline-variant);display:block;margin-bottom:var(--sp-md)">menu_book</span>
+    <h2 class="headline-md" style="margin-bottom:var(--sp-xs)">No matching manuals</h2>
+    <p class="body-md text-muted">Try adjusting your search query or topic filter.</p>
+  </div>
+
   {% else %}
-  <section class="frosted" style="padding:var(--sp-2xl);text-align:center">
-    <span class="material-symbols-outlined" style="font-size:48px;opacity:.4;display:block;margin-bottom:var(--sp-sm)">menu_book</span>
-    <p class="body-md">No published manuals yet.</p>
-  </section>
+  <div class="card" style="padding:var(--sp-2xl);text-align:center">
+    <span class="material-symbols-outlined" style="font-size:48px;color:var(--outline-variant);display:block;margin-bottom:var(--sp-md)">menu_book</span>
+    <h2 class="headline-md" style="margin-bottom:var(--sp-xs)">No published manuals yet</h2>
+    <p class="body-md text-muted">Your instructor has not published manuals for this class yet.</p>
+  </div>
   {% endif %}
+
 </div>
+
+<style>
+  .lesson-card .lesson-img { transition: transform .3s; }
+  .lesson-card:hover .lesson-img { transform: scale(1.04); }
+  .filter-chip.active { background: var(--inverse-surface) !important; color: var(--tertiary-fixed) !important; }
+</style>
+
+<script>
+(function() {
+  var chips = document.querySelectorAll('.filter-chip');
+  var cards = document.querySelectorAll('.lesson-card[data-topic]');
+  var searchInput = document.getElementById('ebook-search-input');
+  var noResults = document.getElementById('no-manuals-msg');
+  var activeFilter = 'all';
+  var searchQuery = '';
+
+  function applyFilter() {
+    var count = 0;
+    cards.forEach(function(card) {
+      var topic = card.getAttribute('data-topic') || '';
+      var title = card.getAttribute('data-title') || '';
+      var desc = card.getAttribute('data-desc') || '';
+      var matchesTopic = (activeFilter === 'all') || (topic === activeFilter);
+      var matchesSearch = !searchQuery || title.includes(searchQuery) || desc.includes(searchQuery);
+
+      if (matchesTopic && matchesSearch) {
+        card.style.display = '';
+        count++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (noResults) {
+      noResults.style.display = (count === 0) ? 'block' : 'none';
+    }
+  }
+
+  chips.forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      chips.forEach(function(c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      activeFilter = chip.getAttribute('data-filter') || 'all';
+      applyFilter();
+    });
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      searchQuery = this.value.trim().toLowerCase();
+      applyFilter();
+    });
+  }
+})();
+</script>
 {% endblock %}

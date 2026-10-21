@@ -56,7 +56,7 @@ def build_quiz_attempt_statement(
     if course_label.strip():
         object_id = f"{object_id}/{_slug(course_label)}"
 
-    return {
+    stmt = {
         "id": sid,
         "actor": build_actor(
             subject=subject, learner_name=learner_name, homepage=homepage
@@ -90,8 +90,10 @@ def build_quiz_attempt_statement(
                 "https://edvidura.local/xapi/extensions/attempt_id": str(attempt_id),
             },
         },
-        "timestamp": timestamp or _iso_now(),
     }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt
 
 
 def build_lesson_completed_statement(
@@ -104,9 +106,10 @@ def build_lesson_completed_statement(
     homepage: str = "http://localhost:8085",
     activity_base: str = "http://localhost:8000",
     statement_id: UUID | str | None = None,
+    timestamp: str | None = None,
 ) -> dict[str, Any]:
     sid = str(statement_id or uuid4())
-    return {
+    stmt = {
         "id": sid,
         "actor": build_actor(
             subject=subject, learner_name=learner_name, homepage=homepage
@@ -130,8 +133,10 @@ def build_lesson_completed_statement(
                 "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
             },
         },
-        "timestamp": _iso_now(),
     }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt
 
 
 def build_resource_experienced_statement(
@@ -145,10 +150,11 @@ def build_resource_experienced_statement(
     homepage: str = "http://localhost:8085",
     activity_base: str = "http://localhost:8000",
     statement_id: UUID | str | None = None,
+    timestamp: str | None = None,
 ) -> dict[str, Any]:
     sid = str(statement_id or uuid4())
     kind = (resource_kind or "manual").strip() or "manual"
-    return {
+    stmt = {
         "id": sid,
         "actor": build_actor(
             subject=subject, learner_name=learner_name, homepage=homepage
@@ -174,8 +180,10 @@ def build_resource_experienced_statement(
                 "https://edvidura.local/xapi/extensions/resource_kind": kind,
             },
         },
-        "timestamp": _iso_now(),
     }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt
 
 
 def build_skill_assessed_statement(
@@ -191,6 +199,7 @@ def build_skill_assessed_statement(
     homepage: str = "http://localhost:8085",
     activity_base: str = "http://localhost:8000",
     statement_id: UUID | str | None = None,
+    timestamp: str | None = None,
 ) -> dict[str, Any]:
     """D15: one competency assessment statement per skill on a quiz attempt."""
     sid = str(statement_id or uuid4())
@@ -226,7 +235,7 @@ def build_skill_assessed_statement(
         extensions["https://edvidura.local/xapi/extensions/attempt_id"] = str(
             attempt_id
         )
-    return {
+    stmt = {
         "id": sid,
         "actor": build_actor(
             subject=subject, learner_name=learner_name, homepage=homepage
@@ -248,8 +257,10 @@ def build_skill_assessed_statement(
             "platform": "EdVidura",
             "extensions": extensions,
         },
-        "timestamp": _iso_now(),
     }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt
 
 
 def build_coach_interacted_statement(
@@ -270,6 +281,7 @@ def build_coach_interacted_statement(
     homepage: str = "http://localhost:8085",
     activity_base: str = "http://localhost:8000",
     statement_id: UUID | str | None = None,
+    timestamp: str | None = None,
 ) -> dict[str, Any]:
     """Study coach turn → xAPI interacted.
 
@@ -333,7 +345,7 @@ def build_coach_interacted_statement(
         "response": (q if include_full_text and q else (q_hash[:16] if q_hash else "")),
     }
 
-    return {
+    stmt = {
         "id": sid,
         "actor": build_actor(
             subject=subject, learner_name=learner_name, homepage=homepage
@@ -362,8 +374,10 @@ def build_coach_interacted_statement(
             "platform": "EdVidura",
             "extensions": extensions,
         },
-        "timestamp": _iso_now(),
     }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt
 
 
 def _slug(text: str) -> str:
@@ -371,3 +385,329 @@ def _slug(text: str) -> str:
 
     s = re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
     return (s or "activity")[:80]
+
+
+def build_ebook_initialized_statement(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str = "",
+    manual_id: UUID | str,
+    manual_title: str,
+    version: int = 1,
+    homepage: str = "http://localhost:8085",
+    activity_base: str = "http://localhost:8000",
+    statement_id: UUID | str | None = None,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    sid = str(statement_id or uuid4())
+    stmt = {
+        "id": sid,
+        "actor": build_actor(
+            subject=subject, learner_name=learner_name, homepage=homepage
+        ),
+        "verb": {
+            "id": verbs.VERB_INITIALIZED,
+            "display": {"en-US": verbs.VERB_DISPLAY[verbs.VERB_INITIALIZED]},
+        },
+        "object": {
+            "objectType": "Activity",
+            "id": f"{activity_base.rstrip('/')}/xapi/activities/ebook/{manual_id}",
+            "definition": {
+                "name": {"en-US": manual_title or "eBook"},
+                "type": "http://id.tincanapi.com/activitytype/resource",
+            },
+        },
+        "context": {
+            "platform": "EdVidura",
+            "extensions": {
+                "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
+                "https://edvidura.local/xapi/extensions/manual_id": str(manual_id),
+                "https://edvidura.local/xapi/extensions/version": int(version),
+                "https://edvidura.local/xapi/extensions/resource_kind": "ebook",
+            },
+        },
+    }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt
+
+
+def build_chapter_experienced_statement(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str = "",
+    manual_id: UUID | str,
+    manual_title: str,
+    chapter_index: int,
+    chapter_title: str = "",
+    version: int = 1,
+    homepage: str = "http://localhost:8085",
+    activity_base: str = "http://localhost:8000",
+    statement_id: UUID | str | None = None,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    sid = str(statement_id or uuid4())
+    chap_num = int(chapter_index) + 1
+    display_title = (chapter_title or f"Chapter {chap_num}").strip()
+    full_name = f"{manual_title} - {display_title}" if manual_title else display_title
+    stmt = {
+        "id": sid,
+        "actor": build_actor(
+            subject=subject, learner_name=learner_name, homepage=homepage
+        ),
+        "verb": {
+            "id": verbs.VERB_EXPERIENCED,
+            "display": {"en-US": verbs.VERB_DISPLAY[verbs.VERB_EXPERIENCED]},
+        },
+        "object": {
+            "objectType": "Activity",
+            "id": f"{activity_base.rstrip('/')}/xapi/activities/ebook/{manual_id}/chapter/{chapter_index}",
+            "definition": {
+                "name": {"en-US": full_name},
+                "type": "http://adlnet.gov/expapi/activities/module",
+            },
+        },
+        "context": {
+            "platform": "EdVidura",
+            "extensions": {
+                "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
+                "https://edvidura.local/xapi/extensions/manual_id": str(manual_id),
+                "https://edvidura.local/xapi/extensions/chapter_index": int(chapter_index),
+                "https://edvidura.local/xapi/extensions/chapter_title": display_title,
+                "https://edvidura.local/xapi/extensions/version": int(version),
+            },
+        },
+    }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt
+
+
+def build_reading_progressed_statement(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str = "",
+    manual_id: UUID | str,
+    manual_title: str,
+    chapter_index: int,
+    progress_percent: int,
+    cfi: str | None = None,
+    version: int = 1,
+    homepage: str = "http://localhost:8085",
+    activity_base: str = "http://localhost:8000",
+    statement_id: UUID | str | None = None,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    sid = str(statement_id or uuid4())
+    pct = max(0, min(100, int(progress_percent)))
+    scaled = round(pct / 100.0, 4)
+    stmt = {
+        "id": sid,
+        "actor": build_actor(
+            subject=subject, learner_name=learner_name, homepage=homepage
+        ),
+        "verb": {
+            "id": verbs.VERB_PROGRESSED,
+            "display": {"en-US": verbs.VERB_DISPLAY[verbs.VERB_PROGRESSED]},
+        },
+        "object": {
+            "objectType": "Activity",
+            "id": f"{activity_base.rstrip('/')}/xapi/activities/ebook/{manual_id}",
+            "definition": {
+                "name": {"en-US": manual_title or "eBook"},
+                "type": "http://id.tincanapi.com/activitytype/resource",
+            },
+        },
+        "result": {
+            "score": {
+                "raw": pct,
+                "min": 0,
+                "max": 100,
+                "scaled": scaled,
+            },
+            "completion": pct >= 100,
+            "extensions": {
+                "https://w3id.org/xapi/cmi5/result/extensions/progress": pct,
+            },
+        },
+        "context": {
+            "platform": "EdVidura",
+            "extensions": {
+                "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
+                "https://edvidura.local/xapi/extensions/manual_id": str(manual_id),
+                "https://edvidura.local/xapi/extensions/chapter_index": int(chapter_index),
+                "https://edvidura.local/xapi/extensions/progress_percent": pct,
+                "https://edvidura.local/xapi/extensions/cfi": str(cfi or ""),
+                "https://edvidura.local/xapi/extensions/version": int(version),
+            },
+        },
+    }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt
+
+
+def build_bookmark_created_statement(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str = "",
+    manual_id: UUID | str,
+    manual_title: str,
+    chapter_index: int,
+    bookmark_title: str,
+    cfi: str | None = None,
+    version: int = 1,
+    homepage: str = "http://localhost:8085",
+    activity_base: str = "http://localhost:8000",
+    statement_id: UUID | str | None = None,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    sid = str(statement_id or uuid4())
+    bm_title = (bookmark_title or f"Bookmark on Chapter {chapter_index + 1}").strip()
+    stmt = {
+        "id": sid,
+        "actor": build_actor(
+            subject=subject, learner_name=learner_name, homepage=homepage
+        ),
+        "verb": {
+            "id": verbs.VERB_BOOKMARKED,
+            "display": {"en-US": verbs.VERB_DISPLAY[verbs.VERB_BOOKMARKED]},
+        },
+        "object": {
+            "objectType": "Activity",
+            "id": f"{activity_base.rstrip('/')}/xapi/activities/ebook/{manual_id}/bookmark/{chapter_index}",
+            "definition": {
+                "name": {"en-US": bm_title},
+                "type": "http://id.tincanapi.com/activitytype/bookmark",
+            },
+        },
+        "context": {
+            "platform": "EdVidura",
+            "extensions": {
+                "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
+                "https://edvidura.local/xapi/extensions/manual_id": str(manual_id),
+                "https://edvidura.local/xapi/extensions/chapter_index": int(chapter_index),
+                "https://edvidura.local/xapi/extensions/bookmark_title": bm_title,
+                "https://edvidura.local/xapi/extensions/cfi": str(cfi or ""),
+                "https://edvidura.local/xapi/extensions/version": int(version),
+            },
+        },
+    }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt
+
+
+def build_annotation_added_statement(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str = "",
+    manual_id: UUID | str,
+    manual_title: str,
+    chapter_index: int,
+    annotation_text: str = "",
+    highlight_text: str = "",
+    color: str = "yellow",
+    cfi_range: str | None = None,
+    version: int = 1,
+    homepage: str = "http://localhost:8085",
+    activity_base: str = "http://localhost:8000",
+    statement_id: UUID | str | None = None,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    sid = str(statement_id or uuid4())
+    note = (annotation_text or "").strip()
+    hl = (highlight_text or "").strip()
+    stmt = {
+        "id": sid,
+        "actor": build_actor(
+            subject=subject, learner_name=learner_name, homepage=homepage
+        ),
+        "verb": {
+            "id": verbs.VERB_ANNOTATED,
+            "display": {"en-US": verbs.VERB_DISPLAY[verbs.VERB_ANNOTATED]},
+        },
+        "object": {
+            "objectType": "Activity",
+            "id": f"{activity_base.rstrip('/')}/xapi/activities/ebook/{manual_id}/annotation/{chapter_index}",
+            "definition": {
+                "name": {"en-US": f"Annotation on {manual_title or 'eBook'}"},
+                "type": "http://risc-inc.com/annotator/activities/annotation",
+            },
+        },
+        "result": {
+            "response": note or hl,
+        },
+        "context": {
+            "platform": "EdVidura",
+            "extensions": {
+                "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
+                "https://edvidura.local/xapi/extensions/manual_id": str(manual_id),
+                "https://edvidura.local/xapi/extensions/chapter_index": int(chapter_index),
+                "https://edvidura.local/xapi/extensions/annotation_text": note[:5000],
+                "https://edvidura.local/xapi/extensions/highlight_text": hl[:5000],
+                "https://edvidura.local/xapi/extensions/color": color,
+                "https://edvidura.local/xapi/extensions/cfi_range": str(cfi_range or ""),
+                "https://edvidura.local/xapi/extensions/version": int(version),
+            },
+        },
+    }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt
+
+
+def build_reading_completed_statement(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str = "",
+    manual_id: UUID | str,
+    manual_title: str,
+    version: int = 1,
+    homepage: str = "http://localhost:8085",
+    activity_base: str = "http://localhost:8000",
+    statement_id: UUID | str | None = None,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    sid = str(statement_id or uuid4())
+    stmt = {
+        "id": sid,
+        "actor": build_actor(
+            subject=subject, learner_name=learner_name, homepage=homepage
+        ),
+        "verb": {
+            "id": verbs.VERB_COMPLETED,
+            "display": {"en-US": verbs.VERB_DISPLAY[verbs.VERB_COMPLETED]},
+        },
+        "object": {
+            "objectType": "Activity",
+            "id": f"{activity_base.rstrip('/')}/xapi/activities/ebook/{manual_id}",
+            "definition": {
+                "name": {"en-US": manual_title or "eBook"},
+                "type": "http://id.tincanapi.com/activitytype/resource",
+            },
+        },
+        "result": {
+            "completion": True,
+            "success": True,
+            "score": {"raw": 100, "min": 0, "max": 100, "scaled": 1.0},
+        },
+        "context": {
+            "platform": "EdVidura",
+            "extensions": {
+                "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
+                "https://edvidura.local/xapi/extensions/manual_id": str(manual_id),
+                "https://edvidura.local/xapi/extensions/version": int(version),
+                "https://edvidura.local/xapi/extensions/resource_kind": "ebook",
+            },
+        },
+    }
+    if timestamp:
+        stmt["timestamp"] = timestamp
+    return stmt

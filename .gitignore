@@ -36,3 +36,8 @@ app/static/uploads/
 backups/
 *.dump
 
+# Ephemeral Chrome test profiles
+scratch/chrome_profile_*/
+
+# Local verification tools and sensitive local artifacts
+scratch/
