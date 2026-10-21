@@ -187,7 +187,7 @@
             </div>
             <div class="progress-track">
               <div class="progress-fill {% if ls.avg_pct >= 80 %}{% elif ls.avg_pct >= 60 %}progress-fill-sky{% else %}{% endif %}"
-                   style="width:{{ ls.avg_pct }}%;{% if ls.avg_pct < 60 %}background:var(--error-container){% endif %}"></div>
+                   class="progress-fill {% if ls.avg_pct < 60 %}bg-error-container{% endif %}" data-pct="{{ ls.avg_pct }}"></div>
             </div>
           </div>
           {% endfor %}
@@ -251,6 +251,9 @@
       </a>
     </div>
   </div>
-
 </div>
+
+<script>
+  document.querySelectorAll('[data-pct]').forEach(el => { el.style.width = el.dataset.pct + '%'; });
+</script>
 {% endblock %}

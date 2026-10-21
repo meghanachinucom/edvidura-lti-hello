@@ -50,6 +50,8 @@ MIGRATIONS = [
     "migration_bi_xapi_tiers.sql",
     "migration_skill_framework_imports.sql",
     "migration_coach_phase_a.sql",
+    "migration_epub_versions.sql",
+    "migration_pebl_phase2.sql",
 ]
 
 # Postgres SQLSTATE values that mean "already applied" / safe to continue.

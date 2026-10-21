@@ -35,7 +35,6 @@ app/static/uploads/
 # Local DB dumps
 backups/
 *.dump
-
 # Playwright LTI session export (cookies — do not commit)
 docs/management-proof/videos/storage_state.json
 docs/management-proof/videos/storage_state_teacher.json
@@ -50,3 +49,8 @@ moodle/_cj.txt
 scripts/_set_db_url.py
 scripts/_set_railway_app_vars.py
 
+# Ephemeral Chrome test profiles
+scratch/chrome_profile_*/
+
+# Local verification tools and sensitive local artifacts
+scratch/
