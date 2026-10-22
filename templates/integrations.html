@@ -64,7 +64,7 @@
     </div>
     <div class="metric-tile">
       <span class="label-caps text-muted">Charts tool</span>
-      <div class="headline-sm" style="margin-top:8px;color:{% if metabase.embed_ready or metabase.url %}var(--primary){% else %}var(--outline){% endif %}">
+      <div class="headline-sm {% if metabase.embed_ready or metabase.url %}text-primary{% else %}text-muted{% endif %}" style="margin-top:8px">
         {% if metabase.embed_ready %}Ready below{% elif metabase.url %}Open separately{% else %}Not set up{% endif %}
       </div>
       <p class="body-sm text-muted" style="margin-top:6px">
@@ -75,7 +75,7 @@
     </div>
     <div class="metric-tile">
       <span class="label-caps text-muted">History archive</span>
-      <div class="headline-sm" style="margin-top:8px;color:{% if lrs.configured %}var(--primary){% else %}var(--outline){% endif %}">
+      <div class="headline-sm {% if lrs.configured %}text-primary{% else %}text-muted{% endif %}" style="margin-top:8px">
         {% if lrs.configured %}{% if lrs.reachable is defined and not lrs.reachable %}Offline{% else %}Connected{% endif %}{% else %}Optional{% endif %}
       </div>
       <p class="body-sm text-muted" style="margin-top:6px">

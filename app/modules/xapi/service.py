@@ -489,7 +489,6 @@ def record_coach_feedback(
         course_id=course_id,
         homepage=homepage or settings.xapi_actor_homepage,
         activity_base=settings.app_base_url,
-        timestamp=timestamp,
     )
     return _store_and_maybe_send(
         tenant_id=tenant_id,
