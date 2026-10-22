@@ -1,108 +1,305 @@
 {% extends "base_shell.html" %}
 {% block content %}
 <div class="page-wrap">
-<section class="welcome">
-  <p class="welcome-kicker">Teach · versioned manuals</p>
-  <h2 class="welcome-title">Manual versions</h2>
-  <p class="welcome-lede">Create a technical manual and publish new versions over time (no AI).</p>
-</section>
 
-{% if ok_message %}
-<p class="banner ok">{{ ok_message | replace('+', ' ') }}</p>
-{% endif %}
+  {# ── Hero Band ── #}
+  <section class="hero-band" style="padding:var(--sp-xl) var(--sp-2xl)">
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+          <span class="material-symbols-outlined" style="font-size:13px">auto_stories</span>
+          Content Studio · eBooks &amp; Manuals
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,44px)">
+          eBooks &amp; Manuals Studio
+        </h1>
+        <p class="body-md" style="color:var(--outline-variant);margin-top:4px;max-width:540px">
+          Author, upload, and version interactive EPUB3 eBooks with live student reading telemetry, text-to-speech, and bookmarks.
+        </p>
+      </div>
+      <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
+        <a href="/manuals?token={{ quiz_token }}" class="btn btn-primary">
+          <span class="material-symbols-outlined" style="font-size:16px">visibility</span>
+          Student View
+        </a>
+        <a href="/teacher/content?token={{ quiz_token }}" class="btn btn-surface">
+          <span class="material-symbols-outlined" style="font-size:16px">edit_note</span>
+          Content Studio
+        </a>
+        <a href="/launch-hub?token={{ quiz_token }}" class="btn btn-glass">
+          <span class="material-symbols-outlined" style="font-size:16px">home</span>
+          Dashboard
+        </a>
+      </div>
+    </div>
+  </section>
 
-<section class="panel">
-  <h2>New manual</h2>
-  <form method="post" action="/teacher/manuals/new" class="teach-form">
-    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-    <label>Title <input name="title" required placeholder="Algebra I technical guide"/></label>
-    <label>Description <input name="description" placeholder="Short summary"/></label>
-    <label>Initial body
-      <textarea name="body_md" rows="6" placeholder="Chapter text (markdown-ish paragraphs)…"></textarea>
-    </label>
-    <label>Publish now?
-      <select name="publish">
-        <option value="1">Yes — publish v1</option>
-        <option value="0">No — keep draft</option>
-      </select>
-    </label>
-    <button type="submit" class="btn primary">Create manual</button>
-  </form>
-</section>
-
-<section class="panel">
-  <h2>Import from PDF / text (D10)</h2>
-  <p class="meta">Extracts text into a new versioned manual (or adds a version to an existing one). No quiz generation.</p>
-  <form method="post" action="/teacher/manuals/from-pdf" enctype="multipart/form-data" class="teach-form">
-    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-    <label>File
-      <input type="file" name="document" accept=".pdf,.txt,.md,.markdown,application/pdf,text/plain" required/>
-    </label>
-    <label>Title (optional — defaults from filename)
-      <input name="title" placeholder="Imported handbook"/>
-    </label>
-    <label>Description <input name="description" placeholder="Optional"/></label>
-    <label>Add as version to existing
-      <select name="manual_id">
-        <option value="">— create new manual —</option>
-        {% for m in manuals %}
-        <option value="{{ m.id }}">{{ m.title }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label>Publish?
-      <select name="publish">
-        <option value="1">Yes</option>
-        <option value="0">Draft</option>
-      </select>
-    </label>
-    <button type="submit" class="btn primary">Import</button>
-  </form>
-</section>
-
-{% for m in manuals %}
-<section class="panel">
-  <div class="panel-head">
-    <h2>{{ m.title }}</h2>
-    <a class="btn secondary" href="/manuals/{{ m.id }}?token={{ quiz_token }}">Student view</a>
+  {# ── Status Message ── #}
+  {% if ok_message %}
+  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.35);border-radius:var(--r-xl);color:var(--primary)">
+    <span class="material-symbols-outlined" style="font-size:20px">check_circle</span>
+    <span class="body-md" style="font-weight:600">{{ ok_message | replace('+', ' ') }}</span>
   </div>
-  <p class="meta">{{ m.status }} · {{ m.slug }}</p>
-  {% if m.versions %}
-  <table>
-    <thead><tr><th>Ver</th><th>Status</th><th>Changelog</th><th></th></tr></thead>
-    <tbody>
-    {% for v in m.versions %}
-      <tr>
-        <td>v{{ v.version }}</td>
-        <td>{% if v.is_published %}<span class="ok">Published</span>{% else %}<span class="meta">Draft</span>{% endif %}</td>
-        <td>{{ v.changelog }}</td>
-        <td>
-          <a class="link" href="/manuals/{{ m.id }}?token={{ quiz_token }}&v={{ v.version }}">Open</a>
-          {% if not v.is_published %}
-          <form method="post" action="/teacher/manuals/{{ m.id }}/versions/{{ v.version }}/publish" style="display:inline">
-            <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-            <button type="submit" class="btn secondary">Publish</button>
-          </form>
-          {% endif %}
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
   {% endif %}
-  <details class="teach-edit">
-    <summary>Add new version</summary>
-    <form method="post" action="/teacher/manuals/{{ m.id }}/versions" class="teach-form">
-      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-      <label>Changelog <input name="changelog" placeholder="What changed in this version"/></label>
-      <label>Body <textarea name="body_md" rows="5" required></textarea></label>
-      <label><input type="checkbox" name="publish" value="1"/> Publish immediately</label>
-      <button type="submit" class="btn primary">Save version</button>
-    </form>
-  </details>
-</section>
-{% else %}
-<section class="panel"><div class="empty"><p>No manuals yet — create one above.</p></div></section>
-{% endfor %}
+
+  {# ── Studio Cards: 3 Creation / Ingestion Workflows ── #}
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:var(--sp-lg)">
+
+    {# 1. Upload EPUB3 eBook #}
+    <div class="card" style="padding:var(--sp-lg);border-radius:var(--r-2xl);background:var(--surface-container-lowest);border:1.5px solid rgba(14,43,36,.08);box-shadow:var(--shadow-l1);display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:var(--sp-xs)">
+        <span class="material-symbols-outlined" style="color:var(--primary);font-size:22px">upload_file</span>
+        <h2 class="headline-sm" style="margin:0">Upload EPUB3 eBook</h2>
+      </div>
+      <p class="body-sm text-muted" style="margin-bottom:var(--sp-md)">
+        Ingest a standard .epub archive. Chapters and navigation are extracted automatically with full xAPI tracking.
+      </p>
+
+      <form method="post" action="/teacher/manuals/upload-epub" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:var(--sp-sm);margin-top:auto">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">EPUB Archive (.epub)</label>
+          <input type="file" name="epub_file" accept=".epub,application/epub+zip" required
+                 style="width:100%;padding:8px 12px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-low);font-size:12px"/>
+        </div>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Title (optional)</label>
+          <input name="title" placeholder="Defaults to EPUB metadata"
+                 style="width:100%;padding:8px 12px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);font-size:13px;font-family:inherit"/>
+        </div>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Target Manual</label>
+          <select name="manual_id" style="width:100%;padding:8px 12px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);font-size:13px;font-family:inherit">
+            <option value="">— Create new manual —</option>
+            {% for m in manuals %}
+            <option value="{{ m.id }}">{{ m.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:4px">
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" name="publish" value="1" checked/>
+            <span>Publish immediately</span>
+          </label>
+          <button type="submit" class="btn btn-primary" style="font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">upload</span> Upload
+          </button>
+        </div>
+      </form>
+    </div>
+
+    {# 2. Author Rich-Text / Markdown Manual #}
+    <div class="card" style="padding:var(--sp-lg);border-radius:var(--r-2xl);background:var(--surface-container-lowest);border:1.5px solid rgba(14,43,36,.08);box-shadow:var(--shadow-l1);display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:var(--sp-xs)">
+        <span class="material-symbols-outlined" style="color:var(--secondary);font-size:22px">edit_note</span>
+        <h2 class="headline-sm" style="margin:0">Create Text Manual</h2>
+      </div>
+      <p class="body-sm text-muted" style="margin-bottom:var(--sp-md)">
+        Author structured curriculum chapters using Markdown and headings. Automatically generates clean reading TOCs.
+      </p>
+
+      <form method="post" action="/teacher/manuals/new" style="display:flex;flex-direction:column;gap:var(--sp-sm);margin-top:auto">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Title</label>
+          <input name="title" required placeholder="e.g. Physics & Chemistry Vol 1"
+                 style="width:100%;padding:8px 12px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);font-size:13px;font-family:inherit"/>
+        </div>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Summary</label>
+          <input name="description" placeholder="Short course description"
+                 style="width:100%;padding:8px 12px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);font-size:13px;font-family:inherit"/>
+        </div>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Initial Chapter Content</label>
+          <textarea name="body_md" rows="3" placeholder="Chapter text (paragraphs, # headings)…"
+                    style="width:100%;padding:8px 12px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);font-size:13px;font-family:inherit"></textarea>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:4px">
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" name="publish" value="1" checked/>
+            <span>Publish v1 now</span>
+          </label>
+          <button type="submit" class="btn btn-primary" style="font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">add_circle</span> Create
+          </button>
+        </div>
+      </form>
+    </div>
+
+    {# 3. Import from PDF / Document #}
+    <div class="card" style="padding:var(--sp-lg);border-radius:var(--r-2xl);background:var(--surface-container-lowest);border:1.5px solid rgba(14,43,36,.08);box-shadow:var(--shadow-l1);display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:var(--sp-xs)">
+        <span class="material-symbols-outlined" style="color:#d97706;font-size:22px">picture_as_pdf</span>
+        <h2 class="headline-sm" style="margin:0">Import from Document</h2>
+      </div>
+      <p class="body-sm text-muted" style="margin-bottom:var(--sp-md)">
+        Extract syllabus handbooks from PDF or plain text files directly into an accessible versioned reading manual.
+      </p>
+
+      <form method="post" action="/teacher/manuals/from-pdf" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:var(--sp-sm);margin-top:auto">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Document File (.pdf, .txt, .md)</label>
+          <input type="file" name="document" accept=".pdf,.txt,.md,.markdown,application/pdf,text/plain" required
+                 style="width:100%;padding:8px 12px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-low);font-size:12px"/>
+        </div>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Title (optional)</label>
+          <input name="title" placeholder="Defaults to filename"
+                 style="width:100%;padding:8px 12px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);font-size:13px;font-family:inherit"/>
+        </div>
+        <div>
+          <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Target Manual</label>
+          <select name="manual_id" style="width:100%;padding:8px 12px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);font-size:13px;font-family:inherit">
+            <option value="">— Create new manual —</option>
+            {% for m in manuals %}
+            <option value="{{ m.id }}">{{ m.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:4px">
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" name="publish" value="1" checked/>
+            <span>Publish now</span>
+          </label>
+          <button type="submit" class="btn btn-primary" style="font-size:13px">
+            <span class="material-symbols-outlined" style="font-size:15px">file_download</span> Import
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+  {# ── Published Library List ── #}
+  <section class="frosted" style="padding:var(--sp-xl)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-lg);flex-wrap:wrap;gap:var(--sp-sm)">
+      <div>
+        <h2 class="headline-lg" style="margin-bottom:2px">Class Manuals &amp; Published Editions</h2>
+        <span class="body-sm text-muted">Currently active textbooks and editions in your school tenant</span>
+      </div>
+      <span class="chip chip-mint" style="font-size:11px">{{ manuals | length }} Manuals In Library</span>
+    </div>
+
+    {% if manuals %}
+    <div style="display:flex;flex-direction:column;gap:var(--sp-md)">
+      {% for m in manuals %}
+      <div class="card" style="padding:var(--sp-lg);border-radius:var(--r-2xl);background:var(--surface-container-lowest);border:1px solid rgba(14,43,36,.07)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-md);flex-wrap:wrap;margin-bottom:var(--sp-sm)">
+          <div>
+            <div style="display:flex;align-items:center;gap:var(--sp-xs);margin-bottom:4px">
+              <span class="chip {% if m.status == 'published' %}chip-mint{% else %}chip-dark{% endif %}" style="font-size:10px">
+                {{ m.status | upper }}
+              </span>
+              <span class="label-caps text-muted">{{ m.slug }}</span>
+            </div>
+            <h3 class="headline-md" style="margin:0">{{ m.title }}</h3>
+            {% if m.description %}
+            <p class="body-sm text-muted" style="margin-top:4px;max-width:650px">{{ m.description }}</p>
+            {% endif %}
+          </div>
+          <div style="display:flex;gap:var(--sp-xs)">
+            <a href="/manuals/{{ m.id }}?token={{ quiz_token }}" class="btn btn-surface" style="font-size:12px;padding:6px 12px">
+              <span class="material-symbols-outlined" style="font-size:15px">menu_book</span>
+              Student view
+            </a>
+          </div>
+        </div>
+
+        {# Version History Table #}
+        {% if m.versions %}
+        <div style="overflow-x:auto;margin-top:var(--sp-md);background:var(--surface-container-low);border-radius:var(--r-md);padding:8px 12px">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="text-align:left;border-bottom:1px solid rgba(14,43,36,.08);color:var(--outline);font-size:11px">
+                <th style="padding:6px 8px">Version</th>
+                <th style="padding:6px 8px">Format</th>
+                <th style="padding:6px 8px">Status</th>
+                <th style="padding:6px 8px">Changelog</th>
+                <th style="padding:6px 8px;text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for v in m.versions %}
+              <tr style="border-bottom:1px solid rgba(14,43,36,.04)">
+                <td style="padding:8px;font-weight:700">v{{ v.version }}</td>
+                <td style="padding:8px">
+                  {% if v.content_type == 'epub' %}
+                  <span class="chip chip-sky" style="font-size:9.5px">EPUB3</span>
+                  {% else %}
+                  <span class="chip chip-secondary" style="font-size:9.5px">Markdown</span>
+                  {% endif %}
+                </td>
+                <td style="padding:8px">
+                  {% if v.is_published %}
+                  <span class="chip chip-mint" style="font-size:9.5px">Published</span>
+                  {% else %}
+                  <span class="chip chip-dark" style="font-size:9.5px">Draft</span>
+                  {% endif %}
+                </td>
+                <td style="padding:8px;color:var(--on-surface-variant)">{{ v.changelog or "—" }}</td>
+                <td style="padding:8px;text-align:right">
+                  <div style="display:inline-flex;gap:6px;align-items:center">
+                    <a href="/manuals/{{ m.id }}?token={{ quiz_token }}&v={{ v.version }}" class="btn btn-surface" style="font-size:11px;padding:3px 8px">
+                      Preview
+                    </a>
+                    {% if not v.is_published %}
+                    <form method="post" action="/teacher/manuals/{{ m.id }}/versions/{{ v.version }}/publish" style="margin:0;display:inline">
+                      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+                      <button type="submit" class="btn btn-primary" style="font-size:11px;padding:3px 8px">
+                        Publish
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+
+        {# Add New Version Collapsible Form #}
+        <details style="margin-top:var(--sp-md);padding-top:var(--sp-sm);border-top:1px solid rgba(14,43,36,.06)">
+          <summary style="font-size:12px;font-weight:600;color:var(--primary);cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+            <span class="material-symbols-outlined" style="font-size:14px">add</span> Add new version
+          </summary>
+          <form method="post" action="/teacher/manuals/{{ m.id }}/versions" style="margin-top:var(--sp-sm);display:flex;flex-direction:column;gap:var(--sp-sm)">
+            <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+            <div>
+              <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Changelog</label>
+              <input name="changelog" placeholder="What changed in this revision"
+                     style="width:100%;padding:6px 10px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);font-size:12px;font-family:inherit"/>
+            </div>
+            <div>
+              <label class="label-caps text-muted" style="display:block;margin-bottom:4px">Body Content (Markdown)</label>
+              <textarea name="body_md" rows="4" required placeholder="Updated chapter content…"
+                        style="width:100%;padding:6px 10px;border-radius:var(--r-md);border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);font-size:12px;font-family:inherit"></textarea>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" name="publish" value="1"/>
+                <span>Publish immediately</span>
+              </label>
+              <button type="submit" class="btn btn-primary" style="font-size:12px;padding:5px 12px">
+                Save version
+              </button>
+            </div>
+          </form>
+        </details>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:var(--sp-2xl);color:var(--outline)">
+      <span class="material-symbols-outlined" style="font-size:48px;display:block;margin-bottom:var(--sp-sm)">menu_book</span>
+      <h3 class="headline-md" style="margin-bottom:4px">No manuals created yet</h3>
+      <p class="body-sm text-muted">Upload an EPUB3 eBook or create a Markdown handbook above to get started.</p>
+    </div>
+    {% endif %}
+  </section>
+
 </div>
 {% endblock %}

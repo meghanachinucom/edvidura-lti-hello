@@ -55,7 +55,7 @@
         </span>
       </div>
       <div class="progress-track" style="margin-top:var(--sp-md)">
-        <div class="progress-fill" style="width:{{ ((bound_count / total_classes) * 100) | int if total_classes else 0 }}%"></div>
+        <div class="progress-fill" data-pct="{{ ((bound_count / total_classes) * 100) | int if total_classes else 0 }}"></div>
       </div>
     </div>
     <div class="metric-tile">
@@ -347,5 +347,9 @@ function filterNodes(type, btn){
     }
   });
 }
+</script>
+
+<script>
+  document.querySelectorAll('[data-pct]').forEach(el => { el.style.width = el.dataset.pct + '%'; });
 </script>
 {% endblock %}

@@ -2,41 +2,50 @@
 {% block content %}
 <div class="page-wrap">
   {% if receipt and receipt.practice %}
-  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(64,194,253,.1);border:1px solid rgba(64,194,253,.22);border-radius:var(--r-xl);color:var(--secondary)">
+  <div
+    style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(64,194,253,.1);border:1px solid rgba(64,194,253,.22);border-radius:var(--r-xl);color:var(--secondary)">
     <span class="material-symbols-outlined">fitness_center</span>
     <span class="body-md">Practice attempt — not sent to Moodle gradebook.</span>
   </div>
   {% elif grade_sent %}
-  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.26);border-radius:var(--r-xl);color:var(--primary)">
+  <div
+    style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.26);border-radius:var(--r-xl);color:var(--primary)">
     <span class="material-symbols-outlined">check_circle</span>
     <span class="body-md">Score sent to the Moodle gradebook.</span>
   </div>
   {% elif grade_error %}
-  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:var(--r-xl);color:#b45309">
+  <div
+    style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:var(--r-xl);color:#b45309">
     <span class="material-symbols-outlined">info</span>
     <span class="body-md">Saved in EdVidura. Moodle sync note: {{ grade_error }}</span>
   </div>
   {% else %}
-  <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(64,194,253,.08);border:1px solid rgba(64,194,253,.18);border-radius:var(--r-xl);color:var(--on-surface)">
+  <div
+    style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(64,194,253,.08);border:1px solid rgba(64,194,253,.18);border-radius:var(--r-xl);color:var(--on-surface)">
     <span class="material-symbols-outlined">info</span>
     <span class="body-md">Saved in EdVidura. Moodle gradebook sync was not available on this launch.</span>
   </div>
   {% endif %}
 
   <section class="hero-band">
-    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+    <div
+      style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
       <div>
-        <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
+        <div class="chip"
+          style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
           <span class="material-symbols-outlined" style="font-size:13px">emoji_events</span>
           My results
         </div>
-        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">{{ score }}/{{ max_score }}</h1>
-        <p class="body-md" style="color:var(--outline-variant);margin-top:4px">{{ learner_name or "You" }} · {{ course or "This quiz" }}</p>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">{{ score
+          }}/{{ max_score }}</h1>
+        <p class="body-md" style="color:var(--outline-variant);margin-top:4px">{{ learner_name or "You" }} · {{ course
+          or "This quiz" }}</p>
       </div>
       {% if stickers %}
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         {% for s in stickers %}
-        <span class="chip" style="background:rgba(255,255,255,.12);color:var(--surface-container-lowest)">{{ s.label }}</span>
+        <span class="chip" style="background:rgba(255,255,255,.12);color:var(--surface-container-lowest)">{{ s.label
+          }}</span>
         {% endfor %}
       </div>
       {% endif %}
@@ -58,7 +67,8 @@
     </div>
     <div class="metric-tile">
       <span class="label-caps text-muted">Next</span>
-      <div class="body-md" style="margin-top:10px;font-weight:600">{% if has_misses %}Retry missed{% else %}Keep going{% endif %}</div>
+      <div class="body-md" style="margin-top:10px;font-weight:600">{% if has_misses %}Retry missed{% else %}Keep going{%
+        endif %}</div>
     </div>
   </div>
 
@@ -66,8 +76,12 @@
   <section class="frosted" style="padding:var(--sp-xl)">
     <div class="section-head">
       <div>
-        <h2 class="headline-md">{% if gap_path and gap_path.active %}{% if gap_path.mode == 'difference' %}{% if gap_path.persisted %}Difference plan saved{% else %}Difference training path{% endif %}{% elif gap_path.persisted %}Learning plan saved{% else %}Gap training path{% endif %}{% else %}Closed remediation loop{% endif %}</h2>
-        <p class="body-sm text-muted">{% if gap_path and gap_path.mode == 'difference' %}D23 · {% elif gap_path and gap_path.persisted %}PLE · {% endif %}Miss → review → practice → graded</p>
+        <h2 class="headline-md">{% if gap_path and gap_path.active %}{% if gap_path.mode == 'difference' %}{% if
+          gap_path.persisted %}Difference plan saved{% else %}Difference training path{% endif %}{% elif
+          gap_path.persisted %}Learning plan saved{% else %}Gap training path{% endif %}{% else %}Closed remediation
+          loop{% endif %}</h2>
+        <p class="body-sm text-muted">{% if gap_path and gap_path.mode == 'difference' %}D23 · {% elif gap_path and
+          gap_path.persisted %}PLE · {% endif %}Miss → review → practice → graded</p>
       </div>
     </div>
     {% if is_practice %}
@@ -93,12 +107,19 @@
     </div>
     {% else %}
     <div class="grid-4" style="margin-bottom:var(--sp-md)">
-      <div class="card" style="padding:var(--sp-md)"><span class="label-caps text-muted">1 · Review</span><p class="body-sm" style="margin-top:6px">Open the pinned lesson or manual.</p></div>
-      <div class="card" style="padding:var(--sp-md)"><span class="label-caps text-muted">2 · Practice</span><p class="body-sm" style="margin-top:6px">Sandbox quiz, no Moodle sync.</p></div>
-      <div class="card" style="padding:var(--sp-md)"><span class="label-caps text-muted">3 · Graded</span><p class="body-sm" style="margin-top:6px">Retry missed items for a score.</p></div>
+      <div class="card" style="padding:var(--sp-md)"><span class="label-caps text-muted">1 · Review</span>
+        <p class="body-sm" style="margin-top:6px">Open the pinned lesson or manual.</p>
+      </div>
+      <div class="card" style="padding:var(--sp-md)"><span class="label-caps text-muted">2 · Practice</span>
+        <p class="body-sm" style="margin-top:6px">Sandbox quiz, no Moodle sync.</p>
+      </div>
+      <div class="card" style="padding:var(--sp-md)"><span class="label-caps text-muted">3 · Graded</span>
+        <p class="body-sm" style="margin-top:6px">Retry missed items for a score.</p>
+      </div>
     </div>
     <div style="display:flex;gap:var(--sp-sm);flex-wrap:wrap">
-      {% if loop_review_href %}<a class="btn btn-primary" href="{{ loop_review_href }}">{{ loop_review_label }}</a>{% endif %}
+      {% if loop_review_href %}<a class="btn btn-primary" href="{{ loop_review_href }}">{{ loop_review_label }}</a>{%
+      endif %}
       <a class="btn btn-glass" href="{{ practice_href }}">Practice lane</a>
       <a class="btn btn-surface" href="{{ graded_retry_href }}">Graded retry</a>
     </div>
@@ -112,26 +133,31 @@
       {% if review %}
       <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
         {% for item in review %}
-        <div class="card" {{ 'style="padding:var(--sp-md);border-left:3px solid ' ~ ('var(--primary)' if item.correct else '#f59e0b') ~ '"' }}>
+        <div class="card"
+          class="card {% if item.correct %}card-correct{% else %}card-missed{% endif %}" style="padding:var(--sp-md)">
           <div style="display:flex;justify-content:space-between;gap:var(--sp-sm);align-items:flex-start">
             <div>
               <div class="headline-sm" style="font-size:15px">{{ item.prompt }}</div>
               <p class="body-sm text-muted" style="margin-top:4px">
-                {% if item.correct %}Correct{% else %}Missed{% if item.correct_choice %} · correct: {{ item.correct_choice }}{% endif %}{% endif %}
+                {% if item.correct %}Correct{% else %}Missed{% if item.correct_choice %} · correct: {{
+                item.correct_choice }}{% endif %}{% endif %}
               </p>
             </div>
-            {% if item.correct %}<span class="chip chip-mint">1 pt</span>{% else %}<span class="chip" style="background:rgba(245,158,11,.12);color:#92400e">0 pt</span>{% endif %}
+            {% if item.correct %}<span class="chip chip-mint">1 pt</span>{% else %}<span class="chip"
+              style="background:rgba(245,158,11,.12);color:#92400e">0 pt</span>{% endif %}
           </div>
           {% if item.teleport_href %}
-          <a href="{{ item.teleport_href }}" class="body-sm" style="display:inline-block;margin-top:8px;color:var(--primary);font-weight:600;text-decoration:none">{{ item.teleport_label }} →</a>
+          <a href="{{ item.teleport_href }}" class="body-sm"
+            style="display:inline-block;margin-top:8px;color:var(--primary);font-weight:600;text-decoration:none">{{
+            item.teleport_label }} →</a>
           <span class="body-sm text-muted"> {{ item.teleport_hint }}</span>
           {% endif %}
           {% if not item.correct %}
           <form method="post" action="/learn/ai/hint" style="margin-top:8px">
-            <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
-            <input type="hidden" name="attempt_id" value="{{ attempt_id }}"/>
-            <input type="hidden" name="prompt" value="{{ item.prompt }}"/>
-            <input type="hidden" name="correct_choice" value="{{ item.correct_choice or '' }}"/>
+            <input type="hidden" name="quiz_token" value="{{ quiz_token }}" />
+            <input type="hidden" name="attempt_id" value="{{ attempt_id }}" />
+            <input type="hidden" name="prompt" value="{{ item.prompt }}" />
+            <input type="hidden" name="correct_choice" value="{{ item.correct_choice or '' }}" />
             <button type="submit" class="btn btn-surface" style="font-size:12px;padding:5px 10px">
               <span class="material-symbols-outlined" style="font-size:14px">lightbulb</span>
               AI hint
@@ -140,13 +166,17 @@
           {% endif %}
           {% if item.manual_href %}
           <div style="margin-top:8px">
-            <a href="{{ item.manual_href }}" style="color:var(--primary);font-weight:600;text-decoration:none;font-size:13px">{{ item.manual_label or "Pinned manual section" }} →</a>
+            <a href="{{ item.manual_href }}"
+              style="color:var(--primary);font-weight:600;text-decoration:none;font-size:13px">{{ item.manual_label or
+              "Pinned manual section" }} →</a>
           </div>
           {% endif %}
           {% if item.practice_loop_href and not item.correct %}
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-            <a class="btn btn-glass" style="font-size:12px;padding:5px 10px" href="{{ item.practice_loop_href }}">Practice this skill</a>
-            <a class="btn btn-surface" style="font-size:12px;padding:5px 10px" href="{{ item.graded_loop_href }}">Graded retry</a>
+            <a class="btn btn-glass" style="font-size:12px;padding:5px 10px"
+              href="{{ item.practice_loop_href }}">Practice this skill</a>
+            <a class="btn btn-surface" style="font-size:12px;padding:5px 10px" href="{{ item.graded_loop_href }}">Graded
+              retry</a>
           </div>
           {% endif %}
         </div>
@@ -186,9 +216,12 @@
           <div>
             <div style="display:flex;justify-content:space-between;margin-bottom:4px">
               <span class="body-sm">{{ c.label }}</span>
-              <span class="body-sm text-muted">{% if c.percent is not none %}{{ c.percent }}%{% else %}—{% endif %}</span>
+              <span class="body-sm text-muted">{% if c.percent is not none %}{{ c.percent }}%{% else %}—{% endif
+                %}</span>
             </div>
-            <div class="progress-track"><div class="progress-fill" {{ 'style="width:' ~ (c.percent if c.percent is not none else 0) ~ '%"' }}></div></div>
+            <div class="progress-track">
+              <div class="progress-fill" data-pct="{{ c.percent if c.percent is not none else 0 }}"></div>
+            </div>
           </div>
           {% endfor %}
         </div>
@@ -199,20 +232,30 @@
       <div class="card" style="padding:var(--sp-lg)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-sm)">
           <h3 class="headline-sm">Grade receipt</h3>
-          {% if receipt.sealed %}<span class="chip chip-mint">Sealed</span>{% else %}<span class="chip chip-sky">Evidence</span>{% endif %}
+          {% if receipt.sealed %}<span class="chip chip-mint">Sealed</span>{% else %}<span
+            class="chip chip-sky">Evidence</span>{% endif %}
         </div>
         <div class="body-sm" style="display:flex;flex-direction:column;gap:6px">
-          <div><span class="text-muted">Score</span> · {{ receipt.score }}/{{ receipt.max_score }} ({{ receipt.percent }}%)</div>
-          <div><span class="text-muted">Moodle</span> · {% if receipt.practice %}Skipped (practice){% elif receipt.grade_sent %}Synced{% elif receipt.ags_available %}Pending{% else %}AGS off{% endif %}</div>
-          {% if skill_xapi_count %}<div><span class="text-muted">Skill xAPI</span> · {{ skill_xapi_count }}</div>{% endif %}
+          <div><span class="text-muted">Score</span> · {{ receipt.score }}/{{ receipt.max_score }} ({{ receipt.percent
+            }}%)</div>
+          <div><span class="text-muted">Moodle</span> · {% if receipt.practice %}Skipped (practice){% elif
+            receipt.grade_sent %}Synced{% elif receipt.ags_available %}Pending{% else %}AGS off{% endif %}</div>
+          {% if skill_xapi_count %}<div><span class="text-muted">Skill xAPI</span> · {{ skill_xapi_count }}</div>{%
+          endif %}
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:var(--sp-md)">
-          <a class="btn btn-surface" href="/quiz/result/{{ attempt_id }}/receipt.json?token={{ quiz_token }}" style="font-size:12px">Download JSON</a>
-          <a class="btn btn-glass" href="/receipts/verify?token={{ quiz_token }}" style="font-size:12px">Verify a seal</a>
+          <a class="btn btn-surface" href="/quiz/result/{{ attempt_id }}/receipt.json?token={{ quiz_token }}"
+            style="font-size:12px">Download JSON</a>
+          <a class="btn btn-glass" href="/receipts/verify?token={{ quiz_token }}" style="font-size:12px">Verify a
+            seal</a>
         </div>
       </div>
       {% endif %}
     </aside>
   </div>
 </div>
+
+<script>
+  document.querySelectorAll('[data-pct]').forEach(el => { el.style.width = el.dataset.pct + '%'; });
+</script>
 {% endblock %}

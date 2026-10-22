@@ -44,7 +44,7 @@
         {% endif %}
       </div>
       {% if gap_path.progress_pct is defined %}
-      <div class="progress-track" style="margin-bottom:var(--sp-lg)"><div class="progress-fill" style="width:{{ gap_path.progress_pct }}%"></div></div>
+      <div class="progress-track" style="margin-bottom:var(--sp-lg)"><div class="progress-fill" data-pct="{{ gap_path.progress_pct }}"></div></div>
       {% endif %}
       {% if gap_path.skills %}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--sp-md)">
@@ -55,8 +55,8 @@
       {% endif %}
       <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
         {% for step in gap_path.steps %}
-        <div class="card" style="padding:var(--sp-md);display:flex;align-items:center;gap:var(--sp-md);border-left:3px solid {{ 'var(--primary)' if step.done else 'rgba(14,43,36,.12)' }}">
-          <div style="width:32px;height:32px;border-radius:10px;background:{{ 'rgba(52,211,153,.18)' if step.done else 'var(--surface-container)' }};color:{{ 'var(--primary)' if step.done else 'var(--on-surface-variant)' }};display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">
+        <div class="card" class="card {% if step.done %}step-done{% else %}step-pending{% endif %}" style="padding:var(--sp-md);display:flex;align-items:center;gap:var(--sp-md)">
+          <div class="step-icon {% if step.done %}step-icon-done{% else %}step-icon-pending{% endif %}" style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">
             {% if step.done %}✓{% else %}{{ step.n }}{% endif %}
           </div>
           <div style="flex:1;min-width:0">
@@ -124,4 +124,8 @@
     </aside>
   </div>
 </div>
+
+<script>
+  document.querySelectorAll('[data-pct]').forEach(el => { el.style.width = el.dataset.pct + '%'; });
+</script>
 {% endblock %}

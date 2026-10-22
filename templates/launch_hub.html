@@ -132,9 +132,12 @@
       <p class="body-sm text-muted">Short skill lessons for your gaps</p>
     </a>
     <a href="/manuals?token={{ quiz_token }}" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--primary)">
-      <span class="material-symbols-outlined" style="color:var(--primary)">menu_book</span>
-      <h3 class="headline-sm" style="margin-top:8px">Manual</h3>
-      <p class="body-sm text-muted">Open published eBook chapters</p>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="material-symbols-outlined" style="color:var(--primary)">auto_stories</span>
+        <span class="chip chip-mint" style="font-size:9.5px">4 eBooks</span>
+      </div>
+      <h3 class="headline-sm" style="margin-top:8px">eBooks &amp; Manuals</h3>
+      <p class="body-sm text-muted">Interactive EPUB3 readers with audio narration &amp; progress</p>
     </a>
     <a href="/quiz?token={{ quiz_token }}&practice=1" class="card" style="padding:var(--sp-lg);text-decoration:none;color:inherit;border-left:3px solid var(--secondary)">
       <span class="material-symbols-outlined" style="color:var(--secondary)">fitness_center</span>
@@ -413,9 +416,9 @@
           {% for s in roster %}
           {% set h1 = (loop.index * 37) % 360 %}
           {% set h2 = (loop.index * 37 + 40) % 360 %}
-          <div {{ 'style="display:flex;align-items:center;gap:var(--sp-sm);padding:8px var(--sp-sm);border-radius:var(--r-lg);transition:background .15s;animation:fadeSlideUp .25s ease both;animation-delay:' ~ (loop.index0 * 0.04) ~ 's"' }}
+          <div class="roster-item" data-delay="{{ loop.index0 * 0.04 }}"
                onmouseover="this.style.background='rgba(52,211,153,.08)'" onmouseout="this.style.background='transparent'">
-            <div class="avatar avatar-sm" {{ 'style="background:linear-gradient(135deg,hsl(' ~ h1 ~ ',60%,88%),hsl(' ~ h2 ~ ',50%,82%));color:hsl(' ~ h1 ~ ',50%,30%);font-weight:700;flex-shrink:0"' }}>
+            <div class="avatar avatar-sm avatar-dynamic" data-h1="{{ h1 }}" data-h2="{{ h2 }}">
               {{ (s.name or "?")[0].upper() }}
             </div>
             <div style="min-width:0;flex:1">
@@ -594,4 +597,16 @@
 
 {% endif %}
 </div>
+<style>
+  .roster-item { display:flex; align-items:center; gap:var(--sp-sm); padding:8px var(--sp-sm); border-radius:var(--r-lg); transition:background .15s; animation:fadeSlideUp .25s ease both; }
+  .avatar-dynamic { font-weight:700; flex-shrink:0; }
+</style>
+<script>
+  document.querySelectorAll('[data-delay]').forEach(el => { el.style.animationDelay = el.dataset.delay + 's'; });
+  document.querySelectorAll('[data-h1]').forEach(el => {
+    const h1 = el.dataset.h1, h2 = el.dataset.h2;
+    el.style.background = `linear-gradient(135deg,hsl(${h1},60%,88%),hsl(${h2},50%,82%))`;
+    el.style.color = `hsl(${h1},50%,30%)`;
+  });
+</script>
 {% endblock %}

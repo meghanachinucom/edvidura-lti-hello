@@ -213,7 +213,7 @@
         {# Row header #}
         <div style="display:flex;align-items:center;gap:var(--sp-md);padding:var(--sp-md) var(--sp-lg)">
           {# Position badge #}
-          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,{{ type_color }},transparent);border:1.5px solid {{ type_color }};display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:800;color:{{ type_color }};flex-shrink:0;opacity:{{ '1' if status_ok else '.5' }}">
+          <div class="type-icon-box" data-color="{{ type_color }}" data-status-ok="{{ '1' if status_ok else '0' }}" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:800;flex-shrink:0">
             {{ '%02d'|format(L.position) }}
           </div>
 
@@ -437,7 +437,7 @@
                      background:{{ 'rgba(52,211,153,.12)' if is_correct else 'transparent' }};
                      color:{{ 'var(--primary)' if is_correct else 'var(--on-surface-variant)' }};
                      font-size:13px;font-weight:{{ '600' if is_correct else '400' }}">
-            <span style="width:18px;height:18px;border-radius:50%;border:1.5px solid {{ 'var(--primary)' if is_correct else 'rgba(14,43,36,.2)' }};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;background:{{ 'var(--primary)' if is_correct else 'transparent' }};color:{{ '#fff' if is_correct else 'var(--on-surface-variant)' }}">
+            <span class="badge-check {% if is_correct %}badge-correct{% else %}badge-default{% endif %}" style="width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">
               {{ ['A','B','C','D'][loop.index0] }}
             </span>
             {{ c }}{% if is_correct %} <span class="material-symbols-outlined" style="font-size:14px;margin-left:auto">check_circle</span>{% endif %}

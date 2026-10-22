@@ -10,6 +10,11 @@ VERB_MASTERED = "http://adlnet.gov/expapi/verbs/mastered"
 # Ask Vidura / chat turns
 VERB_INTERACTED = "http://adlnet.gov/expapi/verbs/interacted"
 VERB_RESPONDED = "http://adlnet.gov/expapi/verbs/responded"
+# PeBL eBook reader verbs
+VERB_INITIALIZED = "http://adlnet.gov/expapi/verbs/initialized"
+VERB_PROGRESSED = "http://adlnet.gov/expapi/verbs/progressed"
+VERB_BOOKMARKED = "http://id.tincanapi.com/verb/bookmarked"
+VERB_ANNOTATED = "http://risc-inc.com/annotator/verbs/annotated"
 
 VERB_DISPLAY = {
     VERB_COMPLETED: "completed",
@@ -20,4 +25,8 @@ VERB_DISPLAY = {
     VERB_MASTERED: "mastered",
     VERB_INTERACTED: "interacted",
     VERB_RESPONDED: "responded",
+    VERB_INITIALIZED: "initialized",
+    VERB_PROGRESSED: "progressed",
+    VERB_BOOKMARKED: "bookmarked",
+    VERB_ANNOTATED: "annotated",
 }

@@ -219,37 +219,70 @@ def test_promote_tier_rejects_bad_tier():
         assert "tier" in str(exc).lower()
 
 
-def _db_ok() -> bool:
-    os.environ.setdefault(
-        "DATABASE_URL",
-        "postgresql://edvidura_app:edvidura_app@127.0.0.1:5433/edvidura",
-    )
-    try:
-        from app import db
+def test_record_quiz_attempt_persists(monkeypatch):
+    """Verify quiz attempt persistence and statement structure.
 
-        with db.connect() as conn:
-            conn.execute("SELECT 1 FROM xapi_statements LIMIT 1")
-        return True
-    except Exception:  # noqa: BLE001
-        return False
+    Requires an explicitly configured, verified disposable test database.
+    Fails closed if the target cannot be positively verified as a test database.
+    """
+    from tests.test_xapi_statement_identity import _get_verified_disposable_test_database_url
+    test_dsn = _get_verified_disposable_test_database_url()
+    if not test_dsn:
+        pytest.skip(
+            "Test requires an explicitly configured, verified disposable test database (EDVIDURA_TEST_DATABASE_URL). "
+            "Failing closed to prevent writing to the application database."
+        )
 
-
-@pytest.mark.skipif(not _db_ok(), reason="Postgres/xapi table not ready")
-def test_record_quiz_attempt_persists():
+    import dataclasses
+    from contextlib import contextmanager
+    import psycopg
+    from psycopg.rows import dict_row
+    from app import db
+    from app.settings import get_settings
     from app.tenancy import TENANT_A_ID
+
+    mock_settings = dataclasses.replace(get_settings(), database_url=test_dsn)
+    monkeypatch.setattr("app.settings.get_settings", lambda: mock_settings)
+    monkeypatch.setattr("app.db.get_settings", lambda: mock_settings)
+    monkeypatch.setattr("app.modules.xapi.service.get_settings", lambda: mock_settings)
+
+    def test_connect():
+        return psycopg.connect(test_dsn, row_factory=dict_row, connect_timeout=5)
+
+    @contextmanager
+    def test_tenant_conn(tenant_id):
+        tid = str(tenant_id)
+        with test_connect() as conn:
+            with conn.transaction():
+                conn.execute("SELECT set_config('app.tenant_id', %s, true)", (tid,))
+                yield conn
+
+    monkeypatch.setattr(db, "connect", test_connect)
+    monkeypatch.setattr(db, "tenant_connection", test_tenant_conn)
+    monkeypatch.setattr(db, "with_tenant", test_tenant_conn)
 
     subject = f"xapi-{uuid4().hex[:8]}"
     attempt_id = uuid4()
-    row = record_quiz_attempt(
-        tenant_id=TENANT_A_ID,
-        subject=subject,
-        learner_name="Test",
-        attempt_id=attempt_id,
-        score=3,
-        max_score=3,
-        course_label="demo",
-        send_lrs=False,
-    )
-    assert str(row["actor_sub"]) == subject
-    assert row["verb_id"] == verbs.VERB_PASSED
-    assert row["statement"]["result"]["score"]["raw"] == 3
+    row_sid = None
+    try:
+        row = record_quiz_attempt(
+            tenant_id=TENANT_A_ID,
+            subject=subject,
+            learner_name="Test",
+            attempt_id=attempt_id,
+            score=3,
+            max_score=3,
+            course_label="demo",
+            send_lrs=False,
+        )
+        row_sid = str(row["statement_id"])
+        assert str(row["actor_sub"]) == subject
+        assert row["verb_id"] == verbs.VERB_PASSED
+        assert row["statement"]["result"]["score"]["raw"] == 3
+    finally:
+        if row_sid:
+            try:
+                with db.tenant_connection(TENANT_A_ID) as conn:
+                    conn.execute("DELETE FROM xapi_statements WHERE statement_id = %s", (row_sid,))
+            except Exception:
+                pass

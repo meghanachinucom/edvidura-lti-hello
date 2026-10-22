@@ -1,6 +1,7 @@
 """Persist xAPI statements under RLS; tier promotion + LRS forward with retry."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import json
 import logging
 from typing import Any
@@ -14,10 +15,265 @@ from app.modules.xapi.builder import (
     build_skill_assessed_statement,
     build_coach_feedback_statement,
     build_coach_interacted_statement,
+    build_ebook_initialized_statement,
+    build_chapter_experienced_statement,
+    build_reading_progressed_statement,
+    build_bookmark_created_statement,
+    build_annotation_added_statement,
+    build_reading_completed_statement,
 )
 from app.settings import get_settings
 
 logger = logging.getLogger("edvidura.xapi")
+
+
+def record_ebook_initialized(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    manual_id: UUID | str,
+    manual_title: str,
+    version: int = 1,
+    statement_id: UUID | str | None = None,
+    homepage: str | None = None,
+    send_lrs: bool = True,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    settings = get_settings()
+    statement = build_ebook_initialized_statement(
+        tenant_id=tenant_id,
+        subject=subject,
+        learner_name=learner_name,
+        manual_id=manual_id,
+        manual_title=manual_title,
+        version=version,
+        homepage=homepage or settings.xapi_actor_homepage,
+        activity_base=settings.app_base_url,
+        statement_id=statement_id,
+        timestamp=timestamp,
+    )
+    return _store_and_maybe_send(
+        tenant_id=tenant_id,
+        statement=statement,
+        actor_sub=subject,
+        attempt_id=None,
+        source_event_id=None,
+        send_lrs=send_lrs,
+        promote_on_valid=True,
+    )
+
+
+def record_chapter_experienced(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    manual_id: UUID | str,
+    manual_title: str,
+    chapter_index: int,
+    chapter_title: str = "",
+    version: int = 1,
+    statement_id: UUID | str | None = None,
+    homepage: str | None = None,
+    send_lrs: bool = True,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    settings = get_settings()
+    statement = build_chapter_experienced_statement(
+        tenant_id=tenant_id,
+        subject=subject,
+        learner_name=learner_name,
+        manual_id=manual_id,
+        manual_title=manual_title,
+        chapter_index=chapter_index,
+        chapter_title=chapter_title,
+        version=version,
+        homepage=homepage or settings.xapi_actor_homepage,
+        activity_base=settings.app_base_url,
+        statement_id=statement_id,
+        timestamp=timestamp,
+    )
+    return _store_and_maybe_send(
+        tenant_id=tenant_id,
+        statement=statement,
+        actor_sub=subject,
+        attempt_id=None,
+        source_event_id=None,
+        send_lrs=send_lrs,
+        promote_on_valid=True,
+    )
+
+
+def record_reading_progressed(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    manual_id: UUID | str,
+    manual_title: str,
+    chapter_index: int,
+    progress_percent: int,
+    cfi: str | None = None,
+    version: int = 1,
+    statement_id: UUID | str | None = None,
+    homepage: str | None = None,
+    send_lrs: bool = True,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    settings = get_settings()
+    statement = build_reading_progressed_statement(
+        tenant_id=tenant_id,
+        subject=subject,
+        learner_name=learner_name,
+        manual_id=manual_id,
+        manual_title=manual_title,
+        chapter_index=chapter_index,
+        progress_percent=progress_percent,
+        cfi=cfi,
+        version=version,
+        homepage=homepage or settings.xapi_actor_homepage,
+        activity_base=settings.app_base_url,
+        statement_id=statement_id,
+        timestamp=timestamp,
+    )
+    return _store_and_maybe_send(
+        tenant_id=tenant_id,
+        statement=statement,
+        actor_sub=subject,
+        attempt_id=None,
+        source_event_id=None,
+        send_lrs=send_lrs,
+        promote_on_valid=True,
+    )
+
+
+def record_bookmark_created(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    manual_id: UUID | str,
+    manual_title: str,
+    chapter_index: int,
+    bookmark_title: str,
+    cfi: str | None = None,
+    version: int = 1,
+    statement_id: UUID | str | None = None,
+    homepage: str | None = None,
+    send_lrs: bool = True,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    settings = get_settings()
+    statement = build_bookmark_created_statement(
+        tenant_id=tenant_id,
+        subject=subject,
+        learner_name=learner_name,
+        manual_id=manual_id,
+        manual_title=manual_title,
+        chapter_index=chapter_index,
+        bookmark_title=bookmark_title,
+        cfi=cfi,
+        version=version,
+        homepage=homepage or settings.xapi_actor_homepage,
+        activity_base=settings.app_base_url,
+        statement_id=statement_id,
+        timestamp=timestamp,
+    )
+    return _store_and_maybe_send(
+        tenant_id=tenant_id,
+        statement=statement,
+        actor_sub=subject,
+        attempt_id=None,
+        source_event_id=None,
+        send_lrs=send_lrs,
+        promote_on_valid=True,
+    )
+
+
+def record_annotation_added(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    manual_id: UUID | str,
+    manual_title: str,
+    chapter_index: int,
+    annotation_text: str = "",
+    highlight_text: str = "",
+    color: str = "yellow",
+    cfi_range: str | None = None,
+    version: int = 1,
+    statement_id: UUID | str | None = None,
+    homepage: str | None = None,
+    send_lrs: bool = True,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    settings = get_settings()
+    statement = build_annotation_added_statement(
+        tenant_id=tenant_id,
+        subject=subject,
+        learner_name=learner_name,
+        manual_id=manual_id,
+        manual_title=manual_title,
+        chapter_index=chapter_index,
+        annotation_text=annotation_text,
+        highlight_text=highlight_text,
+        color=color,
+        cfi_range=cfi_range,
+        version=version,
+        homepage=homepage or settings.xapi_actor_homepage,
+        activity_base=settings.app_base_url,
+        statement_id=statement_id,
+        timestamp=timestamp,
+    )
+    return _store_and_maybe_send(
+        tenant_id=tenant_id,
+        statement=statement,
+        actor_sub=subject,
+        attempt_id=None,
+        source_event_id=None,
+        send_lrs=send_lrs,
+        promote_on_valid=True,
+    )
+
+
+def record_reading_completed(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    manual_id: UUID | str,
+    manual_title: str,
+    version: int = 1,
+    statement_id: UUID | str | None = None,
+    homepage: str | None = None,
+    send_lrs: bool = True,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    settings = get_settings()
+    statement = build_reading_completed_statement(
+        tenant_id=tenant_id,
+        subject=subject,
+        learner_name=learner_name,
+        manual_id=manual_id,
+        manual_title=manual_title,
+        version=version,
+        homepage=homepage or settings.xapi_actor_homepage,
+        activity_base=settings.app_base_url,
+        statement_id=statement_id,
+        timestamp=timestamp,
+    )
+    return _store_and_maybe_send(
+        tenant_id=tenant_id,
+        statement=statement,
+        actor_sub=subject,
+        attempt_id=None,
+        source_event_id=None,
+        send_lrs=send_lrs,
+        promote_on_valid=True,
+    )
+
 
 
 def record_quiz_attempt(
@@ -32,6 +288,7 @@ def record_quiz_attempt(
     homepage: str | None = None,
     source_event_id: UUID | str | None = None,
     send_lrs: bool = True,
+    timestamp: str | None = None,
 ) -> dict[str, Any]:
     settings = get_settings()
     statement = build_quiz_attempt_statement(
@@ -44,6 +301,7 @@ def record_quiz_attempt(
         course_label=course_label,
         homepage=homepage or settings.xapi_actor_homepage,
         activity_base=settings.app_base_url,
+        timestamp=timestamp,
     )
     return _store_and_maybe_send(
         tenant_id=tenant_id,
@@ -65,6 +323,7 @@ def record_lesson_completed(
     lesson_title: str,
     homepage: str | None = None,
     send_lrs: bool = True,
+    timestamp: str | None = None,
 ) -> dict[str, Any]:
     settings = get_settings()
     statement = build_lesson_completed_statement(
@@ -75,6 +334,7 @@ def record_lesson_completed(
         lesson_title=lesson_title,
         homepage=homepage or settings.xapi_actor_homepage,
         activity_base=settings.app_base_url,
+        timestamp=timestamp,
     )
     return _store_and_maybe_send(
         tenant_id=tenant_id,
@@ -97,6 +357,7 @@ def record_resource_experienced(
     resource_kind: str = "manual",
     homepage: str | None = None,
     send_lrs: bool = True,
+    timestamp: str | None = None,
 ) -> dict[str, Any]:
     settings = get_settings()
     statement = build_resource_experienced_statement(
@@ -108,6 +369,7 @@ def record_resource_experienced(
         resource_kind=resource_kind,
         homepage=homepage or settings.xapi_actor_homepage,
         activity_base=settings.app_base_url,
+        timestamp=timestamp,
     )
     return _store_and_maybe_send(
         tenant_id=tenant_id,
@@ -145,6 +407,7 @@ def record_coach_interaction(
     include_full_text: bool | None = None,
     homepage: str | None = None,
     send_lrs: bool = True,
+    timestamp: str | None = None,
 ) -> dict[str, Any]:
     """Persist a study-coach chat turn as xAPI interacted (under RLS).
 
@@ -283,6 +546,123 @@ def record_skill_assessments(
     return stored
 
 
+class StatementConflictError(ValueError):
+    """Raised when an incoming xAPI statement reuses an existing statement_id with different content (xAPI immutability violation)."""
+    pass
+
+
+def _iso_now() -> str:
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+
+def _parse_iso_datetime(val: Any) -> datetime | None:
+    """Parse an ISO 8601 string or datetime to a timezone-aware UTC datetime."""
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val if val.tzinfo is not None else val.replace(tzinfo=timezone.utc)
+    if not isinstance(val, str) or not val.strip():
+        return None
+    try:
+        dt = datetime.fromisoformat(val.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except Exception:
+        return None
+
+
+def _timestamps_equivalent(s1: dict[str, Any], s2: dict[str, Any]) -> bool:
+    """Compare timestamps semantically per xAPI 1.0.3 Section 4.1.1 & Section 2.4.7.
+
+    - If both statements omit timestamp, they match.
+    - If one statement omitted timestamp and the other's timestamp was assigned by the
+      LRS (matching 'stored'), they match per the timestamp-assignment exception.
+    - If both provide timestamps, they must represent the same instant in time
+      (accounting for timezone offsets).
+    - Different actual event times do not match.
+    """
+    t1 = s1.get("timestamp")
+    t2 = s2.get("timestamp")
+    if t1 == t2:
+        return True
+    if not t1 and not t2:
+        return True
+
+    stored1 = s1.get("stored") or s1.get("created_at")
+    stored2 = s2.get("stored") or s2.get("created_at")
+    dt_t1 = _parse_iso_datetime(t1)
+    dt_stored1 = _parse_iso_datetime(stored1)
+    dt_t2 = _parse_iso_datetime(t2)
+    dt_stored2 = _parse_iso_datetime(stored2)
+
+    # xAPI 1.0.3 Section 4.1.1 exception:
+    # "If the Statement in the LRS does not have a timestamp, or the timestamp was
+    # assigned by the LRS because none was provided, and the incoming Statement does
+    # not have a timestamp, they are considered to have matching timestamps."
+    if not t2:
+        if not t1:
+            return True
+        if dt_t1 is not None and dt_stored1 is not None and (dt_t1 == dt_stored1 or abs((dt_t1 - dt_stored1).total_seconds()) < 1.0):
+            return True
+        return False
+
+    if not t1:
+        if not t2:
+            return True
+        if dt_t2 is not None and dt_stored2 is not None and (dt_t2 == dt_stored2 or abs((dt_t2 - dt_stored2).total_seconds()) < 1.0):
+            return True
+        return False
+
+    if dt_t1 is not None and dt_t2 is not None:
+        return dt_t1 == dt_t2
+
+    return t1 == t2
+
+
+def _statements_identical(s1: dict[str, Any], s2: dict[str, Any]) -> bool:
+    """Compare two statements for xAPI equivalence per xAPI 1.0.3 Section 4.1.1.
+
+    Two Statements are considered equivalent if their IDs match and their:
+    - 'actor'
+    - 'verb'
+    - 'object'
+    - 'result'
+    - 'context'
+    - 'timestamp'
+    match.
+
+    Properties assigned or normalized by the LRS (stored, authority, version)
+    and attachments are excluded from the immutability conflict check.
+    Timestamps are compared semantically (across timezones) with the LRS-assignment
+    exception for omitted timestamps.
+    """
+    if not isinstance(s1, dict) or not isinstance(s2, dict):
+        return False
+    if s1 == s2:
+        return True
+
+    # 1. Statement ID must match
+    if s1.get("id") != s2.get("id"):
+        return False
+
+    # 2. Core immutable statement body properties per Section 4.1.1
+    for key in ("actor", "verb", "object", "result", "context"):
+        if s1.get(key) != s2.get(key):
+            return False
+
+    # 3. Semantic timestamp equivalence per Section 4.1.1 and 2.4.7
+    if not _timestamps_equivalent(s1, s2):
+        return False
+
+    return True
+
+
 def _store_and_maybe_send(
     *,
     tenant_id: UUID | str,
@@ -298,8 +678,43 @@ def _store_and_maybe_send(
     statement_id = str(statement.get("id") or "")
     tier = "transactional" if promote_on_valid and _statement_valid(statement) else "noisy"
     stored: dict[str, Any]
-    try:
-        with db.tenant_connection(tenant_id) as conn:
+
+    with db.tenant_connection(tenant_id) as conn:
+        # 1. Enforce xAPI Statement Immutability: Check if statement_id already exists
+        existing = conn.execute(
+            """
+            SELECT id, tenant_id, statement_id, verb_id, actor_sub, object_id,
+                   statement, sent_to_lrs, lrs_error, created_at, attempt_id,
+                   tier, lrs_attempts, promoted_at
+            FROM xapi_statements
+            WHERE statement_id = %s
+            """,
+            (statement_id,),
+        ).fetchone()
+
+        if existing:
+            existing_row = dict(existing)
+            existing_stmt = existing_row.get("statement")
+            if isinstance(existing_stmt, str):
+                try:
+                    existing_stmt = json.loads(existing_stmt)
+                except Exception:
+                    existing_stmt = {}
+
+            if _statements_identical(existing_stmt, statement):
+                # Identical statement retry: treat as idempotent no-op.
+                # Do NOT update the stored statement or change created_at.
+                return existing_row
+            else:
+                # Conflicting statement with existing ID but different content.
+                # Per xAPI 1.0.3 immutability rules, statements MUST NOT be updated.
+                raise StatementConflictError(
+                    f"xAPI statement conflict: Statement with ID '{statement_id}' already exists with different content. "
+                    "xAPI statements are immutable and cannot be overwritten."
+                )
+
+        # 2. Insert new statement without overwrite (ON CONFLICT DO NOTHING)
+        try:
             row = conn.execute(
                 """
                 INSERT INTO xapi_statements (
@@ -310,10 +725,7 @@ def _store_and_maybe_send(
                     %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s,
                     CASE WHEN %s = 'transactional' THEN now() ELSE NULL END
                 )
-                ON CONFLICT (statement_id) DO UPDATE SET
-                    statement = EXCLUDED.statement,
-                    tier = EXCLUDED.tier,
-                    promoted_at = COALESCE(xapi_statements.promoted_at, EXCLUDED.promoted_at)
+                ON CONFLICT (statement_id) DO NOTHING
                 RETURNING id, tenant_id, statement_id, verb_id, actor_sub, object_id,
                           statement, sent_to_lrs, lrs_error, created_at, attempt_id,
                           tier, lrs_attempts, promoted_at
@@ -331,11 +743,35 @@ def _store_and_maybe_send(
                     tier,
                 ),
             ).fetchone()
-            stored = dict(row)
-    except Exception as exc:  # noqa: BLE001
-        # Pre-migration DBs without tier columns
-        logger.warning("xAPI tier insert failed, falling back: %s", exc)
-        with db.tenant_connection(tenant_id) as conn:
+            if row:
+                stored = dict(row)
+            else:
+                # Concurrent race condition: fetched concurrently inserted row
+                row = conn.execute(
+                    """
+                    SELECT id, tenant_id, statement_id, verb_id, actor_sub, object_id,
+                           statement, sent_to_lrs, lrs_error, created_at, attempt_id,
+                           tier, lrs_attempts, promoted_at
+                    FROM xapi_statements
+                    WHERE statement_id = %s
+                    """,
+                    (statement_id,),
+                ).fetchone()
+                if not row:
+                    raise RuntimeError(f"Could not retrieve statement {statement_id}")
+                stored = dict(row)
+                existing_stmt = stored.get("statement")
+                if isinstance(existing_stmt, str):
+                    existing_stmt = json.loads(existing_stmt)
+                if not _statements_identical(existing_stmt, statement):
+                    raise StatementConflictError(
+                        f"Concurrent conflict: ID '{statement_id}' already exists with different content."
+                    )
+        except StatementConflictError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            # Pre-migration fallback without tier columns
+            logger.warning("xAPI tier insert failed, falling back: %s", exc)
             row = conn.execute(
                 """
                 INSERT INTO xapi_statements (
@@ -343,8 +779,7 @@ def _store_and_maybe_send(
                     statement, source_event_id, attempt_id
                 )
                 VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s, %s)
-                ON CONFLICT (statement_id) DO UPDATE SET
-                    statement = EXCLUDED.statement
+                ON CONFLICT (statement_id) DO NOTHING
                 RETURNING id, tenant_id, statement_id, verb_id, actor_sub, object_id,
                           statement, sent_to_lrs, lrs_error, created_at, attempt_id
                 """,
@@ -359,8 +794,28 @@ def _store_and_maybe_send(
                     str(attempt_id) if attempt_id else None,
                 ),
             ).fetchone()
-            stored = dict(row)
-            stored["tier"] = tier
+            if row:
+                stored = dict(row)
+                stored["tier"] = tier
+            else:
+                row = conn.execute(
+                    """
+                    SELECT id, tenant_id, statement_id, verb_id, actor_sub, object_id,
+                           statement, sent_to_lrs, lrs_error, created_at, attempt_id
+                    FROM xapi_statements
+                    WHERE statement_id = %s
+                    """,
+                    (statement_id,),
+                ).fetchone()
+                stored = dict(row)
+                stored["tier"] = tier
+                existing_stmt = stored.get("statement")
+                if isinstance(existing_stmt, str):
+                    existing_stmt = json.loads(existing_stmt)
+                if not _statements_identical(existing_stmt, statement):
+                    raise StatementConflictError(
+                        f"Concurrent conflict: ID '{statement_id}' already exists with different content."
+                    )
 
     if send_lrs:
         ok, err, attempts = forward_to_lrs(statement, retries=3)

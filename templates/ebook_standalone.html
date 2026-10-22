@@ -7,7 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="/static/css/shell.css?v=ebook1"/>
+
 </head>
 <body class="role-student ebook-standalone">
   <a class="skip-link" href="#manual-body">Skip to content</a>
@@ -25,14 +27,44 @@
         <h1 class="ebook-toc-title">Chapters</h1>
         <ol>
           {% for ch in toc %}
-          <li><a href="#{{ ch.slug }}">{{ ch.title }}</a></li>
+          <li>
+            {% if is_epub and ch.chap_index is defined %}
+            <a href="/read/manuals/{{ manual.id }}?tid={{ tid }}&v={{ version.version }}&sig={{ sig }}&chapter={{ ch.chap_index }}"
+               class="{% if chap_idx == ch.chap_index %}on{% endif %}">{{ ch.title }}</a>
+            {% else %}
+            <a href="#{{ ch.slug }}">{{ ch.title }}</a>
+            {% endif %}
+          </li>
           {% endfor %}
         </ol>
       </nav>
       {% endif %}
       <div class="ebook-main">
         <h1 class="welcome-title">{{ manual.title }}</h1>
-        {% if body_html %}
+        {% if is_epub and chapter_url %}
+        <div class="card" style="padding:0;overflow:hidden;margin-bottom:var(--sp-lg);border-radius:var(--r-2xl);background:var(--surface-container-lowest);border:1.5px solid rgba(14,43,36,.08);box-shadow:var(--shadow-l1)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--surface-container-low);border-bottom:1px solid rgba(14,43,36,.06)">
+            <span class="body-sm" style="font-weight:600;color:var(--on-surface)">
+              Chapter {{ chap_idx + 1 }} of {{ total_chapters }} · {{ current_chapter_title }}
+            </span>
+            <div style="display:flex;gap:8px">
+              {% if prev_chap_url %}
+              <a href="{{ prev_chap_url }}" class="btn btn-glass" style="font-size:12px;padding:5px 12px;display:inline-flex;align-items:center;gap:4px">
+                <span class="material-symbols-outlined" style="font-size:14px">chevron_left</span> Previous
+              </a>
+              {% endif %}
+              {% if next_chap_url %}
+              <a href="{{ next_chap_url }}" class="btn btn-primary" style="font-size:12px;padding:5px 12px;display:inline-flex;align-items:center;gap:4px">
+                Next <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          <iframe id="manual-body" src="{{ chapter_url }}" title="{{ current_chapter_title }}"
+                  style="width:100%;height:680px;border:none;background:#ffffff;display:block"
+                  sandbox="allow-same-origin"></iframe>
+        </div>
+        {% elif body_html %}
         <div class="lesson-prose" id="manual-body" tabindex="-1">{{ body_html | safe }}</div>
         {% endif %}
         <p class="meta">Standalone read path · signed link · grades stay in your LMS.</p>
@@ -42,7 +74,7 @@
   {% if focus %}
   <script>
   (function () {
-    var id = {{ focus | tojson }};
+    var id = "{{ focus }}";
     var el = id && document.getElementById(id);
     if (el) { el.classList.add("manual-focus"); el.scrollIntoView({behavior:"smooth", block:"start"}); }
   })();
