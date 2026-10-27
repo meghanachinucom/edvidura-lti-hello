@@ -1,6 +1,8 @@
-"""Versioned technical manuals (Slice B content start — no AI)."""
+"""Versioned technical manuals & EPUB3 eBook support (Phase 1)."""
 from __future__ import annotations
 
+import json
+from pathlib import Path
 import re
 from typing import Any
 from uuid import UUID
@@ -12,6 +14,16 @@ from app.modules.content.service import body_md_to_html
 def _slugify(text: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
     return (s or "manual")[:80]
+
+
+def get_epub_storage_dir(
+    tenant_id: UUID | str, manual_id: UUID | str, version: int
+) -> Path:
+    """Return canonical local filesystem directory for extracted EPUB assets."""
+    base = Path(__file__).resolve().parents[2] / "static" / "uploads" / "epub"
+    target = base / str(tenant_id) / str(manual_id) / str(version)
+    target.mkdir(parents=True, exist_ok=True)
+    return target
 
 
 def list_manuals(
@@ -206,6 +218,10 @@ def create_manual(
     subject: str = "",
     publish: bool = True,
     source_language: str = "en-IN",
+    content_type: str = "markdown",
+    epub_filename: str | None = None,
+    epub_sha256: str | None = None,
+    epub_manifest: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     from app.modules.ai_tutor.voice import normalize_voice_lang
 
@@ -238,88 +254,180 @@ def create_manual(
             """,
             (tid, slug, title_clean, description or "", status, src),
         ).fetchone()
-        version = conn.execute(
-            """
-            INSERT INTO manual_versions (
-                tenant_id, manual_id, version, body_md, changelog,
-                is_published, created_by_subject, published_at
-            )
-            VALUES (%s, %s, 1, %s, %s, %s, %s, CASE WHEN %s THEN now() ELSE NULL END)
-            RETURNING id, manual_id, version, body_md, changelog, is_published,
-                      created_by_subject, created_at, published_at
-            """,
-            (
-                tid,
-                str(manual["id"]),
-                body_md or "",
-                "Initial version",
-                publish,
-                subject or "",
-                publish,
-            ),
-        ).fetchone()
+
+        manifest_json = json.dumps(epub_manifest) if epub_manifest else None
+        try:
+            version = conn.execute(
+                """
+                INSERT INTO manual_versions (
+                    tenant_id, manual_id, version, body_md, changelog,
+                    is_published, created_by_subject, published_at,
+                    content_type, epub_filename, epub_sha256, epub_manifest
+                )
+                VALUES (%s, %s, 1, %s, %s, %s, %s, CASE WHEN %s THEN now() ELSE NULL END, %s, %s, %s, %s::jsonb)
+                RETURNING id, manual_id, version, body_md, changelog, is_published,
+                          created_by_subject, created_at, published_at,
+                          content_type, epub_filename, epub_sha256, epub_manifest
+                """,
+                (
+                    tid,
+                    str(manual["id"]),
+                    body_md or "",
+                    "Initial version",
+                    publish,
+                    subject or "",
+                    publish,
+                    content_type or "markdown",
+                    epub_filename,
+                    epub_sha256,
+                    manifest_json,
+                ),
+            ).fetchone()
+        except Exception:
+            # Fallback for un-migrated DBs without EPUB columns
+            version = conn.execute(
+                """
+                INSERT INTO manual_versions (
+                    tenant_id, manual_id, version, body_md, changelog,
+                    is_published, created_by_subject, published_at
+                )
+                VALUES (%s, %s, 1, %s, %s, %s, %s, CASE WHEN %s THEN now() ELSE NULL END)
+                RETURNING id, manual_id, version, body_md, changelog, is_published,
+                          created_by_subject, created_at, published_at
+                """,
+                (
+                    tid,
+                    str(manual["id"]),
+                    body_md or "",
+                    "Initial version",
+                    publish,
+                    subject or "",
+                    publish,
+                ),
+            ).fetchone()
+
         out = dict(manual)
-        out["latest_version"] = dict(version)
+        v_dict = dict(version)
+        v_dict.setdefault("content_type", content_type or "markdown")
+        out["latest_version"] = v_dict
         return out
+
+
+def _parse_version_row(row: Any) -> dict[str, Any]:
+    item = dict(row)
+    item.setdefault("content_type", "markdown")
+    item.setdefault("epub_filename", None)
+    item.setdefault("epub_sha256", None)
+    item.setdefault("epub_manifest", None)
+    manifest = item.get("epub_manifest")
+    if isinstance(manifest, str):
+        try:
+            item["epub_manifest"] = json.loads(manifest)
+        except Exception:
+            pass
+    return item
 
 
 def list_versions(tenant_id: UUID | str, manual_id: UUID | str) -> list[dict[str, Any]]:
     with db.tenant_connection(tenant_id) as conn:
-        rows = conn.execute(
-            """
-            SELECT id, manual_id, version, body_md, changelog, is_published,
-                   created_by_subject, created_at, published_at
-            FROM manual_versions
-            WHERE manual_id = %s
-            ORDER BY version DESC
-            """,
-            (str(manual_id),),
-        ).fetchall()
-        return [dict(r) for r in rows]
+        try:
+            rows = conn.execute(
+                """
+                SELECT id, manual_id, version, body_md, changelog, is_published,
+                       created_by_subject, created_at, published_at,
+                       content_type, epub_filename, epub_sha256, epub_manifest
+                FROM manual_versions
+                WHERE manual_id = %s
+                ORDER BY version DESC
+                """,
+                (str(manual_id),),
+            ).fetchall()
+        except Exception:
+            rows = conn.execute(
+                """
+                SELECT id, manual_id, version, body_md, changelog, is_published,
+                       created_by_subject, created_at, published_at
+                FROM manual_versions
+                WHERE manual_id = %s
+                ORDER BY version DESC
+                """,
+                (str(manual_id),),
+            ).fetchall()
+        return [_parse_version_row(r) for r in rows]
 
 
 def get_version(
     tenant_id: UUID | str, *, manual_id: UUID | str, version: int
 ) -> dict[str, Any] | None:
     with db.tenant_connection(tenant_id) as conn:
-        row = conn.execute(
-            """
-            SELECT id, manual_id, version, body_md, changelog, is_published,
-                   created_by_subject, created_at, published_at
-            FROM manual_versions
-            WHERE manual_id = %s AND version = %s
-            """,
-            (str(manual_id), int(version)),
-        ).fetchone()
-        return dict(row) if row else None
+        try:
+            row = conn.execute(
+                """
+                SELECT id, manual_id, version, body_md, changelog, is_published,
+                       created_by_subject, created_at, published_at,
+                       content_type, epub_filename, epub_sha256, epub_manifest
+                FROM manual_versions
+                WHERE manual_id = %s AND version = %s
+                """,
+                (str(manual_id), int(version)),
+            ).fetchone()
+        except Exception:
+            row = conn.execute(
+                """
+                SELECT id, manual_id, version, body_md, changelog, is_published,
+                       created_by_subject, created_at, published_at
+                FROM manual_versions
+                WHERE manual_id = %s AND version = %s
+                """,
+                (str(manual_id), int(version)),
+            ).fetchone()
+        return _parse_version_row(row) if row else None
 
 
 def latest_published_version(
     tenant_id: UUID | str, manual_id: UUID | str
 ) -> dict[str, Any] | None:
     with db.tenant_connection(tenant_id) as conn:
-        row = conn.execute(
-            """
-            SELECT id, manual_id, version, body_md, changelog, is_published,
-                   created_by_subject, created_at, published_at
-            FROM manual_versions
-            WHERE manual_id = %s AND is_published = TRUE
-            ORDER BY version DESC
-            LIMIT 1
-            """,
-            (str(manual_id),),
-        ).fetchone()
-        return dict(row) if row else None
+        try:
+            row = conn.execute(
+                """
+                SELECT id, manual_id, version, body_md, changelog, is_published,
+                       created_by_subject, created_at, published_at,
+                       content_type, epub_filename, epub_sha256, epub_manifest
+                FROM manual_versions
+                WHERE manual_id = %s AND is_published = TRUE
+                ORDER BY version DESC
+                LIMIT 1
+                """,
+                (str(manual_id),),
+            ).fetchone()
+        except Exception:
+            row = conn.execute(
+                """
+                SELECT id, manual_id, version, body_md, changelog, is_published,
+                       created_by_subject, created_at, published_at
+                FROM manual_versions
+                WHERE manual_id = %s AND is_published = TRUE
+                ORDER BY version DESC
+                LIMIT 1
+                """,
+                (str(manual_id),),
+            ).fetchone()
+        return _parse_version_row(row) if row else None
 
 
 def add_version(
     *,
     tenant_id: UUID | str,
     manual_id: UUID | str,
-    body_md: str,
+    body_md: str = "",
     changelog: str = "",
     subject: str = "",
     publish: bool = False,
+    content_type: str = "markdown",
+    epub_filename: str | None = None,
+    epub_sha256: str | None = None,
+    epub_manifest: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     tid = str(tenant_id)
     with db.tenant_connection(tid) as conn:
@@ -334,33 +442,65 @@ def add_version(
             (str(manual_id),),
         ).fetchone()
         version_n = int(pos["n"])
-        row = conn.execute(
-            """
-            INSERT INTO manual_versions (
-                tenant_id, manual_id, version, body_md, changelog,
-                is_published, created_by_subject, published_at
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, CASE WHEN %s THEN now() ELSE NULL END)
-            RETURNING id, manual_id, version, body_md, changelog, is_published,
-                      created_by_subject, created_at, published_at
-            """,
-            (
-                tid,
-                str(manual_id),
-                version_n,
-                body_md or "",
-                changelog or f"Version {version_n}",
-                publish,
-                subject or "",
-                publish,
-            ),
-        ).fetchone()
+
+        manifest_json = json.dumps(epub_manifest) if epub_manifest else None
+        try:
+            row = conn.execute(
+                """
+                INSERT INTO manual_versions (
+                    tenant_id, manual_id, version, body_md, changelog,
+                    is_published, created_by_subject, published_at,
+                    content_type, epub_filename, epub_sha256, epub_manifest
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, CASE WHEN %s THEN now() ELSE NULL END, %s, %s, %s, %s::jsonb)
+                RETURNING id, manual_id, version, body_md, changelog, is_published,
+                          created_by_subject, created_at, published_at,
+                          content_type, epub_filename, epub_sha256, epub_manifest
+                """,
+                (
+                    tid,
+                    str(manual_id),
+                    version_n,
+                    body_md or "",
+                    changelog or f"Version {version_n}",
+                    publish,
+                    subject or "",
+                    publish,
+                    content_type or "markdown",
+                    epub_filename,
+                    epub_sha256,
+                    manifest_json,
+                ),
+            ).fetchone()
+        except Exception:
+            row = conn.execute(
+                """
+                INSERT INTO manual_versions (
+                    tenant_id, manual_id, version, body_md, changelog,
+                    is_published, created_by_subject, published_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, CASE WHEN %s THEN now() ELSE NULL END)
+                RETURNING id, manual_id, version, body_md, changelog, is_published,
+                          created_by_subject, created_at, published_at
+                """,
+                (
+                    tid,
+                    str(manual_id),
+                    version_n,
+                    body_md or "",
+                    changelog or f"Version {version_n}",
+                    publish,
+                    subject or "",
+                    publish,
+                ),
+            ).fetchone()
+
         if publish:
             conn.execute(
                 "UPDATE manuals SET status = 'published' WHERE id = %s",
                 (str(manual_id),),
             )
-        return dict(row)
+        return _parse_version_row(row)
 
 
 def publish_version(
@@ -370,22 +510,35 @@ def publish_version(
     version: int,
 ) -> dict[str, Any] | None:
     with db.tenant_connection(tenant_id) as conn:
-        row = conn.execute(
-            """
-            UPDATE manual_versions
-            SET is_published = TRUE, published_at = COALESCE(published_at, now())
-            WHERE manual_id = %s AND version = %s
-            RETURNING id, manual_id, version, body_md, changelog, is_published,
-                      created_by_subject, created_at, published_at
-            """,
-            (str(manual_id), int(version)),
-        ).fetchone()
+        try:
+            row = conn.execute(
+                """
+                UPDATE manual_versions
+                SET is_published = TRUE, published_at = COALESCE(published_at, now())
+                WHERE manual_id = %s AND version = %s
+                RETURNING id, manual_id, version, body_md, changelog, is_published,
+                          created_by_subject, created_at, published_at,
+                          content_type, epub_filename, epub_sha256, epub_manifest
+                """,
+                (str(manual_id), int(version)),
+            ).fetchone()
+        except Exception:
+            row = conn.execute(
+                """
+                UPDATE manual_versions
+                SET is_published = TRUE, published_at = COALESCE(published_at, now())
+                WHERE manual_id = %s AND version = %s
+                RETURNING id, manual_id, version, body_md, changelog, is_published,
+                          created_by_subject, created_at, published_at
+                """,
+                (str(manual_id), int(version)),
+            ).fetchone()
         if row:
             conn.execute(
                 "UPDATE manuals SET status = 'published' WHERE id = %s",
                 (str(manual_id),),
             )
-        return dict(row) if row else None
+        return _parse_version_row(row) if row else None
 
 
 def render_body(body_md: str) -> str:
@@ -393,11 +546,7 @@ def render_body(body_md: str) -> str:
 
 
 def toc_from_body(body_md: str) -> list[dict[str, str]]:
-    """
-    PeBL-ish chapter TOC from ## headings.
-
-    Returns [{slug, title}] — same slugs as heading ids in render_body.
-    """
+    """PeBL-ish chapter TOC from ## headings."""
     from app.modules.sme.service import split_manual_sections
 
     sections = split_manual_sections(body_md)

@@ -32,7 +32,7 @@
       </div>
     </div>
     <div class="quiz-progress-track" aria-hidden="true">
-      <div class="quiz-progress-fill" style="width:{{ pct }}%"></div>
+      <div class="quiz-progress-fill" data-pct="{{ pct }}"></div>
     </div>
   </section>
 
@@ -69,7 +69,7 @@
           · {{ (total - done) if total else 0 }} still open
         </p>
         <div class="quiz-gate-meter" aria-hidden="true">
-          <div class="quiz-gate-meter-fill" style="width:{{ pct }}%"></div>
+          <div class="quiz-gate-meter-fill" data-pct="{{ pct }}"></div>
         </div>
       </div>
 
@@ -95,4 +95,8 @@
     </aside>
   </div>
 </div>
+
+<script>
+  document.querySelectorAll('[data-pct]').forEach(el => { el.style.width = el.dataset.pct + '%'; });
+</script>
 {% endblock %}

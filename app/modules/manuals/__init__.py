@@ -1,5 +1,6 @@
 """Versioned technical manuals / PeBL-ish eBook path."""
 
+from app.modules.manuals.epub import EPUBValidationError, validate_and_extract_epub
 from app.modules.manuals.locales import (
     STATE_LANGUAGE,
     language_for_state,
@@ -8,12 +9,29 @@ from app.modules.manuals.locales import (
     normalize_state,
     resolve_preferred_language,
 )
+from app.modules.manuals.pebl_phase2 import (
+    DatabaseUnavailableError,
+    create_annotation,
+    create_bookmark,
+    delete_annotation,
+    delete_bookmark,
+    generate_epub_cfi,
+    get_annotation,
+    get_bookmark,
+    get_reading_progress,
+    list_annotations,
+    list_bookmarks,
+    parse_epub_cfi,
+    save_reading_progress,
+    update_annotation,
+)
 from app.modules.manuals.service import (
     add_version,
     class_ids_for_manual,
     clear_auto_locales,
     create_manual,
     ensure_auto_translated_locale,
+    get_epub_storage_dir,
     get_locale,
     get_manual,
     get_version,
@@ -45,6 +63,7 @@ __all__ = [
     "clear_auto_locales",
     "create_manual",
     "ensure_auto_translated_locale",
+    "get_epub_storage_dir",
     "get_locale",
     "get_manual",
     "get_version",
@@ -72,4 +91,20 @@ __all__ = [
     "unlink_manual_from_class",
     "upsert_locale",
     "verify_reader_token",
+    "validate_and_extract_epub",
+    "EPUBValidationError",
+    "DatabaseUnavailableError",
+    "save_reading_progress",
+    "get_reading_progress",
+    "create_bookmark",
+    "get_bookmark",
+    "list_bookmarks",
+    "delete_bookmark",
+    "create_annotation",
+    "get_annotation",
+    "list_annotations",
+    "update_annotation",
+    "delete_annotation",
+    "generate_epub_cfi",
+    "parse_epub_cfi",
 ]

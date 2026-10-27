@@ -4935,22 +4935,116 @@ async def manuals_list(request: Request, token: str | None = None):
             session["tenant_id"], class_id
         )
         subtitle = "Published manuals for this class"
-    elif session.get("is_instructor") or session.get("is_school_admin"):
-        # No LTI class on session — teachers still manage via /teacher/manuals
-        rows = []
-        subtitle = "Launch from a Moodle class to see that class’s manuals"
     else:
-        rows = []
-        subtitle = "No class on this launch — open Manuals from your Moodle course"
+        rows = manuals_mod.list_manuals(session["tenant_id"])
+        subtitle = "Curated interactive eBooks with audio narration and xAPI tracking"
+
+    META_MAP = {
+        "welding-demo-handbook": {
+            "category": "Vocational & Engineering",
+            "course_align": "Moodle Course 2: Welding Demo",
+            "icon": "precision_manufacturing",
+            "gradient": "linear-gradient(135deg, #ea580c 0%, #c2410c 50%, #7c2d12 100%)",
+            "accent": "#ea580c",
+            "read_time": "12 min read",
+            "level": "Vocational / CTE",
+            "subject_tag": "welding",
+            "highlight": "Aligned with Moodle Course 2",
+        },
+        "pebl-demo-ebook": {
+            "category": "Physical Sciences",
+            "course_align": "PeBL Core Science & Inquiry",
+            "icon": "biotech",
+            "gradient": "linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%)",
+            "accent": "#0f766e",
+            "read_time": "15 min read",
+            "level": "Undergraduate / AP",
+            "subject_tag": "science",
+            "highlight": "PeBL Interactive Standard",
+        },
+        "algebra-i-study-handbook": {
+            "category": "Mathematics",
+            "course_align": "Class 8 Algebra Foundations",
+            "icon": "functions",
+            "gradient": "linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e3a8a 100%)",
+            "accent": "#2563eb",
+            "read_time": "14 min read",
+            "level": "Secondary Math",
+            "subject_tag": "algebra",
+            "highlight": "Class 8 Curriculum Aligned",
+        },
+        "biology-life-sciences": {
+            "category": "Life Sciences",
+            "course_align": "Cellular Systems & Genetics",
+            "icon": "psychology",
+            "gradient": "linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #4c1d95 100%)",
+            "accent": "#7c3aed",
+            "read_time": "16 min read",
+            "level": "Core Biology",
+            "subject_tag": "biology",
+            "highlight": "Cellular Biology Mastery",
+        },
+    }
+
+    subject = str(session.get("subject") or "")
+    enriched_manuals = []
+    for m in rows:
+        m_dict = dict(m)
+        slug = m_dict.get("slug")
+        meta = META_MAP.get(slug, {
+            "category": "General Curriculum",
+            "course_align": "School Library",
+            "icon": "menu_book",
+            "gradient": "linear-gradient(135deg, #059669 0%, #047857 100%)",
+            "accent": "#059669",
+            "read_time": "10 min read",
+            "level": "General",
+            "subject_tag": "general",
+            "highlight": "Published eBook",
+        })
+        m_dict.update(meta)
+
+        pub = manuals_mod.latest_published_version(session["tenant_id"], m_dict["id"])
+        if pub:
+            m_dict["version_num"] = pub.get("version", 1)
+            m_dict["content_type"] = pub.get("content_type", "markdown")
+            manifest = pub.get("epub_manifest") or {}
+            spine = manifest.get("spine") or []
+            m_dict["chapters_count"] = len(spine) if spine else 4
+        else:
+            m_dict["version_num"] = 1
+            m_dict["content_type"] = "markdown"
+            m_dict["chapters_count"] = 4
+
+        try:
+            prog = manuals_mod.get_reading_progress(
+                tenant_id=session["tenant_id"],
+                manual_id=m_dict["id"],
+                version=m_dict["version_num"],
+                subject=subject,
+            )
+        except Exception:  # noqa: BLE001
+            prog = None
+        if prog:
+            m_dict["progress_percent"] = int(prog.get("progress_percent") or 0)
+            m_dict["time_spent_seconds"] = int(prog.get("time_spent_seconds") or 0)
+            m_dict["last_chapter_index"] = prog.get("chapter_index")
+        else:
+            m_dict["progress_percent"] = 0
+            m_dict["time_spent_seconds"] = 0
+            m_dict["last_chapter_index"] = None
+
+        enriched_manuals.append(m_dict)
+
     return _shell(
         request,
         "manuals.html",
         session,
         active_page="manuals",
-        page_title="Technical manuals",
+        page_title="Interactive eBooks Library",
         page_subtitle=subtitle,
         extra={
-            "manuals": rows,
+            "manuals": enriched_manuals,
             "class_scoped": bool(class_id),
             "bound_class_id": class_id,
         },
@@ -4969,6 +5063,8 @@ async def manual_read(
     lang: str | None = None,
     state: str | None = None,
     retranslate: str | None = None,
+    chapter: int | None = None,
+    cfi: str | None = None,
 ):
     from app.modules import manuals as manuals_mod
 
@@ -5021,6 +5117,8 @@ async def manual_read(
             version = None
     else:
         version = manuals_mod.latest_published_version(session["tenant_id"], manual_id)
+        if not version and session.get("is_instructor") and versions:
+            version = versions[0]
     if not version:
         return _shell(
             request,
@@ -5132,6 +5230,202 @@ async def manual_read(
     }
     published_langs.add(str(manual.get("source_language") or "en-IN"))
 
+    subject = str(session.get("subject") or "")
+    saved_progress = manuals_mod.get_reading_progress(
+        tenant_id=session["tenant_id"],
+        manual_id=manual_id,
+        version=int(version["version"]),
+        subject=subject,
+    )
+    bookmarks_list = manuals_mod.list_bookmarks(
+        tenant_id=session["tenant_id"],
+        manual_id=manual_id,
+        version=int(version["version"]),
+        subject=subject,
+    )
+    annotations_list = manuals_mod.list_annotations(
+        tenant_id=session["tenant_id"],
+        manual_id=manual_id,
+        version=int(version["version"]),
+        subject=subject,
+    )
+
+    is_epub = version.get("content_type") == "epub"
+    chapter_url = None
+    prev_chap_url = None
+    next_chap_url = None
+    chap_idx = 0
+    total_chapters = 0
+    current_chapter_title = ""
+
+    if is_epub:
+        manifest = version.get("epub_manifest") or {}
+        spine = manifest.get("spine") or []
+        toc_items = manifest.get("toc") or []
+        total_chapters = len(spine)
+        if total_chapters > 0:
+            if chapter is not None:
+                chap_idx = max(0, min(int(chapter), total_chapters - 1))
+            elif cfi:
+                parsed_cfi = manuals_mod.parse_epub_cfi(cfi)
+                if parsed_cfi and "chapter_index" in parsed_cfi:
+                    chap_idx = max(0, min(int(parsed_cfi["chapter_index"]), total_chapters - 1))
+                elif saved_progress and "chapter_index" in saved_progress:
+                    chap_idx = max(0, min(int(saved_progress["chapter_index"]), total_chapters - 1))
+                else:
+                    chap_idx = 0
+            elif saved_progress and "chapter_index" in saved_progress:
+                chap_idx = max(0, min(int(saved_progress["chapter_index"]), total_chapters - 1))
+            else:
+                chap_idx = 0
+
+            current_spine = spine[chap_idx]
+            current_chapter_title = current_spine.get("title") or f"Chapter {chap_idx + 1}"
+            rel_path = current_spine.get("full_href") or current_spine.get("href") or ""
+            chapter_url = f"/manuals/{manual_id}/epub-files/{rel_path}?v={version['version']}&token={token_s}"
+            if chap_idx > 0:
+                prev_chap_url = f"/manuals/{manual_id}?token={token_s}&v={version['version']}&chapter={chap_idx - 1}"
+            if chap_idx < total_chapters - 1:
+                next_chap_url = f"/manuals/{manual_id}?token={token_s}&v={version['version']}&chapter={chap_idx + 1}"
+
+        formatted_toc = []
+        if toc_items:
+            for idx, item in enumerate(toc_items):
+                formatted_toc.append({
+                    "title": item.get("title") or f"Chapter {idx + 1}",
+                    "chap_index": idx if idx < total_chapters else 0,
+                    "slug": item.get("slug") or f"chap-{idx+1}",
+                })
+        else:
+            for idx, item in enumerate(spine):
+                formatted_toc.append({
+                    "title": item.get("title") or f"Chapter {idx + 1}",
+                    "chap_index": idx,
+                    "slug": f"chap-{idx+1}",
+                })
+        toc_out = formatted_toc
+    else:
+        toc_out = manuals_mod.toc_from_body(str(version.get("body_md") or ""))
+
+    # Auto-save reading progress on manual view with standard EPUB CFI
+    calc_percent = int(((chap_idx + 1) / float(max(1, total_chapters))) * 100) if total_chapters > 0 else 0
+    current_spine_id = ""
+    standard_cfi = None
+    if is_epub and total_chapters > 0:
+        current_spine = spine[chap_idx]
+        current_spine_id = str(current_spine.get("idref") or current_spine.get("id") or f"ch{chap_idx+1}")
+        if cfi and str(cfi).startswith("epubcfi(") and chap_idx == (manuals_mod.parse_epub_cfi(cfi) or {}).get("chapter_index"):
+            standard_cfi = cfi
+        else:
+            standard_cfi = manuals_mod.generate_epub_cfi(chap_idx, current_spine_id, element_step=2, start_char=0)
+
+    try:
+        manuals_mod.save_reading_progress(
+            tenant_id=session["tenant_id"],
+            manual_id=manual_id,
+            version=int(version["version"]),
+            subject=subject,
+            chapter_index=chap_idx,
+            cfi=standard_cfi or f"epub-cfi-chap-{chap_idx+1}",
+            progress_percent=calc_percent,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+    if is_epub and total_chapters > 0:
+        try:
+            from uuid import NAMESPACE_URL, uuid5
+            from app.modules import xapi as xapi_mod
+
+            sub = str(session.get("subject") or "")
+            lname = str(session.get("learner_name") or "")
+            mtitle = str(manual.get("title") or "eBook")
+            v_num = int(version["version"])
+
+            # 1. Reader initialized (one per session token)
+            init_sid = uuid5(NAMESPACE_URL, f"edvidura:xapi:init:{token_s}:{manual_id}:{v_num}")
+            xapi_mod.record_ebook_initialized(
+                tenant_id=session["tenant_id"],
+                subject=sub,
+                learner_name=lname,
+                manual_id=manual_id,
+                manual_title=mtitle,
+                version=v_num,
+                statement_id=init_sid,
+                send_lrs=True,
+            )
+
+            # Check if client supplied an explicit idempotency key for network retry
+            idempotency_key = request.headers.get("X-Idempotency-Key") or request.query_params.get("idempotency_key")
+
+            # 1. eBook initialized (milestone per launch session; stable per session token)
+            init_sid = uuid5(NAMESPACE_URL, f"edvidura:xapi:init:{token_s}:{manual_id}:{v_num}")
+            xapi_mod.record_ebook_initialized(
+                tenant_id=session["tenant_id"],
+                subject=sub,
+                learner_name=lname,
+                manual_id=manual_id,
+                manual_title=mtitle,
+                version=v_num,
+                statement_id=init_sid,
+                send_lrs=True,
+            )
+
+            # 2. Chapter experienced (distinct per user navigation; deterministic only if explicit idempotency_key is provided)
+            chap_sid = (
+                uuid5(NAMESPACE_URL, f"edvidura:xapi:chap:{token_s}:{manual_id}:{v_num}:{chap_idx}:{idempotency_key}")
+                if idempotency_key
+                else None
+            )
+            xapi_mod.record_chapter_experienced(
+                tenant_id=session["tenant_id"],
+                subject=sub,
+                learner_name=lname,
+                manual_id=manual_id,
+                manual_title=mtitle,
+                chapter_index=chap_idx,
+                chapter_title=current_chapter_title,
+                version=v_num,
+                statement_id=chap_sid,
+                send_lrs=True,
+            )
+
+            # 3. Reading progressed (distinct per progress milestone; deterministic only if explicit idempotency_key is provided)
+            prog_sid = (
+                uuid5(NAMESPACE_URL, f"edvidura:xapi:prog:{token_s}:{manual_id}:{v_num}:{chap_idx}:{calc_percent}:{idempotency_key}")
+                if idempotency_key
+                else None
+            )
+            xapi_mod.record_reading_progressed(
+                tenant_id=session["tenant_id"],
+                subject=sub,
+                learner_name=lname,
+                manual_id=manual_id,
+                manual_title=mtitle,
+                chapter_index=chap_idx,
+                progress_percent=calc_percent,
+                cfi=standard_cfi or f"epub-cfi-chap-{chap_idx+1}",
+                version=v_num,
+                statement_id=prog_sid,
+                send_lrs=True,
+            )
+
+            # 6. Reading completed (when reaches 100% or final chapter; scoped to milestone completion)
+            if calc_percent >= 100 or chap_idx >= total_chapters - 1:
+                comp_sid = uuid5(NAMESPACE_URL, f"edvidura:xapi:comp:{session['tenant_id']}:{sub}:{manual_id}:{v_num}")
+                xapi_mod.record_reading_completed(
+                    tenant_id=session["tenant_id"],
+                    subject=sub,
+                    learner_name=lname,
+                    manual_id=manual_id,
+                    manual_title=mtitle,
+                    version=v_num,
+                    statement_id=comp_sid,
+                    send_lrs=True,
+                )
+        except Exception:  # noqa: BLE001
+            pass
+
     return _shell(
         request,
         "manual_read.html",
@@ -5144,8 +5438,12 @@ async def manual_read(
             "version": version,
             "versions": versions,
             "display_title": display_title,
-            "body_html": manuals_mod.render_body(body_md),
-            "toc": manuals_mod.toc_from_body(body_md),
+            "body_html": (
+                ""
+                if is_epub
+                else manuals_mod.render_body(body_md)
+            ),
+            "toc": toc_out if is_epub else manuals_mod.toc_from_body(body_md),
             "reader_language": resolved.get("language_code"),
             "reader_language_name": resolved.get("language_name"),
             "reader_language_native": resolved.get("language_native"),
@@ -5159,6 +5457,19 @@ async def manual_read(
             "manual_states": manuals_mod.list_states(),
             "available_languages": sorted(published_langs),
             "preferred_state": session.get("preferred_state") or "",
+            "is_epub": is_epub,
+            "chapter_url": chapter_url,
+            "prev_chap_url": prev_chap_url,
+            "next_chap_url": next_chap_url,
+            "chap_idx": chap_idx,
+            "total_chapters": total_chapters,
+            "current_chapter_title": current_chapter_title,
+            "saved_progress": saved_progress,
+            "bookmarks": bookmarks_list,
+            "annotations": annotations_list,
+            "progress_percent": calc_percent,
+            "current_spine_id": current_spine_id,
+            "current_cfi": standard_cfi or f"epub-cfi-chap-{chap_idx+1}",
             "share_path": (
                 manuals_mod.reader_share_path(
                     tenant_id=session["tenant_id"],
@@ -5351,6 +5662,7 @@ async def manual_standalone_read(
     sig: str,
     v: int | None = None,
     focus: str | None = None,
+    chapter: int | None = None,
 ):
     """PeBL standalone reader — HMAC-signed, no LTI session required."""
     from app.modules import manuals as manuals_mod
@@ -5375,18 +5687,848 @@ async def manual_standalone_read(
         )
     focus_slug = (focus or "").strip().lstrip("#")
     body_md = str(version.get("body_md") or "")
+
+    is_epub = version.get("content_type") == "epub"
+    chapter_url = None
+    prev_chap_url = None
+    next_chap_url = None
+    chap_idx = 0
+    total_chapters = 0
+    current_chapter_title = ""
+
+    if is_epub:
+        manifest = version.get("epub_manifest") or {}
+        spine = manifest.get("spine") or []
+        toc_items = manifest.get("toc") or []
+        total_chapters = len(spine)
+        if total_chapters > 0:
+            chap_idx = max(0, min(int(chapter or 0), total_chapters - 1))
+            current_spine = spine[chap_idx]
+            current_chapter_title = current_spine.get("title") or f"Chapter {chap_idx + 1}"
+            rel_path = current_spine.get("full_href") or current_spine.get("href") or ""
+            chapter_url = f"/read/manuals/{manual_id}/epub-files/{rel_path}?tid={tid}&v={version_n}&sig={sig}"
+            if chap_idx > 0:
+                prev_chap_url = f"/read/manuals/{manual_id}?tid={tid}&v={version_n}&sig={sig}&chapter={chap_idx - 1}"
+            if chap_idx < total_chapters - 1:
+                next_chap_url = f"/read/manuals/{manual_id}?tid={tid}&v={version_n}&sig={sig}&chapter={chap_idx + 1}"
+
+        formatted_toc = []
+        if toc_items:
+            for idx, item in enumerate(toc_items):
+                formatted_toc.append({
+                    "title": item.get("title") or f"Chapter {idx + 1}",
+                    "chap_index": idx if idx < total_chapters else 0,
+                    "slug": item.get("slug") or f"chap-{idx+1}",
+                })
+        else:
+            for idx, item in enumerate(spine):
+                formatted_toc.append({
+                    "title": item.get("title") or f"Chapter {idx + 1}",
+                    "chap_index": idx,
+                    "slug": f"chap-{idx+1}",
+                })
+        toc_out = formatted_toc
+    else:
+        toc_out = manuals_mod.toc_from_body(body_md)
+
     return _TEMPLATES.TemplateResponse(
+        request,
         "ebook_standalone.html",
         {
-            "request": request,
             "manual": manual,
             "version": version,
-            "body_html": manuals_mod.render_body(body_md),
-            "toc": manuals_mod.toc_from_body(body_md),
+            "body_html": manuals_mod.render_body(body_md) if not is_epub else "",
+            "toc": toc_out,
+            "is_epub": is_epub,
+            "chapter_url": chapter_url,
+            "prev_chap_url": prev_chap_url,
+            "next_chap_url": next_chap_url,
+            "chap_idx": chap_idx,
+            "total_chapters": total_chapters,
+            "current_chapter_title": current_chapter_title,
+            "tid": tid,
+            "sig": sig,
             "focus": focus_slug,
             "focus_label": focus_slug.replace("-", " ").title() if focus_slug else "",
         },
     )
+
+
+EPUB_ACTIVE_DOCUMENT_EXTENSIONS = {".html", ".xhtml", ".htm", ".svg"}
+
+EPUB_ACTIVE_CSP = (
+    "default-src 'none'; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data:; "
+    "font-src 'self' data:; "
+    "media-src 'self'; "
+    "script-src 'none'; "
+    "connect-src 'none'; "
+    "object-src 'none'; "
+    "form-action 'none'; "
+    "base-uri 'none'; "
+    "frame-ancestors 'self';"
+)
+
+
+@router.get("/manuals/{manual_id}/epub-files/{file_path:path}")
+async def manual_epub_file(
+    request: Request,
+    manual_id: UUID,
+    file_path: str,
+    token: str | None = None,
+    v: int | None = None,
+):
+    from fastapi.responses import FileResponse
+    from app.modules import manuals as manuals_mod
+
+    if not token or v is None:
+        referer = request.headers.get("referer") or ""
+        if "token=" in referer or "v=" in referer:
+            from urllib.parse import parse_qs, urlparse
+            qs = parse_qs(urlparse(referer).query)
+            if not token:
+                tok_list = qs.get("token")
+                if tok_list:
+                    token = tok_list[0]
+            if v is None:
+                v_list = qs.get("v")
+                if v_list and v_list[0].isdigit():
+                    v = int(v_list[0])
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    manual = manuals_mod.get_manual(session["tenant_id"], manual_id)
+    if not manual or (
+        manual.get("status") != "published" and not session.get("is_instructor")
+    ):
+        return HTMLResponse("Manual not found", status_code=404)
+
+    if v is not None:
+        version = manuals_mod.get_version(session["tenant_id"], manual_id=manual_id, version=v)
+    else:
+        version = manuals_mod.latest_published_version(session["tenant_id"], manual_id)
+
+    if not version or version.get("content_type") != "epub":
+        return HTMLResponse("EPUB version not found", status_code=404)
+
+    storage_dir = manuals_mod.get_epub_storage_dir(
+        session["tenant_id"], manual_id, version["version"]
+    ).resolve()
+    target_file = (storage_dir / file_path).resolve()
+
+    if not str(target_file).startswith(str(storage_dir)) or not target_file.exists() or not target_file.is_file():
+        return HTMLResponse("Resource not found", status_code=404)
+
+    ext = target_file.suffix.lower()
+    media_types = {
+        ".html": "application/xhtml+xml; charset=utf-8",
+        ".xhtml": "application/xhtml+xml; charset=utf-8",
+        ".htm": "text/html; charset=utf-8",
+        ".css": "text/css; charset=utf-8",
+        ".js": "application/javascript",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".svg": "image/svg+xml",
+        ".woff": "font/woff",
+        ".woff2": "font/woff2",
+        ".ttf": "font/ttf",
+        ".otf": "font/otf",
+    }
+    mt = media_types.get(ext, "application/octet-stream")
+    headers = {"X-Content-Type-Options": "nosniff"}
+    if ext in EPUB_ACTIVE_DOCUMENT_EXTENSIONS:
+        headers["Content-Security-Policy"] = EPUB_ACTIVE_CSP
+        headers["X-Frame-Options"] = "SAMEORIGIN"
+
+    return FileResponse(
+        path=str(target_file),
+        media_type=mt,
+        headers=headers,
+    )
+
+
+@router.get("/read/manuals/{manual_id}/epub-files/{file_path:path}")
+async def manual_standalone_epub_file(
+    request: Request,
+    manual_id: UUID,
+    file_path: str,
+    tid: UUID | None = None,
+    sig: str | None = None,
+    v: int | None = None,
+):
+    from fastapi.responses import FileResponse
+    from app.modules import manuals as manuals_mod
+
+    if not sig or not tid or v is None:
+        referer = request.headers.get("referer") or ""
+        if "sig=" in referer or "tid=" in referer or "v=" in referer:
+            from urllib.parse import parse_qs, urlparse
+            qs = parse_qs(urlparse(referer).query)
+            if not sig:
+                sig_list = qs.get("sig")
+                if sig_list:
+                    sig = sig_list[0]
+            if not tid:
+                tid_list = qs.get("tid")
+                if tid_list:
+                    try:
+                        tid = UUID(tid_list[0])
+                    except Exception:
+                        tid = None
+            if v is None:
+                v_list = qs.get("v")
+                if v_list and v_list[0].isdigit():
+                    v = int(v_list[0])
+
+    if not tid or not sig or v is None:
+        return HTMLResponse("Invalid or missing eBook parameters", status_code=403)
+
+    if not manuals_mod.verify_reader_token(
+        token=sig, tenant_id=tid, manual_id=manual_id, version=v
+    ):
+        return HTMLResponse("Invalid or expired eBook link", status_code=403)
+
+    manual = manuals_mod.get_manual(tid, manual_id)
+    version = manuals_mod.get_version(tid, manual_id=manual_id, version=v)
+    if not manual or not version or not version.get("is_published") or version.get("content_type") != "epub":
+        return HTMLResponse("eBook not available", status_code=404)
+
+    storage_dir = manuals_mod.get_epub_storage_dir(tid, manual_id, v).resolve()
+    target_file = (storage_dir / file_path).resolve()
+
+    if not str(target_file).startswith(str(storage_dir)) or not target_file.exists() or not target_file.is_file():
+        return HTMLResponse("Resource not found", status_code=404)
+
+    ext = target_file.suffix.lower()
+    media_types = {
+        ".html": "application/xhtml+xml; charset=utf-8",
+        ".xhtml": "application/xhtml+xml; charset=utf-8",
+        ".htm": "text/html; charset=utf-8",
+        ".css": "text/css; charset=utf-8",
+        ".js": "application/javascript",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".svg": "image/svg+xml",
+        ".woff": "font/woff",
+        ".woff2": "font/woff2",
+        ".ttf": "font/ttf",
+        ".otf": "font/otf",
+    }
+    mt = media_types.get(ext, "application/octet-stream")
+    headers = {"X-Content-Type-Options": "nosniff"}
+    if ext in EPUB_ACTIVE_DOCUMENT_EXTENSIONS:
+        headers["Content-Security-Policy"] = EPUB_ACTIVE_CSP
+        headers["X-Frame-Options"] = "SAMEORIGIN"
+
+    return FileResponse(
+        path=str(target_file),
+        media_type=mt,
+        headers=headers,
+    )
+
+
+# —— Phase 2: Progress, Bookmarks & Annotations API ——
+
+def _validate_manual_and_version(
+    tenant_id: Any,
+    manual_id: Any,
+    version: int | None = None,
+    *,
+    is_instructor: bool = False,
+    chapter_index: int | None = None,
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """Validate manual and version accessibility for the authenticated tenant and role.
+
+    Raises:
+        fastapi.HTTPException(status_code=404) if manual/version nonexistent, cross-tenant, or unpublished for learners.
+        fastapi.HTTPException(status_code=400) if location or chapter_index is out of range.
+        manuals_mod.DatabaseUnavailableError if DB persistence/lookup is unavailable.
+    """
+    from fastapi import HTTPException
+    from app.modules import manuals as manuals_mod
+    import psycopg
+
+    try:
+        manual = manuals_mod.get_manual(tenant_id, manual_id)
+    except (psycopg.OperationalError, psycopg.Error, OSError, ConnectionError, TimeoutError, manuals_mod.DatabaseUnavailableError) as exc:
+        raise manuals_mod.DatabaseUnavailableError("Database unavailable during manual lookup") from exc
+
+    if not manual:
+        # Safe 404: do not disclose existence of cross-tenant or missing manual
+        raise HTTPException(status_code=404, detail="Manual not found")
+
+    if not is_instructor and manual.get("status") != "published":
+        raise HTTPException(status_code=404, detail="Manual not found")
+
+    ver_row: dict[str, Any] | None = None
+    if version is not None:
+        try:
+            ver_row = manuals_mod.get_version(tenant_id, manual_id=manual_id, version=int(version))
+        except (psycopg.OperationalError, psycopg.Error, OSError, ConnectionError, TimeoutError, manuals_mod.DatabaseUnavailableError) as exc:
+            raise manuals_mod.DatabaseUnavailableError("Database unavailable during version lookup") from exc
+
+        if not ver_row:
+            raise HTTPException(status_code=404, detail="Manual version not found")
+
+        if not is_instructor and not ver_row.get("is_published"):
+            raise HTTPException(status_code=404, detail="Manual version not found")
+
+        if ver_row.get("manual_id") and str(ver_row.get("manual_id")) != str(manual_id):
+            raise HTTPException(status_code=404, detail="Manual version not found")
+
+        if chapter_index is not None:
+            if chapter_index < 0:
+                raise HTTPException(status_code=400, detail="Invalid chapter index")
+            manifest = ver_row.get("epub_manifest")
+            if isinstance(manifest, dict) and "spine_items" in manifest:
+                spine = manifest.get("spine_items")
+                if isinstance(spine, list) and len(spine) > 0 and chapter_index >= len(spine):
+                    raise HTTPException(status_code=400, detail="Chapter index out of range for EPUB manifest")
+
+    return manual, ver_row
+
+
+@router.post("/api/v1/manuals/{manual_id}/progress")
+async def api_save_progress(
+    request: Request,
+    manual_id: UUID,
+    token: str | None = None,
+):
+    from fastapi import HTTPException
+    from fastapi.responses import JSONResponse
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    sub = str(session.get("subject") or "").strip()
+    if not sub:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    try:
+        data = await request.json()
+    except Exception:
+        form = await request.form()
+        data = dict(form)
+
+    try:
+        version = int(data.get("v") or data.get("version") or 1)
+        chapter_index = int(data.get("chapter_index") or data.get("chapter") or 0)
+        progress_percent = int(data.get("progress_percent") or 0)
+    except (ValueError, TypeError):
+        return JSONResponse({"error": "Invalid numeric fields"}, status_code=400)
+
+    if progress_percent < 0 or progress_percent > 100:
+        return JSONResponse({"error": "Progress percent must be between 0 and 100"}, status_code=400)
+
+    cfi = str(data.get("cfi") or f"epub-cfi-chap-{chapter_index+1}")
+    if len(cfi) > 1000:
+        return JSONResponse({"error": "CFI length exceeds limit"}, status_code=400)
+
+    tid = session["tenant_id"]
+    is_inst = bool(session.get("is_instructor"))
+
+    try:
+        manual, ver_row = _validate_manual_and_version(
+            tid,
+            manual_id,
+            version=version,
+            is_instructor=is_inst,
+            chapter_index=chapter_index,
+        )
+        progress = manuals_mod.save_reading_progress(
+            tenant_id=tid,
+            manual_id=manual_id,
+            version=version,
+            subject=sub,
+            chapter_index=chapter_index,
+            cfi=cfi,
+            progress_percent=progress_percent,
+        )
+        try:
+            from app.modules import xapi as xapi_mod
+
+            mtitle = str(manual.get("title") or "eBook") if manual else "eBook"
+            xapi_mod.record_reading_progressed(
+                tenant_id=tid,
+                subject=sub,
+                learner_name=str(session.get("learner_name") or ""),
+                manual_id=manual_id,
+                manual_title=mtitle,
+                chapter_index=chapter_index,
+                progress_percent=progress_percent,
+                cfi=cfi,
+                version=version,
+                send_lrs=True,
+            )
+            if progress_percent >= 100:
+                xapi_mod.record_reading_completed(
+                    tenant_id=tid,
+                    subject=sub,
+                    learner_name=str(session.get("learner_name") or ""),
+                    manual_id=manual_id,
+                    manual_title=mtitle,
+                    version=version,
+                    send_lrs=True,
+                )
+        except Exception:  # noqa: BLE001
+            pass
+
+        return JSONResponse({"status": "ok", "progress": progress})
+    except HTTPException as e:
+        return JSONResponse({"error": e.detail}, status_code=e.status_code)
+    except manuals_mod.DatabaseUnavailableError:
+        return JSONResponse({"error": "Database service is currently unavailable"}, status_code=503)
+
+
+@router.get("/api/v1/manuals/{manual_id}/progress")
+async def api_get_progress(
+    request: Request,
+    manual_id: UUID,
+    v: int = 1,
+    token: str | None = None,
+):
+    from fastapi import HTTPException
+    from fastapi.responses import JSONResponse
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    sub = str(session.get("subject") or "").strip()
+    if not sub:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    tid = session["tenant_id"]
+    is_inst = bool(session.get("is_instructor"))
+
+    try:
+        _validate_manual_and_version(tid, manual_id, version=v, is_instructor=is_inst)
+        progress = manuals_mod.get_reading_progress(
+            tenant_id=tid,
+            manual_id=manual_id,
+            version=v,
+            subject=sub,
+        )
+        return JSONResponse({"progress": progress})
+    except HTTPException as e:
+        return JSONResponse({"error": e.detail}, status_code=e.status_code)
+    except manuals_mod.DatabaseUnavailableError:
+        return JSONResponse({"error": "Database service is currently unavailable"}, status_code=503)
+
+
+@router.post("/api/v1/manuals/{manual_id}/bookmarks")
+async def api_create_bookmark(
+    request: Request,
+    manual_id: UUID,
+    token: str | None = None,
+):
+    from fastapi import HTTPException
+    from fastapi.responses import JSONResponse
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    sub = str(session.get("subject") or "").strip()
+    if not sub:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    try:
+        data = await request.json()
+    except Exception:
+        form = await request.form()
+        data = dict(form)
+
+    try:
+        version = int(data.get("v") or data.get("version") or 1)
+        chapter_index = int(data.get("chapter_index") or data.get("chapter") or 0)
+    except (ValueError, TypeError):
+        return JSONResponse({"error": "Invalid numeric fields"}, status_code=400)
+
+    cfi = str(data.get("cfi") or manuals_mod.generate_epub_cfi(chapter_index))
+    if len(cfi) > 1000:
+        return JSONResponse({"error": "CFI length exceeds limit"}, status_code=400)
+
+    title = str(data.get("title") or f"Chapter {chapter_index + 1} Bookmark")
+    if len(title) > 255:
+        return JSONResponse({"error": "Title exceeds maximum length of 255 characters"}, status_code=400)
+
+    tid = session["tenant_id"]
+    is_inst = bool(session.get("is_instructor"))
+
+    try:
+        manual, ver_row = _validate_manual_and_version(
+            tid,
+            manual_id,
+            version=version,
+            is_instructor=is_inst,
+            chapter_index=chapter_index,
+        )
+        bookmark = manuals_mod.create_bookmark(
+            tenant_id=tid,
+            manual_id=manual_id,
+            version=version,
+            subject=sub,
+            chapter_index=chapter_index,
+            cfi=cfi,
+            title=title,
+        )
+        try:
+            from uuid import NAMESPACE_URL, uuid5
+            from app.modules import xapi as xapi_mod
+
+            bm_id = bookmark.get("id") if isinstance(bookmark, dict) else None
+            bm_sid = uuid5(NAMESPACE_URL, f"edvidura:xapi:bm:{bm_id}") if bm_id else None
+            mtitle = str(manual.get("title") or "eBook") if manual else "eBook"
+            xapi_mod.record_bookmark_created(
+                tenant_id=tid,
+                subject=sub,
+                learner_name=str(session.get("learner_name") or ""),
+                manual_id=manual_id,
+                manual_title=mtitle,
+                chapter_index=chapter_index,
+                bookmark_title=title,
+                cfi=cfi,
+                version=version,
+                statement_id=bm_sid,
+                send_lrs=True,
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+        return JSONResponse({"status": "ok", "bookmark": bookmark})
+    except HTTPException as e:
+        return JSONResponse({"error": e.detail}, status_code=e.status_code)
+    except manuals_mod.DatabaseUnavailableError:
+        return JSONResponse({"error": "Database service is currently unavailable"}, status_code=503)
+
+
+@router.get("/api/v1/manuals/{manual_id}/bookmarks")
+async def api_list_bookmarks(
+    request: Request,
+    manual_id: UUID,
+    v: int = 1,
+    token: str | None = None,
+):
+    from fastapi import HTTPException
+    from fastapi.responses import JSONResponse
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    sub = str(session.get("subject") or "").strip()
+    if not sub:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    tid = session["tenant_id"]
+    is_inst = bool(session.get("is_instructor"))
+
+    try:
+        _validate_manual_and_version(tid, manual_id, version=v, is_instructor=is_inst)
+        bookmarks = manuals_mod.list_bookmarks(
+            tenant_id=tid,
+            manual_id=manual_id,
+            version=v,
+            subject=sub,
+        )
+        return JSONResponse({"bookmarks": bookmarks})
+    except HTTPException as e:
+        return JSONResponse({"error": e.detail}, status_code=e.status_code)
+    except manuals_mod.DatabaseUnavailableError:
+        return JSONResponse({"error": "Database service is currently unavailable"}, status_code=503)
+
+
+@router.post("/api/v1/manuals/{manual_id}/bookmarks/{bookmark_id}/delete")
+async def api_delete_bookmark(
+    request: Request,
+    manual_id: UUID,
+    bookmark_id: UUID,
+    token: str | None = None,
+):
+    from fastapi import HTTPException
+    from fastapi.responses import JSONResponse
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    sub = str(session.get("subject") or "").strip()
+    if not sub:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    tid = session["tenant_id"]
+    is_inst = bool(session.get("is_instructor"))
+
+    try:
+        _validate_manual_and_version(tid, manual_id, is_instructor=is_inst)
+        bm = manuals_mod.get_bookmark(tenant_id=tid, bookmark_id=bookmark_id)
+        if not bm or bm.get("subject") != sub or str(bm.get("manual_id")) != str(manual_id):
+            return JSONResponse({"error": "Bookmark not found"}, status_code=404)
+
+        ok = manuals_mod.delete_bookmark(
+            tenant_id=tid,
+            bookmark_id=bookmark_id,
+            subject=sub,
+        )
+        return JSONResponse({"status": "ok", "deleted": ok})
+    except HTTPException as e:
+        return JSONResponse({"error": e.detail}, status_code=e.status_code)
+    except manuals_mod.DatabaseUnavailableError:
+        return JSONResponse({"error": "Database service is currently unavailable"}, status_code=503)
+
+
+@router.post("/api/v1/manuals/{manual_id}/annotations")
+async def api_create_annotation(
+    request: Request,
+    manual_id: UUID,
+    token: str | None = None,
+):
+    from fastapi import HTTPException
+    from fastapi.responses import JSONResponse
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    sub = str(session.get("subject") or "").strip()
+    if not sub:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    try:
+        data = await request.json()
+    except Exception:
+        form = await request.form()
+        data = dict(form)
+
+    try:
+        version = int(data.get("v") or data.get("version") or 1)
+        chapter_index = int(data.get("chapter_index") or data.get("chapter") or 0)
+    except (ValueError, TypeError):
+        return JSONResponse({"error": "Invalid numeric fields"}, status_code=400)
+
+    cfi_range = str(data.get("cfi_range") or manuals_mod.generate_epub_cfi(chapter_index))
+    if len(cfi_range) > 1000:
+        return JSONResponse({"error": "CFI range exceeds limit"}, status_code=400)
+
+    highlight_text = str(data.get("highlight_text") or "")
+    if len(highlight_text) > 5000:
+        return JSONResponse({"error": "Highlight text exceeds limit of 5000 characters"}, status_code=400)
+
+    annotation_text = str(data.get("annotation_text") or "")
+    if len(annotation_text) > 5000:
+        return JSONResponse({"error": "Annotation text exceeds limit of 5000 characters"}, status_code=400)
+
+    color = str(data.get("color") or "yellow").lower()
+    if color not in {"yellow", "green", "blue", "pink"}:
+        return JSONResponse({"error": "Invalid color; allowed colors: yellow, green, blue, pink"}, status_code=400)
+
+    tid = session["tenant_id"]
+    is_inst = bool(session.get("is_instructor"))
+
+    try:
+        manual, ver_row = _validate_manual_and_version(
+            tid,
+            manual_id,
+            version=version,
+            is_instructor=is_inst,
+            chapter_index=chapter_index,
+        )
+        annotation = manuals_mod.create_annotation(
+            tenant_id=tid,
+            manual_id=manual_id,
+            version=version,
+            subject=sub,
+            chapter_index=chapter_index,
+            cfi_range=cfi_range,
+            highlight_text=highlight_text,
+            annotation_text=annotation_text,
+            color=color,
+        )
+        try:
+            from uuid import NAMESPACE_URL, uuid5
+            from app.modules import xapi as xapi_mod
+
+            ann_id = annotation.get("id") if isinstance(annotation, dict) else None
+            ann_sid = uuid5(NAMESPACE_URL, f"edvidura:xapi:ann:{ann_id}") if ann_id else None
+            mtitle = str(manual.get("title") or "eBook") if manual else "eBook"
+            xapi_mod.record_annotation_added(
+                tenant_id=tid,
+                subject=sub,
+                learner_name=str(session.get("learner_name") or ""),
+                manual_id=manual_id,
+                manual_title=mtitle,
+                chapter_index=chapter_index,
+                annotation_text=annotation_text,
+                highlight_text=highlight_text,
+                color=color,
+                cfi_range=cfi_range,
+                version=version,
+                statement_id=ann_sid,
+                send_lrs=True,
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+        return JSONResponse({"status": "ok", "annotation": annotation})
+    except HTTPException as e:
+        return JSONResponse({"error": e.detail}, status_code=e.status_code)
+    except manuals_mod.DatabaseUnavailableError:
+        return JSONResponse({"error": "Database service is currently unavailable"}, status_code=503)
+
+
+@router.get("/api/v1/manuals/{manual_id}/annotations")
+async def api_list_annotations(
+    request: Request,
+    manual_id: UUID,
+    v: int = 1,
+    token: str | None = None,
+):
+    from fastapi import HTTPException
+    from fastapi.responses import JSONResponse
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    sub = str(session.get("subject") or "").strip()
+    if not sub:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    tid = session["tenant_id"]
+    is_inst = bool(session.get("is_instructor"))
+
+    try:
+        _validate_manual_and_version(tid, manual_id, version=v, is_instructor=is_inst)
+        annotations = manuals_mod.list_annotations(
+            tenant_id=tid,
+            manual_id=manual_id,
+            version=v,
+            subject=sub,
+        )
+        return JSONResponse({"annotations": annotations})
+    except HTTPException as e:
+        return JSONResponse({"error": e.detail}, status_code=e.status_code)
+    except manuals_mod.DatabaseUnavailableError:
+        return JSONResponse({"error": "Database service is currently unavailable"}, status_code=503)
+
+
+@router.post("/api/v1/manuals/{manual_id}/annotations/{annotation_id}")
+async def api_update_annotation(
+    request: Request,
+    manual_id: UUID,
+    annotation_id: UUID,
+    token: str | None = None,
+):
+    from fastapi import HTTPException
+    from fastapi.responses import JSONResponse
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    sub = str(session.get("subject") or "").strip()
+    if not sub:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    tid = session["tenant_id"]
+    is_inst = bool(session.get("is_instructor"))
+
+    try:
+        data = await request.json()
+    except Exception:
+        form = await request.form()
+        data = dict(form)
+
+    try:
+        _validate_manual_and_version(tid, manual_id, is_instructor=is_inst)
+        ann = manuals_mod.get_annotation(tenant_id=tid, annotation_id=annotation_id)
+        if not ann or ann.get("subject") != sub or str(ann.get("manual_id")) != str(manual_id):
+            return JSONResponse({"error": "Annotation not found"}, status_code=404)
+
+        # Validate that annotation's version is still an allowed version for the operation
+        _validate_manual_and_version(tid, manual_id, version=ann.get("version"), is_instructor=is_inst)
+
+        new_text: str | None = None
+        if "annotation_text" in data:
+            new_text = str(data["annotation_text"] or "")
+            if len(new_text) > 5000:
+                return JSONResponse({"error": "Annotation text exceeds limit of 5000 characters"}, status_code=400)
+
+        new_color: str | None = None
+        if "color" in data and data["color"]:
+            col_candidate = str(data["color"]).lower()
+            if col_candidate not in {"yellow", "green", "blue", "pink"}:
+                return JSONResponse({"error": "Invalid color; allowed colors: yellow, green, blue, pink"}, status_code=400)
+            new_color = col_candidate
+
+        ok = manuals_mod.update_annotation(
+            tenant_id=tid,
+            annotation_id=annotation_id,
+            subject=sub,
+            annotation_text=new_text,
+            color=new_color,
+        )
+        return JSONResponse({"status": "ok", "updated": ok})
+    except HTTPException as e:
+        return JSONResponse({"error": e.detail}, status_code=e.status_code)
+    except manuals_mod.DatabaseUnavailableError:
+        return JSONResponse({"error": "Database service is currently unavailable"}, status_code=503)
+
+
+@router.post("/api/v1/manuals/{manual_id}/annotations/{annotation_id}/delete")
+async def api_delete_annotation(
+    request: Request,
+    manual_id: UUID,
+    annotation_id: UUID,
+    token: str | None = None,
+):
+    from fastapi import HTTPException
+    from fastapi.responses import JSONResponse
+    from app.modules import manuals as manuals_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    sub = str(session.get("subject") or "").strip()
+    if not sub:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    tid = session["tenant_id"]
+    is_inst = bool(session.get("is_instructor"))
+
+    try:
+        _validate_manual_and_version(tid, manual_id, is_instructor=is_inst)
+        ann = manuals_mod.get_annotation(tenant_id=tid, annotation_id=annotation_id)
+        if not ann or ann.get("subject") != sub or str(ann.get("manual_id")) != str(manual_id):
+            return JSONResponse({"error": "Annotation not found"}, status_code=404)
+
+        ok = manuals_mod.delete_annotation(
+            tenant_id=tid,
+            annotation_id=annotation_id,
+            subject=sub,
+        )
+        return JSONResponse({"status": "ok", "deleted": ok})
+    except HTTPException as e:
+        return JSONResponse({"error": e.detail}, status_code=e.status_code)
+    except manuals_mod.DatabaseUnavailableError:
+        return JSONResponse({"error": "Database service is currently unavailable"}, status_code=503)
 
 
 @router.get("/teacher/sme", response_class=HTMLResponse)
@@ -6279,6 +7421,114 @@ async def teacher_manual_from_pdf(
         )
     return RedirectResponse(
         url=f"/teacher/manuals?token={tok}&ok={msg}",
+        status_code=303,
+    )
+
+
+@router.post("/teacher/manuals/upload-epub", response_class=HTMLResponse)
+async def teacher_upload_epub(
+    request: Request, token: str | None = None
+):
+    """EPUB3 archive upload → validate, extract, and store as eBook version."""
+    import shutil
+    import tempfile
+    from app.modules import manuals as manuals_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    upload = form.get("epub_file")
+    title = str(form.get("title") or "").strip()
+    description = str(form.get("description") or "").strip()
+    publish = str(form.get("publish") or "1") != "0"
+    manual_id = str(form.get("manual_id") or "").strip()
+
+    if upload is None or not getattr(upload, "filename", None):
+        return RedirectResponse(
+            url=f"/teacher/manuals?token={tok}&ok=Choose+an+EPUB+file",
+            status_code=303,
+        )
+
+    fname = str(upload.filename or "ebook.epub")
+    if not fname.lower().endswith(".epub"):
+        return RedirectResponse(
+            url=f"/teacher/manuals?token={tok}&ok=File+must+have+.epub+extension",
+            status_code=303,
+        )
+
+    data = await upload.read()
+    tid = session["tenant_id"]
+
+    if manual_id:
+        existing = manuals_mod.get_manual(tid, manual_id)
+        if not existing:
+            return RedirectResponse(
+                url=f"/teacher/manuals?token={tok}&ok=Manual+not+found",
+                status_code=303,
+            )
+        versions = manuals_mod.list_versions(tid, manual_id)
+        next_v = max([int(v["version"]) for v in versions], default=0) + 1
+        target_mid = manual_id
+    else:
+        next_v = 1
+        target_mid = None
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        try:
+            manifest, sha256_hash = manuals_mod.validate_and_extract_epub(
+                data, target_dir=tmpdir
+            )
+        except manuals_mod.EPUBValidationError as exc:
+            msg = f"EPUB validation error: {exc}".replace(" ", "+")
+            return RedirectResponse(
+                url=f"/teacher/manuals?token={tok}&ok={msg}",
+                status_code=303,
+            )
+        except Exception as exc:  # noqa: BLE001
+            msg = f"Error unpacking EPUB: {exc}".replace(" ", "+")
+            return RedirectResponse(
+                url=f"/teacher/manuals?token={tok}&ok={msg}",
+                status_code=303,
+            )
+
+        epub_title = title or manifest.get("title") or Path(fname).stem.replace("_", " ").title()
+
+        if target_mid:
+            storage_dir = manuals_mod.get_epub_storage_dir(tid, target_mid, next_v)
+            shutil.copytree(tmpdir, storage_dir, dirs_exist_ok=True)
+            manuals_mod.add_version(
+                tenant_id=tid,
+                manual_id=target_mid,
+                body_md="",
+                changelog=f"Uploaded EPUB {fname}",
+                subject=str(session.get("subject") or ""),
+                publish=publish,
+                content_type="epub",
+                epub_filename=fname,
+                epub_sha256=sha256_hash,
+                epub_manifest=manifest,
+            )
+        else:
+            created = manuals_mod.create_manual(
+                tenant_id=tid,
+                title=epub_title,
+                description=description or f"Uploaded EPUB {fname}",
+                body_md="",
+                subject=str(session.get("subject") or ""),
+                publish=publish,
+                content_type="epub",
+                epub_filename=fname,
+                epub_sha256=sha256_hash,
+                epub_manifest=manifest,
+            )
+            target_mid = str(created["id"])
+            storage_dir = manuals_mod.get_epub_storage_dir(tid, target_mid, 1)
+            shutil.copytree(tmpdir, storage_dir, dirs_exist_ok=True)
+
+    return RedirectResponse(
+        url=f"/teacher/manuals?token={tok}&ok=eBook+uploaded+successfully",
         status_code=303,
     )
 

@@ -25,7 +25,7 @@ SCHOOL_B_ID = "22222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 COURSE_A_ID = "cccccccc-cccc-cccc-cccc-cccccccccccc"
 COURSE_B_ID = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
 QUIZ_A_ID = "aa11aa11-aa11-aa11-aa11-aa11aa11aa11"
-QUIZ_B_ID = "bb22bb22-bb22-bb22-bb22-bb22bb22bb22"
+QUIZ_B_ID = "bb33bb33-bb33-bb33-bb33-bb33bb33bb33"
 
 
 DEMO = {
@@ -478,6 +478,10 @@ def _upsert_quiz(school: dict) -> None:
                 school["quiz_title"],
                 school["course_desc"],
             ),
+        )
+        conn.execute(
+            "DELETE FROM quiz_questions WHERE quiz_id = %s",
+            (school["quiz_id"],),
         )
         for i, (key, prompt, choices, correct) in enumerate(school["questions"], start=1):
             conn.execute(

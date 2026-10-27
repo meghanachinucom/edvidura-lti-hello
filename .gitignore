@@ -35,7 +35,6 @@ app/static/uploads/
 # Local DB dumps
 backups/
 *.dump
-
 # Playwright LTI session export (cookies — do not commit)
 docs/management-proof/videos/storage_state.json
 docs/management-proof/videos/storage_state_teacher.json
@@ -64,3 +63,8 @@ docs/edvidura---academic-learning-&-lti-classroom.zip
 app/static/css/*.backup.css
 scripts/_probe_app_api.py
 
+# Ephemeral Chrome test profiles
+scratch/chrome_profile_*/
+
+# Local verification tools and sensitive local artifacts
+scratch/

@@ -69,6 +69,10 @@
          href="/lessons?token={{ quiz_token }}">Lessons</a>
       {% endif %}
 
+      {% if caps.manuals %}
+      <a class="nav-link {% if active_page == 'manuals' %}on{% endif %}"
+         href="/manuals?token={{ quiz_token }}">eBooks</a>
+      {% endif %}
       {% if caps.quiz_graded %}
       <a class="nav-link {% if active_page == 'quiz_session' %}on{% endif %}"
          href="/quiz?token={{ quiz_token }}">Quiz</a>
@@ -121,7 +125,7 @@
           {% endif %}
           {% if caps.manuals %}
           <a role="menuitem" class="{% if active_page == 'manuals' %}on{% endif %}"
-             href="/manuals?token={{ quiz_token }}">Manual</a>
+             href="/manuals?token={{ quiz_token }}">eBooks &amp; Manuals</a>
           {% endif %}
           {% if caps.quiz_graded %}
           <a role="menuitem" href="/quiz?token={{ quiz_token }}">Take the quiz</a>
@@ -156,13 +160,14 @@
          href="/launch-hub?token={{ quiz_token }}">Home</a>
       <a class="nav-link {% if active_page == 'instructor_overview' %}on{% endif %}"
          href="/teacher/attempts?token={{ quiz_token }}">Class results</a>
-      <div class="nav-dd {% if active_page in ['teacher_content','lessons','teacher_ai_author'] %}active{% endif %}">
+      <div class="nav-dd {% if active_page in ['teacher_content','lessons','teacher_ai_author','teacher_manuals'] %}active{% endif %}">
         <button class="nav-dd-btn" type="button" aria-expanded="false">
           Content <span class="caret" aria-hidden="true">▾</span>
         </button>
         <div class="nav-dd-panel" role="menu">
           <a role="menuitem" href="/lessons?token={{ quiz_token }}">Preview lessons</a>
           <a role="menuitem" href="/teacher/content?token={{ quiz_token }}">Manage content</a>
+          <a role="menuitem" class="{% if active_page == 'teacher_manuals' %}on{% endif %}" href="/teacher/manuals?token={{ quiz_token }}">eBooks &amp; Manuals</a>
           <a role="menuitem" href="/teacher/dct?token={{ quiz_token }}">Micro-learning planner</a>
           <a role="menuitem" href="/teacher/ai/author?token={{ quiz_token }}">AI authoring</a>
           <a role="menuitem" class="{% if active_page == 'teacher_coach_shortcuts' %}on{% endif %}"

@@ -9,30 +9,27 @@
          data-manual-id="{{ manual.id }}"
          lang="{{ reader_language or source_language or 'en-IN' }}">
   <section class="hero-band" style="margin-bottom:var(--sp-lg)">
-    <div style="position:relative;z-index:1">
-      <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
-        eBook · v{{ version.version }}{% if version.is_published %} · published{% endif %}
-        {% if reader_language_name %} · {{ reader_language_name }}{% endif %}
+    <div style="position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg)">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:var(--sp-xs)">
+          <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed)">
+            <span class="material-symbols-outlined" style="font-size:13px">menu_book</span>
+            {% if is_epub %}EPUB3 eBook{% else %}Manual{% endif %} · v{{ version.version }}{% if version.is_published %} · published{% endif %}
+          </div>
+          {% if progress_percent is defined %}
+          <div class="chip chip-mint" style="font-weight:600">
+            <span class="material-symbols-outlined" style="font-size:13px">auto_stories</span>
+            Progress: {{ progress_percent }}%
+          </div>
+          {% endif %}
+        </div>
+        <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(26px,4vw,40px)">{{ manual.title }}</h1>
+        {% if version.changelog %}<p class="body-md" style="color:var(--outline-variant);margin-top:4px">{{ version.changelog }}</p>{% endif %}
       </div>
-      <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(26px,4vw,40px)">{{ display_title or manual.title }}</h1>
-      {% if version.changelog %}<p class="body-md" style="color:var(--outline-variant);margin-top:4px">{{ version.changelog }}</p>{% endif %}
-      {% if just_translated %}
-      <p class="body-sm" style="color:var(--primary-fixed);margin-top:6px">
-        Auto-translated to {{ reader_language_name }} — cached for next visit.
-      </p>
-      {% elif is_auto and is_locale %}
-      <p class="body-sm" style="color:var(--outline-variant);margin-top:6px">
-        Showing auto-translated {{ reader_language_name }} (from {{ source_language }}).
-      </p>
-      {% elif translate_error %}
-      <p class="body-sm" style="color:#fecaca;margin-top:6px">
-        Could not auto-translate: {{ translate_error }} — showing source ({{ source_language }}).
-      </p>
-      {% elif fallback_to_source %}
-      <p class="body-sm" style="color:var(--outline-variant);margin-top:6px">
-        No {{ reader_language_name or 'locale' }} text yet — showing source ({{ source_language }}).
-      </p>
-      {% endif %}
+      <a href="/manuals?token={{ quiz_token }}" class="btn" style="background:rgba(255,255,255,.1);color:var(--surface-container-lowest);border-color:rgba(255,255,255,.18)">
+        <span class="material-symbols-outlined" style="font-size:15px">list</span>
+        All manuals
+      </a>
     </div>
   </section>
 
@@ -102,85 +99,271 @@
   {% endif %}
 
   <div class="ebook-layout">
-    {% if toc %}
-    <nav class="ebook-toc" aria-label="Chapter table of contents">
+    {% if toc or bookmarks or annotations %}
+    <nav class="ebook-toc" aria-label="Chapter table of contents and bookmarks">
       <h2 class="ebook-toc-title">Chapters</h2>
       <ol>
         {% for ch in toc %}
         <li>
+          {% if is_epub and ch.chap_index is defined %}
+          <a href="/manuals/{{ manual.id }}?token={{ quiz_token }}&v={{ version.version }}&chapter={{ ch.chap_index }}"
+             class="{% if chap_idx == ch.chap_index %}on{% endif %}">{{ ch.title }}</a>
+          {% else %}
           <a href="#{{ ch.slug }}" class="{% if focus == ch.slug %}on{% endif %}">{{ ch.title }}</a>
-          {% set n = (pebl_counts or {}).get(ch.slug, 0) %}
-          {% if n %}<span class="pebl-toc-count" title="Discussion posts">{{ n }}</span>{% endif %}
+          {% endif %}
         </li>
         {% endfor %}
       </ol>
+
+      {# Bookmarks Section #}
+      <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(14,43,36,.08)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <h3 style="font-size:14px;font-weight:700;color:var(--on-surface);margin:0">Bookmarks</h3>
+          <button type="button" id="btn-add-bookmark" class="btn btn-glass" style="font-size:11px;padding:3px 8px">
+            <span class="material-symbols-outlined" style="font-size:13px">bookmark_add</span> Add
+          </button>
+        </div>
+        <ul id="bookmarks-list" class="q-list" style="padding-left:0;list-style:none;margin:0">
+          {% for bm in bookmarks %}
+          <li style="display:flex;align-items:center;justify-content:space-between;gap:4px;padding:4px 0;font-size:13px">
+            <a class="link" href="/manuals/{{ manual.id }}?token={{ quiz_token }}&v={{ version.version }}&chapter={{ bm.chapter_index }}&cfi={{ (bm.cfi or '') | urlencode }}">
+              {{ bm.title }}
+            </a>
+            <button type="button" class="btn-del-bookmark" data-id="{{ bm.id }}" style="background:none;border:none;cursor:pointer;color:var(--outline);padding:2px" title="Delete bookmark">
+              <span class="material-symbols-outlined" style="font-size:14px">close</span>
+            </button>
+          </li>
+          {% else %}
+          <li id="no-bookmarks-msg" class="meta" style="font-size:12px;color:var(--outline)">No bookmarks saved yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      {# Annotations Section #}
+      <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(14,43,36,.08)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <h3 style="font-size:14px;font-weight:700;color:var(--on-surface);margin:0">Notes &amp; Highlights</h3>
+          <button type="button" id="btn-add-annotation" class="btn btn-glass" style="font-size:11px;padding:3px 8px">
+            <span class="material-symbols-outlined" style="font-size:13px">note_add</span> Add
+          </button>
+        </div>
+        <ul id="annotations-list" class="q-list" style="padding-left:0;list-style:none;margin:0">
+          {% for ann in annotations %}
+          <li class="annotation-item" data-id="{{ ann.id }}" data-chap="{{ ann.chapter_index }}" data-color="{{ ann.color | default('yellow') }}" style="padding:6px;margin-bottom:6px;background:rgba(255,255,255,.7);border-radius:var(--r-md);border-left:3px solid var(--primary);font-size:12px;cursor:pointer;transition:all .15s ease">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px">
+              <div class="ann-body" style="flex:1">
+                {% if ann.highlight_text %}
+                <div class="ann-hl-text" style="font-style:italic;color:var(--on-surface-variant);margin-bottom:2px">"{{ ann.highlight_text[:80] }}"</div>
+                {% endif %}
+                {% if ann.annotation_text %}
+                <div class="ann-note-text" style="font-weight:500;color:var(--on-surface)">{{ ann.annotation_text }}</div>
+                {% endif %}
+                <div class="meta" style="font-size:10px;color:var(--outline);margin-top:2px">Chapter {{ ann.chapter_index + 1 }}{% if ann.color %} · {{ ann.color }}{% endif %}</div>
+              </div>
+              <div style="display:flex;gap:2px;align-items:center">
+                <button type="button" class="btn-edit-annotation" data-id="{{ ann.id }}" data-text="{{ ann.annotation_text | e }}" style="background:none;border:none;cursor:pointer;color:var(--outline);padding:2px" title="Edit note">
+                  <span class="material-symbols-outlined" style="font-size:14px">edit</span>
+                </button>
+                <button type="button" class="btn-del-annotation" data-id="{{ ann.id }}" style="background:none;border:none;cursor:pointer;color:var(--outline);padding:2px" title="Delete note">
+                  <span class="material-symbols-outlined" style="font-size:14px">close</span>
+                </button>
+              </div>
+            </div>
+          </li>
+          {% else %}
+          <li id="no-annotations-msg" class="meta" style="font-size:12px;color:var(--outline)">No notes created yet. Select text in the eBook to highlight.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
       {% if share_path %}
-      <div style="margin-top:0.75rem;display:flex;flex-direction:column;gap:8px">
+      <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(14,43,36,.08);display:flex;flex-direction:column;gap:8px">
         <p class="meta" style="margin:0">Standalone link (signed, time-limited)</p>
         <code id="manual-share-url" class="meta" style="word-break:break-all;display:block;padding:8px;background:rgba(14,43,36,.04);border-radius:8px">{{ share_path }}</code>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
           <button type="button" class="btn btn-surface" id="manual-share-copy" style="font-size:13px;padding:6px 12px">
-            <span class="material-symbols-outlined" style="font-size:15px">content_copy</span>
-            Copy link
+            <span class="material-symbols-outlined" style="font-size:15px">content_copy</span> Copy link
           </button>
           <a class="btn btn-primary" href="{{ share_path }}" target="_blank" rel="noopener" style="font-size:13px;padding:6px 12px">
-            <span class="material-symbols-outlined" style="font-size:15px">open_in_new</span>
-            Open standalone
+            <span class="material-symbols-outlined" style="font-size:15px">open_in_new</span> Open standalone
           </a>
         </div>
-        <p id="manual-share-status" class="body-sm text-muted" role="status" style="margin:0;min-height:1.2em"></p>
       </div>
-      <script>
-      (function () {
-        var btn = document.getElementById('manual-share-copy');
-        var urlEl = document.getElementById('manual-share-url');
-        var status = document.getElementById('manual-share-status');
-        if (!btn || !urlEl) return;
-        btn.addEventListener('click', function () {
-          var text = (urlEl.textContent || '').trim();
-          if (!text) return;
-          function ok() { if (status) status.textContent = 'Copied.'; }
-          function fail() { if (status) status.textContent = 'Copy failed — select the link manually.'; }
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(ok).catch(fail);
-          } else {
-            try {
-              var ta = document.createElement('textarea');
-              ta.value = text;
-              document.body.appendChild(ta);
-              ta.select();
-              document.execCommand('copy');
-              document.body.removeChild(ta);
-              ok();
-            } catch (e) { fail(); }
-          }
-        });
-      })();
-      </script>
       {% endif %}
     </nav>
     {% endif %}
 
     <div class="ebook-main">
-      {% if body_html %}
+      {% if is_epub and chapter_url %}
+      <div id="reader-card-wrapper" class="card" style="padding:0;overflow:hidden;margin-bottom:var(--sp-lg);border-radius:var(--r-2xl);background:var(--surface-container-lowest);border:1.5px solid rgba(14,43,36,.08);box-shadow:var(--shadow-l1);transition:all .3s ease">
+
+        {# ── TOP READER TOOLBAR: ACCESSIBILITY, ZOOM, THEMES, TTS, TIME TRACKER ── #}
+        <div class="reader-toolbar" style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--surface-container-low);border-bottom:1px solid rgba(14,43,36,.08);flex-wrap:wrap;gap:10px">
+
+          {# Left Controls: Font Zoom & Themes & Highlight Picker #}
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            {# Font Zoom #}
+            <div style="display:inline-flex;align-items:center;background:var(--surface-container-lowest);border:1px solid rgba(14,43,36,.12);border-radius:var(--r-full);padding:2px 8px" title="Text font size">
+              <button type="button" id="btn-zoom-out" style="background:none;border:none;cursor:pointer;padding:2px 6px;font-size:11px;font-weight:700;color:var(--on-surface)">A-</button>
+              <span id="zoom-level-label" style="font-size:11px;font-weight:600;min-width:34px;text-align:center;color:var(--outline)">100%</span>
+              <button type="button" id="btn-zoom-in" style="background:none;border:none;cursor:pointer;padding:2px 6px;font-size:13px;font-weight:700;color:var(--on-surface)">A+</button>
+            </div>
+
+            {# Reading Themes #}
+            <div style="display:inline-flex;align-items:center;gap:5px" title="Reading contrast theme">
+              <button type="button" class="btn-theme on" data-theme="day" title="Day Mode" style="width:22px;height:22px;border-radius:50%;background:#ffffff;border:2px solid var(--primary);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15)"></button>
+              <button type="button" class="btn-theme" data-theme="sepia" title="Sepia (Warm Paper)" style="width:22px;height:22px;border-radius:50%;background:#fbf0d9;border:1px solid #d4c2a3;cursor:pointer"></button>
+              <button type="button" class="btn-theme" data-theme="slate" title="Slate (Dark Mode)" style="width:22px;height:22px;border-radius:50%;background:#1e293b;border:1px solid #475569;cursor:pointer"></button>
+              <button type="button" class="btn-theme" data-theme="oled" title="OLED (High Contrast)" style="width:22px;height:22px;border-radius:50%;background:#090d16;border:1px solid #38bdf8;cursor:pointer"></button>
+            </div>
+
+            {# Highlighting Color Swatches #}
+            <div style="display:inline-flex;align-items:center;gap:4px;padding-left:8px;border-left:1px solid rgba(14,43,36,.1)" title="Highlight Color">
+              <span style="font-size:10.5px;font-weight:600;color:var(--outline)">Highlight:</span>
+              <button type="button" class="btn-hl-color on" data-color="yellow" title="Yellow" style="width:16px;height:16px;border-radius:50%;background:#fde047;border:2px solid var(--primary);cursor:pointer"></button>
+              <button type="button" class="btn-hl-color" data-color="green" title="Mint Green" style="width:16px;height:16px;border-radius:50%;background:#86efac;border:1px solid rgba(0,0,0,.2);cursor:pointer"></button>
+              <button type="button" class="btn-hl-color" data-color="blue" title="Cyan Blue" style="width:16px;height:16px;border-radius:50%;background:#93c5fd;border:1px solid rgba(0,0,0,.2);cursor:pointer"></button>
+              <button type="button" class="btn-hl-color" data-color="pink" title="Coral Pink" style="width:16px;height:16px;border-radius:50%;background:#f9a8d4;border:1px solid rgba(0,0,0,.2);cursor:pointer"></button>
+            </div>
+          </div>
+
+          {# Right Controls: Audio TTS Narration, Reading Heartbeat Timer, Fullscreen #}
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+
+            {# TTS Narration Bar #}
+            <div style="display:inline-flex;align-items:center;gap:6px;background:var(--surface-container-lowest);border:1px solid rgba(14,43,36,.12);border-radius:var(--r-full);padding:2px 8px">
+              <button type="button" id="btn-audio-play" title="Play audio narration aloud" style="border:none;background:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;color:var(--primary);font-size:11.5px;font-weight:600;padding:2px 4px">
+                <span class="material-symbols-outlined" style="font-size:16px" id="audio-icon">volume_up</span>
+                <span id="audio-btn-label">Listen Aloud</span>
+              </button>
+              <button type="button" id="btn-audio-stop" title="Stop audio narration" style="border:none;background:none;cursor:pointer;display:none;color:var(--error);padding:2px 4px">
+                <span class="material-symbols-outlined" style="font-size:15px">stop</span>
+              </button>
+              <div id="audio-waves" style="display:none;align-items:center;gap:2px;height:12px;padding:0 2px">
+                <span class="soundwave wave1"></span>
+                <span class="soundwave wave2"></span>
+                <span class="soundwave wave3"></span>
+              </div>
+              <button type="button" id="btn-audio-speed" title="Change speed" style="border:none;background:rgba(14,43,36,.06);border-radius:var(--r-full);padding:1px 5px;cursor:pointer;font-size:10px;font-weight:700;color:var(--on-surface)">
+                1x
+              </button>
+            </div>
+
+            {# Reading Timer with Live xAPI Heartbeat #}
+            <div id="reading-timer-badge" title="Live reading time on current chapter (telemetry synced to xAPI)" style="display:inline-flex;align-items:center;gap:5px;background:var(--surface-container-lowest);border:1px solid rgba(14,43,36,.12);padding:2px 8px;border-radius:var(--r-full);font-size:11.5px;color:var(--on-surface);font-weight:600">
+              <span class="material-symbols-outlined" style="font-size:14px;color:var(--primary)">timer</span>
+              <span id="reading-time-clock">00:00</span>
+            </div>
+
+            {# Fullscreen Toggle #}
+            <button type="button" id="btn-toggle-fullscreen" title="Toggle immersive fullscreen mode" style="border:1px solid rgba(14,43,36,.12);background:var(--surface-container-lowest);padding:3px 6px;border-radius:var(--r-md);cursor:pointer;display:inline-flex;align-items:center;color:var(--on-surface)">
+              <span class="material-symbols-outlined" style="font-size:16px" id="fullscreen-icon">fullscreen</span>
+            </button>
+          </div>
+        </div>
+
+        {# Chapter Title & Navigation Bar #}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--surface-container-lowest);border-bottom:1px solid rgba(14,43,36,.06)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="chip chip-mint" style="font-size:11px;font-weight:600">
+              Chapter {{ chap_idx + 1 }} of {{ total_chapters }}
+            </span>
+            <span class="body-sm" style="font-weight:700;color:var(--on-surface)">
+              {{ current_chapter_title }}
+            </span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            {% if prev_chap_url %}
+            <a href="{{ prev_chap_url }}" class="btn btn-glass" style="font-size:12px;padding:5px 12px;display:inline-flex;align-items:center;gap:4px">
+              <span class="material-symbols-outlined" style="font-size:14px">chevron_left</span> Previous
+            </a>
+            {% endif %}
+            {% if next_chap_url %}
+            <a href="{{ next_chap_url }}" class="btn btn-primary" style="font-size:12px;padding:5px 12px;display:inline-flex;align-items:center;gap:4px">
+              Next <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <iframe id="manual-body" src="{{ chapter_url }}" title="{{ current_chapter_title }}"
+                style="width:100%;height:680px;border:none;background:#ffffff;display:block;transition:background-color .3s ease"
+                sandbox="allow-same-origin"></iframe>
+      </div>
+
+      {# ── Bottom Navigation Strip (matching lesson.html) ── #}
+      <div class="frosted" style="padding:var(--sp-md) var(--sp-lg);display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-sm);margin-bottom:var(--sp-lg)">
+        {% if prev_chap_url %}
+        <a class="btn btn-surface" href="{{ prev_chap_url }}">
+          <span class="material-symbols-outlined" style="font-size:15px">arrow_back</span>
+          Previous chapter
+        </a>
+        {% else %}
+        <a class="btn btn-surface" href="/manuals?token={{ quiz_token }}">
+          <span class="material-symbols-outlined" style="font-size:15px">menu_book</span>
+          All manuals
+        </a>
+        {% endif %}
+
+        <div style="margin-left:auto;display:flex;gap:var(--sp-sm);align-items:center">
+          {% if next_chap_url %}
+          <a class="btn btn-primary" href="{{ next_chap_url }}">
+            Next chapter
+            <span class="material-symbols-outlined" style="font-size:15px">arrow_forward</span>
+          </a>
+          {% else %}
+          <a class="btn btn-primary" href="/manuals?token={{ quiz_token }}">
+            <span class="material-symbols-outlined" style="font-size:15px">check_circle</span>
+            Finished reading
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% elif body_html %}
       <div class="lesson-prose" id="manual-body" tabindex="-1">
         {{ body_html | safe }}
       </div>
       {% endif %}
 
-      <section class="panel">
-        <h2>Version history</h2>
-        <ul class="q-list">
+      <section class="card" style="padding:var(--sp-lg);border-radius:var(--r-2xl);background:var(--surface-container-lowest);border:1px solid rgba(14,43,36,.06);box-shadow:var(--shadow-l1);margin-top:var(--sp-lg)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-sm)">
+          <div style="display:flex;align-items:center;gap:var(--sp-xs)">
+            <span class="material-symbols-outlined" style="font-size:18px;color:var(--primary)">history</span>
+            <h3 class="headline-sm" style="margin:0">Edition &amp; Version History</h3>
+          </div>
+          <span class="label-caps text-muted">{{ versions | length }} version{{ 's' if versions | length != 1 else '' }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--sp-xs)">
           {% for v in versions %}
-          <li>
-            <a class="link" href="/manuals/{{ manual.id }}?token={{ quiz_token }}&v={{ v.version }}{% if focus %}&focus={{ focus }}{% endif %}">
-              v{{ v.version }}{% if v.is_published %} · published{% else %} · draft{% endif %}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface-container-low);border-radius:var(--r-md);gap:var(--sp-sm);flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:var(--sp-xs)">
+              <a href="/manuals/{{ manual.id }}?token={{ quiz_token }}&v={{ v.version }}{% if focus %}&focus={{ focus }}{% endif %}"
+                 style="font-weight:600;font-size:13px;color:var(--on-surface);text-decoration:none;display:flex;align-items:center;gap:6px">
+                <span class="chip {% if v.is_published %}chip-mint{% else %}chip-dark{% endif %}" style="font-size:10px">
+                  v{{ v.version }}
+                </span>
+                {% if v.is_published %}Published{% else %}Draft{% endif %}
+                {% if v.content_type == 'epub' %}<span class="chip chip-sky" style="font-size:9.5px">EPUB3</span>{% endif %}
+              </a>
+              {% if v.changelog %}<span class="body-sm text-muted">· {{ v.changelog }}</span>{% endif %}
+            </div>
+            {% if v.version == version.version %}
+            <span class="chip chip-mint" style="font-size:9.5px">Current edition</span>
+            {% else %}
+            <a href="/manuals/{{ manual.id }}?token={{ quiz_token }}&v={{ v.version }}{% if focus %}&focus={{ focus }}{% endif %}"
+               class="btn btn-surface" style="font-size:11px;padding:3px 8px">
+              View this version
             </a>
-            {% if v.changelog %}<div class="meta">{{ v.changelog }}</div>{% endif %}
-          </li>
+            {% endif %}
+          </div>
           {% endfor %}
-        </ul>
-        <p><a class="btn secondary" href="/manuals?token={{ quiz_token }}">All manuals</a></p>
+        </div>
+        <div style="margin-top:var(--sp-md);display:flex;justify-content:flex-end">
+          <a class="btn btn-surface" href="/manuals?token={{ quiz_token }}" style="font-size:12px;padding:5px 12px">
+            <span class="material-symbols-outlined" style="font-size:14px">menu_book</span>
+            All manuals
+          </a>
+        </div>
       </section>
     </div>
 
@@ -238,20 +421,913 @@
     {% endif %}
   </div>
 </article>
-{% if pebl_enabled and quiz_token %}
-<script src="/static/js/pebl_discussion.js?v=pebl3" defer></script>
-{% endif %}
-{% if focus %}
+
+{# Phase 2 JavaScript for Bookmarks, Highlights & Progress #}
+<script id="epub-reader-data" type="application/json">
+{
+  "manualId": {{ (manual.id | string) | tojson }},
+  "version": {{ ((version.version if version else 1) or 1) | tojson }},
+  "quizToken": {{ quiz_token | tojson }},
+  "chapIdx": {{ chap_idx | default(0) | tojson }},
+  "totalChapters": {{ total_chapters | default(4) | tojson }},
+  "chapTitle": {{ current_chapter_title | default('') | tojson }},
+  "spineId": {{ (current_spine_id | default('')) | tojson }},
+  "currentCfi": {{ (current_cfi | default('')) | tojson }}
+}
+</script>
+<script id="epub-annotations-data" type="application/json">
+{{ annotations | tojson }}
+</script>
 <script>
 (function () {
-  var id = {{ focus | tojson }};
-  if (!id) return;
-  var el = document.getElementById(id);
-  if (el) {
-    el.classList.add("manual-focus");
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  var dataEl = document.getElementById('epub-reader-data');
+  if (!dataEl) return;
+  var readerData = JSON.parse(dataEl.textContent || '{}');
+  var manualId = readerData.manualId;
+  var version = readerData.version;
+  var quizToken = readerData.quizToken;
+  var chapIdx = readerData.chapIdx;
+  var chapTitle = readerData.chapTitle;
+  var spineId = readerData.spineId || ('ch' + (chapIdx + 1));
+
+  var annsEl = document.getElementById('epub-annotations-data');
+  var annotations = annsEl ? JSON.parse(annsEl.textContent || '[]') : [];
+
+  var iframe = document.getElementById('manual-body');
+  var activeSelection = null;
+
+  // —— IN-IFRAME HIGHLIGHT STYLES & RESTORATION ——
+
+  function getIframeDoc() {
+    try {
+      if (!iframe) return null;
+      return iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+    } catch (e) {
+      return null;
+    }
   }
+
+  function injectHighlightStyles(doc) {
+    if (!doc || !doc.head || doc.getElementById('epub-highlight-styles')) return;
+    var style = doc.createElement('style');
+    style.id = 'epub-highlight-styles';
+    style.textContent = [
+      '.epub-highlight {',
+      '  background-color: #fef08a !important;',
+      '  color: #0f172a !important;',
+      '  border-bottom: 2px solid #eab308;',
+      '  border-radius: 2px;',
+      '  cursor: pointer;',
+      '  padding: 1px 2px;',
+      '  transition: background-color 0.15s ease, outline 0.15s ease;',
+      '}',
+      '.epub-highlight:hover { background-color: #fde047 !important; }',
+      '.epub-highlight.hl-green { background-color: #bbf7d0 !important; border-bottom-color: #22c55e; }',
+      '.epub-highlight.hl-blue { background-color: #bfdbfe !important; border-bottom-color: #3b82f6; }',
+      '.epub-highlight.hl-pink { background-color: #fbcfe8 !important; border-bottom-color: #ec4899; }',
+      '.epub-highlight.hl-active { outline: 2px solid #0f766e; box-shadow: 0 0 6px rgba(15, 118, 110, 0.4); }'
+    ].join('\n');
+    doc.head.appendChild(style);
+  }
+
+  function getNodeSubpath(ancestor, targetNode, offset) {
+    var steps = [];
+    var cur = targetNode;
+    while (cur && cur !== ancestor) {
+      var parent = cur.parentElement;
+      if (!parent) break;
+      if (cur.nodeType === Node.ELEMENT_NODE) {
+        var elIdx = Array.prototype.indexOf.call(parent.children, cur);
+        steps.unshift((elIdx + 1) * 2);
+      } else if (cur.nodeType === Node.TEXT_NODE) {
+        var elemSibs = 0;
+        var sib = cur.previousSibling;
+        while (sib) {
+          if (sib.nodeType === Node.ELEMENT_NODE) elemSibs++;
+          sib = sib.previousSibling;
+        }
+        steps.unshift((elemSibs * 2) + 1);
+      }
+      cur = parent;
+    }
+    return (steps.length ? '/' + steps.join('/') : '') + ':' + (offset || 0);
+  }
+
+  function generateCfiFromRange(doc, range, chapterIdx, spineIdStr) {
+    if (!doc || !range) return null;
+    var spineNum = 2 * (parseInt(chapterIdx, 10) + 1);
+    var spinePart = '/6/' + spineNum + (spineIdStr ? '[' + spineIdStr + ']' : '') + '!/4';
+
+    var common = range.commonAncestorContainer;
+    if (common.nodeType === Node.TEXT_NODE) {
+      common = common.parentElement;
+    }
+    if (!common) common = doc.body;
+
+    var parentSteps = [];
+    var pCur = common;
+    while (pCur && pCur !== doc.body) {
+      var parent = pCur.parentElement;
+      if (!parent) break;
+      var elIdx = Array.prototype.indexOf.call(parent.children, pCur);
+      parentSteps.unshift((elIdx + 1) * 2);
+      pCur = parent;
+    }
+
+    var fullParentPath = spinePart + (parentSteps.length ? '/' + parentSteps.join('/') : '');
+    var startSub = getNodeSubpath(common, range.startContainer, range.startOffset);
+    var endSub = getNodeSubpath(common, range.endContainer, range.endOffset);
+
+    // Format conforming to EPUB CFI 1.1 Range: epubcfi(parent_path,start_subpath,end_subpath)
+    return 'epubcfi(' + fullParentPath + ',' + startSub + ',' + endSub + ')';
+  }
+
+  function resolveCfiSubpath(parentElem, subpath) {
+    if (!parentElem || !subpath) return null;
+    var parts = subpath.split(':');
+    var pathPart = parts[0];
+    var offset = parts.length > 1 ? parseInt(parts[1], 10) : parseInt(pathPart.replace(/^\/?/, ''), 10);
+    if (isNaN(offset)) offset = 0;
+
+    var steps = pathPart.split('/').filter(Boolean).map(function (s) { return parseInt(s, 10); });
+    var cur = parentElem;
+
+    for (var i = 0; i < steps.length; i++) {
+      var step = steps[i];
+      if (step % 2 === 0) {
+        var elIdx = (step / 2) - 1;
+        if (!cur.children || elIdx < 0 || elIdx >= cur.children.length) return null;
+        cur = cur.children[elIdx];
+      } else {
+        var targetElemSiblings = (step - 1) / 2;
+        var curElemSiblings = 0;
+        var textNode = null;
+        for (var c = 0; c < cur.childNodes.length; c++) {
+          var child = cur.childNodes[c];
+          if (child.nodeType === Node.ELEMENT_NODE) {
+            curElemSiblings++;
+          } else if (child.nodeType === Node.TEXT_NODE) {
+            if (curElemSiblings === targetElemSiblings) {
+              textNode = child;
+              break;
+            }
+          }
+        }
+        if (!textNode) return null;
+        var safeOffset = Math.min(offset, textNode.nodeValue ? textNode.nodeValue.length : 0);
+        return { node: textNode, offset: safeOffset };
+      }
+    }
+
+    if (cur.nodeType === Node.TEXT_NODE) {
+      return { node: cur, offset: Math.min(offset, cur.nodeValue ? cur.nodeValue.length : 0) };
+    }
+    for (var k = 0; k < cur.childNodes.length; k++) {
+      if (cur.childNodes[k].nodeType === Node.TEXT_NODE) {
+        return { node: cur.childNodes[k], offset: Math.min(offset, cur.childNodes[k].nodeValue.length) };
+      }
+    }
+    return { node: cur, offset: 0 };
+  }
+
+  function resolveCfiToRange(doc, cfi) {
+    if (!doc || !doc.body || !cfi || typeof cfi !== 'string') return null;
+    var m = cfi.match(/^epubcfi\((\/6\/(\d+)(?:\[([^\]]+)\])?!(.*?)),((?:\/\d+)*:?\d+),((?:\/\d+)*:?\d+)\)$/);
+    if (!m) return null;
+
+    var spineNum = parseInt(m[2], 10);
+    var targetChapIdx = Math.max(0, Math.floor(spineNum / 2) - 1);
+    if (targetChapIdx !== parseInt(chapIdx, 10)) return null;
+
+    var localParent = m[4] || '';
+    var startSub = m[5];
+    var endSub = m[6];
+
+    var cur = doc.body;
+    var parentSteps = localParent.replace(/^\/4\/?/, '').split('/').filter(Boolean);
+    for (var i = 0; i < parentSteps.length; i++) {
+      var stepNum = parseInt(parentSteps[i], 10);
+      if (stepNum % 2 === 0) {
+        var childIdx = (stepNum / 2) - 1;
+        if (!cur.children || childIdx < 0 || childIdx >= cur.children.length) return null;
+        cur = cur.children[childIdx];
+      }
+    }
+
+    var startPoint = resolveCfiSubpath(cur, startSub);
+    var endPoint = resolveCfiSubpath(cur, endSub);
+    if (!startPoint || !endPoint) return null;
+
+    var rng = doc.createRange();
+    try {
+      rng.setStart(startPoint.node, startPoint.offset);
+      rng.setEnd(endPoint.node, endPoint.offset);
+      return rng;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function applyHighlightToRange(doc, range, ann) {
+    if (!doc || !range || !ann) return false;
+    if (range.startContainer === range.endContainer && range.startContainer.nodeType === Node.TEXT_NODE) {
+      var mark = doc.createElement('mark');
+      mark.className = 'epub-highlight hl-' + (ann.color || 'yellow');
+      mark.setAttribute('data-ann-id', ann.id);
+      mark.title = ann.annotation_text || 'Highlight';
+      try {
+        range.surroundContents(mark);
+        bindHighlightEvents(mark, ann.id);
+        return true;
+      } catch (ex) {
+        // Fall through to multi-node traversal
+      }
+    }
+
+    var startNode = range.startContainer;
+    var endNode = range.endContainer;
+    var commonAncestor = range.commonAncestorContainer;
+    var walker = doc.createTreeWalker(commonAncestor, NodeFilter.SHOW_TEXT, null, false);
+    var inRange = false;
+    var textNodesToHighlight = [];
+
+    var node;
+    while ((node = walker.nextNode())) {
+      if (node === startNode) inRange = true;
+      if (inRange) {
+        var sOff = (node === startNode) ? range.startOffset : 0;
+        var eOff = (node === endNode) ? range.endOffset : (node.nodeValue ? node.nodeValue.length : 0);
+        if (eOff > sOff) {
+          textNodesToHighlight.push({ node: node, start: sOff, end: eOff });
+        }
+      }
+      if (node === endNode) break;
+    }
+
+    var anyCreated = false;
+    for (var i = 0; i < textNodesToHighlight.length; i++) {
+      var item = textNodesToHighlight[i];
+      var subRange = doc.createRange();
+      subRange.setStart(item.node, item.start);
+      subRange.setEnd(item.node, item.end);
+      var subMark = doc.createElement('mark');
+      subMark.className = 'epub-highlight hl-' + (ann.color || 'yellow');
+      subMark.setAttribute('data-ann-id', ann.id);
+      subMark.title = ann.annotation_text || 'Highlight';
+      try {
+        subRange.surroundContents(subMark);
+        bindHighlightEvents(subMark, ann.id);
+        anyCreated = true;
+      } catch (e) {
+        // Continue
+      }
+    }
+    return anyCreated;
+  }
+
+  function highlightTextInScope(doc, scopeElem, ann, textToFind) {
+    if (!doc || !scopeElem) return false;
+    var walker = doc.createTreeWalker(scopeElem, NodeFilter.SHOW_TEXT, null, false);
+    var fullStr = "";
+    var nodePositions = [];
+    var n;
+    while ((n = walker.nextNode())) {
+      if (n.parentElement && n.parentElement.classList.contains('epub-highlight')) {
+        continue;
+      }
+      var val = n.nodeValue;
+      if (!val) continue;
+      var s = fullStr.length;
+      fullStr += val;
+      nodePositions.push({ node: n, start: s, end: fullStr.length });
+    }
+
+    var matchIdx = fullStr.indexOf(textToFind);
+    if (matchIdx === -1) {
+      var normFull = fullStr.replace(/\s+/g, ' ');
+      var normFind = textToFind.replace(/\s+/g, ' ');
+      matchIdx = normFull.indexOf(normFind);
+    }
+    if (matchIdx === -1) return false;
+
+    var matchEnd = matchIdx + textToFind.length;
+    var highlightedAny = false;
+
+    for (var i = 0; i < nodePositions.length; i++) {
+      var item = nodePositions[i];
+      if (item.end <= matchIdx || item.start >= matchEnd) {
+        continue;
+      }
+      var offsetInNodeStart = Math.max(0, matchIdx - item.start);
+      var offsetInNodeEnd = Math.min(item.node.nodeValue.length, matchEnd - item.start);
+
+      if (offsetInNodeEnd > offsetInNodeStart) {
+        var rng = doc.createRange();
+        rng.setStart(item.node, offsetInNodeStart);
+        rng.setEnd(item.node, offsetInNodeEnd);
+        var mark = doc.createElement('mark');
+        mark.className = 'epub-highlight hl-' + (ann.color || 'yellow');
+        mark.setAttribute('data-ann-id', ann.id);
+        mark.title = ann.annotation_text || 'Highlight';
+        try {
+          rng.surroundContents(mark);
+          bindHighlightEvents(mark, ann.id);
+          highlightedAny = true;
+        } catch (ex) {
+          // Boundary safety fallback
+        }
+      }
+    }
+    return highlightedAny;
+  }
+
+  function highlightTextInDoc(doc, ann) {
+    if (!doc || !doc.body || !ann) return;
+    if (doc.querySelector('mark[data-ann-id="' + ann.id + '"]')) return;
+
+    // 1. Direct standard EPUB CFI resolution (standards-based DOM Range without quote search)
+    if (ann.cfi_range) {
+      var directRange = resolveCfiToRange(doc, ann.cfi_range);
+      if (directRange) {
+        var success = applyHighlightToRange(doc, directRange, ann);
+        if (success) {
+          return; // Successfully resolved directly from CFI endpoints
+        }
+      }
+    }
+
+    // 2. Recovery fallback: quote-matching search (strictly used when CFI is missing, corrupt, or legacy)
+    if (ann.highlight_text) {
+      var textToFind = ann.highlight_text.trim();
+      if (textToFind) {
+        highlightTextInScope(doc, doc.body, ann, textToFind);
+      }
+    }
+  }
+
+  function bindHighlightEvents(mark, annId) {
+    mark.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var annItem = document.querySelector('li.annotation-item[data-id="' + annId + '"]');
+      if (annItem) {
+        annItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        annItem.style.background = 'rgba(15, 118, 110, 0.2)';
+        setTimeout(function () { annItem.style.background = ''; }, 1400);
+      }
+    });
+  }
+
+  function restoreHighlights() {
+    var doc = getIframeDoc();
+    if (!doc || !doc.body) return;
+    injectHighlightStyles(doc);
+
+    for (var i = 0; i < annotations.length; i++) {
+      var ann = annotations[i];
+      if (parseInt(ann.chapter_index, 10) === parseInt(chapIdx, 10)) {
+        highlightTextInDoc(doc, ann);
+      }
+    }
+  }
+
+  function scrollToCurrentCfi() {
+    var doc = getIframeDoc();
+    if (!doc || !doc.body || !readerData.currentCfi) return;
+    var cfiStr = readerData.currentCfi;
+    var m = cfiStr.match(/^epubcfi\(\/6\/\d+(?:\[[^\]]+\])?!\/4\/(\d+)/);
+    if (m) {
+      var step = parseInt(m[1], 10);
+      var elem = doc.body.children ? doc.body.children[(step / 2) - 1] : null;
+      if (elem) {
+        elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }
+
+  function setupIframeSelection() {
+    var doc = getIframeDoc();
+    if (!doc || !doc.body) return;
+
+    doc.addEventListener('mouseup', function () {
+      var sel = doc.getSelection();
+      if (!sel || sel.isCollapsed) {
+        activeSelection = null;
+        updateAddAnnBtn(false);
+        return;
+      }
+      var str = sel.toString().trim();
+      if (str.length > 0) {
+        activeSelection = {
+          text: str,
+          range: sel.getRangeAt(0)
+        };
+        updateAddAnnBtn(true);
+      } else {
+        activeSelection = null;
+        updateAddAnnBtn(false);
+      }
+    });
+  }
+
+  function updateAddAnnBtn(hasSel) {
+    var addAnnBtn = document.getElementById('btn-add-annotation');
+    if (!addAnnBtn) return;
+    if (hasSel) {
+      addAnnBtn.classList.add('btn-primary');
+      addAnnBtn.classList.remove('btn-glass');
+      addAnnBtn.title = 'Highlight selected text and save note';
+    } else {
+      addAnnBtn.classList.remove('btn-primary');
+      addAnnBtn.classList.add('btn-glass');
+      addAnnBtn.title = 'Add note';
+    }
+  }
+
+  if (iframe) {
+    iframe.addEventListener('load', function () {
+      restoreHighlights();
+      setupIframeSelection();
+      scrollToCurrentCfi();
+    });
+    // If ready immediately
+    var initialDoc = getIframeDoc();
+    if (initialDoc && initialDoc.readyState === 'complete') {
+      restoreHighlights();
+      setupIframeSelection();
+      scrollToCurrentCfi();
+    }
+  }
+
+  // —— SIDEBAR JUMP TO HIGHLIGHT ——
+  document.querySelectorAll('li.annotation-item').forEach(function (item) {
+    item.addEventListener('click', function (e) {
+      if (e.target.closest('button')) return;
+      var id = this.getAttribute('data-id');
+      var doc = getIframeDoc();
+      if (!doc) return;
+      var mark = doc.querySelector('mark[data-ann-id="' + id + '"]');
+      if (mark) {
+        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        mark.classList.add('hl-active');
+        setTimeout(function () { mark.classList.remove('hl-active'); }, 1400);
+      }
+    });
+  });
+
+  // —— BOOKMARK CREATE & DELETE ——
+  var addBmBtn = document.getElementById('btn-add-bookmark');
+  if (addBmBtn) {
+    addBmBtn.addEventListener('click', function () {
+      var title = prompt("Bookmark title:", chapTitle || ("Chapter " + (chapIdx + 1)));
+      if (!title) return;
+      var stdCfi = 'epubcfi(/6/' + (2 * (chapIdx + 1)) + '[' + spineId + ']!/4/2:0)';
+      fetch('/api/v1/manuals/' + manualId + '/bookmarks?token=' + encodeURIComponent(quizToken), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          v: version,
+          chapter_index: chapIdx,
+          title: title,
+          cfi: stdCfi
+        })
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        if (data.status === 'ok') {
+          window.location.reload();
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll('.btn-del-bookmark').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var id = this.getAttribute('data-id');
+      if (!id) return;
+      if (!confirm("Delete this bookmark?")) return;
+      fetch('/api/v1/manuals/' + manualId + '/bookmarks/' + id + '/delete?token=' + encodeURIComponent(quizToken), {
+        method: 'POST'
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        if (data.status === 'ok') {
+          window.location.reload();
+        }
+      });
+    });
+  });
+
+  // —— ANNOTATION CREATE, EDIT & DELETE ——
+  var addAnnBtn = document.getElementById('btn-add-annotation');
+  if (addAnnBtn) {
+    addAnnBtn.addEventListener('click', function () {
+      var hlText = activeSelection ? activeSelection.text : '';
+      if (!hlText) {
+        hlText = prompt("Selected/highlighted text (or enter phrase from chapter):") || "";
+      }
+      var noteText = prompt("Note / annotation text:", hlText ? ("Note on: " + hlText.substring(0, 30)) : "");
+      if (noteText === null) return;
+
+      var doc = getIframeDoc();
+      var cfiRange = '';
+      if (activeSelection && activeSelection.range && doc) {
+        cfiRange = generateCfiFromRange(doc, activeSelection.range, chapIdx, spineId);
+      }
+      if (!cfiRange) {
+        cfiRange = 'epubcfi(/6/' + (2 * (chapIdx + 1)) + '[' + spineId + ']!/4/2,/1:0,/1:' + (hlText ? hlText.length : 0) + ')';
+      }
+      var chosenColor = 'yellow';
+
+      fetch('/api/v1/manuals/' + manualId + '/annotations?token=' + encodeURIComponent(quizToken), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          v: version,
+          chapter_index: chapIdx,
+          cfi_range: cfiRange,
+          annotation_text: noteText || '',
+          highlight_text: hlText || '',
+          color: chosenColor
+        })
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        if (data.status === 'ok' && data.annotation) {
+          var created = data.annotation;
+          annotations.push(created);
+          var curDoc = getIframeDoc();
+          if (curDoc && created.highlight_text) {
+            highlightTextInDoc(curDoc, created);
+          }
+          window.location.reload();
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll('.btn-edit-annotation').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var id = this.getAttribute('data-id');
+      var oldText = this.getAttribute('data-text') || '';
+      var newText = prompt("Edit note:", oldText);
+      if (newText === null || newText === oldText) return;
+      fetch('/api/v1/manuals/' + manualId + '/annotations/' + id + '?token=' + encodeURIComponent(quizToken), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          annotation_text: newText
+        })
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        if (data.status === 'ok') {
+          window.location.reload();
+        }
+      });
+    });
+  });
+
+  document.querySelectorAll('.btn-del-annotation').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var id = this.getAttribute('data-id');
+      if (!id) return;
+      if (!confirm("Delete this annotation?")) return;
+      fetch('/api/v1/manuals/' + manualId + '/annotations/' + id + '/delete?token=' + encodeURIComponent(quizToken), {
+        method: 'POST'
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        if (data.status === 'ok') {
+          var doc = getIframeDoc();
+          if (doc) {
+            doc.querySelectorAll('mark[data-ann-id="' + id + '"]').forEach(function (mark) {
+              mark.replaceWith.apply(mark, mark.childNodes);
+            });
+          }
+          window.location.reload();
+        }
+      });
+    });
+  });
+
+  // —— 1. FONT SIZE ZOOM CONTROLS (REQ-03) ——
+  var currentZoom = 100;
+  function updateZoom(newZoom) {
+    currentZoom = Math.max(80, Math.min(160, newZoom));
+    var label = document.getElementById('zoom-level-label');
+    if (label) label.textContent = currentZoom + '%';
+    var doc = getIframeDoc();
+    if (doc && doc.body) {
+      doc.body.style.fontSize = (currentZoom / 100 * 1.05) + 'rem';
+    }
+  }
+  var btnZoomIn = document.getElementById('btn-zoom-in');
+  var btnZoomOut = document.getElementById('btn-zoom-out');
+  if (btnZoomIn) btnZoomIn.addEventListener('click', function() { updateZoom(currentZoom + 10); });
+  if (btnZoomOut) btnZoomOut.addEventListener('click', function() { updateZoom(currentZoom - 10); });
+
+  // —— 2. READING CONTRAST THEMES (REQ-02/REQ-03) ——
+  var THEMES = {
+    day: { bg: '#ffffff', color: '#1e293b', calloutBg: '#f0fdfa', calloutBorder: '#0f766e' },
+    sepia: { bg: '#fbf0d9', color: '#3f2e1a', calloutBg: '#f4e3c3', calloutBorder: '#b45309' },
+    slate: { bg: '#1e293b', color: '#f8fafc', calloutBg: '#334155', calloutBorder: '#38bdf8' },
+    oled: { bg: '#090d16', color: '#e2e8f0', calloutBg: '#131d2e', calloutBorder: '#45dfa4' }
+  };
+  function applyTheme(themeKey) {
+    document.querySelectorAll('.btn-theme').forEach(function(b) {
+      b.classList.toggle('on', b.getAttribute('data-theme') === themeKey);
+    });
+    var doc = getIframeDoc();
+    var t = THEMES[themeKey] || THEMES.day;
+    if (doc && doc.body) {
+      doc.body.style.backgroundColor = t.bg;
+      doc.body.style.color = t.color;
+      doc.documentElement.style.backgroundColor = t.bg;
+      doc.querySelectorAll('.callout').forEach(function(c) {
+        c.style.backgroundColor = t.calloutBg;
+        c.style.borderColor = t.calloutBorder;
+      });
+      doc.querySelectorAll('.diagram-box').forEach(function(d) {
+        d.style.backgroundColor = (themeKey === 'slate' || themeKey === 'oled') ? '#1e293b' : '#f8fafc';
+        d.style.borderColor = (themeKey === 'slate' || themeKey === 'oled') ? '#334155' : '#e2e8f0';
+      });
+    }
+    if (iframe) iframe.style.backgroundColor = t.bg;
+  }
+  document.querySelectorAll('.btn-theme').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      applyTheme(this.getAttribute('data-theme'));
+    });
+  });
+
+  // Re-apply theme & zoom whenever iframe loads
+  if (iframe) {
+    iframe.addEventListener('load', function() {
+      var doc = getIframeDoc();
+      if (doc) {
+        injectHighlightStyles(doc);
+        updateZoom(currentZoom);
+        applyTheme('day');
+      }
+    });
+  }
+
+  // —— 3. WEB SPEECH API AUDIOBOOK READ-ALOUD (REQ-02) ——
+  var synth = window.speechSynthesis;
+  var isSpeaking = false;
+  var isPaused = false;
+  var speechSpeed = 1.0;
+  var speedLevels = [1.0, 1.25, 1.5, 0.85];
+  var speedIdx = 0;
+
+  var btnAudioPlay = document.getElementById('btn-audio-play');
+  var btnAudioStop = document.getElementById('btn-audio-stop');
+  var btnAudioSpeed = document.getElementById('btn-audio-speed');
+  var audioWaves = document.getElementById('audio-waves');
+  var audioLabel = document.getElementById('audio-btn-label');
+  var audioIcon = document.getElementById('audio-icon');
+
+  function startReadingAloud() {
+    if (!synth) {
+      alert("Text-to-speech audio narration is not supported in this browser.");
+      return;
+    }
+    if (synth.speaking && !synth.paused) {
+      synth.pause();
+      isPaused = true;
+      if (audioLabel) audioLabel.textContent = "Resume";
+      if (audioIcon) audioIcon.textContent = "play_arrow";
+      if (audioWaves) audioWaves.style.display = "none";
+      return;
+    }
+    if (synth.paused) {
+      synth.resume();
+      isPaused = false;
+      if (audioLabel) audioLabel.textContent = "Pause";
+      if (audioIcon) audioIcon.textContent = "pause";
+      if (audioWaves) audioWaves.style.display = "inline-flex";
+      return;
+    }
+
+    var doc = getIframeDoc();
+    var textToRead = "";
+    if (doc && doc.body) {
+      textToRead = doc.body.innerText || doc.body.textContent || "";
+    }
+    if (!textToRead) {
+      textToRead = chapTitle || "Interactive eBook chapter";
+    }
+
+    synth.cancel();
+    var utterance = new SpeechSynthesisUtterance(textToRead);
+    utterance.rate = speechSpeed;
+    utterance.onstart = function() {
+      isSpeaking = true;
+      isPaused = false;
+      if (audioLabel) audioLabel.textContent = "Pause";
+      if (audioIcon) audioIcon.textContent = "pause";
+      if (btnAudioStop) btnAudioStop.style.display = "inline-flex";
+      if (audioWaves) audioWaves.style.display = "inline-flex";
+    };
+    utterance.onend = function() {
+      isSpeaking = false;
+      isPaused = false;
+      if (audioLabel) audioLabel.textContent = "Listen Aloud";
+      if (audioIcon) audioIcon.textContent = "volume_up";
+      if (btnAudioStop) btnAudioStop.style.display = "none";
+      if (audioWaves) audioWaves.style.display = "none";
+    };
+    utterance.onerror = function() {
+      isSpeaking = false;
+      isPaused = false;
+      if (audioLabel) audioLabel.textContent = "Listen Aloud";
+      if (audioIcon) audioIcon.textContent = "volume_up";
+      if (btnAudioStop) btnAudioStop.style.display = "none";
+      if (audioWaves) audioWaves.style.display = "none";
+    };
+    synth.speak(utterance);
+  }
+
+  function stopReadingAloud() {
+    if (synth) synth.cancel();
+    isSpeaking = false;
+    isPaused = false;
+    if (audioLabel) audioLabel.textContent = "Listen Aloud";
+    if (audioIcon) audioIcon.textContent = "volume_up";
+    if (btnAudioStop) btnAudioStop.style.display = "none";
+    if (audioWaves) audioWaves.style.display = "none";
+  }
+
+  if (btnAudioPlay) btnAudioPlay.addEventListener('click', startReadingAloud);
+  if (btnAudioStop) btnAudioStop.addEventListener('click', stopReadingAloud);
+  if (btnAudioSpeed) {
+    btnAudioSpeed.addEventListener('click', function() {
+      speedIdx = (speedIdx + 1) % speedLevels.length;
+      speechSpeed = speedLevels[speedIdx];
+      this.textContent = speechSpeed + 'x';
+      if (isSpeaking && !isPaused) {
+        startReadingAloud();
+      }
+    });
+  }
+
+  // —— 4. LIVE READING SESSION TIMER & xAPI TELEMETRY HEARTBEAT (REQ-05) ——
+  var elapsedReadingSeconds = 0;
+  var clockEl = document.getElementById('reading-time-clock');
+  var totalChaps = readerData.totalChapters || 4;
+
+  setInterval(function() {
+    elapsedReadingSeconds++;
+    var mins = Math.floor(elapsedReadingSeconds / 60);
+    var secs = elapsedReadingSeconds % 60;
+    var formatted = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+    if (clockEl) clockEl.textContent = formatted;
+
+    // Every 30 seconds: send reading engagement telemetry to xAPI progress endpoint
+    if (elapsedReadingSeconds % 30 === 0) {
+      sendReadingProgressHeartbeat();
+    }
+  }, 1000);
+
+  function sendReadingProgressHeartbeat() {
+    var computedPercent = Math.min(100, Math.round(((chapIdx + 1) / totalChaps) * 100));
+    fetch('/api/v1/manuals/' + manualId + '/progress?token=' + encodeURIComponent(quizToken), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        v: version,
+        chapter_index: chapIdx,
+        progress_percent: computedPercent,
+        cfi: readerData.currentCfi || ('epub-cfi-ch' + (chapIdx + 1))
+      })
+    }).catch(function() {});
+  }
+
+  // Send initial progress on load
+  setTimeout(sendReadingProgressHeartbeat, 2000);
+
+  // —— 5. FULLSCREEN MODE TOGGLE ——
+  var btnFullscreen = document.getElementById('btn-toggle-fullscreen');
+  var readerWrapper = document.getElementById('reader-card-wrapper');
+  var fsIcon = document.getElementById('fullscreen-icon');
+  if (btnFullscreen && readerWrapper) {
+    btnFullscreen.addEventListener('click', function() {
+      var isFs = readerWrapper.classList.toggle('fullscreen-active');
+      if (fsIcon) fsIcon.textContent = isFs ? 'fullscreen_exit' : 'fullscreen';
+    });
+  }
+
+  // —— 6. HIGHLIGHT COLOR SWATCH PICKER ——
+  var chosenColor = 'yellow';
+  document.querySelectorAll('.btn-hl-color').forEach(function(b) {
+    b.addEventListener('click', function() {
+      document.querySelectorAll('.btn-hl-color').forEach(function(btn) { btn.classList.remove('on'); });
+      this.classList.add('on');
+      chosenColor = this.getAttribute('data-color') || 'yellow';
+    });
+  });
+
+  // Autoplay narration if requested in URL
+  if (window.location.search.indexOf('autoplay=1') !== -1) {
+    setTimeout(function() {
+      startReadingAloud();
+    }, 1200);
+  }
+
+  // Expose CFI utilities on window for verification and testing
+  window.generateCfiFromRange = generateCfiFromRange;
+  window.resolveCfiToRange = resolveCfiToRange;
+  window.highlightTextInDoc = highlightTextInDoc;
+  window.highlightTextInScope = highlightTextInScope;
 })();
 </script>
-{% endif %}
+
+<style>
+.ebook-layout {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  gap: var(--sp-lg);
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .ebook-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.ebook-toc {
+  background: var(--surface-container-lowest);
+  border: 1px solid rgba(14,43,36,.07);
+  border-radius: var(--r-2xl);
+  padding: var(--sp-md);
+  box-shadow: var(--shadow-l1);
+  position: sticky;
+  top: 80px;
+}
+.ebook-toc-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: var(--sp-xs);
+}
+.ebook-toc ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ebook-toc ol li a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  transition: all .15s ease;
+}
+.ebook-toc ol li a:hover {
+  background: var(--surface-container-low);
+  color: var(--on-surface);
+}
+.ebook-toc ol li a.on {
+  background: var(--inverse-surface);
+  color: var(--tertiary-fixed);
+  font-weight: 700;
+}
+
+@keyframes soundwave-anim {
+  0%, 100% { height: 3px; }
+  50% { height: 13px; }
+}
+.soundwave {
+  display: inline-block;
+  width: 2.5px;
+  background: var(--primary);
+  border-radius: 1px;
+}
+.wave1 { animation: soundwave-anim 0.8s infinite ease-in-out; }
+.wave2 { animation: soundwave-anim 0.8s infinite ease-in-out 0.25s; }
+.wave3 { animation: soundwave-anim 0.8s infinite ease-in-out 0.45s; }
+
+.btn-theme.on {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px !important;
+}
+.btn-hl-color.on {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 1px !important;
+}
+#reader-card-wrapper.fullscreen-active {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  background: #ffffff;
+}
+#reader-card-wrapper.fullscreen-active #manual-body {
+  height: calc(100vh - 98px) !important;
+}
+</style>
 {% endblock %}
