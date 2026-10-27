@@ -170,8 +170,11 @@ def onboard_connect(
     admin_key: str = Form(""),
     name: str = Form(...),
     slug: str = Form(""),
+    segment: str = Form("school"),
 ):
-    """One-shot: create school + Dynamic Registration invite URL."""
+    """One-shot: create school/corporate tenant + Dynamic Registration invite URL."""
+    from app.modules.tenancy import normalize_segment
+
     if not _ops_authorized(request, admin_key):
         return RedirectResponse(
             url="/onboard?err=" + _q("Sign in with Keycloak or enter setup password"),
@@ -180,23 +183,33 @@ def onboard_connect(
     name_clean = (name or "").strip()
     if not name_clean or len(name_clean) > 120:
         return RedirectResponse(
-            url="/onboard?err=" + _q("School name required (max 120 chars)"),
+            url="/onboard?err=" + _q("Organization name required (max 120 chars)"),
             status_code=303,
         )
     slug_clean = validate_slug(slug) or validate_slug(_slugify_name(name_clean))
     if not slug_clean:
         return RedirectResponse(
             url="/onboard?err="
-            + _q("School ID must be 2–63 chars: lowercase, digits, _ or -"),
+            + _q("Org ID must be 2–63 chars: lowercase, digits, _ or -"),
             status_code=303,
         )
+    seg = normalize_segment(segment)
 
     existing = db.get_tenant_by_slug(slug_clean)
     try:
         if existing:
             tenant = existing
+            # Allow correcting segment on re-connect for the same slug.
+            if normalize_segment(existing.get("segment")) != seg:
+                updated = db.update_tenant_segment(
+                    existing["id"], segment=seg, reset_capabilities=True
+                )
+                if updated:
+                    tenant = updated
         else:
-            tenant = db.create_tenant(slug=slug_clean, name=name_clean)
+            tenant = db.create_tenant(
+                slug=slug_clean, name=name_clean, segment=seg
+            )
         invite = lti_dynreg.create_invite(
             tenant_id=tenant["id"], label=name_clean
         )
@@ -222,7 +235,10 @@ def onboard_create_tenant(
     admin_key: str = Form(""),
     slug: str = Form(...),
     name: str = Form(...),
+    segment: str = Form("school"),
 ):
+    from app.modules.tenancy import normalize_segment
+
     if not _ops_authorized(request, admin_key):
         return RedirectResponse(
             url="/onboard?err=" + _q("Sign in with Keycloak or enter setup password"),
@@ -232,24 +248,29 @@ def onboard_create_tenant(
     if not slug_clean:
         return RedirectResponse(
             url="/onboard?err="
-            + _q("School ID must be 2–63 chars: lowercase, digits, _ or -"),
+            + _q("Org ID must be 2–63 chars: lowercase, digits, _ or -"),
             status_code=303,
         )
     name_clean = (name or "").strip()
     if not name_clean or len(name_clean) > 120:
         return RedirectResponse(
-            url="/onboard?err=" + _q("School name required (max 120 chars)"),
+            url="/onboard?err=" + _q("Organization name required (max 120 chars)"),
             status_code=303,
         )
     if db.get_tenant_by_slug(slug_clean):
         return RedirectResponse(
-            url="/onboard?err=" + _q(f"School ID '{slug_clean}' already exists"),
+            url="/onboard?err=" + _q(f"Org ID '{slug_clean}' already exists"),
             status_code=303,
         )
     try:
-        row = db.create_tenant(slug=slug_clean, name=name_clean)
+        row = db.create_tenant(
+            slug=slug_clean,
+            name=name_clean,
+            segment=normalize_segment(segment),
+        )
+        kind = "Corporate" if row.get("segment") == "corporate" else "School"
         return RedirectResponse(
-            url="/onboard?ok=" + _q(f"School “{row['name']}” created"),
+            url="/onboard?ok=" + _q(f"{kind} “{row['name']}” created"),
             status_code=303,
         )
     except Exception as exc:  # noqa: BLE001

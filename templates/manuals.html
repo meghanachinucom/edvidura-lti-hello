@@ -5,11 +5,15 @@
     <div style="position:relative;z-index:1">
       <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
         <span class="material-symbols-outlined" style="font-size:13px">menu_book</span>
-        Manual · this school only
+        Manual · {% if class_scoped %}this class only{% else %}class launch required{% endif %}
       </div>
       <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(28px,4vw,48px)">Technical manuals</h1>
       <p class="body-md" style="color:var(--outline-variant);max-width:520px;margin-top:4px">
-        Published versions of school manuals and eBook chapters.
+        {% if class_scoped %}
+        Handbooks assigned to your class (not every school manual).
+        {% else %}
+        Launch EdVidura from your Moodle class to see that class’s manuals.
+        {% endif %}
       </p>
     </div>
   </section>
@@ -32,7 +36,21 @@
   {% else %}
   <section class="frosted" style="padding:var(--sp-2xl);text-align:center">
     <span class="material-symbols-outlined" style="font-size:48px;opacity:.4;display:block;margin-bottom:var(--sp-sm)">menu_book</span>
-    <p class="body-md">No published manuals yet.</p>
+    <p class="headline-sm" style="margin-bottom:8px">
+      {% if class_scoped %}No handbooks for this class yet{% else %}Class launch required{% endif %}
+    </p>
+    <p class="body-md text-muted" style="max-width:440px;margin:0 auto">
+      {% if class_scoped %}
+      Ask your teacher to assign a technical manual under Teach → Manuals.
+      {% else %}
+      Open EdVidura from your Moodle class activity so we know which class’s manuals to show.
+      {% endif %}
+    </p>
+    {% if is_instructor %}
+    <p style="margin-top:16px">
+      <a class="btn btn-primary" href="/teacher/manuals?token={{ quiz_token }}">Teach → Manuals</a>
+    </p>
+    {% endif %}
   </section>
   {% endif %}
 </div>

@@ -69,20 +69,35 @@
         <span class="ob-num">1</span>
         <div>
           <h2>Create &amp; get registration URL</h2>
-          <p class="ob-help">We’ll create the school and a one-time Moodle install link.</p>
+          <p class="ob-help">We’ll create the organization and a one-time Moodle install link.</p>
         </div>
       </div>
       <form method="post" action="/onboard/connect" class="ob-form" data-needs-key>
         <input type="hidden" name="admin_key" class="admin-key-mirror" value=""/>
         <label class="ob-field">
-          <span>School name</span>
+          <span>Organization name</span>
           <input name="name" id="school-name" required maxlength="120" placeholder="Riverside High"/>
         </label>
         <label class="ob-field">
-          <span>School ID</span>
+          <span>Org ID</span>
           <input name="slug" id="school-slug" required pattern="[a-z0-9][a-z0-9_-]*" minlength="2" maxlength="63" placeholder="riverside"/>
           <small>Auto-filled from the name — change if you like.</small>
         </label>
+        <fieldset class="ob-field" style="border:0;padding:0;margin:0">
+          <span>Segment</span>
+          <label style="display:flex;gap:0.5rem;align-items:flex-start;margin-top:0.35rem">
+            <input type="radio" name="segment" value="school" checked/>
+            <span><strong>School</strong> — class path + quiz (Riverside-style Class 8)</span>
+          </label>
+          <label style="display:flex;gap:0.5rem;align-items:flex-start;margin-top:0.35rem">
+            <input type="radio" name="segment" value="government"/>
+            <span><strong>Government</strong> — AP Chaganti pravachanalu video library; no Moodle, no exams</span>
+          </label>
+          <label style="display:flex;gap:0.5rem;align-items:flex-start;margin-top:0.35rem">
+            <input type="radio" name="segment" value="corporate"/>
+            <span><strong>Corporate</strong> — L&amp;D video library (e.g. welding) + Ask Vidura; exams off</span>
+          </label>
+        </fieldset>
         <button type="submit" class="ob-btn">Create connect link</button>
       </form>
     </section>

@@ -35,8 +35,11 @@ Use this before every pilot / external demo. Quiz submit always stores the attem
 ## Verify
 
 1. Student: launch → quiz → submit → see score in EdVidura.
-2. LMS gradebook for the activity shows the score.
-3. If EdVidura shows “Not synced”: re-check Accept grades + activity grade settings; check app logs for AGS errors.
+2. Result page **Moodle** line should move from **Syncing…** to **Synced** (polls `/quiz/result/{id}/ags.json`).
+3. LMS gradebook for the activity shows the score.
+4. If EdVidura shows **Not synced**: read the red error under the receipt; re-check Accept grades + Point grade; relaunch; check app logs.
+
+**Prod proof (2026-10):** multiple `quiz_attempts` rows with `grade_sent=true` and `grade_error` null (incl. score 3/3). Occasional Moodle HTTP 400 on older line items — relaunch after Accept grades / point scale fix.
 
 ## Common failures
 
@@ -47,3 +50,6 @@ Use this before every pilot / external demo. Quiz submit always stores the attem
 | Blank iframe | Tool still pointing at `host.docker.internal` for browser URLs — use `localhost` |
 | Canvas cookie block | Prefer new-window launch |
 | Sync queued forever | App restarted mid-AGS; resubmit or check grade_error on attempt |
+| Stays on Syncing… | Wait ~30s or refresh; if failed, error text appears under Moodle line |
+| Launch data expired | Snapshot TTL is **24h** and slides on activity; relaunch if older / missing `launch_id` |
+| App API `grade_sent=false` | Graded submit sets `grade_queued=true` then AGS updates attempt async (poll result / attempts) |

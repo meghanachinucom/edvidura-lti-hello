@@ -172,4 +172,6 @@ def activity_feed(
             or r.get("verb_id")
             in {verbs.VERB_INTERACTED, verbs.VERB_RESPONDED}
         ]
+    elif ch in {"pebl", "pebl_ebook", "ebook"}:
+        out = [r for r in out if str(r.get("channel") or "") == "pebl_ebook"]
     return out

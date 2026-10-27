@@ -25,9 +25,42 @@ _WEAK_ADMIN_KEYS = frozenset(
 )
 
 
+def assert_airgap_safe(settings: Settings | None = None) -> None:
+    """When AIRGAP=1, refuse cloud egress credentials and force local AI posture."""
+    s = settings or get_settings()
+    if not s.airgap:
+        return
+    problems: list[str] = []
+    if s.openai_api_key:
+        problems.append("AIRGAP=1 but OPENAI_API_KEY is set — unset cloud OpenAI")
+    if s.anthropic_api_key:
+        problems.append("AIRGAP=1 but ANTHROPIC_API_KEY is set — unset cloud Anthropic")
+    if s.typesafe_api_key or s.jev_enabled:
+        problems.append("AIRGAP=1 — set JEV_ENABLED=0 and unset TYPESAFE_API_KEY")
+    if s.sentry_dsn and "sentry.io" in s.sentry_dsn.lower():
+        problems.append("AIRGAP=1 but cloud SENTRY_DSN is set — unset or use LAN sink")
+    if s.xapi_lrs_endpoint and (
+        s.xapi_lrs_endpoint.startswith("https://")
+        and "localhost" not in s.xapi_lrs_endpoint
+        and ".internal" not in s.xapi_lrs_endpoint
+    ):
+        problems.append(
+            "AIRGAP=1 but XAPI_LRS_ENDPOINT looks like a public URL — use LAN LRS or unset"
+        )
+    if s.ai_enabled and s.ai_provider in {"openai", "anthropic"}:
+        problems.append(
+            "AIRGAP=1 — set AI_PROVIDER=local_http (or disable AI) instead of cloud providers"
+        )
+    if problems:
+        raise RuntimeError(
+            "Refusing to start in air-gap mode:\n- " + "\n- ".join(problems)
+        )
+
+
 def assert_safe_for_environment(settings: Settings | None = None) -> None:
     """Raise RuntimeError if production/staging secrets are unsafe."""
     s = settings or get_settings()
+    assert_airgap_safe(s)
     if not s.is_production_like:
         return
     problems: list[str] = []
@@ -39,7 +72,8 @@ def assert_safe_for_environment(settings: Settings | None = None) -> None:
         problems.append(
             "ADMIN_API_KEY must be a unique secret of at least 16 characters"
         )
-    if not s.app_base_url.startswith("https://"):
+    # Air-gap LANs often use http://edvidura.internal with TLS terminated elsewhere.
+    if not s.app_base_url.startswith("https://") and not s.airgap:
         problems.append("APP_BASE_URL must be https:// in production/staging")
     if not s.has_private_key:
         problems.append("LTI private key missing (LTI_PRIVATE_KEY_PEM or key file)")

@@ -22,17 +22,16 @@ $teachers = [
     5 => ['riverside_c05_t', 'Helen', 'Park'],
     6 => ['riverside_c06_t', 'Mei', 'Chen'],
     7 => ['riverside_c07_t', 'Sam', 'Okonkwo'],
-    8 => ['riverside_priya', 'Priya', 'Sharma'], // Class 8 lead (classic demo)
+    8 => ['padmavathi', 'Padmavathi', 'Rao'], // Class 8 lead (classic demo)
     9 => ['riverside_c09_t', 'Tom', 'Brooks'],
     10 => ['riverside_c10_t', 'Nina', 'Rossi'],
 ];
 
 $users = [
-    ['riverside_admin', 'Riverside', 'Admin', 'admin@riverside.test', 'schooladmin'],
-    // Keep classic Class 8 students
-    ['riverside_alice', 'Alice', 'Nguyen', 'alice.nguyen@riverside.test', 'student'],
-    ['riverside_bob', 'Bob', 'Okonkwo', 'bob.okonkwo@riverside.test', 'student'],
-    ['riverside_carol', 'Carol', 'Patel', 'carol.patel@riverside.test', 'student'],
+    ['ramesh', 'Ramesh', 'Naidu', 'ramesh.naidu@zphs.vijayawada.edu.in', 'schooladmin'],
+    ['lakshmi', 'Lakshmi', 'Reddy', 'lakshmi.reddy@zphs.vijayawada.edu.in', 'student'],
+    ['venkat', 'Venkat', 'Naidu', 'venkat.naidu@zphs.vijayawada.edu.in', 'student'],
+    ['sravani', 'Sravani', 'Devi', 'sravani.devi@zphs.vijayawada.edu.in', 'student'],
     // Lakeside peer
     ['lakeside_admin', 'Lakeside', 'Admin', 'admin@lakeside.test', 'schooladmin'],
     ['lakeside_helen', 'Helen', 'Park', 'helen.park@lakeside.test', 'editingteacher'],
@@ -112,6 +111,7 @@ foreach ($users as [$username, $firstname, $lastname, $email, $rolehint]) {
 
 echo "PASSWORD_FOR_ALL={$password}\n";
 echo "SITE_ADMIN=admin / Admin@12345\n";
-echo "CLASS_8_TEACHER=riverside_priya / {$password}\n";
-echo "CLASS_8_STUDENT=riverside_alice / {$password}\n";
+echo "CLASS_8_TEACHER=padmavathi / {$password}\n";
+echo "CLASS_8_STUDENT=lakshmi / {$password}\n";
+echo "HEADMASTER=ramesh / {$password}\n";
 echo "Done.\n";

@@ -35,7 +35,13 @@ GET /api/v1/tla/maturity
 X-Admin-Key: …
 ```
 
-Per-level rollup is in `by_cmm`.
+| Field | Meaning |
+|-------|---------|
+| `achieved_cmm` | Highest contiguous level with **all** in-scope items `complete` |
+| `operating_cmm` | Highest contiguous level with all in-scope ≥ `partial` |
+| `by_cmm` | Per-level counts + maturity % |
+
+**EdVidura today:** achieved **CMM-2**, operating **CMM-3** (cmi5 requirements vendored; no player). ELRR / LEM / federation = out of scope for this SaaS product.
 
 ## APIs (ops auth)
 

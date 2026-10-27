@@ -627,12 +627,20 @@ def add_quiz_question(
     prompt: str,
     choices: list[str],
     correct_index: int,
+    qtype: str = "single",
+    correct_text: str = "",
+    topic: str = "",
 ) -> dict[str, Any]:
     quiz = ensure_primary_quiz(tenant_id)
     tid = str(tenant_id)
     choices_clean = [c.strip() for c in choices if str(c).strip()]
-    if len(choices_clean) < 2:
+    kind = (qtype or "single").strip().lower()
+    if kind not in {"essay", "short", "numeric", "open"} and len(choices_clean) < 2:
         raise ValueError("Need at least 2 answer choices")
+    if len(choices_clean) < 2:
+        choices_clean = list(choices_clean) or ["(open response)"]
+        if len(choices_clean) < 2:
+            choices_clean.append("(teacher graded)")
     if correct_index < 0 or correct_index >= len(choices_clean):
         correct_index = 0
     import json
@@ -647,9 +655,10 @@ def add_quiz_question(
         row = conn.execute(
             """
             INSERT INTO quiz_questions (
-                tenant_id, quiz_id, question_key, prompt, choices, correct_index, position
+                tenant_id, quiz_id, question_key, prompt, choices, correct_index, position,
+                qtype, correct_text, topic
             )
-            VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s)
+            VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s, %s)
             RETURNING id, question_key, prompt, choices, correct_index, position
             """,
             (
@@ -660,6 +669,9 @@ def add_quiz_question(
                 json.dumps(choices_clean),
                 correct_index,
                 position,
+                (qtype or "single")[:32],
+                (correct_text or "")[:4000],
+                (topic or "")[:120],
             ),
         ).fetchone()
         return dict(row)

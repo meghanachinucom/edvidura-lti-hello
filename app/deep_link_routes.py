@@ -51,8 +51,12 @@ async def deep_link_picker(request: Request, token: str | None = None):
         return RedirectResponse(
             url=f"/launch-hub?token={_ensure_token(session)}", status_code=303
         )
+    from app.modules.quiz.service import cookie_safe_session
+
     tok = _ensure_token(session)
-    request.session[SESSION_KEY] = session
+    request.session[SESSION_KEY] = cookie_safe_session(
+        {**session, "quiz_token": tok}
+    )
     course = _bound_course(session)
     lessons = (
         content.list_lessons(session["tenant_id"], course["id"]) if course else []
@@ -109,10 +113,20 @@ async def deep_link_submit(
     iid = (item_id or "").strip()
     label = (title or "").strip() or "EdVidura"
     custom: dict[str, str] = {"edvidura_item_type": kind}
-    if kind == "quiz":
-        url = f"{base}/quiz?token={tok}"
-        label = label or "School quiz"
-        custom["edvidura_item_type"] = "quiz"
+    if kind in {"quiz", "practice", "bank"}:
+        if kind == "practice":
+            url = f"{base}/quiz?token={tok}&practice=1"
+            label = label or "Practice quiz"
+            custom["edvidura_item_type"] = "practice"
+            custom["edvidura_practice"] = "1"
+        elif kind == "bank":
+            url = f"{base}/quiz?token={tok}&bank=1"
+            label = label or "Question bank"
+            custom["edvidura_item_type"] = "bank"
+        else:
+            url = f"{base}/quiz?token={tok}"
+            label = label or "School quiz"
+            custom["edvidura_item_type"] = "quiz"
     elif kind == "lesson" and iid:
         url = f"{base}/lessons/{iid}?token={tok}"
         custom["edvidura_lesson_id"] = iid

@@ -37,11 +37,20 @@ COACH_XAPI_ACCESS_LEVEL=class   # or team / all
 - Activity → filter **Coach chat** (`?channel=coach`)
 - Integrations page shows PeBL full-text mode
 
-## Still out of scope vs full PeBL ebook
+## In-book PeBL discussion (shipped)
 
-- In-book Discussion HTML extension / EPUB packaging  
-- Offline local LRS buffer for ebook Tier 2  
+Chapter micro-forums on `/manuals/{id}` post via `record_pebl_discussion` → channel `pebl_ebook`.  
+Offline: browser outbox (`pebl_discussion.js`) syncs when online. Activity filter: `?channel=pebl`.
+
+## Decision: separate ebook chat?
+
+**Not required.** In-book **Discuss** (class) + **Ask Vidura** (AI) satisfy PeBL communication tracking for ebooks. See [PEBL_LITE.md](PEBL_LITE.md).
+
+## Explicitly out of scope vs full PeBL ebook
+
+- EPUB packaging / PeBL Services websocket stack  
 - Highlights/bookmarks CFIs as xAPI  
-- True multi-user threaded forum UI  
+- Full offline LRS Tier-2 (beyond discussion outbox)
+- A third standalone chat product inside the reader
 
-See also: [XAPI.md](XAPI.md), [EBOOK.md](EBOOK.md), [MICRO_LEARNING.md](MICRO_LEARNING.md).
+See also: [XAPI.md](XAPI.md), [EBOOK.md](EBOOK.md), [PEBL_LITE.md](PEBL_LITE.md), [MICRO_LEARNING.md](MICRO_LEARNING.md).

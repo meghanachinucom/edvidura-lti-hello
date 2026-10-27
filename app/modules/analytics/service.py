@@ -1,11 +1,13 @@
 """Tenant analytics aggregations for in-app BI + Metabase-ready exports."""
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
 from app import db
+
+_SESSION_GAP = timedelta(minutes=30)
 
 
 def _short_verb(verb_id: str) -> str:
@@ -13,6 +15,403 @@ def _short_verb(verb_id: str) -> str:
     if "/" in v:
         v = v.rsplit("/", 1)[-1]
     return v or "unknown"
+
+
+def _as_dt(value: Any) -> datetime | None:
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value
+    if not value:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _tool_from_object_id(object_id: str) -> str:
+    parts = [p for p in (object_id or "").split("/") if p]
+    if "activities" in parts:
+        i = parts.index("activities")
+        if i + 1 < len(parts):
+            return parts[i + 1]
+    return "other"
+
+
+def group_progress_by_tool(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Attempt / complete / ongoing / incomplete counts grouped by activity kind."""
+    buckets: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        tool = _tool_from_object_id(str(row.get("object_id") or ""))
+        verb = _short_verb(str(row.get("verb_id") or "")).lower()
+        actor = str(row.get("actor_sub") or "")
+        when = _as_dt(row.get("created_at"))
+        bucket = buckets.setdefault(
+            tool,
+            {
+                "tool": tool,
+                "attempts": 0,
+                "complete": 0,
+                "ongoing": 0,
+                "incomplete": 0,
+                "actors": set(),
+                "last_progress": None,
+            },
+        )
+        bucket["attempts"] += 1
+        if actor:
+            bucket["actors"].add(actor)
+        if verb in {"completed", "passed", "mastered"}:
+            bucket["complete"] += 1
+        elif verb in {"failed", "abandoned"}:
+            bucket["incomplete"] += 1
+        else:
+            bucket["ongoing"] += 1
+        if when and (
+            bucket["last_progress"] is None or when > bucket["last_progress"]
+        ):
+            bucket["last_progress"] = when
+    out: list[dict[str, Any]] = []
+    for tool, bucket in sorted(
+        buckets.items(), key=lambda kv: kv[1]["attempts"], reverse=True
+    ):
+        last = bucket["last_progress"]
+        out.append(
+            {
+                "tool": tool,
+                "attempts": int(bucket["attempts"]),
+                "complete": int(bucket["complete"]),
+                "ongoing": int(bucket["ongoing"]),
+                "incomplete": int(bucket["incomplete"]),
+                "learner_count": len(bucket["actors"]),
+                "last_progress": last.isoformat() if last else None,
+            }
+        )
+    return out
+
+
+def derive_sessions(
+    rows: list[dict[str, Any]], *, gap: timedelta = _SESSION_GAP
+) -> list[dict[str, Any]]:
+    """Collapse xAPI rows into actor sessions (30-minute idle gap)."""
+    by_actor: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        actor = str(row.get("actor_sub") or "").strip()
+        when = _as_dt(row.get("created_at"))
+        if not actor or when is None:
+            continue
+        by_actor.setdefault(actor, []).append({**row, "_when": when})
+    sessions: list[dict[str, Any]] = []
+    for actor, events in by_actor.items():
+        events.sort(key=lambda r: r["_when"])
+        current: list[dict[str, Any]] = []
+        for event in events:
+            if current and event["_when"] - current[-1]["_when"] > gap:
+                sessions.append(_session_from_events(actor, current))
+                current = []
+            current.append(event)
+        if current:
+            sessions.append(_session_from_events(actor, current))
+    sessions.sort(key=lambda s: str(s.get("ended_at") or ""), reverse=True)
+    return sessions
+
+
+def _session_from_events(actor: str, events: list[dict[str, Any]]) -> dict[str, Any]:
+    start = events[0]["_when"]
+    end = events[-1]["_when"]
+    minutes = max(1, int(round((end - start).total_seconds() / 60.0))) if end != start else 1
+    tools = []
+    seen: set[str] = set()
+    for event in events:
+        tool = _tool_from_object_id(str(event.get("object_id") or ""))
+        if tool not in seen:
+            seen.add(tool)
+            tools.append(tool)
+    return {
+        "actor_sub": actor,
+        "started_at": start.isoformat(),
+        "ended_at": end.isoformat(),
+        "duration_minutes": minutes,
+        "event_count": len(events),
+        "tools": tools,
+        "content": tools[0] if tools else "other",
+    }
+
+
+def heatmap_from_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    hours = ["8 AM", "10 AM", "12 PM", "2 PM", "4 PM", "6 PM", "8 PM"]
+    hour_starts = (8, 10, 12, 14, 16, 18, 20)
+    cells = [[0 for _ in hours] for _ in days]
+    for row in rows:
+        when = _as_dt(row.get("created_at"))
+        if when is None:
+            continue
+        local = when.astimezone(timezone.utc)
+        d = local.weekday()  # Mon=0
+        h = local.hour
+        bucket = 0
+        for i, start in enumerate(hour_starts):
+            if h >= start:
+                bucket = i
+        cells[d][bucket] += 1
+    peak = max((n for row in cells for n in row), default=1) or 1
+    intensity = [
+        [min(4, int(round(4 * n / peak)) if n else 0) for n in row] for row in cells
+    ]
+    return {"days": days, "hours": hours, "cells": intensity, "counts": cells}
+
+
+def _short_actor(actor: str) -> str:
+    s = (actor or "").strip()
+    if not s:
+        return "Learner"
+    if ":" in s:
+        s = s.rsplit(":", 1)[-1]
+    if len(s) > 18:
+        return s[:8] + "…" + s[-6:]
+    return s
+
+
+def _week_key(day: date) -> str:
+    iso = day.isocalendar()
+    return f"{iso.year}-W{iso.week:02d}"
+
+
+def _month_key(day: date) -> str:
+    return f"{day.year}-{day.month:02d}"
+
+
+def _quarter_key(day: date) -> str:
+    return f"{day.year}-Q{(day.month - 1) // 3 + 1}"
+
+
+def _period_key(when: datetime, grain: str) -> str:
+    day = when.date()
+    if grain == "week":
+        return _week_key(day)
+    if grain == "month":
+        return _month_key(day)
+    if grain == "quarter":
+        return _quarter_key(day)
+    return day.isoformat()
+
+
+def _grain_axis(grain: str, *, today: date) -> list[str]:
+    if grain == "day":
+        return [(today - timedelta(days=13 - i)).isoformat() for i in range(14)]
+    if grain == "week":
+        monday = today - timedelta(days=today.weekday())
+        return [_week_key(monday - timedelta(weeks=11 - i)) for i in range(12)]
+    if grain == "month":
+        y, m = today.year, today.month
+        out: list[str] = []
+        for i in range(5, -1, -1):
+            mm = m - i
+            yy = y
+            while mm <= 0:
+                mm += 12
+                yy -= 1
+            out.append(f"{yy}-{mm:02d}")
+        return out
+    q = (today.month - 1) // 3 + 1
+    y = today.year
+    out = []
+    for i in range(3, -1, -1):
+        qq = q - i
+        yy = y
+        while qq <= 0:
+            qq += 4
+            yy -= 1
+        out.append(f"{yy}-Q{qq}")
+    return out
+
+
+def _axis_label(grain: str, key: str) -> str:
+    if grain == "day":
+        return key[5:] if len(key) >= 10 else key
+    if grain == "week":
+        return key[-3:]
+    if grain == "month" and len(key) >= 7:
+        return key[5:]
+    return key
+
+
+def learner_date_heatmap(
+    rows: list[dict[str, Any]],
+    *,
+    days: int = 30,
+    max_learners: int = 16,
+    names: dict[str, str] | None = None,
+    today: date | None = None,
+) -> dict[str, Any]:
+    """F-1: noisy LRS heatmap — calendar dates × learners (all xAPI verbs)."""
+    end = today or date.today()
+    span = max(1, min(int(days or 30), 90))
+    dates = [(end - timedelta(days=span - 1 - i)).isoformat() for i in range(span)]
+    index = {d: i for i, d in enumerate(dates)}
+    counts: dict[str, list[int]] = {}
+    totals: dict[str, int] = {}
+    for row in rows:
+        actor = str(row.get("actor_sub") or "").strip()
+        when = _as_dt(row.get("created_at"))
+        if not actor or when is None:
+            continue
+        idx = index.get(when.date().isoformat())
+        if idx is None:
+            continue
+        if actor not in counts:
+            counts[actor] = [0] * span
+        counts[actor][idx] += 1
+        totals[actor] = totals.get(actor, 0) + 1
+    ranked = sorted(totals, key=lambda a: totals[a], reverse=True)[:max_learners]
+    cells = [counts[a] for a in ranked]
+    peak = max((n for row in cells for n in row), default=1) or 1
+    intensity = [
+        [
+            0 if n == 0 else max(1, min(4, int(round(4 * n / peak))))
+            for n in row
+        ]
+        for row in cells
+    ]
+    labels = [(names or {}).get(a) or _short_actor(a) for a in ranked]
+    return {
+        "dates": dates,
+        "date_labels": [d[5:] for d in dates],
+        "learners": [
+            {"id": a, "label": lab, "total": int(totals[a])}
+            for a, lab in zip(ranked, labels)
+        ],
+        "cells": cells,
+        "intensity": intensity,
+        "peak": int(peak),
+    }
+
+
+def learner_time_series(
+    xapi_rows: list[dict[str, Any]],
+    attempt_rows: list[dict[str, Any]],
+    *,
+    names: dict[str, str] | None = None,
+    today: date | None = None,
+    max_learners: int = 8,
+) -> dict[str, Any]:
+    """F-6: per-student activity + quiz % at day / week / month / quarter (8 charts)."""
+    end = today or date.today()
+    activity_totals: dict[str, int] = {}
+    activity_buckets: dict[str, dict[str, dict[str, int]]] = {
+        g: {} for g in ("day", "week", "month", "quarter")
+    }
+    score_sum: dict[str, dict[str, dict[str, float]]] = {
+        g: {} for g in ("day", "week", "month", "quarter")
+    }
+    score_n: dict[str, dict[str, dict[str, int]]] = {
+        g: {} for g in ("day", "week", "month", "quarter")
+    }
+
+    for row in xapi_rows:
+        actor = str(row.get("actor_sub") or "").strip()
+        when = _as_dt(row.get("created_at"))
+        if not actor or when is None:
+            continue
+        activity_totals[actor] = activity_totals.get(actor, 0) + 1
+        for grain in activity_buckets:
+            key = _period_key(when, grain)
+            by_actor = activity_buckets[grain].setdefault(actor, {})
+            by_actor[key] = by_actor.get(key, 0) + 1
+
+    for row in attempt_rows:
+        actor = str(row.get("subject") or row.get("actor_sub") or "").strip()
+        when = _as_dt(row.get("created_at"))
+        if not actor or when is None:
+            continue
+        max_s = max(int(row.get("max_score") or 0), 1)
+        pct = 100.0 * int(row.get("score") or 0) / max_s
+        for grain in score_sum:
+            key = _period_key(when, grain)
+            score_sum[grain].setdefault(actor, {})
+            score_n[grain].setdefault(actor, {})
+            score_sum[grain][actor][key] = score_sum[grain][actor].get(key, 0.0) + pct
+            score_n[grain][actor][key] = score_n[grain][actor].get(key, 0) + 1
+        activity_totals.setdefault(actor, 0)
+
+    merged_names = dict(names or {})
+    for row in attempt_rows:
+        sub = str(row.get("subject") or row.get("actor_sub") or "").strip()
+        label = str(row.get("learner_name") or "").strip()
+        if sub and label and sub not in merged_names:
+            merged_names[sub] = label
+
+    ranked = sorted(
+        activity_totals, key=lambda a: activity_totals[a], reverse=True
+    )[:max_learners]
+    learners = [
+        {
+            "id": a,
+            "label": merged_names.get(a) or _short_actor(a),
+            "total": int(activity_totals.get(a) or 0),
+        }
+        for a in ranked
+    ]
+
+    charts: list[dict[str, Any]] = []
+    specs = (
+        ("activity", "day", "Daily activity", "events"),
+        ("score", "day", "Daily quiz average", "%"),
+        ("activity", "week", "Weekly activity", "events"),
+        ("score", "week", "Weekly quiz average", "%"),
+        ("activity", "month", "Monthly activity", "events"),
+        ("score", "month", "Monthly quiz average", "%"),
+        ("activity", "quarter", "Quarterly activity", "events"),
+        ("score", "quarter", "Quarterly quiz average", "%"),
+    )
+    for metric, grain, title, unit in specs:
+        keys = _grain_axis(grain, today=end)
+        class_values: list[int | float | None] = []
+        per: dict[str, list[int | float | None]] = {a: [] for a in ranked}
+        for key in keys:
+            if metric == "activity":
+                total = 0
+                for actor in ranked:
+                    n = int(activity_buckets[grain].get(actor, {}).get(key) or 0)
+                    per[actor].append(n)
+                    total += n
+                class_values.append(total)
+            else:
+                acc = 0.0
+                n_all = 0
+                for actor in ranked:
+                    s = score_sum[grain].get(actor, {}).get(key)
+                    c = score_n[grain].get(actor, {}).get(key) or 0
+                    if c:
+                        avg = round(s / c)
+                        per[actor].append(avg)
+                        acc += s
+                        n_all += c
+                    else:
+                        per[actor].append(None)
+                class_values.append(round(acc / n_all) if n_all else None)
+        charts.append(
+            {
+                "id": f"{metric}_{grain}",
+                "title": title,
+                "grain": grain,
+                "metric": metric,
+                "unit": unit,
+                "keys": keys,
+                "labels": [_axis_label(grain, k) for k in keys],
+                "class_values": class_values,
+                "learners": per,
+            }
+        )
+    return {"learners": learners, "charts": charts}
 
 
 def tenant_dashboard(tenant_id: UUID | str) -> dict[str, Any]:
@@ -114,6 +513,26 @@ def tenant_dashboard(tenant_id: UUID | str) -> dict[str, Any]:
             """
         ).fetchone()
 
+        xapi_rows = conn.execute(
+            """
+            SELECT actor_sub, verb_id, object_id, created_at
+            FROM xapi_statements
+            WHERE created_at >= now() - interval '400 days'
+            ORDER BY created_at DESC
+            LIMIT 8000
+            """
+        ).fetchall()
+
+        attempt_series = conn.execute(
+            """
+            SELECT subject, learner_name, score, max_score, created_at
+            FROM quiz_attempts
+            WHERE created_at >= now() - interval '400 days'
+            ORDER BY created_at DESC
+            LIMIT 4000
+            """
+        ).fetchall()
+
     a = dict(attempt_stats or {})
     attempts = int(a.get("attempt_count") or 0)
     passes = int(a.get("pass_count") or 0)
@@ -149,7 +568,7 @@ def tenant_dashboard(tenant_id: UUID | str) -> dict[str, Any]:
         for r in verbs
     ]
 
-    return {
+    pack = {
         "attempt_count": attempts,
         "learner_count": int(a.get("learner_count") or 0),
         "avg_percent": int(a.get("avg_percent") or 0) if attempts else None,
@@ -203,6 +622,32 @@ def tenant_dashboard(tenant_id: UUID | str) -> dict[str, Any]:
             "learner_avg": [int(r["avg_percent"]) for r in top_learners],
         },
     }
+    statement_rows = [dict(r) for r in (xapi_rows or [])]
+    attempt_rows = [dict(r) for r in (attempt_series or [])]
+    names: dict[str, str] = {}
+    for row in attempt_rows:
+        sub = str(row.get("subject") or "").strip()
+        label = str(row.get("learner_name") or "").strip()
+        if sub and label and sub not in names:
+            names[sub] = label
+    by_tool = group_progress_by_tool(statement_rows)
+    sessions = derive_sessions(statement_rows)[:12]
+    durations = [int(s["duration_minutes"]) for s in sessions if s.get("duration_minutes")]
+    pack["by_tool"] = by_tool
+    pack["sessions"] = sessions
+    pack["avg_session_minutes"] = (
+        int(round(sum(durations) / len(durations))) if durations else None
+    )
+    pack["heatmap"] = heatmap_from_rows(statement_rows)
+    pack["learner_heatmap"] = learner_date_heatmap(
+        statement_rows, days=90, names=names
+    )
+    pack["time_series"] = learner_time_series(
+        statement_rows, attempt_rows, names=names
+    )
+    pack["charts"]["tool_labels"] = [t["tool"] for t in by_tool[:8]]
+    pack["charts"]["tool_attempts"] = [t["attempts"] for t in by_tool[:8]]
+    return pack
 
 
 def learner_dashboard(

@@ -263,6 +263,7 @@
           <option value="5">About 5</option>
           <option value="8">About 8</option>
           <option value="10">About 10</option>
+          <option value="120">Test bank — 120 items (review before save)</option>
         </select>
       </label>
       <button type="submit" class="btn primary">Create draft questions</button>
@@ -323,6 +324,9 @@
   <form method="post" action="/teacher/ai/grade-assist" class="teach-form">
     <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
     <label>Question <textarea name="prompt" rows="2" required placeholder="What is…?"></textarea></label>
+    <label>Instructor model answer
+      <textarea name="instructor_answer" rows="3" placeholder="The answer you would mark full credit…"></textarea>
+    </label>
     <label>Rubric <textarea name="rubric" rows="2" placeholder="Accuracy, clarity, completeness…"></textarea></label>
     <label>Student answer <textarea name="student_answer" rows="4" required></textarea></label>
     <label>Max score <input name="max_score" type="number" value="5" min="1" max="20"/></label>
@@ -339,6 +343,8 @@
 <section class="panel">
   <h2>Also available</h2>
   <ul class="meta" style="line-height:1.8">
+    <li><a href="/teacher/quiz/export.md?token={{ quiz_token }}">Export quiz Markdown</a> · <a href="/teacher/quiz/export.pdf?token={{ quiz_token }}">Export printable PDF</a></li>
+    <li><a href="/lti-integration?token={{ quiz_token }}">Moodle connection</a> → LTI groups / group assignments</li>
     <li><a href="/teacher/content?token={{ quiz_token }}">Upload content</a> → <strong>AI quiz</strong> from a reading lesson</li>
     <li><a href="/teacher/skills?token={{ quiz_token }}">Skills</a> → competency registry for DCT paths</li>
     <li><a href="/teacher/attempts?token={{ quiz_token }}">Class results</a> → AI next-step suggestions</li>

@@ -14,7 +14,16 @@
 
   {% if catalog.lessons %}
   <p class="micro-reels-hint body-sm text-muted">
+    {% if catalog.video_count %}
     Watch · swipe up · {{ catalog.available_count }} reels
+    {% else %}
+    Skill cards ready · {{ catalog.available_count }} ·
+    {% if catalog.airgap %}
+    teacher clips publish locally (air-gap — no cloud demo videos)
+    {% else %}
+    ask your teacher to publish short clips
+    {% endif %}
+    {% endif %}
   </p>
 
   <div class="micro-reels-phone">
@@ -22,6 +31,8 @@
       {% for item in catalog.lessons %}
       <article class="micro-reel {% if item.priority %}is-priority{% endif %} {% if item.reel_video_url %}has-video{% endif %}"
                data-index="{{ loop.index0 }}"
+               data-skill-id="{{ item.skill_id }}"
+               data-reel-title="{{ item.reel_title or item.label }}"
                id="reel-{{ loop.index0 }}">
         <div class="micro-reel-bg" aria-hidden="true"></div>
         {% if item.reel_video_url %}
@@ -71,9 +82,19 @@
   <section class="frosted micro-reels-empty">
     <span class="material-symbols-outlined" style="font-size:48px;opacity:.4;display:block;margin-bottom:var(--sp-sm)">videocam</span>
     <p class="headline-sm" style="margin-bottom:8px">No reels yet</p>
-    <p class="body-sm text-muted" style="max-width:420px;margin:0 auto">
+    <p class="body-sm text-muted" style="max-width:420px;margin:0 auto 16px">
+      {% if catalog.airgap %}
+      Air-gap mode has no cloud sample videos. Your teacher publishes skill clips
+      from Teach → Micro-learning (local upload).
+      {% else %}
       Your teacher publishes short skill videos from the Micro-learning planner.
+      Until then, use your study plan or practice quiz.
+      {% endif %}
     </p>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <a class="btn btn-primary" href="/learn/gap?token={{ quiz_token }}">My plan</a>
+      <a class="btn btn-glass" href="/quiz?token={{ quiz_token }}&practice=1">Practice</a>
+    </div>
   </section>
   {% endif %}
 </div>
@@ -87,6 +108,27 @@
   var phone = root.closest('.micro-reels-phone');
   var dots = document.querySelectorAll('#micro-reels-dots .micro-reels-dot');
   var reels = root.querySelectorAll('.micro-reel');
+  var token = {{ quiz_token | tojson }};
+  var viewed = {};
+
+  function trackView(idx) {
+    var el = reels[idx];
+    if (!el) return;
+    var sid = el.getAttribute('data-skill-id') || '';
+    if (!sid || viewed[sid]) return;
+    viewed[sid] = true;
+    try {
+      fetch('/learn/micro/viewed?token=' + encodeURIComponent(token || ''), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          skill_id: sid,
+          title: el.getAttribute('data-reel-title') || 'Micro reel'
+        }),
+        keepalive: true
+      }).catch(function () {});
+    } catch (e) {}
+  }
 
   function sizeReels() {
     var h = root.clientHeight;
@@ -123,6 +165,7 @@
       d.classList.toggle('on', i === idx);
     });
     playActive(idx);
+    trackView(idx);
   }
 
   function currentIndex() {

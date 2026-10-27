@@ -11,7 +11,7 @@ Implemented in `app.modules.specials` and wired into the Shiko shell.
 | 5 | Two-window contract | Home banner: Moodle gradebook vs EdVidura story |
 | 6 | Retry with memory | `/quiz?retry={attempt_id}` — missed items only |
 | 7 | School time capsule | `/teacher/time-capsule.json` (+ Teach menu) |
-| 8 | Ghost coach | Gates quiz if lessons incomplete (`force=1` bypass) |
+| 8 | Ghost coach | Gates graded quiz if lessons incomplete (hard by default; `GHOST_COACH_HARD_GATE=0` restores `force=1`; practice lane always open) |
 | 9 | Practice lane | `/quiz?practice=1` — no Moodle AGS |
 | 10 | Tenant theme | Accent derived from tenant+course |
 | 11 | Incident button | Account menu → `POST /incident` |

@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EdVidura · F Mix · LMS + Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    font-family:"Outfit",system-ui,sans-serif;background:#0c0c0e;color:#e8e8ec;
+    background-image:
+      radial-gradient(ellipse 70% 50% at 20% -10%,rgba(255,255,255,.06),transparent 55%),
+      radial-gradient(ellipse 50% 40% at 90% 10%,rgba(180,160,120,.07),transparent 50%);
+  }
+
+  .chooser{
+    position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+    padding:12px 16px;background:rgba(8,8,10,.92);backdrop-filter:blur(12px);
+    border-bottom:1px solid #2a2a30;
+  }
+  .chooser strong{font-size:12px;color:#999;margin-right:4px}
+  .chooser button{
+    font:inherit;font-size:11px;font-weight:600;padding:7px 11px;cursor:pointer;
+    border:1px solid #333;background:#161618;color:#bbb;border-radius:8px;
+  }
+  .chooser button[aria-pressed="true"]{background:#f4f4f5;color:#111;border-color:#f4f4f5}
+  .cap{max-width:1180px;margin:0 auto;padding:14px 20px 8px;font-size:12px;color:#8b8b96;line-height:1.45}
+  .slide{display:none;padding-bottom:56px}.slide.is-on{display:block}
+  .note-fab{max-width:1180px;margin:0 auto;padding:0 20px 4px;font-size:11px;color:#6b6b74}
+
+  .shell{
+    max-width:1180px;margin:10px auto 0;color:#141414;
+    background:linear-gradient(165deg,#faf9f6 0%,#f3f1eb 48%,#eeebe4 100%);
+    border-radius:18px;overflow:hidden;
+    box-shadow:0 0 0 1px rgba(255,255,255,.08),0 4px 12px rgba(0,0,0,.2),0 32px 80px rgba(0,0,0,.55);
+    min-height:700px;display:grid;grid-template-columns:220px 1fr;
+  }
+  .rail{
+    background:linear-gradient(180deg,#1c1c1f 0%,#141416 100%);
+    color:#e8e8ec;padding:22px 14px 18px;display:flex;flex-direction:column;gap:3px;
+    border-right:1px solid rgba(255,255,255,.04);
+  }
+  .rail .brand{font-weight:800;letter-spacing:-.04em;font-size:16px;padding:2px 10px 18px}
+  .rail .brand span{
+    display:block;font-size:10px;font-weight:500;opacity:.4;margin-top:3px;
+    letter-spacing:.08em;text-transform:uppercase;
+  }
+  .rail a{
+    display:block;padding:10px 12px;border-radius:10px;color:#a8a8b0;
+    text-decoration:none;font-size:13px;font-weight:500;
+  }
+  .rail a:hover{background:rgba(255,255,255,.06);color:#fff}
+  .rail a.on{
+    background:rgba(255,255,255,.1);color:#fff;font-weight:650;
+    box-shadow:inset 3px 0 0 #e8a848;border-radius:10px 10px 10px 4px;
+  }
+  .rail .sec{
+    margin-top:22px;padding:8px 12px 6px;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:#5c5c66;font-weight:600;
+  }
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{
+    display:flex;align-items:center;gap:12px;padding:14px 22px;
+    border-bottom:1px solid rgba(20,20,20,.06);
+    background:rgba(255,255,255,.55);backdrop-filter:blur(8px);font-size:13px;
+  }
+  .topbar .crumb{color:#737373}
+  .topbar .crumb b{color:#141414;font-weight:650}
+  .topbar .sp{flex:1}
+  .topbar .chip{
+    font-size:11px;font-weight:650;padding:6px 12px;border-radius:99px;
+    background:#141414;color:#fafaf7;box-shadow:0 4px 12px rgba(20,20,20,.18);
+  }
+  .topbar .live{
+    display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:650;color:#52525b;
+  }
+  .topbar .live i{
+    width:7px;height:7px;border-radius:50%;background:#22c55e;
+    box-shadow:0 0 0 3px rgba(34,197,94,.2);
+  }
+
+  /* Split: LMS stage + mentor chat */
+  .split{
+    flex:1;display:grid;grid-template-columns:1.15fr .95fr;min-height:0;
+  }
+  .split.lms-heavy{grid-template-columns:1.35fr .85fr}
+  .stage{
+    padding:20px 22px 28px;overflow:auto;border-right:1px solid rgba(20,20,20,.06);
+    background:
+      radial-gradient(ellipse 60% 40% at 0% 0%,rgba(232,168,72,.04),transparent 50%),
+      transparent;
+  }
+  .chat-col{
+    display:flex;flex-direction:column;min-height:0;
+    background:
+      radial-gradient(ellipse 80% 30% at 50% -5%,rgba(20,20,20,.04),transparent),
+      #f6f5f1;
+  }
+  .chat-hd{
+    display:flex;align-items:center;gap:10px;padding:14px 16px;
+    border-bottom:1px solid rgba(20,20,20,.06);background:rgba(255,255,255,.7);
+  }
+  .chat-hd .ava{
+    width:32px;height:32px;border-radius:50%;background:#141414;color:#fff;
+    display:grid;place-items:center;font-size:11px;font-weight:800;
+  }
+  .chat-hd b{display:block;font-size:13px;letter-spacing:-.02em}
+  .chat-hd span{font-size:11px;color:#737373}
+  .chat-hd .sp{flex:1}
+  .thread{flex:1;padding:18px 16px 12px;overflow:auto}
+  .composer{
+    display:flex;gap:8px;padding:12px 14px 16px;border-top:1px solid rgba(20,20,20,.06);
+    background:#fff;
+  }
+  .composer input{
+    flex:1;border:1.5px solid rgba(20,20,20,.1);border-radius:999px;padding:11px 14px;
+    font:inherit;font-size:13px;background:#fafaf7;
+  }
+  .composer button{
+    border:0;border-radius:999px;padding:0 16px;background:#141414;color:#fff;
+    font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+  }
+
+  /* Glimpse */
+  .glimpse{
+    position:relative;overflow:hidden;border-radius:16px;margin-bottom:16px;color:#f4f4f0;
+    background:
+      radial-gradient(ellipse 55% 70% at 88% 20%,rgba(232,168,72,.22),transparent 55%),
+      linear-gradient(145deg,#161618 0%,#0e0e10 55%,#1a1410 100%);
+    box-shadow:0 0 0 1px rgba(255,255,255,.06),0 14px 40px rgba(0,0,0,.22);
+    animation:glimpseIn .65s ease both;
+  }
+  .glimpse::after{
+    content:"";position:absolute;right:-8%;top:-20%;width:50%;height:140%;
+    background:radial-gradient(circle at 40% 45%,rgba(255,196,90,.16),transparent 42%);
+    pointer-events:none;
+  }
+  .glimpse .inner{position:relative;z-index:1;padding:22px 22px 20px}
+  .glimpse .ep{
+    display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;
+    font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#c4b4a0;
+  }
+  .glimpse .ep i{
+    width:7px;height:7px;border-radius:50%;background:#e8a848;
+    box-shadow:0 0 0 4px rgba(232,168,72,.2),0 0 16px rgba(232,168,72,.5);
+    animation:emberPulse 2.2s ease-in-out infinite;
+  }
+  .glimpse h1{
+    color:#fafaf7;margin:0 0 10px;font-size:clamp(1.55rem,2.8vw,2.05rem);
+    letter-spacing:-.045em;line-height:1.08;font-weight:800;max-width:14ch;
+  }
+  .glimpse .voice{
+    margin:0 0 14px;font-size:13.5px;line-height:1.5;color:rgba(244,244,240,.72);max-width:32rem;
+  }
+  .glimpse .voice strong{color:#fff;font-weight:650}
+  .glimpse .path{display:flex;flex-wrap:wrap;gap:5px;margin:0}
+  .glimpse .path span{
+    font-size:10px;font-weight:650;padding:5px 9px;border-radius:99px;
+    background:rgba(255,255,255,.06);color:rgba(244,244,240,.5);
+    border:1px solid rgba(255,255,255,.06);
+  }
+  .glimpse .path span.done{color:#86efac;background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.2)}
+  .glimpse .path span.now{
+    color:#0e0e10;background:#e8a848;border-color:#e8a848;
+    box-shadow:0 4px 12px rgba(232,168,72,.3);
+  }
+
+  h1.page{
+    font-weight:800;font-size:clamp(1.4rem,2.5vw,1.75rem);
+    letter-spacing:-.04em;line-height:1.1;margin:0 0 8px;color:#0f0f10;
+  }
+  .lede{margin:0 0 16px;color:#57575f;font-size:13.5px;line-height:1.5;max-width:36rem}
+  .section-label{
+    margin:4px 0 10px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    color:#8a8a92;font-weight:700;
+  }
+
+  .modules{
+    background:#fff;border:1px solid rgba(20,20,20,.07);border-radius:14px;overflow:hidden;
+    box-shadow:0 8px 28px rgba(20,20,20,.04);
+  }
+  .mod{
+    display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;
+    padding:13px 14px;border-bottom:1px solid rgba(20,20,20,.05);
+    text-decoration:none;color:inherit;
+  }
+  .mod:last-child{border-bottom:0}
+  .mod:hover{background:#fafaf7}
+  .mod .n{
+    width:28px;height:28px;border-radius:9px;background:#f0efe9;display:grid;place-items:center;
+    font-size:11px;font-weight:700;color:#71717a;
+  }
+  .mod.done .n{background:#dcfce7;color:#166534}
+  .mod.now{background:linear-gradient(90deg,rgba(20,20,20,.04),transparent);box-shadow:inset 3px 0 0 #141414}
+  .mod.now .n{background:#141414;color:#fff}
+  .mod h3{margin:0;font-size:13.5px;font-weight:650;letter-spacing:-.015em}
+  .mod p{margin:2px 0 0;font-size:11.5px;color:#71717a}
+  .mod .st{font-size:10.5px;font-weight:650;color:#71717a}
+  .mod.now .st{color:#141414}
+  .mod.done .st{color:#166534}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:10px 14px;border-radius:10px;background:#141414;color:#fff;
+    font-size:12.5px;font-weight:700;text-decoration:none;border:0;
+    box-shadow:0 6px 16px rgba(20,20,20,.18);
+  }
+  .btn.sec{
+    background:rgba(255,255,255,.85);color:#141414;border:1.5px solid rgba(20,20,20,.12);
+    box-shadow:none;
+  }
+  .row-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+
+  .prose{
+    background:#fff;border:1px solid rgba(20,20,20,.07);border-radius:14px;padding:20px 22px;
+    font-size:14.5px;line-height:1.6;box-shadow:0 10px 30px rgba(20,20,20,.04);
+  }
+  .prose h2{font-weight:750;font-size:1.25rem;margin:0 0 12px;letter-spacing:-.03em}
+  .prose ul{margin:10px 0;padding-left:1.15rem;color:#3f3f46}
+  .prose label{
+    display:flex;gap:8px;align-items:flex-start;padding:9px 11px;margin-top:7px;
+    background:#fafaf7;border-radius:9px;font-size:12.5px;cursor:pointer;
+  }
+  .prog{height:6px;background:rgba(20,20,20,.08);border-radius:99px;overflow:hidden;margin-bottom:14px}
+  .prog i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2a2a2e,#141414)}
+
+  .ebook{
+    display:grid;grid-template-columns:160px 1fr;gap:0;background:#fff;
+    border:1px solid rgba(20,20,20,.07);border-radius:14px;min-height:380px;overflow:hidden;
+    box-shadow:0 10px 30px rgba(20,20,20,.04);
+  }
+  .toc{background:linear-gradient(180deg,#fafaf7,#f3f1eb);border-right:1px solid rgba(20,20,20,.06);padding:14px 10px}
+  .toc h2{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#71717a;margin:0 0 10px;font-weight:700;padding:0 6px}
+  .toc a{
+    display:block;padding:7px 8px;border-radius:7px;font-size:12px;color:#3f3f46;
+    text-decoration:none;margin-bottom:2px;font-weight:500;
+  }
+  .toc a.on,.toc a:hover{background:#fff;font-weight:650;color:#141414;box-shadow:0 2px 8px rgba(20,20,20,.04)}
+  .chap{padding:18px 20px}
+  .chap .tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#71717a;margin-bottom:6px;font-weight:700}
+  .chap h2{font-weight:750;font-size:1.25rem;margin:0 0 10px;letter-spacing:-.03em}
+  .chap p{font-size:13.5px;line-height:1.6;color:#3f3f46;margin:0 0 10px}
+  .discuss{margin-top:16px;padding-top:14px;border-top:1px solid rgba(20,20,20,.06)}
+  .discuss .m{
+    font-size:12px;padding:9px 11px;background:#fafaf7;border-radius:9px;margin-bottom:7px;
+    border:1px solid rgba(20,20,20,.04);
+  }
+
+  .qcard{
+    background:#fff;border:1px solid rgba(20,20,20,.07);border-radius:14px;
+    padding:18px 20px;margin-bottom:12px;box-shadow:0 10px 30px rgba(20,20,20,.04);
+  }
+  .qcard .n{font-size:10px;color:#71717a;font-weight:700;margin-bottom:8px;letter-spacing:.12em;text-transform:uppercase}
+  .opt{
+    display:block;padding:11px 13px;border:1.5px solid rgba(20,20,20,.1);border-radius:10px;
+    margin-top:8px;font-size:13.5px;cursor:pointer;
+  }
+  .opt.on{border-color:#141414;background:#f7f7f5;box-shadow:0 4px 12px rgba(20,20,20,.05)}
+
+  table.grades{
+    width:100%;border-collapse:collapse;background:#fff;
+    border:1px solid rgba(20,20,20,.07);border-radius:14px;overflow:hidden;font-size:12.5px;
+    box-shadow:0 10px 30px rgba(20,20,20,.04);
+  }
+  table.grades th{
+    text-align:left;padding:10px 14px;background:#fafaf7;font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:#71717a;border-bottom:1px solid rgba(20,20,20,.06);font-weight:700;
+  }
+  table.grades td{padding:11px 14px;border-bottom:1px solid #f0efe9}
+  table.grades tr:last-child td{border-bottom:0}
+
+  .side-card{
+    background:#fff;border:1px solid rgba(20,20,20,.07);border-radius:14px;
+    padding:14px 16px;margin-bottom:12px;box-shadow:0 8px 24px rgba(20,20,20,.04);
+  }
+  .side-card h2{
+    margin:0 0 10px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:#71717a;font-weight:700;
+  }
+  .stat{
+    display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;
+    border-bottom:1px solid #f0efe9;color:#52525b;
+  }
+  .stat:last-child{border-bottom:0}
+  .stat b{font-weight:750;color:#141414}
+
+  /* Chat bubbles */
+  .day{
+    text-align:center;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:#a1a1a1;font-weight:600;margin:0 0 16px;
+  }
+  .msg{display:flex;gap:8px;margin-bottom:12px;align-items:flex-end}
+  .msg.me{flex-direction:row-reverse}
+  .msg .ava{
+    width:28px;height:28px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+    font-size:10px;font-weight:700;
+  }
+  .msg .ava.v{background:#141414;color:#f7f7f5}
+  .msg .ava.u{background:#e4e4e0;color:#141414}
+  .bub{
+    max-width:88%;padding:10px 13px;border-radius:16px;font-size:13.5px;line-height:1.45;
+  }
+  .msg.v .bub{background:#141414;color:#f7f7f5;border-bottom-left-radius:4px}
+  .msg.me .bub{background:#fff;color:#141414;border:1px solid #e8e8e4;border-bottom-right-radius:4px}
+  .msg.v .bub strong{color:#86efac;font-weight:600}
+  .msg.v .bub em{color:#e8a848;font-style:normal;font-weight:650}
+  .choices{display:flex;flex-direction:column;gap:7px;margin:14px 0 8px;padding-left:36px}
+  .choices a{
+    display:block;padding:11px 13px;border:1.5px solid #141414;border-radius:12px;
+    text-decoration:none;color:#141414;font-weight:650;font-size:12.5px;background:#fff;
+    letter-spacing:-.01em;
+  }
+  .choices a.primary{background:#141414;color:#f7f7f5}
+  .choices a small{display:block;font-weight:500;opacity:.5;margin-top:2px;font-size:10.5px}
+  .in-card{
+    margin:4px 0 8px;background:#fff;border:1px solid #e8e8e4;border-radius:14px;
+    overflow:hidden;max-width:100%;box-shadow:0 6px 18px rgba(20,20,20,.04);
+  }
+  .in-card .hd{padding:7px 12px;background:#f0f0ec;font-size:10px;font-weight:700;color:#525252;letter-spacing:.06em;text-transform:uppercase}
+  .in-card .bd{padding:12px 14px;font-size:12.5px;line-height:1.5}
+  .in-card .bd h3{margin:0 0 6px;font-size:14px;letter-spacing:-.02em}
+  .in-card .ft{display:flex;gap:6px;padding:10px 12px;border-top:1px solid #eee}
+  .in-card .ft a{
+    flex:1;text-align:center;padding:8px;border-radius:9px;font-size:11.5px;font-weight:700;
+    text-decoration:none;background:#141414;color:#fff;
+  }
+  .in-card .ft a.sec{background:#f0f0ec;color:#141414}
+  .muted-tip{
+    margin:8px 0 0;padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.4;
+    background:rgba(20,20,20,.04);color:#52525b;border:1px dashed rgba(20,20,20,.12);
+  }
+
+  @keyframes glimpseIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes emberPulse{
+    0%,100%{box-shadow:0 0 0 4px rgba(232,168,72,.18),0 0 12px rgba(232,168,72,.4)}
+    50%{box-shadow:0 0 0 6px rgba(232,168,72,.28),0 0 20px rgba(232,168,72,.6)}
+  }
+
+  @media(max-width:980px){
+    .shell{grid-template-columns:1fr}
+    .rail{flex-direction:row;flex-wrap:wrap;gap:4px;padding:12px}
+    .rail .brand{width:100%;padding-bottom:8px}
+    .rail a.on{box-shadow:none}
+    .rail .sec{display:none}
+    .split,.split.lms-heavy{grid-template-columns:1fr}
+    .stage{border-right:0;border-bottom:1px solid rgba(20,20,20,.06)}
+    .ebook{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+  <div class="chooser">
+    <strong>F Mix</strong>
+    <button type="button" data-slide="s1" aria-pressed="true">1 Home</button>
+    <button type="button" data-slide="s2" aria-pressed="false">2 Lesson</button>
+    <button type="button" data-slide="s3" aria-pressed="false">3 Manual</button>
+    <button type="button" data-slide="s4" aria-pressed="false">4 Quiz</button>
+    <button type="button" data-slide="s5" aria-pressed="false">5 Grades</button>
+    <button type="button" data-slide="s6" aria-pressed="false">6 Plan</button>
+  </div>
+  <p class="note-fab">LMS stage left (glimpse + modules/content) · mentor chat right (thread + choices). Same Outfit voice.</p>
+
+  <!-- 1 Home -->
+  <section class="slide is-on" id="s1">
+    <p class="cap"><strong>1 · Home mix</strong> — Glimpse + syllabus on the LMS stage. Vidura opens the day in chat with plot choices that launch modules.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a class="on" href="#">Course home</a>
+        <a href="#">Modules</a>
+        <a href="#">Manuals</a>
+        <a href="#">Quizzes</a>
+        <a href="#">My grades</a>
+        <a href="#">My plan</a>
+        <div class="sec">Help</div>
+        <a href="#">Ask Vidura</a>
+        <a href="#">Return to Moodle</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Riverside · <b>Welding 101</b></span>
+          <span class="sp"></span>
+          <span class="live"><i></i> Mentor live</span>
+          <span class="chip">Student · Ada</span>
+        </div>
+        <div class="split">
+          <div class="stage">
+            <div class="glimpse">
+              <div class="inner">
+                <p class="ep"><i></i> Episode 02 · The steady hand</p>
+                <h1>Today you earn the arc.</h1>
+                <p class="voice">Safety is behind you. <strong>Act II is unlocked</strong> — chat picks the next beat; modules keep the syllabus honest.</p>
+                <div class="path">
+                  <span class="done">Act I · Safety ✓</span>
+                  <span class="now">Act II · SMAW</span>
+                  <span>Act III · Handbook</span>
+                  <span>Finale · Quiz</span>
+                </div>
+              </div>
+            </div>
+            <p class="section-label">Course modules</p>
+            <div class="modules">
+              <a class="mod done" href="#"><span class="n">✓</span><div><h3>1. Safety &amp; joints</h3><p>Lesson · completed</p></div><span class="st">Done</span></a>
+              <a class="mod now" href="#"><span class="n">2</span><div><h3>2. SMAW practice</h3><p>Lesson · ~12 min left</p></div><span class="st">Up next</span></a>
+              <a class="mod" href="#"><span class="n">3</span><div><h3>3. Welding fundamentals</h3><p>Manual · class discuss</p></div><span class="st">Locked</span></a>
+              <a class="mod" href="#"><span class="n">4</span><div><h3>4. Class quiz</h3><p>Assessment · Moodle</p></div><span class="st">Locked</span></a>
+            </div>
+            <div class="row-btns">
+              <a class="btn" href="#">Open module 2</a>
+              <a class="btn sec" href="#">All modules</a>
+            </div>
+            <div class="side-card" style="margin-top:16px">
+              <h2>Progress</h2>
+              <div class="stat"><span>Complete</span><b>42%</b></div>
+              <div class="stat"><span>Modules</span><b>1 / 4</b></div>
+              <div class="stat"><span>AGS</span><b>Ready</b></div>
+            </div>
+          </div>
+          <aside class="chat-col">
+            <div class="chat-hd">
+              <div class="ava">V</div>
+              <div><b>Vidura</b><span>Mentor · Welding 101</span></div>
+              <span class="sp"></span>
+            </div>
+            <div class="thread">
+              <div class="day">Today · Episode 2</div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub">Hey Ada — yesterday you nailed joints. <strong>Today we earn the arc.</strong></div></div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub">SMAW practice is unlocked on your syllabus. Three setup checks before you touch the stinger.</div></div>
+              <div class="msg me"><div class="ava u">A</div><div class="bub">What’s my path look like?</div></div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub">Safety ✓ → <em>SMAW (now)</em> → Handbook → Quiz. How do you want to continue?</div></div>
+              <div class="choices">
+                <a class="primary" href="#">Enter SMAW practice <small>Recommended · opens the LMS lesson</small></a>
+                <a href="#">Open the handbook first <small>Refresher in reader</small></a>
+                <a href="#">Ask something first <small>Stay in this thread</small></a>
+              </div>
+            </div>
+            <div class="composer">
+              <input type="text" placeholder="Message Vidura…" readonly/>
+              <button type="button">Send</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 Lesson -->
+  <section class="slide" id="s2">
+    <p class="cap"><strong>2 · Lesson mix</strong> — Real lesson player on the left. Mentor “sends” the same page as a card and waits on checks.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a class="on" href="#">Modules</a>
+        <a href="#">Manuals</a>
+        <a href="#">Ask Vidura</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Modules · <b>2. SMAW practice</b></span>
+          <span class="sp"></span>
+          <span class="live"><i></i> Mentor live</span>
+          <span class="chip">Lesson</span>
+        </div>
+        <div class="split lms-heavy">
+          <div class="stage">
+            <div class="prog"><i style="width:66%"></i></div>
+            <div class="prose">
+              <h2>Before you strike the arc</h2>
+              <p>Shielded Metal Arc Welding uses a consumable electrode with flux. Set polarity and amperage for the electrode diameter.</p>
+              <ul>
+                <li>Confirm PPE and booth clear of flammables</li>
+                <li>Check cable and ground clamp</li>
+                <li>Set amperage for electrode diameter</li>
+              </ul>
+              <label><input type="checkbox" checked/> PPE + booth clear</label>
+              <label><input type="checkbox" checked/> Cable + ground clamp</label>
+              <label><input type="checkbox"/> Amperage set for diameter</label>
+              <div class="row-btns">
+                <a class="btn" href="#">Mark complete</a>
+                <a class="btn sec" href="#">Next: Manual</a>
+              </div>
+            </div>
+          </div>
+          <aside class="chat-col">
+            <div class="chat-hd">
+              <div class="ava">V</div>
+              <div><b>Vidura</b><span>Act II · Beat 1</span></div>
+            </div>
+            <div class="thread">
+              <div class="day">Lesson · SMAW practice</div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub">Here’s today’s page — same checklist as the lesson on your left. Tick them; I’ll wait.</div></div>
+              <div class="msg v" style="align-items:stretch">
+                <div class="ava v">V</div>
+                <div style="flex:1;min-width:0">
+                  <div class="in-card">
+                    <div class="hd">Shared · Lesson</div>
+                    <div class="bd">
+                      <h3>Before you strike</h3>
+                      Three checks. Last one is the one people rush.
+                      <label style="display:flex;gap:6px;margin-top:8px;font-size:12px"><input type="checkbox" checked/> PPE + booth</label>
+                      <label style="display:flex;gap:6px;margin-top:4px;font-size:12px"><input type="checkbox" checked/> Cable + ground</label>
+                      <label style="display:flex;gap:6px;margin-top:4px;font-size:12px"><input type="checkbox"/> Amperage for diameter</label>
+                    </div>
+                    <div class="ft">
+                      <a href="#">Sync checks</a>
+                      <a class="sec" href="#">Open full lesson</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub">One left. When it’s checked, we unlock the handbook — or ask me about amperage first.</div></div>
+              <div class="choices">
+                <a class="primary" href="#">Mark complete →</a>
+                <a href="#">Ask about amperage</a>
+              </div>
+            </div>
+            <div class="composer">
+              <input type="text" placeholder="Ask about this lesson…" readonly/>
+              <button type="button">Send</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 Manual -->
+  <section class="slide" id="s3">
+    <p class="cap"><strong>3 · Manual mix</strong> — Ebook reader stays LMS. Mentor shares the chapter into chat; class discuss lives under the page.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a href="#">Modules</a>
+        <a class="on" href="#">Manuals</a>
+        <a href="#">Ask Vidura</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Manuals · <b>Welding fundamentals</b></span>
+          <span class="sp"></span>
+          <span class="live"><i></i> Mentor live</span>
+          <span class="chip">v1 · class</span>
+        </div>
+        <div class="split lms-heavy">
+          <div class="stage">
+            <div class="ebook">
+              <nav class="toc">
+                <h2>Chapters</h2>
+                <a href="#">Safety first</a>
+                <a class="on" href="#">SMAW basics</a>
+                <a href="#">GMAW basics</a>
+                <a href="#">Inspection</a>
+              </nav>
+              <div class="chap">
+                <div class="tag">Chapter</div>
+                <h2>SMAW basics (stick)</h2>
+                <p>Strike the arc, keep a short arc length, and travel at a steady speed so the bead is even without undercut.</p>
+                <p>When in doubt, stop and ask a qualified inspector.</p>
+                <div class="discuss">
+                  <p class="section-label" style="margin-top:0">Class discuss</p>
+                  <div class="m"><strong>Sam:</strong> Short arc = less spatter for me.</div>
+                  <div class="m"><strong>Ada:</strong> Trying steady travel tonight.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <aside class="chat-col">
+            <div class="chat-hd">
+              <div class="ava">V</div>
+              <div><b>Vidura</b><span>Act III · Handbook</span></div>
+            </div>
+            <div class="thread">
+              <div class="day">Manual · shared chapter</div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub">Depth when practice isn’t enough. I dropped <em>SMAW basics</em> into the reader on your left.</div></div>
+              <div class="msg v" style="align-items:stretch">
+                <div class="ava v">V</div>
+                <div style="flex:1;min-width:0">
+                  <div class="in-card">
+                    <div class="hd">Shared · Manual</div>
+                    <div class="bd">
+                      <h3>SMAW basics (stick)</h3>
+                      Short arc · steady travel · even bead without undercut.
+                    </div>
+                    <div class="ft">
+                      <a href="#">Jump to chapter</a>
+                      <a class="sec" href="#">Post in discuss</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub">Leave one tip in class discuss — then we can talk quiz readiness.</div></div>
+              <div class="choices">
+                <a class="primary" href="#">Post a tip →</a>
+                <a href="#">I’m ready for the quiz</a>
+              </div>
+            </div>
+            <div class="composer">
+              <input type="text" placeholder="Ask about this chapter…" readonly/>
+              <button type="button">Send</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 Quiz -->
+  <section class="slide" id="s4">
+    <p class="cap"><strong>4 · Quiz mix</strong> — Graded LMS assessment center stage. Chat goes quiet: no answers, only attempt status.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a href="#">Modules</a>
+        <a class="on" href="#">Quizzes</a>
+        <a href="#">My grades</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Quizzes · <b>Class quiz</b></span>
+          <span class="sp"></span>
+          <span class="chip">Graded · AGS</span>
+        </div>
+        <div class="split lms-heavy">
+          <div class="stage">
+            <div class="prog"><i style="width:25%"></i></div>
+            <div class="qcard">
+              <div class="n">Question 1 of 4</div>
+              <h1 class="page" style="font-size:1.35rem">Which item is required before striking an arc?</h1>
+              <div class="opt">A · Cotton hoodie only</div>
+              <div class="opt on">B · Filter lens / helmet</div>
+              <div class="opt">C · Open-toe shoes</div>
+              <div class="opt">D · No gloves</div>
+            </div>
+            <div class="row-btns">
+              <a class="btn" href="#">Next question</a>
+              <a class="btn sec" href="#">Save &amp; exit</a>
+            </div>
+          </div>
+          <aside class="chat-col">
+            <div class="chat-hd">
+              <div class="ava">V</div>
+              <div><b>Vidura</b><span>Quiet mode · graded</span></div>
+            </div>
+            <div class="thread">
+              <div class="day">Attempt in progress</div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub">You’re in a <strong>graded</strong> attempt. I won’t give answers — finish, then we’ll review misses.</div></div>
+              <div class="muted-tip">Mentor is muted on content hints until you submit. Status syncs with the LMS attempt timer.</div>
+              <div class="side-card" style="margin-top:14px;box-shadow:none">
+                <h2>Attempt</h2>
+                <div class="stat"><span>Time left</span><b>18:42</b></div>
+                <div class="stat"><span>Answered</span><b>1 / 4</b></div>
+                <div class="stat"><span>Moodle sync</span><b>On submit</b></div>
+              </div>
+            </div>
+            <div class="composer">
+              <input type="text" placeholder="Chat paused during graded quiz" disabled/>
+              <button type="button" disabled style="opacity:.4">Send</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 Grades -->
+  <section class="slide" id="s5">
+    <p class="cap"><strong>5 · Grades mix</strong> — Gradebook is the LMS truth. Score drops as a chat beat with next-story choices.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a class="on" href="#">My grades</a>
+        <a href="#">My plan</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Welding 101 · <b>Grades</b></span>
+          <span class="sp"></span>
+          <span class="live"><i></i> Mentor live</span>
+          <span class="chip">Ada</span>
+        </div>
+        <div class="split">
+          <div class="stage">
+            <h1 class="page">My grades</h1>
+            <p class="lede">Scores sync to Moodle when AGS is on. Receipts stay here.</p>
+            <table class="grades">
+              <thead><tr><th>Item</th><th>Type</th><th>Score</th><th>Moodle</th></tr></thead>
+              <tbody>
+                <tr><td>Class quiz · attempt 1</td><td>Quiz</td><td>7 / 8</td><td>Sent</td></tr>
+                <tr><td>Practice lane</td><td>Practice</td><td>8 / 8</td><td>—</td></tr>
+                <tr><td>SMAW practice</td><td>Lesson</td><td>Complete</td><td>—</td></tr>
+              </tbody>
+            </table>
+            <div class="row-btns">
+              <a class="btn" href="#">Open receipt</a>
+              <a class="btn sec" href="#">My plan</a>
+            </div>
+          </div>
+          <aside class="chat-col">
+            <div class="chat-hd">
+              <div class="ava">V</div>
+              <div><b>Vidura</b><span>Score drop</span></div>
+            </div>
+            <div class="thread">
+              <div class="day">Just now</div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub"><strong>7 / 8</strong> — strong. One PPE miss. Your gradebook on the left already shows Moodle <em>Sent</em>.</div></div>
+              <div class="msg v" style="align-items:stretch">
+                <div class="ava v">V</div>
+                <div style="flex:1;min-width:0">
+                  <div class="in-card">
+                    <div class="hd">Result</div>
+                    <div class="bd">
+                      <h3>Class quiz</h3>
+                      Missed: PPE before arc. Plan rebuilds from this gap.
+                    </div>
+                    <div class="ft">
+                      <a href="#">Review miss</a>
+                      <a class="sec" href="#">Gap plan</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="choices">
+                <a class="primary" href="#">Open Safety chapter <small>Close the gap first</small></a>
+                <a href="#">Show my plan</a>
+                <a href="#">Why did I miss this?</a>
+              </div>
+            </div>
+            <div class="composer">
+              <input type="text" placeholder="Ask about this score…" readonly/>
+              <button type="button">Send</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 Plan -->
+  <section class="slide" id="s6">
+    <p class="cap"><strong>6 · Plan mix</strong> — Adaptive checklist is LMS. Chat narrates order and refuses the graded retry skip.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a class="on" href="#">My plan</a>
+        <a href="#">Ask Vidura</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Welding 101 · <b>My plan</b></span>
+          <span class="sp"></span>
+          <span class="live"><i></i> Mentor live</span>
+          <span class="chip">Adaptive</span>
+        </div>
+        <div class="split">
+          <div class="stage">
+            <h1 class="page">Close the gap</h1>
+            <p class="lede">Built from your last quiz + class skills. Complete in order.</p>
+            <div class="modules">
+              <a class="mod now" href="#"><span class="n">1</span><div><h3>Review: Safety first</h3><p>Manual chapter · PPE</p></div><span class="st">Now</span></a>
+              <a class="mod" href="#"><span class="n">2</span><div><h3>Micro: PPE in 60s</h3><p>Micro-learning</p></div><span class="st">Next</span></a>
+              <a class="mod" href="#"><span class="n">3</span><div><h3>Practice lane retry</h3><p>No Moodle sync</p></div><span class="st">Then</span></a>
+              <a class="mod" href="#"><span class="n">4</span><div><h3>Graded retry</h3><p>Syncs to gradebook</p></div><span class="st">Final</span></a>
+            </div>
+          </div>
+          <aside class="chat-col">
+            <div class="chat-hd">
+              <div class="ava">V</div>
+              <div><b>Vidura</b><span>Gap path</span></div>
+            </div>
+            <div class="thread">
+              <div class="day">Your plan</div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub">Start with the handbook chapter you missed — <strong>don’t jump to graded retry</strong> yet.</div></div>
+              <div class="msg me"><div class="ava u">A</div><div class="bub">Can I just retake the quiz?</div></div>
+              <div class="msg v"><div class="ava v">V</div><div class="bub">Not yet. Handbook → micro → practice lane. Graded retry is last so Moodle gets a fair score.</div></div>
+              <div class="choices">
+                <a class="primary" href="#">Open Safety chapter <small>Step 1 on your plan</small></a>
+                <a href="#">Why this order?</a>
+              </div>
+            </div>
+            <div class="composer">
+              <input type="text" placeholder="Ask why this plan…" readonly/>
+              <button type="button">Send</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<script>
+  const buttons = document.querySelectorAll('.chooser button[data-slide]');
+  const slides = document.querySelectorAll('.slide');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-slide');
+      buttons.forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+      slides.forEach(s => s.classList.toggle('is-on', s.id === id));
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+</script>
+</body>
+</html>

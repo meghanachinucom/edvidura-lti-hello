@@ -203,9 +203,60 @@
         </div>
         <div class="body-sm" style="display:flex;flex-direction:column;gap:6px">
           <div><span class="text-muted">Score</span> · {{ receipt.score }}/{{ receipt.max_score }} ({{ receipt.percent }}%)</div>
-          <div><span class="text-muted">Moodle</span> · {% if receipt.practice %}Skipped (practice){% elif receipt.grade_sent %}Synced{% elif receipt.ags_available %}Pending{% else %}AGS off{% endif %}</div>
+          <div>
+            <span class="text-muted">Moodle</span> ·
+            <span id="ags-moodle-status"
+                  data-attempt="{{ attempt_id }}"
+                  data-token="{{ quiz_token }}"
+                  data-practice="{% if receipt.practice %}1{% else %}0{% endif %}"
+                  data-initial="{% if receipt.practice %}skipped_practice{% elif receipt.grade_sent %}synced{% elif grade_error %}failed{% elif receipt.ags_available %}pending{% else %}ags_off{% endif %}">
+              {% if receipt.practice %}Skipped (practice){% elif receipt.grade_sent %}Synced{% elif grade_error %}Not synced{% elif receipt.ags_available %}Syncing…{% else %}AGS off{% endif %}
+            </span>
+          </div>
+          <p id="ags-moodle-error" class="body-sm" style="color:var(--error);margin:0;{% if not grade_error %}display:none{% endif %}">{{ grade_error or '' }}</p>
           {% if skill_xapi_count %}<div><span class="text-muted">Skill xAPI</span> · {{ skill_xapi_count }}</div>{% endif %}
         </div>
+        <script>
+        (function () {
+          var el = document.getElementById('ags-moodle-status');
+          var errEl = document.getElementById('ags-moodle-error');
+          if (!el || el.getAttribute('data-practice') === '1') return;
+          var initial = el.getAttribute('data-initial') || '';
+          if (initial !== 'pending') return;
+          var attempt = el.getAttribute('data-attempt');
+          var token = el.getAttribute('data-token') || '';
+          var tries = 0;
+          var labels = {
+            synced: 'Synced',
+            failed: 'Not synced',
+            pending: 'Syncing…',
+            ags_off: 'AGS off',
+            skipped_practice: 'Skipped (practice)'
+          };
+          function tick() {
+            tries += 1;
+            fetch('/quiz/result/' + encodeURIComponent(attempt) + '/ags.json?token=' + encodeURIComponent(token), {
+              headers: { 'Accept': 'application/json' }
+            })
+              .then(function (r) { return r.json(); })
+              .then(function (d) {
+                if (!d || !d.ok) return;
+                el.textContent = labels[d.status] || d.status;
+                if (d.grade_error && errEl) {
+                  errEl.style.display = '';
+                  errEl.textContent = d.grade_error;
+                }
+                if (d.status === 'pending' && tries < 20) {
+                  setTimeout(tick, 1500);
+                }
+              })
+              .catch(function () {
+                if (tries < 20) setTimeout(tick, 2000);
+              });
+          }
+          setTimeout(tick, 800);
+        })();
+        </script>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:var(--sp-md)">
           <a class="btn btn-surface" href="/quiz/result/{{ attempt_id }}/receipt.json?token={{ quiz_token }}" style="font-size:12px">Download JSON</a>
           <a class="btn btn-glass" href="/receipts/verify?token={{ quiz_token }}" style="font-size:12px">Verify a seal</a>

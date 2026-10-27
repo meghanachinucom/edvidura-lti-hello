@@ -294,8 +294,14 @@
           <form method="post" action="/teacher/ai/generate">
             <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
             <input type="hidden" name="lesson_id" value="{{ L.id }}"/>
-            <input type="hidden" name="count" value="5"/>
             <p class="make-quiz__lead">Draft questions from <strong>the whole lesson</strong> (every section).</p>
+            <label class="meta">How many?
+              <select name="count">
+                <option value="5">About 5</option>
+                <option value="10">About 10</option>
+                <option value="120">Test bank — 120 (review all)</option>
+              </select>
+            </label>
             <div class="make-quiz__grid">
               <fieldset class="make-quiz__field">
                 <legend>How hard?</legend>

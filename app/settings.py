@@ -82,6 +82,12 @@ class Settings:
     coach_integrity_enabled: bool = True
     coach_flashcards_enabled: bool = True
     coach_feedback_enabled: bool = True
+    # Ghost coach: when true, graded quiz cannot bypass with force=1 (practice still ok).
+    ghost_coach_hard_gate: bool = True
+    # Air-gap SKU: refuse cloud AI/Jev/Sentry keys at boot when set.
+    airgap: bool = False
+    # Local SPA origin (Vite). Used for /dev/client-launch?spa=1 redirects + CORS.
+    frontend_origin: str = ""
 
     @property
     def is_production(self) -> bool:
@@ -266,4 +272,15 @@ def get_settings() -> Settings:
             else os.getenv("COACH_FEEDBACK_ENABLED", "").strip().lower()
             in {"1", "true", "yes", "on"}
         ),
+        ghost_coach_hard_gate=(
+            True
+            if not os.getenv("GHOST_COACH_HARD_GATE", "").strip()
+            else os.getenv("GHOST_COACH_HARD_GATE", "").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        airgap=os.getenv("AIRGAP", "").strip().lower()
+        in {"1", "true", "yes", "on"},
+        frontend_origin=os.getenv(
+            "FRONTEND_ORIGIN", "http://127.0.0.1:3000"
+        ).strip().rstrip("/"),
     )

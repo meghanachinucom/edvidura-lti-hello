@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EdVidura · F × LMS · complete</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    font-family:"Outfit",system-ui,sans-serif;background:#0c0c0e;color:#e8e8ec;
+    background-image:radial-gradient(ellipse 70% 45% at 30% -10%,rgba(255,255,255,.05),transparent 55%);
+  }
+  .chooser{
+    position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+    padding:12px 16px;background:rgba(8,8,10,.92);backdrop-filter:blur(12px);
+    border-bottom:1px solid #2a2a30;
+  }
+  .chooser strong{font-size:12px;color:#999;margin-right:4px}
+  .chooser button{
+    font:inherit;font-size:11px;font-weight:600;padding:7px 11px;cursor:pointer;
+    border:1px solid #333;background:#161618;color:#bbb;border-radius:8px;
+  }
+  .chooser button[aria-pressed="true"]{background:#f4f4f5;color:#111;border-color:#f4f4f5}
+  .cap{max-width:1120px;margin:0 auto;padding:14px 20px 8px;font-size:12px;color:#8b8b96;line-height:1.45}
+  .slide{display:none;padding-bottom:56px}.slide.is-on{display:block}
+  .note-fab{max-width:1120px;margin:0 auto;padding:0 20px 4px;font-size:11px;color:#6b6b74}
+
+  .shell{
+    max-width:1080px;margin:10px auto 0;color:#141414;background:#f7f7f5;
+    border-radius:16px;overflow:hidden;min-height:640px;display:grid;grid-template-columns:220px 1fr;
+    box-shadow:0 0 0 1px rgba(255,255,255,.06),0 24px 60px rgba(0,0,0,.5);
+  }
+  .rail{
+    background:linear-gradient(180deg,#1c1c1f 0%,#141416 100%);
+    color:#e8e8ec;padding:22px 14px 18px;display:flex;flex-direction:column;gap:3px;
+    border-right:1px solid rgba(255,255,255,.04);
+  }
+  .rail .brand{font-weight:800;letter-spacing:-.04em;font-size:16px;padding:2px 10px 18px}
+  .rail .brand span{
+    display:block;font-size:10px;font-weight:500;opacity:.4;margin-top:3px;
+    letter-spacing:.08em;text-transform:uppercase;
+  }
+  .rail a{
+    display:block;padding:10px 12px;border-radius:10px;color:#a8a8b0;
+    text-decoration:none;font-size:13px;font-weight:500;
+  }
+  .rail a:hover{background:rgba(255,255,255,.06);color:#fff}
+  .rail a.on{
+    background:rgba(255,255,255,.1);color:#fff;font-weight:650;
+    box-shadow:inset 3px 0 0 #fff;border-radius:10px 10px 10px 4px;
+  }
+  .rail .sec{
+    margin-top:22px;padding:8px 12px 6px;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:#5c5c66;font-weight:600;
+  }
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{
+    display:flex;align-items:center;gap:12px;padding:14px 26px;
+    border-bottom:1px solid rgba(20,20,20,.06);
+    background:rgba(255,255,255,.55);backdrop-filter:blur(8px);font-size:13px;
+  }
+  .topbar .crumb{color:#737373}
+  .topbar .crumb b{color:#141414;font-weight:650}
+  .topbar .sp{flex:1}
+  .topbar .chip{
+    font-size:11px;font-weight:650;padding:5px 11px;border-radius:99px;
+    background:#141414;color:#fafaf7;
+  }
+  .body{padding:28px 30px 36px;display:grid;grid-template-columns:1fr 260px;gap:28px;align-items:start}
+  .body.solo{grid-template-columns:1fr;max-width:720px}
+
+  h1{font-weight:800;font-size:clamp(1.55rem,2.8vw,2rem);letter-spacing:-.04em;line-height:1.12;margin:0 0 8px;color:#0f0f10}
+  .lede{margin:0 0 22px;color:#57575f;font-size:14px;line-height:1.55;max-width:36rem}
+  .section-label{margin:28px 0 12px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8a8a92;font-weight:650}
+
+  /* Quiet mentor line — used instead of stacked mini-glimpses */
+  .mentor-line{
+    display:flex;gap:12px;align-items:flex-start;margin:0 0 22px;padding:0;
+    font-size:14px;line-height:1.5;color:#3f3f46;
+  }
+  .mentor-line .ava{
+    width:28px;height:28px;border-radius:50%;background:#141414;color:#fff;
+    display:grid;place-items:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;
+  }
+  .mentor-line strong{color:#141414;font-weight:650}
+
+  .glimpse{
+    position:relative;overflow:hidden;border-radius:14px;margin-bottom:8px;color:#f4f4f0;
+    background:linear-gradient(160deg,#18181b 0%,#111113 100%);
+    box-shadow:0 0 0 1px rgba(255,255,255,.05);
+    animation:glimpseIn .55s ease both;
+  }
+  .glimpse .inner{position:relative;z-index:1;padding:28px 28px 26px;max-width:34rem}
+  .glimpse .ep{
+    margin:0 0 12px;font-size:10px;font-weight:650;letter-spacing:.14em;
+    text-transform:uppercase;color:rgba(244,244,240,.45);
+  }
+  .glimpse h1{color:#fafaf7;margin:0 0 10px;font-size:clamp(1.7rem,3vw,2.15rem);max-width:16ch}
+  .glimpse .voice{margin:0 0 20px;font-size:14.5px;line-height:1.55;color:rgba(244,244,240,.65)}
+  .glimpse .voice strong{color:#fff;font-weight:650}
+  .glimpse .path{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 20px}
+  .glimpse .path span{
+    font-size:11px;font-weight:600;padding:5px 10px;border-radius:99px;
+    background:rgba(255,255,255,.06);color:rgba(244,244,240,.45);
+  }
+  .glimpse .path span.done{color:#a7f3d0;background:rgba(255,255,255,.06)}
+  .glimpse .path span.now{color:#0e0e10;background:#fafaf7}
+  .glimpse .cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .glimpse .cta .btn{background:#fafaf7;color:#0e0e10;box-shadow:none}
+  .glimpse .cta .ghost{
+    font-size:12.5px;font-weight:600;color:rgba(244,244,240,.55);text-decoration:none;
+  }
+  .glimpse .cta .ghost:hover{color:#fff}
+  @keyframes glimpseIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .modules{background:#fff;border:1px solid rgba(20,20,20,.08);border-radius:12px;overflow:hidden}
+  .mod{
+    display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;
+    padding:15px 18px;border-bottom:1px solid rgba(20,20,20,.05);text-decoration:none;color:inherit;
+  }
+  .mod:last-child{border-bottom:0}
+  .mod:hover{background:#fafaf7}
+  .mod .n{width:32px;height:32px;border-radius:10px;background:#f0efe9;display:grid;place-items:center;font-size:12px;font-weight:700;color:#71717a}
+  .mod.done .n{background:#dcfce7;color:#166534}
+  .mod.now{background:linear-gradient(90deg,rgba(20,20,20,.04),transparent);box-shadow:inset 3px 0 0 #141414}
+  .mod.now .n{background:#141414;color:#fff}
+  .mod h3{margin:0;font-size:14.5px;font-weight:650;letter-spacing:-.015em}
+  .mod p{margin:3px 0 0;font-size:12px;color:#71717a}
+  .mod .st{font-size:11px;font-weight:650;color:#71717a}
+  .mod.now .st{color:#141414}
+  .mod.done .st{color:#166534}
+
+  .side .card{
+    background:#fff;border:1px solid rgba(20,20,20,.08);border-radius:12px;padding:16px 18px;margin-bottom:14px;
+  }
+  .side h2{margin:0 0 12px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#71717a;font-weight:700}
+  .stat{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid #f0efe9;color:#52525b}
+  .stat:last-child{border-bottom:0}
+  .stat b{font-weight:750;color:#141414;font-size:14px}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    padding:10px 15px;border-radius:9px;background:#141414;color:#fff;
+    font-size:13px;font-weight:650;text-decoration:none;border:0;cursor:pointer;
+  }
+  .btn.sec{background:rgba(255,255,255,.8);color:#141414;border:1.5px solid rgba(20,20,20,.12);box-shadow:none}
+  .btn.block{display:flex;width:100%;margin-top:10px}
+  .row-btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+
+  .prose{background:#fff;border:1px solid rgba(20,20,20,.08);border-radius:12px;padding:26px 28px;font-size:15px;line-height:1.65}
+  .prose h2{font-weight:750;font-size:1.4rem;margin:0 0 14px;letter-spacing:-.03em}
+  .prose ul{margin:12px 0;padding-left:1.2rem;color:#3f3f46}
+  .prose label{display:flex;gap:10px;padding:11px 13px;margin-top:8px;background:#fafaf7;border-radius:10px;font-size:13px;cursor:pointer}
+  .prog{height:7px;background:rgba(20,20,20,.08);border-radius:99px;overflow:hidden;margin-bottom:16px}
+  .prog i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2a2a2e,#141414)}
+
+  .ebook{display:grid;grid-template-columns:180px 1fr;background:#fff;border:1px solid rgba(20,20,20,.08);border-radius:12px;min-height:400px;overflow:hidden}
+  .toc{background:#fafafa;border-right:1px solid rgba(20,20,20,.06);padding:16px 12px}
+  .toc h2{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#71717a;margin:0 0 12px;font-weight:700;padding:0 8px}
+  .toc a{display:block;padding:8px 10px;border-radius:8px;font-size:12.5px;color:#3f3f46;text-decoration:none;margin-bottom:2px;font-weight:500}
+  .toc a.on,.toc a:hover{background:#fff;font-weight:650;color:#141414;box-shadow:0 2px 8px rgba(20,20,20,.04)}
+  .chap{padding:24px 26px}
+  .chap .tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#71717a;margin-bottom:8px;font-weight:700}
+  .chap h2{font-weight:750;font-size:1.45rem;margin:0 0 12px;letter-spacing:-.03em}
+  .chap p{font-size:14.5px;line-height:1.65;color:#3f3f46;margin:0 0 12px}
+  .discuss{margin-top:20px;padding-top:16px;border-top:1px solid rgba(20,20,20,.06)}
+  .discuss .m{font-size:12.5px;padding:10px 12px;background:#fafaf7;border-radius:10px;margin-bottom:8px;border:1px solid rgba(20,20,20,.04)}
+
+  .pack{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .pack a{
+    display:block;padding:18px;background:#fff;border:1px solid rgba(20,20,20,.08);border-radius:12px;
+    text-decoration:none;color:inherit;
+  }
+  .pack a:hover{border-color:rgba(20,20,20,.18)}
+  .pack .tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#71717a;font-weight:700;margin-bottom:8px}
+  .pack h3{margin:0 0 6px;font-size:15px;font-weight:700;letter-spacing:-.02em}
+  .pack p{margin:0;font-size:12.5px;color:#57575f;line-height:1.45}
+
+  .qcard{background:#fff;border:1px solid rgba(20,20,20,.08);border-radius:12px;padding:22px 24px;margin-bottom:14px}
+  .qcard .n{font-size:10px;color:#71717a;font-weight:700;margin-bottom:10px;letter-spacing:.12em;text-transform:uppercase}
+  .opt{display:block;padding:12px 14px;border:1.5px solid rgba(20,20,20,.1);border-radius:10px;margin-top:9px;font-size:14px;cursor:pointer}
+  .opt.on{border-color:#141414;background:#f7f7f5;box-shadow:0 4px 14px rgba(20,20,20,.06)}
+
+  .result{
+    background:#141414;color:#fafaf7;border-radius:12px;padding:28px;text-align:center;margin-bottom:20px;
+  }
+  .result .big{font-size:3.5rem;font-weight:800;letter-spacing:-.05em;line-height:1}
+  .result .lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.55;margin-bottom:8px;font-weight:700}
+
+  table.grades{width:100%;border-collapse:collapse;background:#fff;border:1px solid rgba(20,20,20,.08);border-radius:12px;overflow:hidden;font-size:13px}
+  table.grades th{text-align:left;padding:12px 16px;background:#fafaf7;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#71717a;border-bottom:1px solid rgba(20,20,20,.06);font-weight:700}
+  table.grades td{padding:13px 16px;border-bottom:1px solid #f0efe9}
+  table.grades tr:last-child td{border-bottom:0}
+
+  .drawer{
+    background:#fff;border:1px solid rgba(20,20,20,.08);border-radius:12px;overflow:hidden;
+    display:flex;flex-direction:column;min-height:380px;
+  }
+  .drawer .hd{padding:14px 16px;border-bottom:1px solid rgba(20,20,20,.06);display:flex;gap:10px;align-items:center}
+  .drawer .hd .ava{width:32px;height:32px;border-radius:50%;background:#141414;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800}
+  .drawer .msgs{flex:1;padding:16px;background:#fafaf7}
+  .drawer .bubble{max-width:85%;padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.45;margin-bottom:10px}
+  .drawer .bubble.v{background:#141414;color:#fff;border-bottom-left-radius:4px}
+  .drawer .bubble.u{background:#fff;border:1px solid #e8e8e4;margin-left:auto;border-bottom-right-radius:4px}
+  .drawer .src{display:block;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.15);font-size:11px;opacity:.65}
+  .drawer .ft{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(20,20,20,.06)}
+  .drawer .ft input{flex:1;border:1.5px solid rgba(20,20,20,.1);border-radius:999px;padding:10px 14px;font:inherit;font-size:13px}
+
+  @media(max-width:900px){
+    .shell{grid-template-columns:1fr}
+    .rail{flex-direction:row;flex-wrap:wrap;gap:4px;padding:12px}
+    .rail .brand{width:100%}
+    .rail a.on{box-shadow:none}
+    .rail .sec{display:none}
+    .body{grid-template-columns:1fr;padding:20px}
+    .ebook{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+  <div class="chooser">
+    <strong>F · LMS</strong>
+    <button type="button" data-slide="s1" aria-pressed="true">1 Home</button>
+    <button type="button" data-slide="s2" aria-pressed="false">2 Modules</button>
+    <button type="button" data-slide="s3" aria-pressed="false">3 Lesson</button>
+    <button type="button" data-slide="s4" aria-pressed="false">4 Manuals</button>
+    <button type="button" data-slide="s5" aria-pressed="false">5 Reader</button>
+    <button type="button" data-slide="s6" aria-pressed="false">6 Quizzes</button>
+    <button type="button" data-slide="s7" aria-pressed="false">7 Attempt</button>
+    <button type="button" data-slide="s8" aria-pressed="false">8 Result</button>
+    <button type="button" data-slide="s9" aria-pressed="false">9 Grades</button>
+    <button type="button" data-slide="s10" aria-pressed="false">10 Plan</button>
+    <button type="button" data-slide="s11" aria-pressed="false">11 Ask Vidura</button>
+    <button type="button" data-slide="s12" aria-pressed="false">12 Teacher</button>
+  </div>
+  <p class="note-fab">LMS product — calm layout, charcoal only. Glimpse on home; other screens stay light.</p>
+
+  <!-- 1 Home -->
+  <section class="slide is-on" id="s1">
+    <p class="cap"><strong>1 · Course home</strong> — Episode glimpse first. Then syllabus modules, progress, CTAs.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a class="on" href="#">Course home</a>
+        <a href="#">Modules</a>
+        <a href="#">Manuals</a>
+        <a href="#">Quizzes</a>
+        <a href="#">My grades</a>
+        <a href="#">My plan</a>
+        <div class="sec">Help</div>
+        <a href="#">Ask Vidura</a>
+        <a href="#">Return to Moodle</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Riverside · <b>Welding 101</b></span>
+          <span class="sp"></span>
+          <span class="chip">Student · Ada</span>
+        </div>
+        <div class="body">
+          <div>
+            <div class="glimpse">
+              <div class="inner">
+                <p class="ep">Episode 02 · The steady hand</p>
+                <h1>Today you earn the arc.</h1>
+                <p class="voice">Safety is behind you. <strong>Act II is unlocked</strong> — finish SMAW, then handbook, then the graded quiz.</p>
+                <div class="path">
+                  <span class="done">Safety ✓</span>
+                  <span class="now">SMAW</span>
+                  <span>Handbook</span>
+                  <span>Quiz</span>
+                </div>
+                <div class="cta">
+                  <a class="btn" href="#">Continue SMAW →</a>
+                  <a class="ghost" href="#">Ask Vidura</a>
+                </div>
+              </div>
+            </div>
+            <p class="section-label">Modules</p>
+            <div class="modules">
+              <a class="mod done" href="#"><span class="n">✓</span><div><h3>Safety &amp; joints</h3><p>Lesson</p></div><span class="st">Done</span></a>
+              <a class="mod now" href="#"><span class="n">2</span><div><h3>SMAW practice</h3><p>Lesson · ~12 min</p></div><span class="st">Next</span></a>
+              <a class="mod" href="#"><span class="n">3</span><div><h3>Welding fundamentals</h3><p>Manual</p></div><span class="st">Locked</span></a>
+              <a class="mod" href="#"><span class="n">4</span><div><h3>Class quiz</h3><p>Graded · Moodle</p></div><span class="st">Locked</span></a>
+            </div>
+          </div>
+          <aside class="side">
+            <div class="card">
+              <h2>Progress</h2>
+              <div class="stat"><span>Complete</span><b>42%</b></div>
+              <div class="stat"><span>Modules</span><b>1 / 4</b></div>
+              <div class="stat"><span>AGS</span><b>Ready</b></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 Modules -->
+  <section class="slide" id="s2">
+    <p class="cap"><strong>2 · Modules index</strong> — Clean syllabus list. One short lede, no stacked banners.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a class="on" href="#">Modules</a>
+        <a href="#">Manuals</a>
+        <a href="#">Quizzes</a>
+        <a href="#">My grades</a>
+        <div class="sec">Help</div>
+        <a href="#">Ask Vidura</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Welding 101 · <b>Modules</b></span>
+          <span class="sp"></span>
+          <span class="chip">5 items</span>
+        </div>
+        <div class="body solo">
+          <div>
+            <h1>Course modules</h1>
+            <p class="lede">You’re on item 2 — finish the SMAW checklist before the handbook.</p>
+            <div class="modules">
+              <a class="mod done" href="#"><span class="n">1</span><div><h3>Safety &amp; joints</h3><p>Lesson</p></div><span class="st">100%</span></a>
+              <a class="mod now" href="#"><span class="n">2</span><div><h3>SMAW practice</h3><p>Lesson · in progress</p></div><span class="st">Resume</span></a>
+              <a class="mod" href="#"><span class="n">3</span><div><h3>Welding fundamentals</h3><p>Manual</p></div><span class="st">Open</span></a>
+              <a class="mod" href="#"><span class="n">4</span><div><h3>Class quiz</h3><p>Graded · Moodle</p></div><span class="st">Start</span></a>
+              <a class="mod" href="#"><span class="n">+</span><div><h3>Practice lane</h3><p>No grade sync</p></div><span class="st">Optional</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 Lesson -->
+  <section class="slide" id="s3">
+    <p class="cap"><strong>3 · Lesson player</strong> — Just the lesson. Progress + checks + one action row.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a class="on" href="#">Modules</a>
+        <a href="#">Manuals</a>
+        <a href="#">Ask Vidura</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Modules · <b>2. SMAW practice</b></span>
+          <span class="sp"></span>
+          <span class="chip">Lesson</span>
+        </div>
+        <div class="body solo">
+          <div>
+            <div class="prog"><i style="width:66%"></i></div>
+            <div class="prose">
+              <h2>Before you strike the arc</h2>
+              <p>Shielded Metal Arc Welding uses a consumable electrode with flux. Set polarity and amperage for the electrode diameter.</p>
+              <label><input type="checkbox" checked/> PPE + booth clear</label>
+              <label><input type="checkbox" checked/> Cable + ground clamp</label>
+              <label><input type="checkbox"/> Amperage set for diameter</label>
+              <div class="row-btns">
+                <a class="btn" href="#">Mark complete</a>
+                <a class="btn sec" href="#">Ask Vidura</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 Manuals list -->
+  <section class="slide" id="s4">
+    <p class="cap"><strong>4 · Manuals library</strong> — Class-scoped packs only. Assigned for this Moodle context.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a href="#">Modules</a>
+        <a class="on" href="#">Manuals</a>
+        <a href="#">Quizzes</a>
+        <a href="#">Ask Vidura</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Welding 101 · <b>Manuals</b></span>
+          <span class="sp"></span>
+          <span class="chip">This class</span>
+        </div>
+        <div class="body solo">
+          <div>
+            <h1>Class manuals</h1>
+            <p class="lede">Only manuals assigned to Welding 101 appear here. Open a reader or jump into chapter discuss.</p>
+            <div class="pack">
+              <a href="#">
+                <div class="tag">Assigned · v1</div>
+                <h3>Welding fundamentals</h3>
+                <p>4 chapters · class discuss on · SMAW / GMAW / inspection</p>
+              </a>
+              <a href="#">
+                <div class="tag">Assigned · v1</div>
+                <h3>Shop safety brief</h3>
+                <p>2 chapters · PPE focus · linked from gap plan</p>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 Reader -->
+  <section class="slide" id="s5">
+    <p class="cap"><strong>5 · Manual reader</strong> — TOC + chapter. Class discuss under the page. Ask Vidura secondary.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a href="#">Modules</a>
+        <a class="on" href="#">Manuals</a>
+        <a href="#">Ask Vidura</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Manuals · <b>Welding fundamentals</b></span>
+          <span class="sp"></span>
+          <span class="chip">v1 · this class</span>
+        </div>
+        <div class="body solo">
+          <div>
+            <div class="ebook">
+              <nav class="toc">
+                <h2>Chapters</h2>
+                <a href="#">Safety first</a>
+                <a class="on" href="#">SMAW basics</a>
+                <a href="#">GMAW basics</a>
+                <a href="#">Inspection</a>
+              </nav>
+              <div class="chap">
+                <div class="tag">Chapter</div>
+                <h2>SMAW basics (stick)</h2>
+                <p>Strike the arc, keep a short arc length, and travel at a steady speed so the bead is even without undercut.</p>
+                <p>When in doubt, stop and ask a qualified inspector.</p>
+                <div class="discuss">
+                  <p class="section-label" style="margin-top:0">Class discuss</p>
+                  <div class="m"><strong>Sam:</strong> Short arc = less spatter for me.</div>
+                  <div class="m"><strong>Ada:</strong> Trying steady travel tonight.</div>
+                  <a class="btn sec" href="#" style="margin-top:8px">Add a tip</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 Quizzes hub -->
+  <section class="slide" id="s6">
+    <p class="cap"><strong>6 · Quizzes hub</strong> — Graded vs practice lanes clearly labeled for Moodle sync.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a href="#">Modules</a>
+        <a class="on" href="#">Quizzes</a>
+        <a href="#">My grades</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Welding 101 · <b>Quizzes</b></span>
+          <span class="sp"></span>
+          <span class="chip">2 available</span>
+        </div>
+        <div class="body solo">
+          <div>
+            <h1>Assessments</h1>
+            <p class="lede">Graded syncs to Moodle. Practice never touches the gradebook.</p>
+            <div class="modules">
+              <a class="mod now" href="#"><span class="n">1</span><div><h3>Class quiz</h3><p>8 items · graded</p></div><span class="st">Start</span></a>
+              <a class="mod" href="#"><span class="n">2</span><div><h3>Practice lane</h3><p>No AGS · unlimited</p></div><span class="st">Open</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 Attempt -->
+  <section class="slide" id="s7">
+    <p class="cap"><strong>7 · Quiz attempt</strong> — Classic assessment UI. Mentor stays quiet on answers.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a class="on" href="#">Quizzes</a>
+        <a href="#">My grades</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Quizzes · <b>Class quiz</b></span>
+          <span class="sp"></span>
+          <span class="chip">Q 2 of 8 · Graded</span>
+        </div>
+        <div class="body solo">
+          <div>
+            <div class="prog"><i style="width:25%"></i></div>
+            <div class="qcard">
+              <div class="n">Question 2 of 8 · Graded</div>
+              <h1 style="font-size:1.25rem">Which item is required before striking an arc?</h1>
+              <label class="opt">A · Cotton hoodie only</label>
+              <label class="opt on">B · Filter lens / helmet</label>
+              <label class="opt">C · Open-toe shoes</label>
+              <label class="opt">D · No gloves</label>
+            </div>
+            <div class="row-btns">
+              <a class="btn" href="#">Next</a>
+              <a class="btn sec" href="#">Save &amp; exit</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 Result -->
+  <section class="slide" id="s8">
+    <p class="cap"><strong>8 · Quiz result</strong> — Score, one mentor line, two actions.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a class="on" href="#">Quizzes</a>
+        <a href="#">My grades</a>
+        <a href="#">My plan</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Class quiz · <b>Result</b></span>
+          <span class="sp"></span>
+          <span class="chip">Attempt 1</span>
+        </div>
+        <div class="body solo">
+          <div>
+            <div class="result">
+              <div class="lbl">Your score</div>
+              <div class="big">7 / 8</div>
+              <p style="margin:10px 0 0;opacity:.65;font-size:13px">Sent to Moodle · one miss on PPE</p>
+            </div>
+            <div class="mentor-line">
+              <div class="ava">V</div>
+              <div><strong>Strong overall.</strong> Open Safety, then your gap plan — don’t re-roll graded yet.</div>
+            </div>
+            <div class="row-btns">
+              <a class="btn" href="#">Review misses</a>
+              <a class="btn sec" href="#">My plan</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 Grades -->
+  <section class="slide" id="s9">
+    <p class="cap"><strong>9 · Grades</strong> — Simple gradebook. Short lede, no extra panels.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a class="on" href="#">My grades</a>
+        <a href="#">My plan</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Welding 101 · <b>Grades</b></span>
+          <span class="sp"></span>
+          <span class="chip">Ada</span>
+        </div>
+        <div class="body solo">
+          <div>
+            <h1>My grades</h1>
+            <p class="lede">One PPE miss on the last quiz. Open Safety, then your gap plan.</p>
+            <table class="grades">
+              <thead><tr><th>Item</th><th>Type</th><th>Score</th><th>Moodle</th></tr></thead>
+              <tbody>
+                <tr><td>Class quiz · attempt 1</td><td>Quiz</td><td>7 / 8</td><td>Sent</td></tr>
+                <tr><td>Practice lane</td><td>Practice</td><td>8 / 8</td><td>—</td></tr>
+                <tr><td>SMAW practice</td><td>Lesson</td><td>Complete</td><td>—</td></tr>
+              </tbody>
+            </table>
+            <div class="row-btns">
+              <a class="btn" href="#">Open my plan</a>
+              <a class="btn sec" href="#">Review misses</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 Plan -->
+  <section class="slide" id="s10">
+    <p class="cap"><strong>10 · Learning plan</strong> — Three-step checklist. No side clutter.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a class="on" href="#">My plan</a>
+        <a href="#">Ask Vidura</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Welding 101 · <b>My plan</b></span>
+          <span class="sp"></span>
+          <span class="chip">Adaptive</span>
+        </div>
+        <div class="body solo">
+          <div>
+            <h1>Close the gap</h1>
+            <p class="lede">From your last quiz. Handbook → practice — graded retry last.</p>
+            <div class="modules">
+              <a class="mod now" href="#"><span class="n">1</span><div><h3>Review: Safety first</h3><p>Manual · PPE</p></div><span class="st">Now</span></a>
+              <a class="mod" href="#"><span class="n">2</span><div><h3>Practice lane</h3><p>No Moodle sync</p></div><span class="st">Next</span></a>
+              <a class="mod" href="#"><span class="n">3</span><div><h3>Graded retry</h3><p>Syncs to gradebook</p></div><span class="st">Final</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 Ask Vidura -->
+  <section class="slide" id="s11">
+    <p class="cap"><strong>11 · Ask Vidura</strong> — Helper drawer over the LMS. Citations + refuse cheating. Not the whole product.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Learning OS</span></div>
+        <a href="#">Course home</a>
+        <a href="#">Modules</a>
+        <a href="#">Manuals</a>
+        <a class="on" href="#">Ask Vidura</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Help · <b>Ask Vidura</b></span>
+          <span class="sp"></span>
+          <span class="chip">SME sources</span>
+        </div>
+        <div class="body solo">
+          <div>
+            <h1>Ask Vidura</h1>
+            <p class="lede">Grounded on class manuals. Won’t write graded answers.</p>
+            <div class="drawer">
+              <div class="hd">
+                <div class="ava">V</div>
+                <div><b style="display:block;font-size:13px">Vidura</b><span style="font-size:11px;color:#737373">Welding 101</span></div>
+              </div>
+              <div class="msgs">
+                <div class="bubble u">Write my quiz answers for me</div>
+                <div class="bubble v">I won’t do that. I will walk the handbook with you.</div>
+                <div class="bubble u">OK — PPE for SMAW?</div>
+                <div class="bubble v">Helmet with filter lens, gloves, leather apron, closed shoes.<span class="src">Source · Welding fundamentals · Safety first</span></div>
+              </div>
+              <div class="ft">
+                <input type="text" placeholder="Ask about class sources…" readonly/>
+                <a class="btn" href="#">Send</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 Teacher -->
+  <section class="slide" id="s12">
+    <p class="cap"><strong>12 · Teacher LMS</strong> — Roster, content, grades. Episode script is a teaching tool.</p>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">EdVidura<span>Teacher</span></div>
+        <a class="on" href="#">Class home</a>
+        <a href="#">Content</a>
+        <a href="#">Manuals</a>
+        <a href="#">Results</a>
+        <a href="#">Analytics</a>
+        <div class="sec">Coach</div>
+        <a href="#">Episode script</a>
+        <a href="#">Ask Vidura insights</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <span class="crumb">Welding 101 · <b>Class home</b></span>
+          <span class="sp"></span>
+          <span class="chip">Instructor</span>
+        </div>
+        <div class="body">
+          <div>
+            <h1>Class home</h1>
+            <p class="lede">18 learners · LTI bound. Manage content and grades here.</p>
+            <table class="grades">
+              <thead><tr><th>Learner</th><th>Module</th><th>Score</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Ada</td><td>SMAW</td><td>7/8</td><td>In progress</td></tr>
+                <tr><td>Sam</td><td>Manual</td><td>—</td><td>Reading</td></tr>
+                <tr><td>Jordan</td><td>Quiz</td><td>5/8</td><td>Needs plan</td></tr>
+                <tr><td>Riley</td><td>—</td><td>—</td><td>Not started</td></tr>
+              </tbody>
+            </table>
+            <div class="row-btns">
+              <a class="btn" href="#">Manage content</a>
+              <a class="btn sec" href="#">Assign manuals</a>
+            </div>
+          </div>
+          <aside class="side">
+            <div class="card">
+              <h2>Class</h2>
+              <div class="stat"><span>Students</span><b>18</b></div>
+              <div class="stat"><span>Avg quiz</span><b>72%</b></div>
+              <div class="stat"><span>AGS</span><b>On</b></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<script>
+(function(){
+  var btns=document.querySelectorAll(".chooser button[data-slide]");
+  var slides=document.querySelectorAll(".slide");
+  btns.forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var id=btn.getAttribute("data-slide");
+      btns.forEach(function(b){b.setAttribute("aria-pressed",b===btn?"true":"false")});
+      slides.forEach(function(s){s.classList.toggle("is-on",s.id===id)});
+      window.scrollTo({top:0,behavior:"smooth"});
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -99,3 +99,53 @@ def test_metabase_embed_url_signed(monkeypatch):
     token2 = url2.split("/embed/dashboard/")[1].split("#")[0]
     payload2 = jwt.decode(token2, "test-secret", algorithms=["HS256"])
     assert payload2["params"]["tenant_slug"] == ["riverside"]
+
+
+def test_teacher_analytics_template_heatmap_and_series():
+    from pathlib import Path
+
+    from jinja2 import ChoiceLoader, DictLoader, Environment, FileSystemLoader
+
+    root = Path(__file__).resolve().parents[1] / "templates"
+    env = Environment(
+        loader=ChoiceLoader(
+            [
+                DictLoader({"base_shell.html": "{% block content %}{% endblock %}"}),
+                FileSystemLoader(str(root)),
+            ]
+        ),
+        autoescape=True,
+    )
+    html = env.get_template("teacher_analytics.html").render(
+        quiz_token="tok",
+        context_heading="Class 8",
+        class_snap=None,
+        recent_attempts=[],
+        dash={
+            "learner_heatmap": {
+                "dates": ["2026-10-26", "2026-10-27"],
+                "date_labels": ["10-26", "10-27"],
+                "learners": [{"id": "a", "label": "Lakshmi", "total": 3}],
+                "cells": [[1, 2]],
+                "intensity": [[1, 4]],
+            },
+            "time_series": {
+                "charts": [
+                    {
+                        "id": "activity_day",
+                        "title": "Daily activity",
+                        "grain": "day",
+                        "metric": "activity",
+                        "unit": "events",
+                        "labels": ["10-27"],
+                        "class_values": [4],
+                    }
+                    for _ in range(8)
+                ]
+            },
+        },
+    )
+    assert "Noisy LRS heatmap (date × learner)" in html
+    assert "Lakshmi" in html
+    assert html.count("Daily activity") == 8
+    assert "Per-student time series (8 charts)" in html

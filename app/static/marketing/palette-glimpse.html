@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · Coolors gray glimpse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+  <link rel="stylesheet" href="/static/css/shell.css?v=coolors-gray1"/>
+  <style>
+    .glimpse-frame {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 6px;
+      margin-bottom: 28px;
+    }
+    .swatch {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: 1px solid rgba(33,37,41,.12);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 6px;
+      font-size: 9px;
+      font-family: Outfit, system-ui, sans-serif;
+      font-weight: 600;
+    }
+    .swatch.dark { color: #f8f9fa; }
+    .glimpse-shell {
+      border: 1px solid #ced4da;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #f8f9fa;
+      box-shadow: 0 16px 40px -12px rgba(33,37,41,.18);
+    }
+    .glimpse-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: #fff;
+      border-bottom: 1px solid #dee2e6;
+      font-family: Outfit, system-ui, sans-serif;
+      font-size: 13px;
+      color: #6c757d;
+    }
+    .glimpse-brand {
+      font-family: Syne, system-ui, sans-serif;
+      font-weight: 700;
+      color: #212529;
+      font-size: 15px;
+    }
+    .note {
+      margin-top: 16px;
+      font-family: Outfit, system-ui, sans-serif;
+      font-size: 13px;
+      color: #6c757d;
+      max-width: 52ch;
+    }
+  </style>
+</head>
+<body>
+  <div class="glimpse-frame">
+    <p class="label-caps" style="margin-bottom:10px;color:#6c757d">Coolors · f8f9fa → 212529</p>
+    <div class="swatches" aria-label="Palette">
+      <div class="swatch" style="background:#f8f9fa">f8f9fa</div>
+      <div class="swatch" style="background:#e9ecef">e9ecef</div>
+      <div class="swatch" style="background:#dee2e6">dee2e6</div>
+      <div class="swatch" style="background:#ced4da">ced4da</div>
+      <div class="swatch" style="background:#adb5bd">adb5bd</div>
+      <div class="swatch dark" style="background:#6c757d">6c757d</div>
+      <div class="swatch dark" style="background:#495057">495057</div>
+      <div class="swatch dark" style="background:#343a40">343a40</div>
+      <div class="swatch dark" style="background:#212529">212529</div>
+    </div>
+
+    <div class="glimpse-shell">
+      <div class="glimpse-top">
+        <span class="glimpse-brand">EdVidura</span>
+        <span>Home · Welding 101</span>
+      </div>
+      <div class="page-wrap" style="min-height:420px">
+        <section class="student-home motion-hero">
+          <p class="student-home__kicker label-caps text-muted">Welding 101</p>
+          <h1 class="display-hero student-home__title">Hi, Ada</h1>
+          <p class="body-lg text-muted student-home__lede">2 of 6 lessons done · 33%</p>
+          <div class="student-home__cta">
+            <a href="#" class="btn btn-primary" onclick="return false">
+              <span class="material-symbols-outlined" style="font-size:16px">play_arrow</span>
+              Continue learning
+            </a>
+            <a href="#" class="btn btn-surface" onclick="return false">
+              <span class="material-symbols-outlined" style="font-size:16px">psychology</span>
+              Ask Vidura
+            </a>
+          </div>
+          <a class="student-home__next" href="#" onclick="return false">
+            <span class="label-caps text-muted">Up next</span>
+            <span class="headline-sm">Personal protective equipment</span>
+            <span class="material-symbols-outlined student-home__next-ico" aria-hidden="true">arrow_forward</span>
+          </a>
+        </section>
+        <nav class="student-home__links" aria-label="Quick links">
+          <a href="#" onclick="return false">Lessons</a>
+          <a href="#" onclick="return false">Quiz</a>
+          <a href="#" onclick="return false">Manual</a>
+          <a href="#" onclick="return false">My plan</a>
+          <a href="#" onclick="return false">Micro</a>
+        </nav>
+      </div>
+    </div>
+    <p class="note">Student home with the Coolors gray system — mint accents removed; primary actions use #212529.</p>
+  </div>
+</body>
+</html>

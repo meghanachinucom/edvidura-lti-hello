@@ -1,15 +1,19 @@
-# Export current EdVidura UI → Lovable
+# EdVidura → Lovable / Google Stitch
 
-## Create the Lovable link
+## Use this (next-level screens)
 
-1. Open [https://lovable.dev](https://lovable.dev) and sign in.
-2. **New project** → paste [`EdVidura_Current_UI_Lovable_Prompt.md`](EdVidura_Current_UI_Lovable_Prompt.md)
-3. Share / Preview → that URL is your Lovable link.
+[`EdVidura_Next_Level_Stitch_Lovable.md`](EdVidura_Next_Level_Stitch_Lovable.md)
 
-## Local visual reference
+**Lumen** palette + motion. **Outfit for all type.** Responsive 390–1440. One prompt per screen.
 
-Open [`palette-glimpse.html`](palette-glimpse.html) (or http://127.0.0.1:8765/palette-glimpse.html if the static server is running).
+| Tool | Steps |
+|------|--------|
+| [Stitch](https://stitch.withgoogle.com) | New project → paste **Screen 00**. Then paste **01, 02, 03…** each as its own generation. Desktop 1440, then Mobile 390. |
+| [Lovable](https://lovable.dev) | New project → **Screen 00**. Then send each later screen as a **new chat message**, in order. |
 
-**Current design (live):** Full-width Shiko top navbar with Learn / Teach / School / Account dropdowns (`shell.css?v=shiko5`). No left sidebar.
+Copy only the fenced code block under each heading — not the whole file.
 
-Hard-refresh after Moodle launch so `/static/css/shell.css` reloads.
+## Older briefs
+
+- [`EdVidura_Core_Screens_Lovable_Prompts.md`](EdVidura_Core_Screens_Lovable_Prompts.md) — Paper studio (superseded)
+- [`EdVidura_Current_UI_Lovable_Prompt.md`](EdVidura_Current_UI_Lovable_Prompt.md) — obsolete live colors

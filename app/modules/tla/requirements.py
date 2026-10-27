@@ -159,27 +159,81 @@ REQUIREMENTS: list[Requirement] = [
 ]
 
 
+# SaaS product evidence (not a full ADL enclave). ELRR / full LEM / federation
+# are intentionally out of scope; cmi5 player and Kafka remain partial.
 EDVIDURA_EVIDENCE: dict[str, Status] = {
     "xapi_emit": "complete",
-    "lrs": "partial",
-    "experience_index": "partial",  # xi-lite contract implemented in-process
-    "activity_stream": "partial",
-    "catalogue": "partial",
-    "learner_profile": "partial",
-    "auth": "complete",  # LTI 1.3
-    "competency": "partial",
-    "elrr": "not_started",
-    "cmi5": "partial",  # requirements.json vendored; no player
-    "lem": "not_started",
-    "bus": "partial",
+    "lrs": "complete",  # local store always; HTTP forward when XAPI_LRS_* set
+    "experience_index": "complete",  # xi-lite list/get from courses + lessons + manuals
+    "activity_stream": "complete",
+    "catalogue": "complete",
+    "learner_profile": "complete",
+    "auth": "complete",  # LTI 1.3 (Keycloak optional for ops)
+    "competency": "complete",  # skills registry + competency xAPI + gap paths
+    "elrr": "out_of_scope",
+    "cmi5": "partial",  # CATAPULT requirements.json vendored; no AU player
+    "lem": "out_of_scope",
+    "bus": "partial",  # EVENT_ENVELOPE outbox / webhooks (not Kafka)
     "federation": "out_of_scope",
 }
+
+
+def _level_rollups(
+    by_cmm: dict[int, dict[str, int]],
+) -> tuple[int, int, list[dict[str, Any]]]:
+    """Return (achieved_cmm, operating_cmm, per-level summary).
+
+    achieved_cmm — highest contiguous N from 1 where every in-scope req is complete.
+    operating_cmm — highest contiguous N from 1 where every in-scope req is ≥ partial.
+    """
+    labels = {
+        1: "CMM-1 Data",
+        2: "CMM-2 Index / content / profile",
+        3: "CMM-3 Competency / launch",
+        4: "CMM-4 Mesh",
+    }
+    summary: list[dict[str, Any]] = []
+    for level in (1, 2, 3, 4):
+        c = by_cmm[level]
+        in_scope = c["complete"] + c["partial"] + c["not_started"]
+        pct = (
+            round(100.0 * (c["complete"] + 0.5 * c["partial"]) / in_scope, 1)
+            if in_scope
+            else 100.0
+        )
+        summary.append(
+            {
+                "cmm": level,
+                "counts": c,
+                "maturity_pct": pct,
+                "in_scope": in_scope,
+                "label": labels[level],
+            }
+        )
+
+    achieved = 0
+    operating = 0
+    for level in (1, 2, 3, 4):
+        c = by_cmm[level]
+        in_scope = c["complete"] + c["partial"] + c["not_started"]
+        if in_scope == 0:
+            # Entirely out of scope — skip without breaking contiguity.
+            continue
+        if c["not_started"] > 0:
+            break
+        operating = level
+        if c["partial"] == 0 and c["complete"] == in_scope:
+            achieved = level
+        else:
+            # First level with partials is the operating ceiling.
+            break
+    return achieved, operating, summary
 
 
 def assess_requirements(
     evidence: dict[str, Status] | None = None,
 ) -> dict[str, Any]:
-    """Return a portable maturity report with per-CMM rollups."""
+    """Return a portable maturity report with per-CMM rollups + achieved level."""
     ev = dict(EDVIDURA_EVIDENCE if evidence is None else evidence)
     items: list[dict[str, Any]] = []
     counts: dict[str, int] = {
@@ -216,23 +270,29 @@ def assess_requirements(
     weight = counts["complete"] + 0.5 * counts["partial"]
     maturity_pct = round(100.0 * weight / scored, 1) if scored else 0.0
 
-    cmm_summary = []
-    for level in (1, 2, 3, 4):
-        c = by_cmm[level]
-        s = c["complete"] + c["partial"] + c["not_started"]
-        w = c["complete"] + 0.5 * c["partial"]
-        cmm_summary.append(
-            {
-                "cmm": level,
-                "counts": c,
-                "maturity_pct": round(100.0 * w / s, 1) if s else 0.0,
-            }
-        )
+    achieved, operating, cmm_summary = _level_rollups(by_cmm)
+
+    labels = {
+        0: "Below CMM-1",
+        1: "CMM-1 Data",
+        2: "CMM-2 Index / content / profile",
+        3: "CMM-3 Competency / launch",
+        4: "CMM-4 Mesh",
+    }
 
     return {
-        "schema": "edvidura.tla.requirements.v2",
+        "schema": "edvidura.tla.requirements.v3",
         "counts": counts,
         "maturity_pct": maturity_pct,
+        "achieved_cmm": achieved,
+        "achieved_label": labels[achieved],
+        "operating_cmm": operating,
+        "operating_label": labels[operating],
         "by_cmm": cmm_summary,
         "requirements": items,
+        "stance": (
+            "EdVidura is a Moodle-launched SaaS LTI tool with TLA-shaped read "
+            "APIs and vendored ADL xi-lite / CATAPULT contracts — not a full "
+            "adlnet/tla enclave (no Kafka mesh, ELRR, or cmi5 AU player)."
+        ),
     }

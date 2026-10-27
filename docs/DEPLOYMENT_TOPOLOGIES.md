@@ -97,14 +97,14 @@ Customer keeps **data plane** (app + DB + Moodle) on their network; selected **c
 
 Ship as: signed images + `db/migration_*.sql` bundle + `config.example.env` air‑gap profile + offline model weights (if local AI).
 
-### Gaps to close for a hardened air‑gap SKU
+### Air‑gap pack (shipped in repo)
 
-1. **Documented compose profile** `airgap` (app + db + moodle + optional ollama/metabase/yet) with no external URLs.
-2. **Egress kill‑switch** — boot assert: refuse start if `AIRGAP=1` and any cloud endpoint/key is set.
-3. **Offline install kit** — image tarballs, dependency freeze, migration runner, smoke checklist.
-4. **Update channel** — USB/sneakernet or customer registry mirror (not live `railway up`).
-5. **Jev** — keep optional; do not require for core product in air‑gap.
-6. **License / model** — customer supplies approved LLM weights; EdVidura only talks OpenAI‑compatible HTTP on LAN.
+See **[AIRGAP_PACK.md](AIRGAP_PACK.md)** and `deploy/airgap/`:
+
+1. Compose profile — app + Postgres (`deploy/airgap/docker-compose.yml`).
+2. Egress kill‑switch — `AIRGAP=1` boot assert in `app/security_boot.py`.
+3. Env template — `deploy/airgap/env.airgap.example`.
+4. Still customer-owned: USB/registry update channel, TLS on LAN, LLM weights, Moodle image.
 
 ## Decision guide for clients
 

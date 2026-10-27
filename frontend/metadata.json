@@ -1,0 +1,8 @@
+{
+  "name": "Remix EdVidura - Academic Learning \u0026 LTI Classroom",
+  "description": "Editorial LMS classroom environment for Riverside High Algebra I, featuring lessons, quizzes, diagnostic tracking, class handbooks, and Ask Vidura companion.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

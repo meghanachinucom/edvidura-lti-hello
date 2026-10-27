@@ -29,7 +29,15 @@ Open [`index.html`](index.html) in a browser for the clickable pack with screens
 | 15 | 22/09 | Chatbot further Integration | Ask Vidura: shortcuts / clarify / thumbs / integrity / flashcards | Phase A LearnWise |
 | 16 | 22/09 | Chatbot + LMS/Moodle + VR → adaptive personalized plan | Study plan UI + signals fuse + teacher coach insights | Phase B1/B2 |
 
-**Not Done on sheet (do not claim in this pack):** Micro-learning WIP, PeBL ebook WIP, Air-gap Yet to Start, TLA Yet to Start, PeBL chat for ebook WIP.
+**Sheet open items:** none for build — all meeting rows Done (AGS testing Good to go on prod `grade_sent` evidence).
+
+**TLA (sheet Done):** Achieved **CMM-2**, operating **CMM-3** — `GET /api/v1/tla/maturity` (ops auth). See [TLA.md](../TLA.md).
+
+**PeBL ebook (sheet Done):** Class manuals + reader + Discuss + Ask Vidura. Separate chat product **not required** — [PEBL_LITE.md](../PEBL_LITE.md).
+
+**Micro-learning (sheet Done):** `/learn/micro` + DCT reel publish + xAPI — [MICRO_LEARNING.md](../MICRO_LEARNING.md).
+
+**Air-gap (sheet Done):** `deploy/airgap` + `AIRGAP=1` guard; topologies in [DEPLOYMENT_TOPOLOGIES.md](../DEPLOYMENT_TOPOLOGIES.md).
 
 ---
 

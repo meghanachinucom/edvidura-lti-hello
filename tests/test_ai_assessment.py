@@ -147,3 +147,30 @@ def test_short_text_raises():
         assert False, "expected ValueError"
     except ValueError:
         pass
+
+
+def test_extract_docx():
+    import zipfile
+    from io import BytesIO
+    from xml.etree.ElementTree import Element, SubElement, tostring
+
+    from app.modules.ai_assessment import extract_text_from_bytes
+
+    ns = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    document = Element(f"{{{ns}}}document")
+    body = SubElement(document, f"{{{ns}}}body")
+    para = SubElement(body, f"{{{ns}}}p")
+    run = SubElement(para, f"{{{ns}}}r")
+    text = SubElement(run, f"{{{ns}}}t")
+    text.text = (
+        "LTI launch opens the tool from Moodle. Tenant isolation keeps school "
+        "data separate. Gradebook sync sends scores with AGS."
+    )
+    xml = tostring(document, encoding="utf-8", xml_declaration=True)
+    buf = BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("word/document.xml", xml)
+        zf.writestr("[Content_Types].xml", "<Types></Types>")
+    extracted = extract_text_from_bytes(buf.getvalue(), filename="notes.docx")
+    assert extracted["source_kind"] == "docx"
+    assert "LTI" in extracted["text"]

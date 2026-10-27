@@ -2,16 +2,87 @@
 {% block content %}
 <a class="skip-link" href="#manual-body">Skip to manual content</a>
 
-<article class="ebook-reader" aria-label="Technical manual">
+<article class="ebook-reader" aria-label="Technical manual"
+         data-ebook-title="{{ display_title or manual.title }}"
+         data-ebook-focus="{{ focus or '' }}"
+         data-ebook-focus-label="{{ focus_label or '' }}"
+         data-manual-id="{{ manual.id }}"
+         lang="{{ reader_language or source_language or 'en-IN' }}">
   <section class="hero-band" style="margin-bottom:var(--sp-lg)">
     <div style="position:relative;z-index:1">
       <div class="chip" style="background:rgba(255,255,255,.12);color:var(--tertiary-fixed);margin-bottom:var(--sp-xs)">
         eBook · v{{ version.version }}{% if version.is_published %} · published{% endif %}
+        {% if reader_language_name %} · {{ reader_language_name }}{% endif %}
       </div>
-      <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(26px,4vw,40px)">{{ manual.title }}</h1>
+      <h1 class="display-hero" style="color:var(--surface-container-lowest);font-size:clamp(26px,4vw,40px)">{{ display_title or manual.title }}</h1>
       {% if version.changelog %}<p class="body-md" style="color:var(--outline-variant);margin-top:4px">{{ version.changelog }}</p>{% endif %}
+      {% if just_translated %}
+      <p class="body-sm" style="color:var(--primary-fixed);margin-top:6px">
+        Auto-translated to {{ reader_language_name }} — cached for next visit.
+      </p>
+      {% elif is_auto and is_locale %}
+      <p class="body-sm" style="color:var(--outline-variant);margin-top:6px">
+        Showing auto-translated {{ reader_language_name }} (from {{ source_language }}).
+      </p>
+      {% elif translate_error %}
+      <p class="body-sm" style="color:#fecaca;margin-top:6px">
+        Could not auto-translate: {{ translate_error }} — showing source ({{ source_language }}).
+      </p>
+      {% elif fallback_to_source %}
+      <p class="body-sm" style="color:var(--outline-variant);margin-top:6px">
+        No {{ reader_language_name or 'locale' }} text yet — showing source ({{ source_language }}).
+      </p>
+      {% endif %}
     </div>
   </section>
+
+  {% if manual_languages %}
+  <form method="get" action="/manuals/{{ manual.id }}" id="manual-lang-form" class="card" style="padding:var(--sp-md) var(--sp-lg);margin-bottom:var(--sp-lg);display:flex;flex-wrap:wrap;gap:var(--sp-sm);align-items:end">
+    {% if quiz_token %}<input type="hidden" name="token" value="{{ quiz_token }}"/>{% endif %}
+    {% if version %}<input type="hidden" name="v" value="{{ version.version }}"/>{% endif %}
+    {% if focus %}<input type="hidden" name="focus" value="{{ focus }}"/>{% endif %}
+    <label style="margin:0;flex:1;min-width:140px">
+      <span class="label-caps text-muted">State</span>
+      <select name="state" id="manual-state" aria-label="Indian state" onchange="this.form.requestSubmit()">
+        <option value="">—</option>
+        {% for st in manual_states or [] %}
+        <option value="{{ st.code }}" {% if preferred_state == st.code %}selected{% endif %}>
+          {{ st.name }} ({{ st.language_name }})
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label style="margin:0;flex:1;min-width:140px">
+      <span class="label-caps text-muted">Language</span>
+      <select name="lang" id="manual-lang" aria-label="Manual language" onchange="this.form.requestSubmit()">
+        {% for lang in manual_languages %}
+        <option value="{{ lang.code }}" {% if reader_language == lang.code %}selected{% endif %}>
+          {{ lang.name }}{% if lang.code in (available_languages or []) %} · ready{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn btn-primary" id="manual-lang-go">Show</button>
+    {% if is_instructor or is_school_admin %}
+    <button type="submit" name="retranslate" value="1" class="btn btn-surface" title="Re-run auto-translate for auto locales">Retranslate</button>
+    {% endif %}
+  </form>
+  <p class="body-sm text-muted" id="manual-lang-hint" style="margin:-8px 0 var(--sp-lg)">
+    Changing language auto-translates from {{ source_language or 'source' }} (needs AI key). First switch may take a few seconds; then it is cached.
+  </p>
+  <script>
+  (function(){
+    var form=document.getElementById('manual-lang-form');
+    var hint=document.getElementById('manual-lang-hint');
+    if(!form) return;
+    form.addEventListener('submit', function(){
+      if(hint) hint.textContent='Translating… please wait.';
+      var btn=document.getElementById('manual-lang-go');
+      if(btn){ btn.disabled=true; btn.textContent='Translating…'; }
+    });
+  })();
+  </script>
+  {% endif %}
 
   {% if focus or remediation_loop %}
   <div class="card" id="focus-banner" role="status" style="padding:var(--sp-md) var(--sp-lg);margin-bottom:var(--sp-lg);border-left:3px solid var(--secondary)">
@@ -36,7 +107,11 @@
       <h2 class="ebook-toc-title">Chapters</h2>
       <ol>
         {% for ch in toc %}
-        <li><a href="#{{ ch.slug }}" class="{% if focus == ch.slug %}on{% endif %}">{{ ch.title }}</a></li>
+        <li>
+          <a href="#{{ ch.slug }}" class="{% if focus == ch.slug %}on{% endif %}">{{ ch.title }}</a>
+          {% set n = (pebl_counts or {}).get(ch.slug, 0) %}
+          {% if n %}<span class="pebl-toc-count" title="Discussion posts">{{ n }}</span>{% endif %}
+        </li>
         {% endfor %}
       </ol>
       {% if share_path %}
@@ -108,8 +183,64 @@
         <p><a class="btn secondary" href="/manuals?token={{ quiz_token }}">All manuals</a></p>
       </section>
     </div>
+
+    {% if pebl_enabled and quiz_token %}
+    {% set _chapters = toc or [] %}
+    {% set _default_slug = focus or (_chapters[0].slug if _chapters else '') %}
+    {% set _default_title = focus_label or (_chapters[0].title if _chapters else 'General') %}
+    <aside class="pebl-discuss" id="pebl-discuss"
+           data-manual-id="{{ manual.id }}"
+           data-token="{{ quiz_token }}"
+           data-subject="{{ subject or '' }}"
+           data-chapter="{{ _default_slug }}"
+           data-chapter-title="{{ _default_title }}"
+           aria-label="PeBL chapter discussion">
+      <header class="pebl-discuss__head">
+        <div>
+          <h2 class="headline-sm" style="margin:0">Discuss</h2>
+          <p class="body-sm text-muted" style="margin:4px 0 0">
+            PeBL · <span id="pebl-chapter-label">{{ _default_title }}</span>
+          </p>
+        </div>
+        <span class="chip chip-dark" style="font-size:11px">class thread</span>
+      </header>
+      <p id="pebl-offline" class="pebl-offline" hidden role="status"></p>
+      {% if _chapters %}
+      <label class="pebl-chapter-pick body-sm">
+        Chapter
+        <select id="pebl-chapter" aria-label="Discussion chapter">
+          {% for ch in _chapters %}
+          <option value="{{ ch.slug }}" {% if ch.slug == _default_slug %}selected{% endif %}>{{ ch.title }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      {% else %}
+      <p class="body-sm text-muted pebl-empty" style="margin:8px 0">
+        No chapters in this version yet. Teachers add <code>##</code> headings so Discuss can open a thread per section.
+      </p>
+      {% endif %}
+      <div class="pebl-msg-list" id="pebl-msg-list" role="log" aria-live="polite"></div>
+      {% if _chapters or _default_slug %}
+      <form class="pebl-form" id="pebl-form">
+        <label class="visually-hidden" for="pebl-body">Message</label>
+        <textarea id="pebl-body" rows="3" maxlength="4000" required
+                  placeholder="Share a question or tip for this chapter…"></textarea>
+        <div class="pebl-form__row">
+          <button type="submit" class="btn btn-primary" style="font-size:13px">Post</button>
+          <p class="body-sm text-muted pebl-status" id="pebl-status" role="status"></p>
+        </div>
+      </form>
+      {% endif %}
+      <p class="body-sm text-muted" style="margin:8px 0 0">
+        Ask Vidura (AI) stays in the drawer · this thread is your class.
+      </p>
+    </aside>
+    {% endif %}
   </div>
 </article>
+{% if pebl_enabled and quiz_token %}
+<script src="/static/js/pebl_discussion.js?v=pebl3" defer></script>
+{% endif %}
 {% if focus %}
 <script>
 (function () {

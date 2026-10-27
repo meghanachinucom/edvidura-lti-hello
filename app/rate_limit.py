@@ -13,6 +13,7 @@ from starlette.responses import JSONResponse, Response
 logger = logging.getLogger("edvidura.ratelimit")
 
 # path prefix -> (max_requests, window_seconds)
+# Longer prefixes listed before shorter ones so coach/quiz beat /api/v1/.
 DEFAULT_LIMITS: list[tuple[str, int, int]] = [
     ("/lti/login", 60, 60),
     ("/lti/launch", 120, 60),
@@ -20,6 +21,12 @@ DEFAULT_LIMITS: list[tuple[str, int, int]] = [
     ("/onboard", 40, 60),
     ("/auth/login", 30, 60),
     ("/admin/", 60, 60),
+    ("/learn/coach", 40, 60),  # LLM cost / abuse
+    ("/quiz/submit", 30, 60),
+    ("/quiz", 60, 60),
+    ("/api/v1/app/coach", 40, 60),
+    ("/api/v1/app/quiz", 60, 60),
+    ("/api/v1/app/", 120, 60),
     ("/api/v1/", 60, 60),
 ]
 

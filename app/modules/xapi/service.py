@@ -14,6 +14,7 @@ from app.modules.xapi.builder import (
     build_skill_assessed_statement,
     build_coach_feedback_statement,
     build_coach_interacted_statement,
+    build_pebl_discussion_statement,
 )
 from app.settings import get_settings
 
@@ -97,6 +98,9 @@ def record_resource_experienced(
     resource_kind: str = "manual",
     homepage: str | None = None,
     send_lrs: bool = True,
+    duration_seconds: int | None = None,
+    page_label: str = "",
+    chapter_slug: str = "",
 ) -> dict[str, Any]:
     settings = get_settings()
     statement = build_resource_experienced_statement(
@@ -108,6 +112,9 @@ def record_resource_experienced(
         resource_kind=resource_kind,
         homepage=homepage or settings.xapi_actor_homepage,
         activity_base=settings.app_base_url,
+        duration_seconds=duration_seconds,
+        page_label=page_label,
+        chapter_slug=chapter_slug,
     )
     return _store_and_maybe_send(
         tenant_id=tenant_id,
@@ -180,6 +187,56 @@ def record_coach_interaction(
         jev_strategy_confidence=jev_strategy_confidence,
         jev_on_topic_p=jev_on_topic_p,
         jev_skipped_remote=bool(jev_skipped_remote),
+        homepage=homepage or settings.xapi_actor_homepage,
+        activity_base=settings.app_base_url,
+    )
+    return _store_and_maybe_send(
+        tenant_id=tenant_id,
+        statement=statement,
+        actor_sub=subject,
+        attempt_id=None,
+        source_event_id=None,
+        send_lrs=send_lrs,
+        promote_on_valid=True,
+    )
+
+
+def record_pebl_discussion(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    message_text: str,
+    thread_id: str,
+    manual_id: UUID | str | None = None,
+    manual_title: str = "",
+    chapter_slug: str = "",
+    chapter_title: str = "",
+    access_level: str | None = None,
+    include_full_text: bool | None = None,
+    homepage: str | None = None,
+    send_lrs: bool = True,
+) -> dict[str, Any]:
+    """Persist an in-book PeBL discussion post as xAPI interacted."""
+    settings = get_settings()
+    full = (
+        bool(include_full_text)
+        if include_full_text is not None
+        else bool(getattr(settings, "coach_xapi_full_text", True))
+    )
+    level = access_level or getattr(settings, "coach_xapi_access_level", "class")
+    statement = build_pebl_discussion_statement(
+        tenant_id=tenant_id,
+        subject=subject,
+        learner_name=learner_name,
+        message_text=message_text,
+        thread_id=thread_id,
+        manual_id=manual_id,
+        manual_title=manual_title,
+        chapter_slug=chapter_slug,
+        chapter_title=chapter_title,
+        access_level=str(level or "class"),
+        include_full_text=full,
         homepage=homepage or settings.xapi_actor_homepage,
         activity_base=settings.app_base_url,
     )
@@ -380,13 +437,31 @@ def _store_and_maybe_send(
     return stored
 
 
+def validate_statement(statement: Any) -> list[str]:
+    """Return xAPI required-field errors (empty list means the statement is usable)."""
+    errors: list[str] = []
+    if not isinstance(statement, dict):
+        return ["statement must be an object"]
+    actor = statement.get("actor")
+    if not isinstance(actor, dict) or not (
+        actor.get("mbox")
+        or actor.get("account")
+        or actor.get("mbox_sha1sum")
+        or actor.get("openid")
+        or actor.get("name")
+    ):
+        errors.append("actor is required (mbox, account, or name)")
+    verb = statement.get("verb")
+    if not isinstance(verb, dict) or not str(verb.get("id") or "").strip():
+        errors.append("verb.id is required")
+    obj = statement.get("object")
+    if not isinstance(obj, dict) or not str(obj.get("id") or "").strip():
+        errors.append("object.id is required")
+    return errors
+
+
 def _statement_valid(statement: dict[str, Any]) -> bool:
-    return bool(
-        statement.get("id")
-        and statement.get("actor")
-        and statement.get("verb", {}).get("id")
-        and statement.get("object", {}).get("id")
-    )
+    return not validate_statement(statement)
 
 
 def _mark_lrs(
@@ -506,6 +581,9 @@ def store_raw_statement(
     stmt = dict(statement)
     if not stmt.get("id"):
         stmt["id"] = str(uuid4())
+    errors = validate_statement(stmt)
+    if errors:
+        raise ValueError("; ".join(errors))
     sub = (actor_sub or "").strip()
     if not sub:
         account = (stmt.get("actor") or {}).get("account") or {}

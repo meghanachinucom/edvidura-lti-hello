@@ -5,6 +5,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from app.admin_auth import OpsAuth
@@ -176,3 +177,196 @@ def retry_lrs(
     result["tiers"] = xapi_mod.tier_counts(tenant_id)
     result["tenant_id"] = str(tenant_id)
     return result
+
+
+class FileIngest(BaseModel):
+    tenant_id: UUID
+    filename: str
+    file_key: str = ""
+    content_type: str = ""
+    json_body: dict[str, Any] | list[Any] | None = None
+    base64: str = ""
+    source: str = "upload"
+
+
+class GradeIngest(BaseModel):
+    tenant_id: UUID
+    subject: str
+    score: int
+    max_score: int = 1
+    learner_name: str = ""
+    activity_id: str = "school-quiz"
+    source: str = "external"
+    course_label: str = ""
+
+
+class AttemptSyncIn(BaseModel):
+    tenant_id: UUID
+    subject: str
+    used: int
+    activity_id: str = "school-quiz"
+    source: str = "external"
+
+
+@router.get("/assignments")
+def xapi_assignments(
+    _ops: OpsAuth,
+    tenant_id: UUID = Query(...),
+    subject: str | None = None,
+) -> dict[str, Any]:
+    """F-3 user assignment dashboard for external modules."""
+    _require_tenant(tenant_id)
+    pack = xapi_mod.assignment_dashboard(tenant_id, subject=subject)
+    pack["tenant_id"] = str(tenant_id)
+    return pack
+
+
+@router.post("/files", status_code=status.HTTP_201_CREATED)
+def xapi_put_file(payload: FileIngest, _ops: OpsAuth) -> dict[str, Any]:
+    _require_tenant(payload.tenant_id)
+    body = b""
+    if payload.base64.strip():
+        try:
+            body = xapi_mod.decode_base64_body(payload.base64)
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="invalid base64"
+            ) from exc
+    try:
+        return xapi_mod.put_file(
+            payload.tenant_id,
+            filename=payload.filename,
+            payload=body or None,
+            json_body=payload.json_body,
+            content_type=payload.content_type,
+            file_key=payload.file_key,
+            source=payload.source,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
+
+
+@router.get("/files/{file_id}")
+def xapi_fetch_json(
+    file_id: str,
+    _ops: OpsAuth,
+    tenant_id: UUID = Query(...),
+    subject: str | None = None,
+) -> dict[str, Any]:
+    """F-4 structured JSON file fetcher."""
+    _require_tenant(tenant_id)
+    try:
+        return xapi_mod.fetch_json_file(
+            tenant_id, file_id, subject=subject or ""
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=str(exc)
+        ) from exc
+
+
+@router.get("/files/{file_id}/stream")
+def xapi_stream_file(
+    file_id: str,
+    _ops: OpsAuth,
+    tenant_id: UUID = Query(...),
+    subject: str | None = None,
+) -> Response:
+    """F-9 universal file streamer."""
+    _require_tenant(tenant_id)
+    try:
+        data, content_type, filename = xapi_mod.stream_file(
+            tenant_id, file_id, subject=subject or ""
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={
+            "Content-Disposition": f'inline; filename="{filename}"',
+            "X-File-Kind": xapi_mod.detect_file_kind(filename, content_type, data)[
+                "kind"
+            ],
+        },
+    )
+
+
+@router.get("/files/{file_id}/meta")
+def xapi_file_meta(
+    file_id: str,
+    _ops: OpsAuth,
+    tenant_id: UUID = Query(...),
+    subject: str | None = None,
+) -> dict[str, Any]:
+    """F-10 file type detection and routing."""
+    _require_tenant(tenant_id)
+    try:
+        return xapi_mod.file_meta(tenant_id, file_id, subject=subject or "")
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+
+
+@router.post("/grades", status_code=status.HTTP_201_CREATED)
+def xapi_ingest_grade(payload: GradeIngest, _ops: OpsAuth) -> dict[str, Any]:
+    """F-5 inbound grade from an external module (does not replace Moodle AGS)."""
+    _require_tenant(payload.tenant_id)
+    try:
+        return xapi_mod.ingest_external_grade(
+            payload.tenant_id,
+            subject=payload.subject,
+            score=payload.score,
+            max_score=payload.max_score,
+            learner_name=payload.learner_name,
+            activity_id=payload.activity_id,
+            source=payload.source,
+            course_label=payload.course_label,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
+
+
+@router.get("/attempts")
+def xapi_attempt_counters(
+    _ops: OpsAuth,
+    tenant_id: UUID = Query(...),
+    subject: str | None = None,
+    activity_id: str | None = None,
+) -> dict[str, Any]:
+    """F-6 attempt counter view (local graded + synced external)."""
+    _require_tenant(tenant_id)
+    pack = xapi_mod.attempt_counters(
+        tenant_id, subject=subject, activity_id=activity_id or ""
+    )
+    pack["tenant_id"] = str(tenant_id)
+    return pack
+
+
+@router.post("/attempts/sync")
+def xapi_sync_attempts(payload: AttemptSyncIn, _ops: OpsAuth) -> dict[str, Any]:
+    """F-6 merge an external module's attempt count."""
+    _require_tenant(payload.tenant_id)
+    try:
+        return xapi_mod.sync_attempt_counter(
+            payload.tenant_id,
+            subject=payload.subject,
+            used=payload.used,
+            activity_id=payload.activity_id,
+            source=payload.source,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc

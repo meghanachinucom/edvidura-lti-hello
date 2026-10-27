@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EdVidura · F Chat · complete</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    font-family:"Outfit",system-ui,sans-serif;background:#0c0c0e;color:#e8e8ec;
+    background-image:
+      radial-gradient(ellipse 70% 50% at 20% -10%,rgba(255,255,255,.06),transparent 55%),
+      radial-gradient(ellipse 50% 40% at 90% 10%,rgba(232,168,72,.07),transparent 50%);
+  }
+  .chooser{
+    position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+    padding:12px 16px;background:rgba(8,8,10,.92);backdrop-filter:blur(12px);
+    border-bottom:1px solid #2a2a30;
+  }
+  .chooser strong{font-size:12px;color:#999;margin-right:4px}
+  .chooser button{
+    font:inherit;font-size:11px;font-weight:600;padding:7px 11px;cursor:pointer;
+    border:1px solid #333;background:#161618;color:#bbb;border-radius:8px;
+  }
+  .chooser button[aria-pressed="true"]{background:#f4f4f5;color:#111;border-color:#f4f4f5}
+  .note-fab{max-width:720px;margin:0 auto;padding:10px 20px 0;font-size:11px;color:#6b6b74}
+  .cap{max-width:720px;margin:0 auto;padding:12px 20px 8px;font-size:12px;color:#8b8b96;line-height:1.45}
+  .slide{display:none;padding-bottom:48px}.slide.is-on{display:block}
+
+  .phone{
+    max-width:420px;margin:8px auto 0;background:#f7f7f5;color:#141414;
+    border-radius:28px;overflow:hidden;min-height:740px;display:flex;flex-direction:column;
+    box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);
+    animation:phoneIn .55s ease both;
+  }
+  @keyframes phoneIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .status{display:flex;justify-content:space-between;padding:14px 22px 0;font-size:11px;font-weight:600}
+  .nav{
+    display:flex;align-items:center;gap:10px;padding:10px 16px 12px;
+    border-bottom:1px solid #e8e8e4;background:rgba(255,255,255,.7);
+  }
+  .nav .back{
+    width:32px;height:32px;border-radius:50%;border:0;background:#eee;
+    font-size:14px;cursor:pointer;font-family:inherit;
+  }
+  .nav .who{flex:1;min-width:0}
+  .nav .who b{display:block;font-size:14px;letter-spacing:-.02em;font-weight:700}
+  .nav .who span{font-size:11px;color:#737373}
+  .nav .dot{
+    width:8px;height:8px;border-radius:50%;background:#22c55e;
+    box-shadow:0 0 0 3px rgba(34,197,94,.2);
+  }
+  .thread{
+    flex:1;padding:16px 14px 12px;overflow:auto;
+    background:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(232,168,72,.06),transparent),#f7f7f5;
+  }
+  .day{
+    text-align:center;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:#a1a1a1;font-weight:600;margin:4px 0 18px;
+  }
+  .row{display:flex;gap:8px;margin-bottom:12px;align-items:flex-end}
+  .row.me{flex-direction:row-reverse}
+  .ava{
+    width:28px;height:28px;border-radius:50%;flex-shrink:0;
+    display:grid;place-items:center;font-size:10px;font-weight:700;
+  }
+  .ava.v{background:#141414;color:#f7f7f5}
+  .ava.u{background:#e4e4e0;color:#141414}
+  .bub{
+    max-width:78%;padding:10px 13px;border-radius:18px;font-size:14px;line-height:1.45;
+  }
+  .row.v .bub{background:#141414;color:#f7f7f5;border-bottom-left-radius:5px}
+  .row.me .bub{background:#fff;color:#141414;border:1px solid #e8e8e4;border-bottom-right-radius:5px}
+  .row.v .bub em{color:#e8a848;font-style:normal;font-weight:650}
+  .row.v .bub strong{color:#86efac;font-weight:600}
+  .row.v .bub .src{
+    display:block;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12);
+    font-size:11px;opacity:.65;
+  }
+  .time{font-size:10px;color:#a1a1a1;margin:2px 8px 10px;padding-left:36px}
+  .time.me{text-align:right;padding-left:0;padding-right:36px}
+
+  .card{
+    margin:4px 0 8px;background:#fff;border:1px solid #e8e8e4;border-radius:16px;
+    overflow:hidden;max-width:100%;box-shadow:0 8px 24px rgba(20,20,20,.05);
+  }
+  .card .hd{padding:8px 12px;background:#f0f0ec;font-size:11px;font-weight:650;color:#525252}
+  .card .bd{padding:12px 14px;font-size:13px;line-height:1.5}
+  .card .bd h3{margin:0 0 6px;font-size:15px;letter-spacing:-.02em;font-weight:700}
+  .checks{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+  .checks label{
+    display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border-radius:10px;
+    background:#f7f7f5;font-size:12px;cursor:pointer;
+  }
+  .checks label.done{background:#ecfdf5}
+  .card .ft{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #eee}
+  .card .ft a{
+    flex:1;text-align:center;padding:9px;border-radius:10px;font-size:12px;font-weight:700;
+    text-decoration:none;background:#141414;color:#fff;
+  }
+  .card .ft a.sec{background:#f0f0ec;color:#141414}
+
+  .choices{display:flex;flex-direction:column;gap:7px;margin:14px 0 8px;padding-left:36px}
+  .choices a{
+    display:block;padding:12px 14px;border:1.5px solid #141414;border-radius:14px;
+    text-decoration:none;color:#141414;font-weight:650;font-size:13px;background:#fff;
+  }
+  .choices a.primary{background:#141414;color:#f7f7f5}
+  .choices a small{display:block;font-weight:500;opacity:.5;margin-top:2px;font-size:11px}
+
+  .composer{
+    display:flex;gap:8px;padding:10px 12px 14px;border-top:1px solid #e8e8e4;background:#fff;
+  }
+  .composer input{
+    flex:1;border:1.5px solid #e8e8e4;border-radius:999px;padding:11px 14px;
+    font:inherit;font-size:13px;background:#f7f7f5;
+  }
+  .composer button{
+    border:0;background:#141414;color:#fff;border-radius:999px;padding:0 16px;
+    font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;
+  }
+  .sys-strip{
+    display:flex;gap:0;border-top:1px solid #e8e8e4;background:#fff;padding:6px 4px 12px;
+  }
+  .sys-strip a{
+    flex:1;text-align:center;font-size:10px;font-weight:650;color:#737373;
+    text-decoration:none;padding:6px 2px;
+  }
+  .sys-strip a.on{color:#141414}
+  .sys-strip a span{display:block;font-size:15px;margin-bottom:2px;font-weight:700}
+
+  .banner{
+    margin:0 0 14px;padding:10px 12px;border-radius:12px;
+    background:rgba(232,168,72,.12);border:1px solid rgba(232,168,72,.35);
+    font-size:12px;color:#7a4e10;line-height:1.4;font-weight:500;
+  }
+  .banner.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+  .banner.mute{background:#f0f0ec;border-color:#e4e4e0;color:#525252}
+
+  .score{
+    text-align:center;padding:22px 14px;background:#141414;color:#f7f7f5;border-radius:20px;margin:6px 0;
+  }
+  .score .big{font-size:3.2rem;font-weight:800;letter-spacing:-.05em;line-height:1}
+  .score .lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.55;margin-bottom:6px;font-weight:700}
+  .path-chips{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 4px}
+  .path-chips span{
+    font-size:10px;font-weight:650;padding:5px 9px;border-radius:99px;
+    background:rgba(255,255,255,.1);color:rgba(247,247,245,.55);
+  }
+  .path-chips span.done{color:#86efac;background:rgba(34,197,94,.15)}
+  .path-chips span.now{color:#0e0e10;background:#e8a848}
+
+  .typing{
+    display:inline-flex;gap:4px;padding:12px 14px;background:#141414;
+    border-radius:18px;border-bottom-left-radius:5px;
+  }
+  .typing i{width:6px;height:6px;border-radius:50%;background:#666;animation:blink 1.2s infinite}
+  .typing i:nth-child(2){animation-delay:.2s}
+  .typing i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+  .wide{
+    max-width:980px;margin:8px auto 0;display:grid;grid-template-columns:400px 1fr;gap:16px;padding:0 16px;
+  }
+  .desk{
+    background:#f7f7f5;color:#141414;border-radius:20px;padding:22px;min-height:700px;
+    box-shadow:0 20px 50px rgba(0,0,0,.4);
+  }
+  .desk h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#737373;margin:0 0 14px;font-weight:700}
+  .desk table{width:100%;border-collapse:collapse;font-size:13px}
+  .desk th{
+    text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:#737373;padding:8px 6px;border-bottom:1px solid #e4e4e0;font-weight:700;
+  }
+  .desk td{padding:11px 6px;border-bottom:1px solid #eee}
+  .pill{display:inline-block;padding:3px 9px;border-radius:99px;background:#ecfdf5;color:#065f46;font-size:11px;font-weight:650}
+  .pill.warn{background:#fff7ed;color:#9a3412}
+  .desk .choices{padding-left:0}
+  @media(max-width:860px){.wide{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="chooser">
+    <strong>F · Chat</strong>
+    <button type="button" data-slide="s1" aria-pressed="true">1 Open</button>
+    <button type="button" data-slide="s2" aria-pressed="false">2 Hook</button>
+    <button type="button" data-slide="s3" aria-pressed="false">3 Path</button>
+    <button type="button" data-slide="s4" aria-pressed="false">4 Lesson</button>
+    <button type="button" data-slide="s5" aria-pressed="false">5 Manual</button>
+    <button type="button" data-slide="s6" aria-pressed="false">6 Discuss</button>
+    <button type="button" data-slide="s7" aria-pressed="false">7 Quiz</button>
+    <button type="button" data-slide="s8" aria-pressed="false">8 Coach</button>
+    <button type="button" data-slide="s9" aria-pressed="false">9 Score</button>
+    <button type="button" data-slide="s10" aria-pressed="false">10 Plan</button>
+    <button type="button" data-slide="s11" aria-pressed="false">11 Library</button>
+    <button type="button" data-slide="s12" aria-pressed="false">12 Empty</button>
+    <button type="button" data-slide="s13" aria-pressed="false">13 Teacher</button>
+  </div>
+  <p class="note-fab">Pure mentor chat product — every beat is a conversation. No LMS chrome. Outfit only.</p>
+
+  <section class="slide is-on" id="s1">
+    <p class="cap"><strong>1 · Cold open</strong> — App opens on a quiet chat. One breath. No dashboard dump.</p>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>EdVidura</span></div>
+      <div class="nav">
+        <div class="who" style="padding-left:8px"><b>Vidura</b><span>Your class guide · Welding 101</span></div>
+        <div class="dot"></div>
+      </div>
+      <div class="thread">
+        <div class="day">Just now</div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">…</div></div>
+        <div class="row v"><div class="ava v">V</div><div class="typing"><i></i><i></i><i></i></div></div>
+      </div>
+      <div class="composer"><input placeholder="Say hi…" disabled/><button type="button">Send</button></div>
+      <div class="sys-strip">
+        <a class="on" href="#"><span>●</span>Today</a>
+        <a href="#"><span>■</span>Library</a>
+        <a href="#"><span>○</span>Progress</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s2">
+    <p class="cap"><strong>2 · Hook</strong> — First real message. Episode named. Choices = plot branches.</p>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>EdVidura</span></div>
+      <div class="nav">
+        <div class="who" style="padding-left:8px"><b>Vidura</b><span>Welding 101 · online</span></div>
+        <div class="dot"></div>
+      </div>
+      <div class="thread">
+        <div class="day">Today · Episode 2</div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">Ada — yesterday you locked down joints. <em>Today you earn the arc.</em></div></div>
+        <div class="time">9:41</div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">SMAW practice is unlocked. Three checks before the stinger. How do you want to start?</div></div>
+        <div class="choices">
+          <a class="primary" href="#">I’m ready — open the lesson <small>Recommended · ~12 min</small></a>
+          <a href="#">Remind me what I finished <small>Recap Act I</small></a>
+          <a href="#">Ask a quick PPE question first</a>
+        </div>
+      </div>
+      <div class="composer"><input placeholder="Message Vidura…"/><button type="button">Send</button></div>
+      <div class="sys-strip">
+        <a class="on" href="#"><span>●</span>Today</a>
+        <a href="#"><span>■</span>Library</a>
+        <a href="#"><span>○</span>Progress</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s3">
+    <p class="cap"><strong>3 · Path in chat</strong> — Syllabus becomes a story map inside the thread — not a separate LMS list.</p>
+    <div class="phone">
+      <div class="status"><span>9:42</span><span>EdVidura</span></div>
+      <div class="nav">
+        <button class="back" type="button">←</button>
+        <div class="who"><b>Vidura</b><span>Your path</span></div>
+        <div class="dot"></div>
+      </div>
+      <div class="thread">
+        <div class="row me"><div class="ava u">A</div><div class="bub">What’s my path look like?</div></div>
+        <div class="row v" style="align-items:stretch">
+          <div class="ava v">V</div>
+          <div style="flex:1;max-width:85%">
+            <div class="bub" style="max-width:100%">
+              Here’s the episode map for Welding 101.
+              <div class="path-chips">
+                <span class="done">Act I · Safety ✓</span>
+                <span class="now">Act II · SMAW</span>
+                <span>Act III · Handbook</span>
+                <span>Finale · Quiz</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">You’re on <strong>Act II</strong>. Finish the checks — then handbook depth, then the graded quiz that syncs to Moodle.</div></div>
+        <div class="choices">
+          <a class="primary" href="#">Enter SMAW now</a>
+          <a href="#">Jump to handbook</a>
+        </div>
+      </div>
+      <div class="composer"><input placeholder="Ask about the path…"/><button type="button">Send</button></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s4">
+    <p class="cap"><strong>4 · Lesson in-thread</strong> — Content is a card Vidura sends. Checks feel like replying.</p>
+    <div class="phone">
+      <div class="status"><span>9:44</span><span>EdVidura</span></div>
+      <div class="nav">
+        <button class="back" type="button">←</button>
+        <div class="who"><b>SMAW practice</b><span>with Vidura · in progress</span></div>
+      </div>
+      <div class="thread">
+        <div class="day">Lesson card</div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">Here’s today’s page. Tick as you go — I’m watching the list.</div></div>
+        <div class="row v" style="align-items:stretch">
+          <div class="ava v">V</div>
+          <div style="flex:1;max-width:85%">
+            <div class="card">
+              <div class="hd">Lesson · SMAW practice note</div>
+              <div class="bd">
+                <h3>Before you strike</h3>
+                Set polarity and amperage for electrode diameter. Keep a short arc length.
+                <div class="checks">
+                  <label class="done"><input type="checkbox" checked/> PPE + booth clear</label>
+                  <label class="done"><input type="checkbox" checked/> Cable + ground clamp</label>
+                  <label><input type="checkbox"/> Amperage set for diameter</label>
+                </div>
+              </div>
+              <div class="ft">
+                <a href="#">Save progress</a>
+                <a class="sec" href="#">Need handbook</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">One left. That last check is the one people rush.</div></div>
+        <div class="choices">
+          <a class="primary" href="#">Mark amperage done →</a>
+          <a href="#">Why does diameter matter?</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s5">
+    <p class="cap"><strong>5 · Manual share</strong> — Handbook drops like a link preview. Depth without leaving chat.</p>
+    <div class="phone">
+      <div class="status"><span>9:52</span><span>EdVidura</span></div>
+      <div class="nav">
+        <button class="back" type="button">←</button>
+        <div class="who"><b>Vidura</b><span>Shared a chapter</span></div>
+      </div>
+      <div class="thread">
+        <div class="row v"><div class="ava v">V</div><div class="bub">Pinning this from your class manual. Read the short bit — then tell me your first check.</div></div>
+        <div class="row v" style="align-items:stretch">
+          <div class="ava v">V</div>
+          <div style="flex:1;max-width:85%">
+            <div class="card">
+              <div class="hd">Manual · Welding fundamentals · v1</div>
+              <div class="bd">
+                <h3>SMAW basics (stick)</h3>
+                Strike the arc, keep a short arc length, travel steady — even bead, no undercut.
+              </div>
+              <div class="ft"><a href="#">Open full chapter</a><a class="sec" href="#">Class discuss</a></div>
+            </div>
+          </div>
+        </div>
+        <div class="row me"><div class="ava u">A</div><div class="bub">Ground clamp. I always skip looking at it.</div></div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">Honest. Want me to drop that tip into the chapter thread for the class?</div></div>
+        <div class="choices">
+          <a class="primary" href="#">Post my tip to class</a>
+          <a href="#">Keep it between us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s6">
+    <p class="cap"><strong>6 · Class discuss</strong> — PeBL-lite thread lives inside the conversation, not a forum tab.</p>
+    <div class="phone">
+      <div class="status"><span>9:55</span><span>Class discuss</span></div>
+      <div class="nav">
+        <button class="back" type="button">←</button>
+        <div class="who"><b>SMAW basics</b><span>Welding 101 · 6 posts</span></div>
+      </div>
+      <div class="thread">
+        <div class="day">Chapter thread</div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">Class tip wall for this chapter. Keep it practical.</div></div>
+        <div class="row" style="align-items:flex-start">
+          <div class="ava u">S</div>
+          <div class="bub" style="background:#fff;border:1px solid #e8e8e4;border-radius:16px;border-bottom-left-radius:5px">Short arc = less spatter for me.</div>
+        </div>
+        <div class="time">Sam · yesterday</div>
+        <div class="row me"><div class="ava u">A</div><div class="bub">Always check the ground clamp — I rush that one.</div></div>
+        <div class="time me">Just now · posted</div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">Posted. When you’re ready, we can talk quiz readiness — or keep reading.</div></div>
+        <div class="choices">
+          <a class="primary" href="#">I’m ready for the quiz</a>
+          <a href="#">Back to chapter</a>
+        </div>
+      </div>
+      <div class="composer"><input placeholder="Add a tip…"/><button type="button">Post</button></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s7">
+    <p class="cap"><strong>7 · Quiz as DMs</strong> — Questions arrive as messages. Answering feels like texting back. No hints.</p>
+    <div class="phone">
+      <div class="status"><span>10:05</span><span>Quiz · 2/8</span></div>
+      <div class="nav">
+        <button class="back" type="button">←</button>
+        <div class="who"><b>Graded quiz</b><span>Moodle sync on</span></div>
+      </div>
+      <div class="thread">
+        <div class="banner mute">Graded attempt · mentor won’t give answers</div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">No hints from me on this one. Tap clean.</div></div>
+        <div class="row v" style="align-items:stretch">
+          <div class="ava v">V</div>
+          <div style="flex:1;max-width:85%">
+            <div class="card">
+              <div class="hd">Q2 · PPE</div>
+              <div class="bd"><h3>Required before striking an arc?</h3></div>
+            </div>
+          </div>
+        </div>
+        <div class="choices" style="padding-left:36px">
+          <a href="#">Cotton hoodie only</a>
+          <a class="primary" href="#">Filter lens / helmet</a>
+          <a href="#">Open-toe shoes</a>
+          <a href="#">Skip gloves for feel</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s8">
+    <p class="cap"><strong>8 · Ask Vidura</strong> — Same chat. Citations + integrity refusal stay in-character.</p>
+    <div class="phone">
+      <div class="status"><span>10:18</span><span>Ask Vidura</span></div>
+      <div class="nav">
+        <button class="back" type="button">←</button>
+        <div class="who"><b>Vidura</b><span>SME sources only</span></div>
+        <div class="dot"></div>
+      </div>
+      <div class="thread">
+        <div class="row me"><div class="ava u">A</div><div class="bub">Write my quiz answers for me</div></div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">I won’t do that — it breaks the point of the class. I <em>will</em> walk the handbook with you.</div></div>
+        <div class="row me"><div class="ava u">A</div><div class="bub">OK — PPE for SMAW?</div></div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">Helmet with filter lens, gloves, leather apron, closed shoes. Keep flammables clear.<span class="src">Source · Welding fundamentals · Safety first</span></div></div>
+        <div class="choices">
+          <a class="primary" href="#">Open that chapter</a>
+          <a href="#">Another question</a>
+        </div>
+      </div>
+      <div class="composer"><input placeholder="Ask about class sources…"/><button type="button">Send</button></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s9">
+    <p class="cap"><strong>9 · Score drop</strong> — Result is a beat in the conversation, then next-chapter choices.</p>
+    <div class="phone">
+      <div class="status"><span>10:31</span><span>EdVidura</span></div>
+      <div class="nav">
+        <div class="who" style="padding-left:8px"><b>Vidura</b><span>Results</span></div>
+      </div>
+      <div class="thread">
+        <div class="row v"><div class="ava v">V</div><div class="bub">You’re through. Here’s how it landed — Moodle has it if sync is live.</div></div>
+        <div class="row v" style="align-items:stretch">
+          <div class="ava v">V</div>
+          <div style="flex:1;max-width:85%">
+            <div class="score">
+              <div class="lbl">Score</div>
+              <div class="big">7/8</div>
+              <div style="opacity:.7;font-size:12px;margin-top:6px">AGS · sent to Moodle</div>
+            </div>
+          </div>
+        </div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">One miss on PPE. We can close that gap tonight — handbook or your plan?</div></div>
+        <div class="choices">
+          <a class="primary" href="#">Open Safety chapter</a>
+          <a href="#">Show my gap plan</a>
+          <a href="#">I’m done for today</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s10">
+    <p class="cap"><strong>10 · Gap plan</strong> — Adaptive path narrated as ordered choices. Graded retry stays last.</p>
+    <div class="phone">
+      <div class="status"><span>10:34</span><span>My plan</span></div>
+      <div class="nav">
+        <button class="back" type="button">←</button>
+        <div class="who"><b>Vidura</b><span>Close the gap</span></div>
+      </div>
+      <div class="thread">
+        <div class="row me"><div class="ava u">A</div><div class="bub">Can I just retake the quiz?</div></div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">Not yet. Here’s the order so Moodle gets a fair score.</div></div>
+        <div class="row v" style="align-items:stretch">
+          <div class="ava v">V</div>
+          <div style="flex:1;max-width:85%">
+            <div class="card">
+              <div class="hd">Gap path · from 7/8</div>
+              <div class="bd">
+                <div class="checks">
+                  <label class="done" style="background:#fff7ed"><strong>1 ·</strong>&nbsp; Safety first chapter</label>
+                  <label><strong>2 ·</strong>&nbsp; Micro: PPE in 60s</label>
+                  <label><strong>3 ·</strong>&nbsp; Practice lane (no sync)</label>
+                  <label><strong>4 ·</strong>&nbsp; Graded retry (Moodle)</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="choices">
+          <a class="primary" href="#">Start step 1 →</a>
+          <a href="#">Why this order?</a>
+        </div>
+      </div>
+      <div class="composer"><input placeholder="Ask about the plan…"/><button type="button">Send</button></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s11">
+    <p class="cap"><strong>11 · Library / progress</strong> — Still conversational. Cards for manuals + progress, not a dashboard grid.</p>
+    <div class="phone">
+      <div class="status"><span>11:02</span><span>Library</span></div>
+      <div class="nav">
+        <div class="who" style="padding-left:8px"><b>Your library</b><span>Welding 101 · this class</span></div>
+      </div>
+      <div class="thread">
+        <div class="day">Class materials</div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">Everything linked to this Moodle course — manuals first, then your progress.</div></div>
+        <div class="row v" style="align-items:stretch">
+          <div class="ava v">V</div>
+          <div style="flex:1;max-width:85%">
+            <div class="card">
+              <div class="hd">Manual · assigned</div>
+              <div class="bd"><h3>Welding fundamentals</h3>v1 · 4 chapters · class discuss on</div>
+              <div class="ft"><a href="#">Open</a><a class="sec" href="#">Discuss</a></div>
+            </div>
+            <div class="card">
+              <div class="hd">Progress</div>
+              <div class="bd">
+                Modules <strong>1 / 4</strong> · Quiz <strong>7/8</strong> · AGS <strong>sent</strong>
+              </div>
+              <div class="ft"><a href="#">Resume SMAW</a><a class="sec" href="#">Grades</a></div>
+            </div>
+          </div>
+        </div>
+        <div class="choices">
+          <a class="primary" href="#">Back to Today</a>
+          <a href="#">Ask about a chapter</a>
+        </div>
+      </div>
+      <div class="sys-strip">
+        <a href="#"><span>●</span>Today</a>
+        <a class="on" href="#"><span>■</span>Library</a>
+        <a href="#"><span>○</span>Progress</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s12">
+    <p class="cap"><strong>12 · Empty / unbound</strong> — Still a conversation. Never a blank admin void.</p>
+    <div class="phone">
+      <div class="status"><span>9:02</span><span>EdVidura</span></div>
+      <div class="nav">
+        <div class="who" style="padding-left:8px"><b>Vidura</b><span>Waiting on class link</span></div>
+      </div>
+      <div class="thread">
+        <div class="day">First launch</div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">Hey — I don’t see a class on this launch yet.</div></div>
+        <div class="row v"><div class="ava v">V</div><div class="bub">Open EdVidura from your Moodle course so I can load <em>your</em> manuals and path. I’ll be here.</div></div>
+        <div class="banner">No LTI class context · manuals stay hidden until bound</div>
+        <div class="choices">
+          <a class="primary" href="#">How do I launch from Moodle?</a>
+          <a href="#">I’m a teacher — set up content</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s13">
+    <p class="cap"><strong>13 · Teacher desk</strong> — Students stay in chat; teachers get a calm desk beside a live preview.</p>
+    <div class="wide">
+      <div class="phone" style="min-height:640px;margin:0">
+        <div class="status"><span>Preview</span><span>Student</span></div>
+        <div class="nav">
+          <div class="who" style="padding-left:8px"><b>Vidura</b><span>What Ada sees</span></div>
+          <div class="dot"></div>
+        </div>
+        <div class="thread">
+          <div class="row v"><div class="ava v">V</div><div class="bub">Ada — today we earn the arc. SMAW is unlocked.</div></div>
+          <div class="choices">
+            <a class="primary" href="#">Enter SMAW practice</a>
+            <a href="#">Open handbook</a>
+          </div>
+        </div>
+      </div>
+      <div class="desk">
+        <h2>Class pulse · Welding 101</h2>
+        <div class="banner ok" style="margin-bottom:16px">Mentor script: Episode 2 · “earn the arc” · active for 18 students</div>
+        <table>
+          <thead><tr><th>Learner</th><th>Beat</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Ada</td><td>SMAW checks</td><td><span class="pill">In chat</span></td></tr>
+            <tr><td>Sam</td><td>Handbook</td><td><span class="pill">Reading</span></td></tr>
+            <tr><td>Jordan</td><td>Quiz Q4</td><td><span class="pill warn">Retry</span></td></tr>
+            <tr><td>Riley</td><td>—</td><td><span class="pill warn">Not opened</span></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:13px;color:#525252;margin:18px 0 10px;line-height:1.45">
+          Edit today’s opening line, assign manuals to this class, or jump to attempts — students never leave the chat metaphor.
+        </p>
+        <div class="choices">
+          <a class="primary" href="#">Edit Episode 2 script</a>
+          <a href="#">Assign manuals to class</a>
+          <a href="#">Class results</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<script>
+(function(){
+  var btns=document.querySelectorAll(".chooser button[data-slide]");
+  var slides=document.querySelectorAll(".slide");
+  btns.forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var id=btn.getAttribute("data-slide");
+      btns.forEach(function(b){b.setAttribute("aria-pressed",b===btn?"true":"false")});
+      slides.forEach(function(s){s.classList.toggle("is-on",s.id===id)});
+      window.scrollTo({top:0,behavior:"smooth"});
+    });
+  });
+})();
+</script>
+</body>
+</html>

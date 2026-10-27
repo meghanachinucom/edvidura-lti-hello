@@ -167,7 +167,13 @@ def competency_profile(
             pct = None
         else:
             pct = round(100 * correct / total)
-            status = "strong" if pct >= 100 else ("developing" if pct >= 50 else "weak")
+            threshold = int(meta.get("pass_percent") or 60)
+            if pct >= 100 or pct >= max(threshold, 80):
+                status = "strong"
+            elif pct >= threshold or pct >= 50:
+                status = "developing"
+            else:
+                status = "weak"
         profiles.append(
             {
                 "id": cid,
@@ -176,6 +182,8 @@ def competency_profile(
                 "total": total,
                 "percent": pct,
                 "status": status,
+                "pass_percent": int(meta.get("pass_percent") or 60),
+                "assigned": bool(total and pct is not None and pct >= int(meta.get("pass_percent") or 60)),
             }
         )
     return profiles
@@ -226,6 +234,46 @@ def class_competency_map(
         )
     out.sort(key=lambda x: (x["percent"] is None, x["percent"] if x["percent"] is not None else 999))
     return out
+
+
+def composite_risk_score(
+    *,
+    latest_percent: int | None,
+    attempt_count: int,
+    reasons: list[str] | None = None,
+) -> dict[str, Any]:
+    """0–100 composite risk (higher = more at risk). Rule-based, no ML."""
+    score = 0
+    pct = latest_percent
+    if pct is not None:
+        if pct < 40:
+            score += 40
+        elif pct < 60:
+            score += 25
+        elif pct < 70:
+            score += 10
+    if any("2+" in r or "Failed" in r for r in (reasons or [])):
+        score += 25
+    if any("incomplete" in r.lower() for r in (reasons or [])):
+        score += 20
+    if int(attempt_count or 0) >= 3 and pct is not None and pct < 60:
+        score += 15
+    score = max(0, min(100, score))
+    band = "high" if score >= 60 else ("medium" if score >= 30 else "low")
+    return {"score": score, "band": band}
+
+
+def classify_trend(percents: list[int]) -> str:
+    """improving | stable | declining from chronological percents."""
+    series = [int(p) for p in percents if p is not None]
+    if len(series) < 2:
+        return "stable"
+    delta = series[-1] - series[0]
+    if delta >= 10:
+        return "improving"
+    if delta <= -10:
+        return "declining"
+    return "stable"
 
 
 def at_risk_learners(
@@ -299,6 +347,15 @@ def at_risk_learners(
 
         if not reasons:
             continue
+        percents: list[int] = []
+        for a in sorted(rows, key=lambda r: str(r.get("created_at") or "")):
+            mx = max(int(a.get("max_score") or 1), 1)
+            percents.append(round(100 * int(a.get("score") or 0) / mx))
+        risk = composite_risk_score(
+            latest_percent=pct,
+            attempt_count=len(rows),
+            reasons=reasons,
+        )
         risks.append(
             {
                 "subject": subject,
@@ -308,6 +365,9 @@ def at_risk_learners(
                 "reasons": reasons,
                 "latest_percent": pct,
                 "attempt_count": len(rows),
+                "risk_score": risk["score"],
+                "risk_band": risk["band"],
+                "trend": classify_trend(percents),
             }
         )
     risks.sort(key=lambda r: (-len(r["reasons"]), int(r["latest_percent"])))

@@ -10,6 +10,11 @@ from pylti1p3.lineitem import LineItem
 
 from app.lti_fastapi import FastAPIMessageLaunch
 
+# Stable ids so find_or_create does not spawn duplicate Moodle grade columns.
+_LINEITEM_TAG = "edvidura-quiz"
+_LINEITEM_RESOURCE_ID = "edvidura-quiz"
+_LINEITEM_LABEL = "EdVidura Quiz"
+
 
 def send_quiz_grade(
     message_launch: FastAPIMessageLaunch,
@@ -20,11 +25,14 @@ def send_quiz_grade(
 ) -> tuple[bool, str | None]:
     """Push a score to the LMS gradebook. Returns (ok, error_message)."""
     if not message_launch.has_ags():
-        return False, "AGS not available on this launch (enable grades on the Moodle external tool)"
+        return (
+            False,
+            "AGS not available on this launch (Moodle tool: Accept grades = Yes, then relaunch)",
+        )
 
     ags = message_launch.get_ags()
     if not ags.can_put_grade():
-        return False, "Missing AGS score scope on this launch"
+        return False, "Missing AGS score scope on this launch — relaunch after enabling grades"
 
     grade = (
         Grade()
@@ -40,30 +48,38 @@ def send_quiz_grade(
         endpoint = message_launch.get_launch_data().get(
             "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint", {}
         ) or {}
-        lineitem = None
+        scopes = list(endpoint.get("scope") or [])
+        lineitem: LineItem | None = None
+
         if endpoint.get("lineitem"):
-            # Use the line item Moodle attached to this resource link
+            # Moodle attached a line item to this resource link — pylti uses it when None.
             lineitem = None
-        elif ags.can_create_lineitem():
+        elif ags.can_create_lineitem() and endpoint.get("lineitems"):
             lineitem = LineItem()
-            lineitem.set_tag("edvidura-slice-a-quiz")
+            lineitem.set_tag(_LINEITEM_TAG)
             lineitem.set_score_maximum(float(score_maximum))
-            lineitem.set_label("EdVidura Slice A Quiz")
-            lineitem.set_resource_id("edvidura-slice-a-quiz")
-        else:
-            scopes = ", ".join(endpoint.get("scope") or []) or "(none)"
+            lineitem.set_label(_LINEITEM_LABEL)
+            lineitem.set_resource_id(_LINEITEM_RESOURCE_ID)
+            # Prefer matching an existing column before creating another.
+            try:
+                existing = ags.find_lineitem_by_tag(_LINEITEM_TAG)
+                if existing is not None:
+                    lineitem = existing
+            except LtiException:
+                pass
+        elif not endpoint.get("lineitem"):
+            scope_txt = ", ".join(scopes) or "(none)"
             return (
                 False,
                 "No line item on launch and cannot create one. "
-                f"Scopes={scopes}. In Moodle activity: Accept grades=Yes and set a Point grade, then relaunch.",
+                f"Scopes={scope_txt}. Moodle activity: Accept grades=Yes, Grade type=Point, then relaunch.",
             )
 
         ags.put_grade(grade, lineitem)
         return True, None
     except LtiException as exc:
         traceback.print_exc()
-        return False, str(exc)
-
+        return False, f"LMS rejected grade: {exc}"
     except Exception as exc:  # noqa: BLE001
         traceback.print_exc()
         return False, f"AGS error: {exc}"

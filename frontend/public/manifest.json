@@ -1,0 +1,19 @@
+{
+  "name": "EdVidura - Academic Learning & LTI Classroom",
+  "short_name": "EdVidura",
+  "description": "Editorial LMS classroom environment for Riverside High Algebra I, featuring lessons, quizzes, diagnostic tracking, class handbooks, and Ask Vidura companion.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#071E2D",
+  "theme_color": "#071E2D",
+  "categories": ["education", "math", "productivity"],
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "64x64 128x128 256x256 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EdVidura · Story UI demos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{font-family:"Schibsted Grotesk",system-ui,sans-serif;background:#0c0d10;color:#e7e5e0}
+
+  .chooser{
+    position:sticky;top:0;z-index:50;
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    padding:12px 16px;background:#08090b;border-bottom:1px solid #22252c;
+  }
+  .chooser strong{font-size:13px;margin-right:6px}
+  .chooser button{
+    font:inherit;font-size:12px;font-weight:500;padding:7px 12px;
+    border:1px solid #333843;background:transparent;color:#c9c6bf;cursor:pointer;border-radius:999px;
+  }
+  .chooser button[aria-pressed="true"]{background:#e7e5e0;color:#0c0d10;border-color:#e7e5e0}
+  .chooser .hint{margin-left:auto;font-size:11px;color:#7a7f8a;max-width:340px;text-align:right}
+  .panel{display:none}.panel.is-on{display:block}
+  .note{max-width:1040px;margin:0 auto;padding:14px 20px 6px;font-size:13px;color:#9a9ea8;line-height:1.45}
+  .frame{max-width:1100px;margin:10px auto 56px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+  @media(max-width:640px){.chooser .hint{display:none}}
+
+  /* ═══════════════════════════════════════
+     S1 — FORGE PROLOGUE (cinematic open)
+     ═══════════════════════════════════════ */
+  #s1 .frame{background:#100e0c;color:#f4efe6}
+  #s1 .stage{
+    position:relative;min-height:78vh;display:flex;flex-direction:column;justify-content:flex-end;
+    padding:28px 36px 40px;
+    background:
+      linear-gradient(180deg,rgba(16,14,12,.15) 0%,rgba(16,14,12,.55) 45%,rgba(16,14,12,.92) 100%),
+      radial-gradient(ellipse 80% 60% at 70% 20%,rgba(232,93,32,.28),transparent 55%),
+      radial-gradient(ellipse 50% 40% at 20% 80%,rgba(180,60,20,.18),transparent 50%),
+      #1a1512;
+  }
+  #s1 .stage::before{
+    content:"";position:absolute;inset:0;opacity:.35;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    mix-blend-mode:overlay;
+  }
+  #s1 .navline{
+    position:absolute;top:0;left:0;right:0;
+    display:flex;align-items:center;gap:18px;padding:18px 36px;
+    font-size:13px;z-index:2;
+  }
+  #s1 .navline .brand{font-weight:700;letter-spacing:-.02em}
+  #s1 .navline a{color:inherit;text-decoration:none;opacity:.55}
+  #s1 .navline .spacer{flex:1}
+  #s1 .ep{
+    position:relative;z-index:1;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:#e85d20;margin:0 0 14px;
+  }
+  #s1 h1{
+    position:relative;z-index:1;
+    font-family:"Instrument Serif",Georgia,serif;
+    font-size:clamp(2.6rem,6vw,4.2rem);font-weight:400;line-height:1.02;
+    letter-spacing:-.03em;margin:0 0 16px;max-width:14ch;
+  }
+  #s1 .voice{
+    position:relative;z-index:1;
+    font-size:1.1rem;line-height:1.55;color:#c9bfb2;max-width:34rem;margin:0 0 28px;
+  }
+  #s1 .acts{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  #s1 .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:14px 22px;font-size:14px;font-weight:600;text-decoration:none;
+    background:#e85d20;color:#1a0c06;border-radius:2px;
+  }
+  #s1 .btn-quiet{background:transparent;color:#f4efe6;border-bottom:1px solid rgba(244,239,230,.45);padding:14px 4px;border-radius:0}
+  #s1 .chapters{
+    background:#161310;padding:28px 36px 36px;
+    border-top:1px solid rgba(232,93,32,.25);
+  }
+  #s1 .chapters h2{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:#8a8176;margin:0 0 18px;font-weight:500;
+  }
+  #s1 .beat{
+    display:grid;grid-template-columns:72px 1fr auto;gap:18px;align-items:start;
+    padding:16px 0;border-bottom:1px solid #2a251f;
+  }
+  #s1 .beat:last-child{border-bottom:0}
+  #s1 .beat .act{
+    font-family:"Instrument Serif",serif;font-style:italic;font-size:1.15rem;color:#e85d20;
+  }
+  #s1 .beat h3{margin:0;font-size:1.05rem;font-weight:600}
+  #s1 .beat p{margin:4px 0 0;font-size:13px;color:#8a8176;line-height:1.4}
+  #s1 .beat .status{font-size:12px;color:#c9bfb2;align-self:center}
+  #s1 .beat.is-now{background:linear-gradient(90deg,rgba(232,93,32,.1),transparent);margin:0 -16px;padding-left:16px;padding-right:16px}
+
+  /* ═══════════════════════════════════════
+     S2 — FIELD JOURNAL (trade story)
+     ═══════════════════════════════════════ */
+  #s2 .frame{background:#e8e2d4;color:#1f1a14}
+  #s2 .top{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    padding:22px 32px 18px;border-bottom:2px solid #1f1a14;
+  }
+  #s2 .top .brand{font-family:"Libre Caslon Text",Georgia,serif;font-size:1.35rem}
+  #s2 .top .meta{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em}
+  #s2 .spread{display:grid;grid-template-columns:1fr 1fr;min-height:560px}
+  #s2 .left{
+    padding:36px 32px;border-right:1px solid #1f1a14;
+    background:
+      linear-gradient(160deg,#dfe8e4 0%,#e8e2d4 55%);
+  }
+  #s2 .stamp{
+    display:inline-block;border:1.5px solid #1f1a14;padding:4px 10px;
+    font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    margin-bottom:28px;
+  }
+  #s2 .left h1{
+    font-family:"Libre Caslon Text",Georgia,serif;
+    font-size:clamp(2rem,4vw,2.8rem);line-height:1.15;font-weight:700;
+    margin:0 0 18px;
+  }
+  #s2 .left .entry{
+    font-family:"Libre Caslon Text",Georgia,serif;font-size:1.05rem;line-height:1.65;
+    color:#3a3228;margin:0 0 28px;
+  }
+  #s2 .left .entry em{font-style:italic;color:#1f1a14}
+  #s2 .btn{
+    display:inline-block;padding:12px 18px;background:#1f1a14;color:#e8e2d4;
+    text-decoration:none;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  }
+  #s2 .right{padding:28px 28px 32px;background:#f3eee3}
+  #s2 .right h2{
+    font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    margin:0 0 14px;color:#6a5f52;
+  }
+  #s2 .log{list-style:none;margin:0;padding:0}
+  #s2 .log li{
+    padding:14px 0;border-bottom:1px dashed #b8ae9c;
+    display:grid;grid-template-columns:3.5rem 1fr;gap:10px;
+  }
+  #s2 .log time{font-family:"JetBrains Mono",monospace;font-size:11px;color:#6a5f52}
+  #s2 .log strong{display:block;font-size:14px;margin-bottom:2px}
+  #s2 .log span{font-size:12px;color:#6a5f52}
+  #s2 .log li.now{background:#fff8e8;margin:0 -12px;padding-left:12px;padding-right:12px;border-left:3px solid #c45c26}
+  @media(max-width:760px){#s2 .spread{grid-template-columns:1fr}#s2 .left{border-right:0;border-bottom:1px solid #1f1a14}}
+
+  /* ═══════════════════════════════════════
+     S3 — EPISODE REEL (horizontal story)
+     ═══════════════════════════════════════ */
+  #s3 .frame{background:#0b1220;color:#e8eef8}
+  #s3 .header{
+    padding:20px 28px 8px;display:flex;align-items:center;gap:16px;
+  }
+  #s3 .header .brand{font-family:"Sora",sans-serif;font-weight:700;font-size:15px;letter-spacing:-.02em}
+  #s3 .header .pill{
+    font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:#7dd3fc;border:1px solid rgba(125,211,252,.35);padding:4px 8px;
+  }
+  #s3 .header .spacer{flex:1}
+  #s3 .hook{
+    padding:8px 28px 20px;
+  }
+  #s3 .hook h1{
+    font-family:"Sora",sans-serif;font-weight:600;
+    font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:-.04em;line-height:1.1;margin:0 0 10px;
+  }
+  #s3 .hook p{margin:0;color:#93a4bc;max-width:36rem;line-height:1.5;font-size:15px}
+  #s3 .reel-wrap{padding:0 0 28px}
+  #s3 .reel{
+    display:flex;gap:14px;overflow-x:auto;padding:8px 28px 16px;
+    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+  }
+  #s3 .ep-card{
+    flex:0 0 min(78vw,300px);scroll-snap-align:start;
+    background:#121c2e;border:1px solid #243247;min-height:340px;
+    display:flex;flex-direction:column;padding:18px;position:relative;
+    text-decoration:none;color:inherit;
+    transition:border-color .2s,transform .2s;
+  }
+  #s3 .ep-card:hover{border-color:#7dd3fc;transform:translateY(-3px)}
+  #s3 .ep-card.featured{
+    background:linear-gradient(165deg,#152238 0%,#1a2f4a 40%,#0f1a2c 100%);
+    border-color:#38bdf8;
+  }
+  #s3 .ep-card .num{
+    font-family:"JetBrains Mono",monospace;font-size:11px;color:#7dd3fc;letter-spacing:.12em;
+  }
+  #s3 .ep-card h3{
+    font-family:"Sora",sans-serif;font-size:1.25rem;font-weight:600;letter-spacing:-.02em;
+    margin:12px 0 8px;line-height:1.2;
+  }
+  #s3 .ep-card p{font-size:13px;color:#93a4bc;line-height:1.45;margin:0;flex:1}
+  #s3 .ep-card .foot{
+    margin-top:18px;font-size:12px;font-weight:600;color:#e8eef8;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  #s3 .ep-card .foot em{font-style:normal;color:#38bdf8}
+  #s3 .hint-scroll{
+    padding:0 28px;font-size:11px;color:#5b6b82;font-family:"JetBrains Mono",monospace;
+  }
+</style>
+</head>
+<body>
+  <div class="chooser">
+    <strong>Story demos</strong>
+    <button type="button" data-demo="s1" aria-pressed="true">A · Forge prologue</button>
+    <button type="button" data-demo="s2" aria-pressed="false">B · Field journal</button>
+    <button type="button" data-demo="s3" aria-pressed="false">C · Episode reel</button>
+    <span class="hint">Designed to make opening the app feel like starting a chapter — not a dashboard</span>
+  </div>
+
+  <!-- A -->
+  <section class="panel is-on" id="s1">
+    <p class="note"><strong>A · Forge prologue</strong> — Dark cinematic open. Ember accent. First screen is a scene, then story beats (acts). You open the app and feel “what happens next?”</p>
+    <div class="frame">
+      <div class="stage">
+        <div class="navline">
+          <span class="brand">EdVidura</span>
+          <a href="#">Library</a>
+          <a href="#">Coach</a>
+          <span class="spacer"></span>
+          <span style="opacity:.5;font-size:12px">Welding 101</span>
+        </div>
+        <p class="ep">Episode 02 · The steady hand</p>
+        <h1>Before the arc, the story is setup.</h1>
+        <p class="voice">Last time you locked down PPE and joint types. Tonight you earn the right to strike — three checks, one clean bead, no guessing.</p>
+        <div class="acts">
+          <a class="btn" href="#">Enter today’s chapter →</a>
+          <a class="btn btn-quiet" href="#">Replay last episode</a>
+        </div>
+      </div>
+      <div class="chapters">
+        <h2>Your story so far</h2>
+        <div class="beat">
+          <span class="act">Act I</span>
+          <div><h3>Safety &amp; joints</h3><p>You learned why the booth isn’t optional.</p></div>
+          <span class="status">Complete</span>
+        </div>
+        <div class="beat is-now">
+          <span class="act">Act II</span>
+          <div><h3>SMAW practice</h3><p>The chapter you’re in — checklist before the spark.</p></div>
+          <span class="status">Now playing</span>
+        </div>
+        <div class="beat">
+          <span class="act">Act III</span>
+          <div><h3>The handbook</h3><p>Depth when the practice note isn’t enough.</p></div>
+          <span class="status">Ahead</span>
+        </div>
+        <div class="beat">
+          <span class="act">Finale</span>
+          <div><h3>Class quiz</h3><p>Prove it — score syncs back to Moodle.</p></div>
+          <span class="status">Locked until ready</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- B -->
+  <section class="panel" id="s2">
+    <p class="note"><strong>B · Field journal</strong> — Trade-school storytelling. Left page = today’s entry (voice). Right page = dated log of the journey. Feels personal, not corporate.</p>
+    <div class="frame">
+      <div class="top">
+        <div class="brand">EdVidura · Field notes</div>
+        <div class="meta">WELDING 101 · RIVERSIDE · DAY 4</div>
+      </div>
+      <div class="spread">
+        <div class="left">
+          <span class="stamp">Today’s entry</span>
+          <h1>The bead doesn’t forgive a rushed setup.</h1>
+          <p class="entry">
+            Ada — you finished joints yesterday. <em>Today’s page is SMAW.</em>
+            Write the three checks in your head before you touch the stinger.
+            When you’re unsure, the handbook is in the back of this journal.
+          </p>
+          <a class="btn" href="#">Turn the page →</a>
+        </div>
+        <div class="right">
+          <h2>Journey log</h2>
+          <ul class="log">
+            <li>
+              <time>Day 1</time>
+              <div><strong>Safety first</strong><span>Opened the story · PPE chapter</span></div>
+            </li>
+            <li>
+              <time>Day 2</time>
+              <div><strong>Joint types</strong><span>Lesson complete</span></div>
+            </li>
+            <li class="now">
+              <time>Day 4</time>
+              <div><strong>SMAW practice</strong><span>You are here — continue the entry</span></div>
+            </li>
+            <li>
+              <time>Soon</time>
+              <div><strong>Graded quiz</strong><span>The test at the end of this arc</span></div>
+            </li>
+            <li>
+              <time>—</time>
+              <div><strong>Ask Vidura</strong><span>When the journal isn’t enough</span></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- C -->
+  <section class="panel" id="s3">
+    <p class="note"><strong>C · Episode reel</strong> — Streaming-show energy. Hook line up top, then swipe through episodes of the class. Excitement = “which episode am I on?”</p>
+    <div class="frame">
+      <div class="header">
+        <span class="brand">EdVidura</span>
+        <span class="pill">Series · Welding 101</span>
+        <span class="spacer"></span>
+        <span style="font-size:12px;color:#7a8ba3">Continue watching</span>
+      </div>
+      <div class="hook">
+        <h1>You’re mid-season. The arc is waiting.</h1>
+        <p>Episode 2 is unlocked. Finish the practice note, then the handbook deep-dive — quiz night closes the season.</p>
+      </div>
+      <div class="reel-wrap">
+        <div class="reel">
+          <a class="ep-card" href="#">
+            <span class="num">EP 01</span>
+            <h3>Safety &amp; joints</h3>
+            <p>Why the booth rules exist — and how joint choice shapes every bead after.</p>
+            <div class="foot"><span>Watched</span><em>Replay</em></div>
+          </a>
+          <a class="ep-card featured" href="#">
+            <span class="num">EP 02 · NOW</span>
+            <h3>SMAW practice</h3>
+            <p>Three setup checks. One honest bead. This is the episode that separates rush from craft.</p>
+            <div class="foot"><span>~12 min left</span><em>Resume →</em></div>
+          </a>
+          <a class="ep-card" href="#">
+            <span class="num">EP 03</span>
+            <h3>Handbook deep-dive</h3>
+            <p>When practice isn’t enough — open the class manual and discuss with peers.</p>
+            <div class="foot"><span>Up next</span><em>Preview</em></div>
+          </a>
+          <a class="ep-card" href="#">
+            <span class="num">EP 04</span>
+            <h3>Season finale quiz</h3>
+            <p>Unique questions. Moodle gets the score. Prove the season stuck.</p>
+            <div class="foot"><span>Locked</span><em>—</em></div>
+          </a>
+          <a class="ep-card" href="#">
+            <span class="num">SPECIAL</span>
+            <h3>Ask Vidura</h3>
+            <p>Side quest: grounded answers from approved sources only.</p>
+            <div class="foot"><span>Always on</span><em>Ask</em></div>
+          </a>
+        </div>
+        <p class="hint-scroll">← scroll the season →</p>
+      </div>
+    </div>
+  </section>
+
+<script>
+(function(){
+  var buttons=document.querySelectorAll(".chooser button[data-demo]");
+  var panels=document.querySelectorAll(".panel");
+  buttons.forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var id=btn.getAttribute("data-demo");
+      buttons.forEach(function(b){b.setAttribute("aria-pressed",b===btn?"true":"false")});
+      panels.forEach(function(p){p.classList.toggle("is-on",p.id===id)});
+    });
+  });
+})();
+</script>
+</body>
+</html>

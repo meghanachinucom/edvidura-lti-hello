@@ -1,4 +1,12 @@
-# EdVidura — Railway / container image
+# EdVidura — Railway / container image (API + built SPA)
+FROM node:22-bookworm-slim AS frontend
+WORKDIR /fe
+COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
+RUN npm ci --legacy-peer-deps
+COPY frontend/ ./
+ENV VITE_BASE=/app/
+RUN npm run build
+
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -21,6 +29,7 @@ COPY scripts ./scripts
 COPY templates ./templates
 COPY docs/RAILWAY.md ./docs/RAILWAY.md
 COPY docs/SAAS_ROADMAP.md ./docs/SAAS_ROADMAP.md
+COPY --from=frontend /fe/dist ./frontend/dist
 
 RUN mkdir -p keys app/static/uploads \
     && printf '' > keys/.gitkeep \

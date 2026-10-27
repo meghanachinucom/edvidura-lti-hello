@@ -12,6 +12,7 @@ from uuid import UUID
 from app import settings
 from app.modules import analytics as analytics_mod
 from app.modules import content
+from app.modules import manuals as manuals_mod
 from app.modules import skills as skills_mod
 from app.modules import xapi as xapi_mod
 from app.modules.tla import adl_refs, requirements as req_mod
@@ -84,7 +85,7 @@ def _skill_codes(tenant_id: UUID | str) -> list[str]:
 
 
 def build_xi_entries(tenant_id: UUID | str) -> list[dict[str, Any]]:
-    """Build ADL xi-lite Course documents from published courses + lessons."""
+    """Build ADL xi-lite Course documents from courses, lessons, and manuals."""
     base = (getattr(settings, "app_base_url", None) or "").rstrip("/")
     codes = _skill_codes(tenant_id)
     entries: list[dict[str, Any]] = []
@@ -118,7 +119,34 @@ def build_xi_entries(tenant_id: UUID | str) -> list[dict[str, Any]]:
                     competencies=codes[:20],
                 )
             )
+    try:
+        manual_rows = manuals_mod.list_manuals(tenant_id)
+    except Exception:  # noqa: BLE001
+        manual_rows = []
+    for m in manual_rows:
+        mid = str(m.get("id") or "")
+        if not mid:
+            continue
+        manual_url = f"{base}/manuals/{mid}" if base else f"manual:{mid}"
+        entries.append(
+            shapes.shape_xi_course_entry(
+                entry_id=f"manual-{mid}",
+                name=str(m.get("title") or "Manual"),
+                description=str(m.get("description") or m.get("slug") or "manual"),
+                url=manual_url,
+                competencies=codes[:20],
+            )
+        )
     return entries
+
+
+def live_evidence() -> dict[str, req_mod.Status]:
+    """Baseline evidence, with LRS upgraded when an external LRS is configured."""
+    ev = dict(req_mod.EDVIDURA_EVIDENCE)
+    endpoint = (getattr(settings, "xapi_lrs_endpoint", None) or "").strip()
+    if endpoint:
+        ev["lrs"] = "complete"
+    return ev
 
 
 def xi_experiences(
@@ -160,13 +188,21 @@ def xi_experience(
 def maturity_report(
     evidence: dict[str, req_mod.Status] | None = None,
 ) -> dict[str, Any]:
-    report = req_mod.assess_requirements(evidence)
+    report = req_mod.assess_requirements(evidence or live_evidence())
     report["adl_refs"] = adl_refs.list_adl_refs()
     report["cmi5"] = cmi5_requirements.summarize_requirements(limit=5)
     report["vendored"] = {
         "xi_lite": "app/modules/tla/vendor/xi_lite/",
         "cmi5_requirements": "app/modules/tla/vendor/cmi5/requirements.json",
         "attribution": "app/modules/tla/vendor/ATTRIBUTION.md",
+    }
+    report["apis"] = {
+        "maturity": "GET /api/v1/tla/maturity",
+        "cmi5_requirements": "GET /api/v1/tla/cmi5/requirements",
+        "xi": "GET /api/v1/xi/experiences",
+        "catalogue": "GET /api/v1/catalogue/courses",
+        "experiences": "GET /api/v1/experiences",
+        "profiles": "GET /api/v1/profiles/{subject}",
     }
     report["reuse"] = {
         "portable_modules": [

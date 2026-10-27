@@ -258,6 +258,40 @@ def build_learner_signal_profile(
     if vr.get("count"):
         sources.append("vr")
 
+    avg_ratio = quiz_prof.get("avg_score_ratio")
+    latest_pct = round(100 * float(avg_ratio)) if avg_ratio is not None else None
+    from app.modules.specials import composite_risk_score
+
+    risk = composite_risk_score(
+        latest_percent=latest_pct,
+        attempt_count=int(quiz_prof.get("attempts") or 0),
+        reasons=["Repeat low scores"] if latest_pct is not None and latest_pct < 60 else [],
+    )
+    trend = "declining" if latest_pct is not None and latest_pct < 50 else (
+        "improving" if latest_pct is not None and latest_pct >= 70 else "stable"
+    )
+    gaps = []
+    if attempt:
+        try:
+            gaps = adaptive_mod.weak_skills_from_attempt(
+                attempt.get("answers"), tenant_id=tenant_id
+            )
+        except Exception:  # noqa: BLE001
+            gaps = []
+    # DCT F-4: typed PLE signal contract consumed by the planner.
+    contract = {
+        "risk_score": int(risk.get("score") or 0),
+        "risk_band": str(risk.get("band") or "low"),
+        "competency_gap": [
+            {
+                "code": str(g.get("id") or g.get("skill_code") or ""),
+                "label": str(g.get("label") or ""),
+                "status": str(g.get("status") or "weak"),
+            }
+            for g in gaps[:8]
+        ],
+        "trend": trend,
+    }
     return {
         "subject": sub,
         "tenant_id": str(tenant_id),
@@ -271,6 +305,9 @@ def build_learner_signal_profile(
         "quiz": quiz_prof,
         "open_plan_id": str((open_plan or {}).get("plan_id") or "") or None,
         "attempt": attempt,
+        "risk": risk,
+        "trend": trend,
+        "ple": contract,
     }
 
 

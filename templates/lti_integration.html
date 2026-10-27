@@ -25,6 +25,55 @@
     </div>
   </div>
 
+  <div class="grid-4" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:var(--sp-md)">
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Roster (NRPS)</span>
+      <div class="metric-counter" style="margin-top:6px;font-size:18px">{% if nrps_available %}Ready{% else %}Not on this launch{% endif %}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Group services</span>
+      <div class="metric-counter" style="margin-top:6px;font-size:18px">{% if gs_available %}LTI-GS on launch{% else %}Local groups{% endif %}</div>
+    </div>
+    <div class="metric-tile">
+      <span class="label-caps text-muted">Groups</span>
+      <div class="metric-counter" style="margin-top:6px;font-size:18px">{{ groups|length }}</div>
+    </div>
+  </div>
+
+  <section class="frosted" style="padding:var(--sp-xl);margin-top:var(--sp-md)">
+    <h2 class="headline-md" style="margin-bottom:var(--sp-md)">Group-based assignments</h2>
+    <p class="body-sm text-muted">LTI Group Services when Moodle sends the GS claim. Otherwise create a local group and assign the class quiz.</p>
+    <form method="post" action="/teacher/groups" class="teach-form" style="margin:var(--sp-md) 0">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <label>New group name <input name="name" required placeholder="Period 1 — Group A"/></label>
+      <button type="submit" class="btn primary">Create group</button>
+    </form>
+    {% if groups %}
+    <ul class="body-sm" style="line-height:1.8">
+      {% for g in groups %}
+      <li><strong>{{ g.name }}</strong> · {{ g.member_count }} members · {{ g.source }}
+        <form method="post" action="/teacher/groups/assign" style="display:inline">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="group_id" value="{{ g.group_id }}"/>
+          <input type="hidden" name="activity_type" value="quiz"/>
+          <input type="hidden" name="activity_id" value="school-quiz"/>
+          <input type="hidden" name="title" value="Class quiz"/>
+          <button type="submit" class="btn secondary" style="font-size:12px">Assign class quiz</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if group_assignments %}
+    <p class="label-caps text-muted" style="margin-top:var(--sp-md)">Assignments</p>
+    <ul class="body-sm">
+      {% for a in group_assignments %}
+      <li>{{ a.group_name }} → {{ a.title }} ({{ a.activity_type }})</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+
   <section class="frosted" style="padding:var(--sp-xl)">
     <h2 class="headline-md" style="margin-bottom:var(--sp-md)">Endpoints</h2>
     <dl class="kv">

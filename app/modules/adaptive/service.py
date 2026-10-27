@@ -966,6 +966,20 @@ def learner_plan_summary(
         elif s:
             skills.append({"code": str(s), "label": str(s)})
     sources = [str(x) for x in (plan.get("signal_sources") or []) if x][:6]
+    risk, trend = _risk_and_trend_for_subject(
+        tenant_id, subject=subject, course_label=course_label
+    )
+    if risk:
+        plan["risk"] = risk
+    if trend:
+        plan["trend"] = trend
+    interventions = _plan_interventions(
+        plan,
+        plan_href=plan_href,
+        skills=skills,
+        done=done,
+        total=total,
+    )
     return {
         "active": True,
         "plan_href": plan_href,
@@ -978,12 +992,112 @@ def learner_plan_summary(
         "first_href": plan.get("first_href") or plan_href,
         "mode": str(plan.get("mode") or "gap"),
         "role_code": plan.get("role_code"),
+        "risk": plan.get("risk"),
+        "trend": plan.get("trend"),
+        "interventions": interventions,
         "message": (
             f"Step {min(done + 1, total)} of {total}"
             if total
             else "Continue your learning plan"
         ),
     }
+
+
+def _risk_and_trend_for_subject(
+    tenant_id: UUID | str,
+    *,
+    subject: str,
+    course_label: str = "",
+) -> tuple[dict[str, Any] | None, str | None]:
+    from app.modules.quiz.personalized import student_performance_profile
+    from app.modules.specials import classify_trend, composite_risk_score
+
+    try:
+        prof = student_performance_profile(
+            tenant_id, subject, course_label=course_label
+        )
+    except Exception:  # noqa: BLE001
+        return None, None
+    attempts = int(prof.get("attempts") or 0)
+    ratio = prof.get("avg_score_ratio")
+    latest = round(100 * float(ratio)) if ratio is not None else None
+    reasons = []
+    if latest is not None and latest < 40:
+        reasons.append(f"Latest score {latest}%")
+    if attempts >= 2 and latest is not None and latest < 60:
+        reasons.append("Repeat low scores")
+    risk = composite_risk_score(
+        latest_percent=latest,
+        attempt_count=attempts,
+        reasons=reasons,
+    )
+    percents = []
+    if ratio is not None:
+        percents = [latest or 0]
+    trend = classify_trend(percents if len(percents) > 1 else [])
+    # Use difficulty as a proxy when we only have an average.
+    if attempts >= 2 and latest is not None:
+        if latest >= 70:
+            trend = "improving"
+        elif latest < 50:
+            trend = "declining"
+        else:
+            trend = "stable"
+    risk["reasons"] = reasons
+    return risk, trend
+
+
+def _plan_interventions(
+    plan: dict[str, Any],
+    *,
+    plan_href: str,
+    skills: list[dict[str, Any]],
+    done: int,
+    total: int,
+) -> list[dict[str, str]]:
+    out: list[dict[str, str]] = []
+    risk = plan.get("risk") if isinstance(plan.get("risk"), dict) else {}
+    if str(risk.get("band") or "") == "high":
+        out.append(
+            {
+                "code": "teacher_checkin",
+                "label": "Ask your teacher for a short check-in — risk is high",
+                "href": plan_href,
+            }
+        )
+    if str(plan.get("trend") or "") == "declining":
+        out.append(
+            {
+                "code": "review_lessons",
+                "label": "Revisit the last lesson before another graded quiz",
+                "href": "/lessons",
+            }
+        )
+    if total and done < total:
+        out.append(
+            {
+                "code": "next_gap",
+                "label": "Open the next gap step in your plan",
+                "href": str(plan.get("first_href") or plan_href),
+            }
+        )
+    if skills:
+        out.append(
+            {
+                "code": "practice_quiz",
+                "label": "Retry a practice quiz on weak skills",
+                "href": "/quiz?practice=1",
+            }
+        )
+    if (plan.get("mode") or "") == "gap":
+        out.append(
+            {
+                "code": "ask_vidura",
+                "label": "Ask Vidura about the current skill before the next attempt",
+                "href": "/ask",
+            }
+        )
+    return out[:4]
 
 
 def dct_planner_pack(tenant_id: UUID | str) -> dict[str, Any]:
@@ -1050,7 +1164,15 @@ _DEMO_REEL_VIDEOS = (
 )
 
 
-def _demo_reel_video(skill_code: str) -> str:
+def _demo_reel_video(skill_code: str) -> str | None:
+    """Public sample clips for cloud demos only — never in air-gap."""
+    try:
+        from app.settings import get_settings
+
+        if get_settings().airgap:
+            return None
+    except Exception:  # noqa: BLE001
+        pass
     code = (skill_code or "skill").strip().lower() or "skill"
     idx = sum(ord(c) for c in code) % len(_DEMO_REEL_VIDEOS)
     return _DEMO_REEL_VIDEOS[idx]
@@ -1154,11 +1276,21 @@ def micro_learning_catalog(
             }
         )
     items.sort(key=lambda x: (not x["priority"], x["label"].lower()))
+    airgap = False
+    try:
+        from app.settings import get_settings
+
+        airgap = bool(get_settings().airgap)
+    except Exception:  # noqa: BLE001
+        airgap = False
+    with_video = sum(1 for i in items if i.get("reel_video_url"))
     return {
         "lessons": items,
         "items": items,  # alias; templates should use lessons (items is dict method)
         "priority_count": sum(1 for i in items if i["priority"]),
         "available_count": len(items),
+        "video_count": with_video,
+        "airgap": airgap,
         "missing_count": pack["missing_count"],
         "missing": pack["missing"],
     }

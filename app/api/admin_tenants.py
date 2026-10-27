@@ -15,6 +15,7 @@ from app.schemas.tenant import (
     LtiPlatformResponse,
     TenantCreate,
     TenantResponse,
+    TenantSegmentUpdate,
 )
 
 logger = logging.getLogger(__name__)
@@ -27,11 +28,16 @@ router = APIRouter(
 
 
 def _serialize_tenant(row: dict) -> dict:
+    from app.modules.tenancy import profile_from_row
+
+    profile = profile_from_row(row)
     return {
         "id": row["id"],
         "slug": row["slug"],
         "name": row["name"],
         "status": row["status"],
+        "segment": profile["segment"],
+        "capabilities": profile["capabilities"],
         "created_at": row["created_at"],
     }
 
@@ -63,8 +69,19 @@ def create_tenant(payload: TenantCreate) -> dict:
             detail=f"Tenant slug '{payload.slug}' already exists.",
         )
     try:
-        row = db.create_tenant(slug=payload.slug, name=payload.name, status=payload.status)
-        logger.info("Created tenant slug=%s id=%s", row["slug"], row["id"])
+        row = db.create_tenant(
+            slug=payload.slug,
+            name=payload.name,
+            status=payload.status,
+            segment=payload.segment,
+            capabilities=payload.capabilities,
+        )
+        logger.info(
+            "Created tenant slug=%s id=%s segment=%s",
+            row["slug"],
+            row["id"],
+            row.get("segment"),
+        )
         return _serialize_tenant(row)
     except psycopg.errors.UniqueViolation:
         raise HTTPException(
@@ -79,6 +96,39 @@ def create_tenant(payload: TenantCreate) -> dict:
 @router.get("/tenants", response_model=List[TenantResponse])
 def list_tenants() -> list[dict]:
     return [_serialize_tenant(r) for r in db.list_tenants()]
+
+
+@router.patch("/tenants/{tenant_id}/segment", response_model=TenantResponse)
+def update_tenant_segment(tenant_id: UUID, payload: TenantSegmentUpdate) -> dict:
+    tenant = db.get_tenant(tenant_id)
+    if not tenant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tenant '{tenant_id}' does not exist.",
+        )
+    try:
+        row = db.update_tenant_segment(
+            tenant_id,
+            segment=payload.segment,
+            capabilities=payload.capabilities,
+            reset_capabilities=payload.reset_capabilities,
+        )
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Tenant '{tenant_id}' does not exist.",
+            )
+        logger.info(
+            "Updated tenant segment id=%s segment=%s",
+            tenant_id,
+            row.get("segment"),
+        )
+        return _serialize_tenant(row)
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        logger.error("update_tenant_segment failed: %s", exc)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 @router.post(

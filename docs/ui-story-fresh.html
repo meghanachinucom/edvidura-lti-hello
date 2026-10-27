@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EdVidura · Fresh story demos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{font-family:"Figtree",system-ui,sans-serif;background:#111113;color:#ececf0}
+  .chooser{
+    position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    padding:12px 16px;background:#0a0a0c;border-bottom:1px solid #2a2a30;
+  }
+  .chooser strong{font-size:13px;margin-right:4px}
+  .chooser button{
+    font:inherit;font-size:12px;font-weight:600;padding:7px 12px;cursor:pointer;
+    border:1px solid #3a3a44;background:transparent;color:#c8c8d0;border-radius:6px;
+  }
+  .chooser button[aria-pressed="true"]{background:#f4f4f5;color:#111;border-color:#f4f4f5}
+  .chooser .hint{margin-left:auto;font-size:11px;color:#888896;max-width:320px;text-align:right}
+  .panel{display:none}.panel.is-on{display:block}
+  .note{max-width:1080px;margin:0 auto;padding:14px 20px 4px;font-size:13px;color:#9a9aa6;line-height:1.45}
+  .frame{max-width:1100px;margin:10px auto 56px;overflow:hidden;box-shadow:0 28px 70px rgba(0,0,0,.5)}
+  @media(max-width:640px){.chooser .hint{display:none}}
+
+  /* ═══ D BOARDING PASS ═══ */
+  #d .frame{background:#f7f4ef;color:#14120f}
+  #d .sky{
+    background:linear-gradient(180deg,#87b7ff 0%,#c5ddff 40%,#f7f4ef 100%);
+    padding:24px 28px 0;min-height:200px;
+  }
+  #d .sky-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600}
+  #d .sky h1{
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+    font-size:clamp(2rem,5vw,3rem);letter-spacing:-.04em;line-height:1;margin:28px 0 8px;max-width:16ch;
+  }
+  #d .sky p{margin:0 0 24px;color:#2a3548;max-width:28rem;font-size:15px;line-height:1.45}
+  #d .pass{
+    margin:0 20px 28px;background:#fff;border-radius:16px;
+    box-shadow:0 12px 40px rgba(40,60,100,.12);
+    display:grid;grid-template-columns:1.4fr 0.9fr;overflow:hidden;
+    border:1px solid #e4ddd2;
+  }
+  #d .pass-main{padding:22px 24px}
+  #d .pass-main .fromto{
+    display:flex;align-items:flex-end;gap:12px;margin-bottom:18px;
+  }
+  #d .pass-main .code{
+    font-family:"Bricolage Grotesque",sans-serif;font-size:2.4rem;font-weight:800;letter-spacing:-.04em;line-height:1;
+  }
+  #d .pass-main .arrow{flex:1;height:2px;background:#14120f;margin-bottom:14px;position:relative}
+  #d .pass-main .arrow::after{content:"";position:absolute;right:-2px;top:-4px;border:5px solid transparent;border-left-color:#14120f}
+  #d .pass-main .label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7a7368;font-weight:700}
+  #d .pass-main .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:13px}
+  #d .pass-main .row b{display:block;font-size:15px;margin-top:2px}
+  #d .pass-side{
+    background:#14120f;color:#f7f4ef;padding:22px 20px;
+    display:flex;flex-direction:column;justify-content:space-between;
+    border-left:2px dashed #3a3530;
+  }
+  #d .pass-side .gate{font-family:"Geist Mono",monospace;font-size:11px;letter-spacing:.14em;opacity:.7}
+  #d .pass-side h3{font-family:"Bricolage Grotesque",sans-serif;font-size:1.35rem;margin:10px 0;font-weight:700;letter-spacing:-.02em}
+  #d .board{
+    display:inline-block;margin-top:8px;padding:12px 16px;background:#ff5a1f;color:#fff;
+    text-decoration:none;font-weight:700;font-size:13px;border-radius:8px;text-align:center;
+  }
+  #d .itinerary{padding:0 28px 32px}
+  #d .itinerary h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#7a7368;margin:0 0 12px}
+  #d .leg{
+    display:grid;grid-template-columns:56px 1fr auto;gap:14px;align-items:center;
+    padding:12px 0;border-bottom:1px solid #e4ddd2;font-size:14px;
+  }
+  #d .leg .t{font-family:"Geist Mono",monospace;font-size:12px;color:#7a7368}
+  #d .leg.now{background:#fff4ec;margin:0 -10px;padding-left:10px;padding-right:10px;border-radius:8px;border-bottom-color:transparent}
+  @media(max-width:700px){#d .pass{grid-template-columns:1fr}}
+
+  /* ═══ E COMIC PANELS ═══ */
+  #e .frame{background:#1a1a1e;color:#f2f2f4}
+  #e .bar{
+    display:flex;align-items:center;gap:14px;padding:16px 22px;
+    border-bottom:3px solid #f2f2f4;
+  }
+  #e .bar .brand{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:18px;letter-spacing:-.03em}
+  #e .bar span{font-size:12px;opacity:.55;margin-left:auto}
+  #e .title-row{padding:20px 22px 8px}
+  #e .title-row h1{
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+    font-size:clamp(1.6rem,3.5vw,2.2rem);letter-spacing:-.03em;margin:0 0 6px;
+  }
+  #e .title-row p{margin:0;color:#a0a0ae;font-size:14px}
+  #e .pages{
+    display:grid;grid-template-columns:1.1fr 0.9fr;gap:10px;padding:16px 22px 28px;
+  }
+  #e .panel-box{
+    border:3px solid #f2f2f4;background:#121216;min-height:200px;padding:16px;
+    position:relative;display:flex;flex-direction:column;
+  }
+  #e .panel-box.wide{grid-column:1/-1;min-height:160px;background:linear-gradient(120deg,#1c1520,#121216 50%,#141c22)}
+  #e .panel-box .cap{
+    position:absolute;top:10px;left:10px;background:#f2f2f4;color:#121216;
+    font-family:"Geist Mono",monospace;font-size:10px;font-weight:600;padding:3px 7px;letter-spacing:.06em;
+  }
+  #e .panel-box h3{font-family:"Bricolage Grotesque",sans-serif;font-size:1.3rem;font-weight:700;margin:28px 0 8px;letter-spacing:-.02em}
+  #e .panel-box p{margin:0;font-size:13px;color:#b4b4c0;line-height:1.45;flex:1}
+  #e .bubble{
+    align-self:flex-end;background:#ffd60a;color:#121216;padding:10px 14px;
+    font-weight:700;font-size:13px;border-radius:14px 14px 4px 14px;margin-top:12px;
+    text-decoration:none;max-width:90%;
+  }
+  #e .panel-box.done{opacity:.55}
+  #e .panel-box.now{border-color:#ffd60a;box-shadow:0 0 0 1px #ffd60a}
+  @media(max-width:700px){#e .pages{grid-template-columns:1fr}}
+
+  /* ═══ F MENTOR DIALOGUE ═══ */
+  #f .frame{background:#fafafa;color:#171717}
+  #f .nav{
+    display:flex;gap:16px;align-items:center;padding:14px 24px;
+    border-bottom:1px solid #e5e5e5;font-size:13px;font-weight:600;
+  }
+  #f .nav .brand{font-family:"Outfit",sans-serif;font-weight:700;letter-spacing:-.02em}
+  #f .nav a{color:#737373;text-decoration:none}
+  #f .chat{max-width:640px;margin:0 auto;padding:28px 24px 36px}
+  #f .day{
+    text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:#a3a3a3;margin-bottom:28px;font-weight:600;
+  }
+  #f .msg{display:flex;gap:12px;margin-bottom:20px;align-items:flex-end}
+  #f .msg.me{flex-direction:row-reverse}
+  #f .ava{
+    width:36px;height:36px;border-radius:50%;flex-shrink:0;
+    display:grid;place-items:center;font-size:12px;font-weight:700;
+  }
+  #f .ava.v{background:#171717;color:#fafafa}
+  #f .ava.u{background:#e5e5e5;color:#171717}
+  #f .bubble-t{
+    max-width:85%;padding:12px 16px;border-radius:18px;font-size:15px;line-height:1.45;
+  }
+  #f .msg.vidura .bubble-t{background:#171717;color:#fafafa;border-bottom-left-radius:4px}
+  #f .msg.me .bubble-t{background:#ececec;color:#171717;border-bottom-right-radius:4px}
+  #f .msg.vidura .bubble-t strong{color:#86efac}
+  #f .choices{display:flex;flex-direction:column;gap:8px;margin:24px 0 0;padding-left:48px}
+  #f .choices a{
+    display:block;padding:14px 16px;border:1.5px solid #171717;border-radius:12px;
+    text-decoration:none;color:#171717;font-weight:600;font-size:14px;
+    transition:background .15s,color .15s;
+  }
+  #f .choices a:hover{background:#171717;color:#fafafa}
+  #f .choices a.primary{background:#171717;color:#fafafa}
+  #f .choices a small{display:block;font-weight:500;opacity:.55;margin-top:2px;font-size:12px}
+
+  /* ═══ G LIVE STAGE ═══ */
+  #g .frame{background:#0f1419;color:#eef3f7}
+  #g .marquee{
+    overflow:hidden;border-bottom:1px solid #243040;background:#0a0e12;
+    font-family:"Geist Mono",monospace;font-size:11px;letter-spacing:.08em;
+    color:#5eead4;padding:8px 0;white-space:nowrap;
+  }
+  #g .marquee span{display:inline-block;padding-left:100%;animation:scroll 28s linear infinite}
+  @keyframes scroll{to{transform:translateX(-100%)}}
+  #g .stage-wrap{padding:32px 28px 20px;text-align:center}
+  #g .live{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:"Geist Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:#fb7185;margin-bottom:18px;
+  }
+  #g .live i{
+    width:8px;height:8px;border-radius:50%;background:#fb7185;
+    box-shadow:0 0 0 0 rgba(251,113,133,.6);animation:pulse 1.6s infinite;
+  }
+  @keyframes pulse{70%{box-shadow:0 0 0 10px transparent}}
+  #g h1{
+    font-family:"Literata",Georgia,serif;font-weight:600;
+    font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-.03em;line-height:1.1;
+    margin:0 auto 14px;max-width:16ch;
+  }
+  #g .syn{color:#94a3b8;max-width:32rem;margin:0 auto 28px;line-height:1.55;font-size:15px}
+  #g .curtain{
+    position:relative;margin:0 auto 28px;max-width:520px;aspect-ratio:16/9;
+    background:
+      radial-gradient(ellipse at 50% 80%,rgba(94,234,212,.2),transparent 55%),
+      linear-gradient(180deg,#1a2430,#0f1419);
+    border:1px solid #2a3a4c;border-radius:4px;
+    display:grid;place-items:center;
+  }
+  #g .curtain a{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:16px 28px;background:#5eead4;color:#042f2e;
+    font-weight:700;font-size:15px;text-decoration:none;border-radius:999px;
+  }
+  #g .setlist{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#243040;
+    border-top:1px solid #243040;
+  }
+  #g .setlist a{
+    background:#0f1419;padding:16px 14px;text-decoration:none;color:inherit;
+    font-size:13px;min-height:88px;
+  }
+  #g .setlist a:hover{background:#15202b}
+  #g .setlist .n{font-family:"Geist Mono",monospace;font-size:10px;color:#5eead4;letter-spacing:.1em}
+  #g .setlist strong{display:block;margin:6px 0 2px;font-size:13px}
+  #g .setlist span{color:#64748b;font-size:11px}
+  #g .setlist a.now{background:#13252a;box-shadow:inset 0 3px 0 #5eead4}
+  @media(max-width:700px){#g .setlist{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+  <div class="chooser">
+    <strong>Fresh</strong>
+    <button type="button" data-demo="d" aria-pressed="true">D · Boarding pass</button>
+    <button type="button" data-demo="e" aria-pressed="false">E · Comic panels</button>
+    <button type="button" data-demo="f" aria-pressed="false">F · Mentor chat</button>
+    <button type="button" data-demo="g" aria-pressed="false">G · Live stage</button>
+    <span class="hint">New metaphors — travel, comic, dialogue, live show. Same Welding story.</span>
+  </div>
+
+  <!-- D -->
+  <section class="panel is-on" id="d">
+    <p class="note"><strong>D · Boarding pass</strong> — Bright sky, ticket energy. Opening the app = you’re about to <em>depart</em> into today’s lesson. Fresh, optimistic, not dark-cinema.</p>
+    <div class="frame">
+      <div class="sky">
+        <div class="sky-top">
+          <span>EdVidura</span>
+          <span style="opacity:.65">Welding 101 · Gate open</span>
+        </div>
+        <h1>Your flight is boarding.</h1>
+        <p>Destination: SMAW practice. You’ve cleared Safety. Next stop is the checklist — then the quiz terminal.</p>
+        <div class="pass">
+          <div class="pass-main">
+            <div class="fromto">
+              <div>
+                <div class="label">From</div>
+                <div class="code">SAFE</div>
+              </div>
+              <div class="arrow"></div>
+              <div>
+                <div class="label">To</div>
+                <div class="code">SMAW</div>
+              </div>
+            </div>
+            <div class="row">
+              <div><div class="label">Passenger</div><b>Ada</b></div>
+              <div><div class="label">Class</div><b>W101</b></div>
+              <div><div class="label">Progress</div><b>42%</b></div>
+            </div>
+          </div>
+          <div class="pass-side">
+            <div>
+              <div class="gate">GATE B · NOW</div>
+              <h3>SMAW practice note</h3>
+              <div style="font-size:12px;opacity:.7">~12 min · three checks before the arc</div>
+            </div>
+            <a class="board" href="#">Board lesson →</a>
+          </div>
+        </div>
+      </div>
+      <div class="itinerary">
+        <h2>Itinerary</h2>
+        <div class="leg"><span class="t">01</span><div><strong>Safety &amp; joints</strong></div><span>Landed</span></div>
+        <div class="leg now"><span class="t">02</span><div><strong>SMAW practice</strong></div><span>Boarding</span></div>
+        <div class="leg"><span class="t">03</span><div><strong>Handbook</strong></div><span>Soon</span></div>
+        <div class="leg"><span class="t">04</span><div><strong>Class quiz</strong></div><span>Final</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- E -->
+  <section class="panel" id="e">
+    <p class="note"><strong>E · Comic panels</strong> — Story as sequential art. Bold frames, yellow speech CTA. Feels playful and sharp — not soft SaaS.</p>
+    <div class="frame">
+      <div class="bar">
+        <span class="brand">EdVidura</span>
+        <span>Welding 101 · Issue #2</span>
+      </div>
+      <div class="title-row">
+        <h1>Previously: you survived the booth rules.</h1>
+        <p>This issue — the steady hand. Read the panels. Tap the yellow bubble when you’re ready.</p>
+      </div>
+      <div class="pages">
+        <div class="panel-box done">
+          <span class="cap">PANEL 1</span>
+          <h3>Safety &amp; joints</h3>
+          <p>Flashback complete. PPE on. Joints named. The booth doesn’t negotiate.</p>
+        </div>
+        <div class="panel-box now">
+          <span class="cap">PANEL 2 · YOU ARE HERE</span>
+          <h3>SMAW practice</h3>
+          <p>Three checks. One bead. No shortcuts drawn in the margins.</p>
+          <a class="bubble" href="#">Continue this panel →</a>
+        </div>
+        <div class="panel-box">
+          <span class="cap">PANEL 3</span>
+          <h3>Handbook</h3>
+          <p>When the panel isn’t enough — open the class manual deep cut.</p>
+        </div>
+        <div class="panel-box">
+          <span class="cap">FINALE</span>
+          <h3>Quiz night</h3>
+          <p>Moodle gets the score. The season ends when you prove it.</p>
+        </div>
+        <div class="panel-box wide">
+          <span class="cap">SIDE QUEST</span>
+          <h3>Ask Vidura appears in the gutter</h3>
+          <p>Stuck between panels? Coach only cites approved sources — no fan-fiction metallurgy.</p>
+          <a class="bubble" href="#" style="align-self:flex-start">Ask a question →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- F -->
+  <section class="panel" id="f">
+    <p class="note"><strong>F · Mentor chat</strong> — The whole home screen is a conversation. Story = dialogue choices. Feels intimate and modern (iMessage energy, not LMS).</p>
+    <div class="frame">
+      <div class="nav">
+        <span class="brand">EdVidura</span>
+        <a href="#">Library</a>
+        <a href="#">Progress</a>
+        <span style="margin-left:auto;color:#a3a3a3;font-weight:500">Welding 101</span>
+      </div>
+      <div class="chat">
+        <div class="day">Today · Episode 2</div>
+        <div class="msg vidura">
+          <div class="ava v">EV</div>
+          <div class="bubble-t">Hey Ada — yesterday you nailed joints. <strong>Today we earn the arc.</strong></div>
+        </div>
+        <div class="msg vidura">
+          <div class="ava v">EV</div>
+          <div class="bubble-t">SMAW practice is unlocked. Three setup checks before you touch the stinger. Ready?</div>
+        </div>
+        <div class="msg me">
+          <div class="ava u">A</div>
+          <div class="bubble-t">What’s my path look like?</div>
+        </div>
+        <div class="msg vidura">
+          <div class="ava v">EV</div>
+          <div class="bubble-t">You’re mid-story: Safety ✓ → <strong>SMAW (now)</strong> → Handbook → Quiz. Pick how you want to continue.</div>
+        </div>
+        <div class="choices">
+          <a class="primary" href="#">Enter SMAW practice <small>Recommended · ~12 min</small></a>
+          <a href="#">Open the handbook first <small>If you want a refresher</small></a>
+          <a href="#">Ask Vidura something <small>Grounded on class sources</small></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- G -->
+  <section class="panel" id="g">
+    <p class="note"><strong>G · Live stage</strong> — Concert / live-show energy. “NOW SHOWING” your chapter. Marquee + curtain CTA + setlist. Exciting without looking like a kids’ game.</p>
+    <div class="frame">
+      <div class="marquee"><span>NOW SHOWING · WELDING 101 · EPISODE 02 THE STEADY HAND · RIVERSIDE HIGH · ASK VIDURA AFTER THE SET · </span></div>
+      <div class="stage-wrap">
+        <div class="live"><i></i> Live for you</div>
+        <h1>Tonight’s set: SMAW practice</h1>
+        <p class="syn">Doors open on the checklist. Last show was Safety &amp; joints — standing ovation optional, PPE mandatory.</p>
+        <div class="curtain">
+          <a href="#">▶ Start the set</a>
+        </div>
+      </div>
+      <div class="setlist">
+        <a href="#"><span class="n">01</span><strong>Safety &amp; joints</strong><span>Played</span></a>
+        <a class="now" href="#"><span class="n">02</span><strong>SMAW practice</strong><span>On stage</span></a>
+        <a href="#"><span class="n">03</span><strong>Handbook</strong><span>Encore material</span></a>
+        <a href="#"><span class="n">04</span><strong>Class quiz</strong><span>Closing number</span></a>
+      </div>
+    </div>
+  </section>
+
+<script>
+(function(){
+  var buttons=document.querySelectorAll(".chooser button[data-demo]");
+  var panels=document.querySelectorAll(".panel");
+  buttons.forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var id=btn.getAttribute("data-demo");
+      buttons.forEach(function(b){b.setAttribute("aria-pressed",b===btn?"true":"false")});
+      panels.forEach(function(p){p.classList.toggle("is-on",p.id===id)});
+    });
+  });
+})();
+</script>
+</body>
+</html>

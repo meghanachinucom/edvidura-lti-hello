@@ -139,6 +139,58 @@ def coverage_question_count(requested: int, segment_count: int, *, cap: int = 40
     return max(segs, min(req, extras_cap))
 
 
+def questions_for_page_count(page_count: int) -> int:
+    """SME R-8: at least 5 questions per 10 pages (round up)."""
+    pages = max(1, int(page_count or 1))
+    blocks = (pages + 9) // 10
+    return 5 * blocks
+
+
+def _extract_docx_text(data: bytes, *, filename: str = "upload.docx") -> tuple[str, list[dict[str, str]]]:
+    """Plain-text extract from a .docx (OOXML) without extra packages."""
+    import zipfile
+    from io import BytesIO
+    from xml.etree import ElementTree as ET
+
+    ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    try:
+        with zipfile.ZipFile(BytesIO(data)) as zf:
+            xml = zf.read("word/document.xml")
+    except Exception as exc:  # noqa: BLE001
+        raise ValueError(f"Could not read Word document: {exc}") from exc
+    try:
+        root = ET.fromstring(xml)
+    except ET.ParseError as exc:
+        raise ValueError(f"Could not parse Word document: {exc}") from exc
+    paras: list[str] = []
+    for para in root.iter(f"{ns}p"):
+        texts = [t.text or "" for t in para.iter(f"{ns}t")]
+        line = "".join(texts).strip()
+        if line:
+            paras.append(line)
+    text = "\n".join(paras).strip()
+    chunks: list[str] = []
+    buf: list[str] = []
+    chars = 0
+    for line in paras:
+        buf.append(line)
+        chars += len(line)
+        if chars >= 800:
+            chunks.append("\n".join(buf))
+            buf = []
+            chars = 0
+    if buf:
+        chunks.append("\n".join(buf))
+    segments = [
+        {"label": f"Section {i}", "text": chunk[:2500]}
+        for i, chunk in enumerate(chunks or [text], start=1)
+        if chunk.strip()
+    ]
+    if not segments and text:
+        segments = [{"label": filename or "Document", "text": text[:2500]}]
+    return text, segments
+
+
 def generate_mcqs_from_text(
     body: str,
     *,
@@ -147,6 +199,7 @@ def generate_mcqs_from_text(
     difficulty: str = "core",
     complexity: str = "apply",
     segments: list[dict[str, str]] | None = None,
+    cap: int | None = None,
 ) -> dict[str, Any]:
     text = (body or "").strip()
     if len(text) < 40 and not segments:
@@ -161,13 +214,8 @@ def generate_mcqs_from_text(
     segs = segments or segment_text_for_coverage(text, title=title)
     if not segs:
         raise ValueError("Lesson text is too short to generate questions")
-    n = coverage_question_count(count, len(segs), cap=40)
-
-    def _openai():
-        questions = _openai_mcqs_covered(
-            segs, count=n, title=title, difficulty=level, complexity=depth
-        )
-        return {"questions": questions}
+    limit = 200 if (cap and int(cap) >= 100) or int(count or 0) >= 100 else int(cap or 40)
+    n = coverage_question_count(count, len(segs), cap=limit)
 
     def _local():
         return {
@@ -176,21 +224,37 @@ def generate_mcqs_from_text(
             )
         }
 
-    result = run_ai(
-        openai_fn=_openai,
-        local_fn=_local,
-        feature="mcq",
-        route_state={
-            "segment_count": len(segs),
-            "difficulty": level,
-            "complexity": depth,
-            "title": (title or "")[:120],
-            "goal": (
-                "Draft full-coverage MCQs from lesson segments. Prefer local for "
-                "Easy/Recall and few segments; prefer remote for Analyze/Hard."
-            ),
-        },
-    )
+    if n >= 100:
+        # Bulk banks stay on the local generator so 100+ items are reliable.
+        result = {
+            **_local(),
+            "provider": "local",
+            "model": "heuristic",
+            "note": "Bulk bank (100+). Review each item before promoting to the live quiz.",
+        }
+    else:
+
+        def _openai():
+            questions = _openai_mcqs_covered(
+                segs, count=n, title=title, difficulty=level, complexity=depth
+            )
+            return {"questions": questions}
+
+        result = run_ai(
+            openai_fn=_openai,
+            local_fn=_local,
+            feature="mcq",
+            route_state={
+                "segment_count": len(segs),
+                "difficulty": level,
+                "complexity": depth,
+                "title": (title or "")[:120],
+                "goal": (
+                    "Draft full-coverage MCQs from lesson segments. Prefer local for "
+                    "Easy/Recall and few segments; prefer remote for Analyze/Hard."
+                ),
+            },
+        )
     result["difficulty"] = level
     result["complexity"] = depth
     result["complexity_label"] = complexity_label(depth)
@@ -205,17 +269,20 @@ def extract_text_from_bytes(
     data: bytes,
     *,
     filename: str = "",
+    max_chars: int = 50_000,
 ) -> dict[str, Any]:
     """Extract plain text from PDF / .txt / .md for MCQ drafting.
 
     PDFs keep **per-page** text so quizzes can cover pages 1…N end-to-end
-    (not only early pages).
+    (not only early pages). ``max_chars`` caps returned text (manuals may
+    pass a higher limit for long Sanskrit PDFs).
     """
     raw = data or b""
     if not raw:
         raise ValueError("Empty upload")
     if len(raw) > 8 * 1024 * 1024:
         raise ValueError("File too large (max 8 MB)")
+    cap = max(1_000, int(max_chars or 50_000))
     name = (filename or "upload").lower().strip()
     if name.endswith((".txt", ".md", ".markdown")):
         text = raw.decode("utf-8", errors="replace").strip()
@@ -223,14 +290,25 @@ def extract_text_from_bytes(
             raise ValueError("Text file is too short to generate questions")
         segments = segment_text_for_coverage(text, title=filename or "Document")
         return {
-            "text": text,
+            "text": text[:cap],
             "source_kind": "text",
             "page_count": None,
             "filename": filename or "upload.txt",
             "segments": segments,
         }
+    if name.endswith((".docx", ".doc")):
+        text, segments = _extract_docx_text(raw, filename=filename or "upload.docx")
+        if len(text) < 40:
+            raise ValueError("Word document is too short to generate questions")
+        return {
+            "text": text[:cap],
+            "source_kind": "docx",
+            "page_count": max(1, len(segments)),
+            "filename": filename or "upload.docx",
+            "segments": segments,
+        }
     if not name.endswith(".pdf"):
-        raise ValueError("Upload a PDF or .txt / .md file")
+        raise ValueError("Upload a PDF, Word (.docx), or .txt / .md file")
     try:
         from io import BytesIO
 
@@ -267,7 +345,7 @@ def extract_text_from_bytes(
     if not segments:
         segments = segment_text_for_coverage(text, title=filename or "PDF")
     return {
-        "text": text[:50000],
+        "text": text[:cap],
         "source_kind": "pdf",
         "page_count": len(reader.pages),
         "filename": filename or "upload.pdf",
@@ -284,12 +362,14 @@ def generate_mcqs_from_document(
     difficulty: str = "core",
     complexity: str = "apply",
 ) -> dict[str, Any]:
-    """PDF/text upload → extract → MCQ draft covering all pages/sections."""
+    """PDF/text/DOCX upload → extract → MCQ draft covering all pages/sections."""
     extracted = extract_text_from_bytes(data, filename=filename)
     label = (title or "").strip() or (filename or "Uploaded document")
+    pages = extracted.get("page_count")
+    wanted = max(int(count or 1), questions_for_page_count(int(pages or 1)) if pages else int(count or 1))
     result = generate_mcqs_from_text(
         extracted["text"],
-        count=count,
+        count=wanted,
         title=label,
         difficulty=difficulty,
         complexity=complexity,
@@ -299,6 +379,53 @@ def generate_mcqs_from_document(
     result["source_filename"] = extracted["filename"]
     result["page_count"] = extracted.get("page_count")
     result["extracted_chars"] = len(extracted["text"])
+    return result
+
+
+def generate_test_bank(
+    body: str,
+    *,
+    count: int = 120,
+    title: str = "",
+    difficulty: str = "core",
+    complexity: str = "apply",
+    segments: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    """F-4: 100+ item draft bank. Teacher review is required before save."""
+    wanted = max(100, min(int(count or 120), 200))
+    result = generate_mcqs_from_text(
+        body,
+        count=wanted,
+        title=title,
+        difficulty=difficulty,
+        complexity=complexity,
+        segments=segments,
+        cap=200,
+    )
+    questions = list(result.get("questions") or [])
+    if len(questions) < 100:
+        segs = segments or segment_text_for_coverage(body, title=title)
+        extra = _local_mcqs_covered(
+            segs or [{"label": title or "Topic", "text": body}],
+            count=wanted,
+            title=title,
+            difficulty=normalize_difficulty(difficulty),
+            complexity=complexity,
+        )
+        seen = {str(q.get("prompt") or "") for q in questions}
+        for q in extra:
+            if str(q.get("prompt") or "") in seen:
+                continue
+            questions.append(q)
+            seen.add(str(q.get("prompt") or ""))
+            if len(questions) >= wanted:
+                break
+    for q in questions:
+        q["review_status"] = "draft"
+    result["questions"] = questions[:wanted]
+    result["bank_size"] = len(result["questions"])
+    result["review_required"] = True
+    result["min_size"] = 100
     return result
 
 
@@ -453,14 +580,159 @@ def generate_remediation_micro_lesson(
         openai_fn=_openai, local_fn=_local, feature="remediation_micro_lesson"
     )
 
+def _tokens(text: str) -> set[str]:
+    return {w for w in re.findall(r"[a-zA-Z]{3,}", (text or "").lower())}
+
+
+def grade_essay_against_instructor(
+    student_answer: str,
+    *,
+    prompt: str,
+    instructor_answer: str = "",
+    rubric: str = "",
+    rag_chunks: list[dict[str, Any]] | None = None,
+    max_score: int = 5,
+) -> dict[str, Any]:
+    """F-12: compare a student essay to the instructor model answer + RAG chunks."""
+    prompt_s = (prompt or "").strip()
+    answer = (student_answer or "").strip()
+    if not prompt_s or not answer:
+        raise ValueError("Prompt and student answer are required")
+    max_s = max(1, min(int(max_score), 20))
+    model = (instructor_answer or "").strip()
+    rubric_s = (
+        rubric or "Award points for accuracy against the instructor answer and source text."
+    ).strip()
+    chunks = [c for c in (rag_chunks or []) if isinstance(c, dict)][:12]
+    rag_text = " ".join(
+        str(c.get("body") or c.get("text") or c.get("excerpt") or "") for c in chunks
+    )
+    st, mt, rt = _tokens(answer), _tokens(model), _tokens(rag_text)
+    coverage = (len(st & mt) / max(len(mt), 1)) if mt else 0.0
+    rag_hit = (len(st & rt) / max(min(len(rt), 40), 1)) if rt else 0.0
+    length_ok = min(1.0, len(answer.split()) / 40.0)
+    if mt and rt:
+        raw = 0.5 * coverage + 0.3 * rag_hit + 0.2 * length_ok
+        compared = "instructor_answer+rag"
+    elif mt:
+        raw = 0.75 * coverage + 0.25 * length_ok
+        compared = "instructor_answer"
+    elif rt:
+        raw = 0.65 * rag_hit + 0.35 * length_ok
+        compared = "rag"
+    else:
+        raw = 0.7 * length_ok
+        compared = "length"
+    percent = int(round(100 * max(0.0, min(1.0, raw))))
+    score = int(round(percent / 100 * max_s))
+    citations = []
+    for c in chunks:
+        title = str(c.get("title") or c.get("label") or "").strip()
+        body = str(c.get("body") or c.get("text") or "")
+        if title and (_tokens(body) & st):
+            citations.append({"title": title, "ref": title})
+    core = {
+        "score": score,
+        "max_score": max_s,
+        "percent": percent,
+        "feedback": (
+            f"Compared with the instructor answer ({compared}). "
+            f"Key-point coverage {int(round(coverage * 100))}% · "
+            f"source overlap {int(round(rag_hit * 100))}%."
+        ),
+        "strengths": (
+            ["Touches instructor key points"] if coverage >= 0.3 else ["Attempt submitted"]
+        ),
+        "improvements": (
+            []
+            if coverage >= 0.6
+            else ["Bring the answer closer to the instructor model and cited sources"]
+        ),
+        "confidence": "high" if mt and coverage >= 0.5 else "medium" if mt or rt else "low",
+        "compared_to": compared,
+        "instructor_overlap": round(coverage, 3),
+        "rag_overlap": round(rag_hit, 3),
+        "citations": citations[:6],
+    }
+
+    def _openai():
+        data = openai_chat_json(
+            system=(
+                "You grade student essays against an instructor model answer and "
+                "retrieved source excerpts. Return ONLY JSON: "
+                '{"score":0,"feedback":"...","strengths":["..."],'
+                '"improvements":["..."],"confidence":"low|medium|high"}. '
+                "Do not invent sources. You do NOT send grades to any LMS."
+            ),
+            user=(
+                f"Max score: {max_s}\nRubric: {rubric_s}\nQuestion: {prompt_s}\n"
+                f"Instructor answer: {model[:2500]}\n"
+                f"Sources: {[c.get('title') for c in chunks]}\n"
+                f"{rag_text[:2500]}\nStudent answer: {answer[:4000]}"
+            ),
+            temperature=0.2,
+        )
+        if isinstance(data, dict) and data.get("score") is not None:
+            try:
+                core["score"] = max(0, min(max_s, int(data.get("score") or score)))
+            except (TypeError, ValueError):
+                pass
+            if data.get("feedback"):
+                core["feedback"] = str(data.get("feedback"))
+            if data.get("strengths"):
+                core["strengths"] = [str(x) for x in data["strengths"]][:5]
+            if data.get("improvements"):
+                core["improvements"] = [str(x) for x in data["improvements"]][:5]
+            if data.get("confidence"):
+                core["confidence"] = str(data.get("confidence"))
+            core["percent"] = int(round(100 * core["score"] / max_s))
+        return core
+
+    def _local():
+        return core
+
+    packed = run_ai(openai_fn=_openai, local_fn=_local, feature="essay_grade")
+    packed.setdefault("score", score)
+    packed.setdefault("max_score", max_s)
+    packed["percent"] = int(packed.get("percent") or percent)
+    packed["compared_to"] = compared
+    packed["instructor_overlap"] = core["instructor_overlap"]
+    packed["rag_overlap"] = core["rag_overlap"]
+    packed["citations"] = citations[:6]
+    packed["moodle_passback"] = False
+    packed["disclaimer"] = (
+        "Suggestion only — never sent to Moodle automatically. "
+        "Teacher enters the official grade in the LMS."
+    )
+    packed["copy_text"] = (
+        f"Score: {packed['score']}/{max_s} ({packed['percent']}%)\n"
+        f"Compared to: {compared}\n"
+        f"Confidence: {packed.get('confidence')}\n"
+        f"Feedback: {packed.get('feedback')}\n\n"
+        "— EdVidura AI suggestion only. Not sent to Moodle."
+    )
+    return packed
+
+
 def grade_open_response(
     *,
     prompt: str,
     rubric: str,
     student_answer: str,
     max_score: int = 5,
+    instructor_answer: str = "",
+    rag_chunks: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Suggest a score for an open response — never sends to Moodle/AGS."""
+    if (instructor_answer or "").strip() or rag_chunks:
+        return grade_essay_against_instructor(
+            student_answer,
+            prompt=prompt,
+            instructor_answer=instructor_answer,
+            rubric=rubric,
+            rag_chunks=rag_chunks,
+            max_score=max_score,
+        )
     prompt_s = (prompt or "").strip()
     answer = (student_answer or "").strip()
     if not prompt_s or not answer:
@@ -781,15 +1053,59 @@ def _local_mcqs_covered(
             if i < len(pool):
                 facts.append(pool[i])
 
-    n = min(max(1, count), max(len(facts), len(pools)))
+    n = max(1, min(int(count or 1), 200))
     first_pass = [pool[0] for pool in pools]
     ordered = first_pass + [f for f in facts if f not in first_pass]
+    if not ordered:
+        ordered = [(title or "Topic", "This lesson is part of the unit.")]
+    stems = (
+        "According to “{label}”, which statement is correct?",
+        "From “{label}”: which fact is stated in the lesson?",
+        "Based on “{label}”, which choice is true?",
+        "Using “{label}”, which statement best matches the material?",
+        "From “{label}”: which option restates a point in the lesson?",
+    )
     questions: list[dict[str, Any]] = []
-    for i in range(min(n, len(ordered))):
-        label, fact = ordered[i]
-        others = [f for j, (_l, f) in enumerate(ordered) if j != i][:3]
+    while len(questions) < n:
+        i = len(questions)
+        label, fact = ordered[i % len(ordered)]
+        cycle = i // len(ordered)
+        others = [f for j, (_l, f) in enumerate(ordered) if j != (i % len(ordered))][:3]
         while len(others) < 3:
             others.append(GENERIC_DISTRACTORS[len(others) % 3])
+        kind = i % 10
+        if kind == 7:
+            questions.append(
+                {
+                    "prompt": f"True or false — the lesson on “{label}” includes: “{fact[:90]}”",
+                    "choices": ["True", "False"],
+                    "correct_index": 0,
+                    "qtype": "true_false",
+                    "source_excerpt": fact[:120],
+                    "topic": label,
+                    "difficulty": level,
+                    "complexity": depth,
+                    "review_status": "draft",
+                }
+            )
+            continue
+        if kind == 8:
+            questions.append(
+                {
+                    "prompt": f"In one or two sentences, explain this point from “{label}”: {fact[:110]}",
+                    "choices": [],
+                    "correct_index": 0,
+                    "qtype": "essay",
+                    "correct_text": fact[:400],
+                    "instructor_answer": fact[:400],
+                    "source_excerpt": fact[:120],
+                    "topic": label,
+                    "difficulty": level,
+                    "complexity": depth,
+                    "review_status": "draft",
+                }
+            )
+            continue
         correct_index = i % 4
         ordered_choices = [""] * 4
         ordered_choices[correct_index] = fact[:160]
@@ -799,34 +1115,29 @@ def _local_mcqs_covered(
                 continue
             ordered_choices[idx] = others[di][:160]
             di += 1
-        if depth == "recall":
-            prompt = f"From “{label}”: which fact is stated in the lesson?"
-        elif depth == "analyze":
-            prompt = (
-                f"Using “{label}”, which choice best explains why this matters: "
-                f"“{fact[:55]}…”?"
-            )[:240]
-        elif level == "foundational":
-            prompt = f"From “{label}”: which statement is true?"
-        elif level == "challenge":
-            prompt = (
-                f"Based on “{label}”, which choice best applies: "
-                f"“{fact[:70]}…”?"
-            )[:240]
+        if depth == "analyze" or level == "challenge":
+            stem = stems[3]
+        elif depth == "recall" or level == "foundational":
+            stem = stems[1]
         else:
-            prompt = f"According to “{label}”, which statement is correct?"
+            stem = stems[cycle % len(stems)]
+        prompt = stem.format(label=label)
+        if cycle:
+            prompt = f"{prompt} (item {cycle + 1})"
         questions.append(
             {
-                "prompt": prompt,
+                "prompt": prompt[:240],
                 "choices": ordered_choices,
                 "correct_index": correct_index,
+                "qtype": "single",
                 "source_excerpt": fact[:120],
                 "topic": label,
                 "difficulty": level,
                 "complexity": depth,
+                "review_status": "draft",
             }
         )
-    return questions
+    return questions[:n]
 
 
 def _openai_mcqs(text: str, *, count: int, title: str) -> list[dict[str, Any]]:

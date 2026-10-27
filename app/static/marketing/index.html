@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EdVidura — Adaptive learning inside your LMS</title>
+  <meta name="description" content="EdVidura brings AI coaching, skill reels, PeBL eBooks, and Moodle grade passback into one LTI tool for technical training." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050505;
+      --fg: #f4f4f4;
+      --muted: #8a8a8a;
+      --line: rgba(244, 244, 244, 0.16);
+      --paper: #f4f4f4;
+      --ink: #050505;
+      --font: "Outfit", system-ui, sans-serif;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      color: var(--fg);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; height: auto; }
+    code {
+      font-size: 0.88em;
+      padding: 0.1em 0.35em;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+    }
+
+    canvas#mesh {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.55;
+    }
+
+    .progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      width: 0%;
+      z-index: 50;
+      background: var(--fg);
+      transition: width 0.15s linear;
+    }
+
+    .nav {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem clamp(1.25rem, 4vw, 3rem);
+      color: var(--fg);
+    }
+    .nav-brand {
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+    .nav-cta {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border-bottom: 1px solid currentColor;
+      padding-bottom: 2px;
+      transition: opacity 0.25s;
+    }
+    .nav-cta:hover { opacity: 0.6; }
+
+    .wrap { position: relative; z-index: 1; }
+
+    .panel {
+      position: relative;
+      min-height: min(100svh, 920px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(5rem, 10vh, 7rem) clamp(1.25rem, 4vw, 3rem);
+      opacity: 0.35;
+      transform: scale(1.035);
+      transition: opacity 0.75s var(--ease), transform 0.75s var(--ease);
+    }
+    .panel.on {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .panel.paper {
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .panel.paper .muted { color: #555; }
+    .panel.paper .kicker { color: #333; }
+    .panel.paper .kicker::before {
+      background: linear-gradient(90deg, #111, #888);
+    }
+    .panel.paper .line { border-color: rgba(5,5,5,0.14); }
+
+    .kicker {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .kicker::before {
+      content: "";
+      width: 28px;
+      height: 3px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #fff, #666);
+      animation: kicker-grow 1.2s ease infinite alternate;
+    }
+    @keyframes kicker-grow {
+      from { width: 18px; opacity: 0.55; }
+      to { width: 40px; opacity: 1; }
+    }
+
+    h1.display {
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: clamp(3.4rem, 12vw, 7.2rem);
+      line-height: 0.92;
+      letter-spacing: -0.04em;
+      max-width: 12ch;
+    }
+    h1.display .pop {
+      display: inline-block;
+      background: linear-gradient(105deg, #fff 0%, #9a9a9a 40%, #fff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      background-size: 200% auto;
+      animation: title-shimmer 4s ease-in-out infinite;
+    }
+    @keyframes title-shimmer {
+      0%, 100% { background-position: 0% center; }
+      50% { background-position: 100% center; }
+    }
+
+    h2 {
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: clamp(1.85rem, 4.5vw, 3.1rem);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      max-width: 16ch;
+      margin-bottom: 10px;
+    }
+    .lede {
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
+      line-height: 1.55;
+      color: var(--muted);
+      max-width: 42ch;
+      margin-top: 12px;
+    }
+    .muted { color: var(--muted); }
+
+    [data-frag] {
+      opacity: 0;
+      translate: 0 22px;
+      transition: opacity 0.55s ease, translate 0.55s var(--ease), scale 0.55s var(--ease);
+    }
+    .panel.on [data-frag].show {
+      opacity: 1;
+      translate: 0 0;
+    }
+    .panel.on [data-frag].show.scale-in { scale: 1; }
+    [data-frag].scale-in { scale: 0.92; }
+
+    .hero {
+      min-height: 100svh;
+      padding-bottom: clamp(3rem, 8vh, 5rem);
+      justify-content: flex-end;
+      overflow: hidden;
+    }
+    .hero-media {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    .hero-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(1) contrast(1.1);
+      transform: scale(1.08);
+      animation: hero-drift 22s ease-in-out infinite alternate;
+    }
+    @keyframes hero-drift {
+      from { transform: scale(1.08); }
+      to { transform: scale(1.14) translate(-1.2%, -0.8%); }
+    }
+    .hero-shade {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        radial-gradient(90% 70% at 80% 0%, rgba(255,255,255,0.08), transparent 50%),
+        linear-gradient(180deg, rgba(5,5,5,0.2) 0%, rgba(5,5,5,0.35) 45%, rgba(5,5,5,0.94) 100%);
+    }
+    .hero-copy { position: relative; z-index: 2; max-width: 52rem; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.85rem 1.15rem;
+      margin-top: 1.75rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 3rem;
+      padding: 0 1.35rem;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.2s, filter 0.2s;
+    }
+    .btn:hover { filter: brightness(1.05); }
+    .btn:active { transform: translateY(1px); }
+    .btn-solid { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+    .btn-ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+    .panel.paper .btn-solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .panel.paper .btn-ghost { color: var(--ink); border-color: rgba(5,5,5,0.25); }
+
+    .pipe-wrap { margin-top: 28px; max-width: min(1000px, 100%); width: 100%; }
+    .pipe-wrap svg { width: 100%; height: auto; overflow: visible; }
+    .pipe-node { opacity: 0; transform-origin: center; }
+    .panel.on .pipe-node.show { animation: node-in 0.6s var(--ease) forwards; }
+    @keyframes node-in {
+      from { opacity: 0; transform: scale(0.7); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .flow-dot {
+      fill: #f4f4f4;
+      filter: drop-shadow(0 0 6px rgba(255,255,255,0.65));
+    }
+
+    .steps { margin-top: 28px; max-width: 720px; border-top: 1px solid var(--line); }
+    .panel.paper .steps { border-color: rgba(5,5,5,0.14); }
+    .step {
+      padding: 1.15rem 0;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 3rem 1fr;
+      gap: 0.85rem;
+      align-items: baseline;
+    }
+    .panel.paper .step { border-color: rgba(5,5,5,0.14); }
+    .step .num {
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 1.25rem;
+    }
+    .step strong { display: block; font-size: 1.05rem; margin-bottom: 4px; }
+    .step span { color: var(--muted); font-size: 0.95rem; }
+    .panel.paper .step span { color: #555; }
+
+    .bento {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+      margin-top: 28px;
+      max-width: min(1100px, 100%);
+    }
+    .tile {
+      grid-column: span 12;
+      padding: 22px 20px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      border-radius: 4px;
+    }
+    @media (min-width: 720px) {
+      .tile { grid-column: span 6; }
+      .tile.wide { grid-column: span 12; }
+    }
+    .panel.paper .tile {
+      background: #fff;
+      border-color: rgba(5,5,5,0.12);
+      box-shadow: 0 18px 40px -16px rgba(0,0,0,0.18);
+    }
+    .tile .num {
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .tile h3 {
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-bottom: 6px;
+    }
+    .tile p { color: var(--muted); font-size: 0.95rem; line-height: 1.45; max-width: 36ch; }
+    .panel.paper .tile p { color: #555; }
+
+    .bars { margin-top: 28px; max-width: 560px; }
+    .bar-row { margin-bottom: 20px; }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+    .bar-track {
+      height: 10px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .panel.paper .bar-track { background: rgba(5,5,5,0.08); }
+    .bar-fill {
+      height: 100%;
+      width: 0;
+      background: var(--fg);
+      border-radius: 99px;
+      transition: width 1.2s var(--ease);
+    }
+    .panel.paper .bar-fill { background: var(--ink); }
+    .bar-fill.grow { width: var(--w); }
+
+    .stat {
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+      margin-top: 8px;
+    }
+
+    .finale { text-align: left; overflow: hidden; }
+    .burst {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .confetti {
+      position: absolute;
+      top: -12px;
+      width: 8px;
+      height: 12px;
+      opacity: 0;
+      animation: fall 4s linear infinite;
+    }
+    @keyframes fall {
+      0% { transform: translateY(0) rotate(0); opacity: 0; }
+      10% { opacity: 1; }
+      100% { transform: translateY(110vh) rotate(540deg); opacity: 0; }
+    }
+
+    .frag-hint {
+      position: fixed;
+      bottom: 1.1rem;
+      left: 50%;
+      translate: -50% 0;
+      z-index: 45;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      background: rgba(5,5,5,0.7);
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+    }
+    .frag-hint.visible { opacity: 1; }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      padding: 1.5rem clamp(1.25rem, 4vw, 3rem) 2.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+      justify-content: space-between;
+      border-top: 1px solid var(--line);
+    }
+    footer a:hover { color: var(--fg); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-media img,
+      .kicker::before,
+      h1.display .pop,
+      .confetti { animation: none !important; }
+      .panel { opacity: 1; transform: none; transition: none; }
+      [data-frag] { opacity: 1; translate: none; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="mesh" aria-hidden="true"></canvas>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <p class="frag-hint" id="fragHint">Space → reveal next</p>
+
+  <header class="nav">
+    <a class="nav-brand" href="/product">EdVidura</a>
+    <a class="nav-cta" href="#talk">Talk to us</a>
+  </header>
+
+  <div class="wrap">
+    <section class="panel hero on" data-frags="3" id="top">
+      <div class="hero-media" aria-hidden="true">
+        <img src="/static/marketing/hero.jpg" alt="" width="1920" height="1080" fetchpriority="high" />
+      </div>
+      <div class="hero-shade" aria-hidden="true"></div>
+      <div class="hero-copy">
+        <p class="kicker" data-frag="1">LMS-first adaptive learning</p>
+        <h1 class="display" data-frag="1"><span class="pop">EdVidura</span></h1>
+        <p class="lede" data-frag="2" style="color:rgba(244,244,244,0.78)">Adaptive skill training that lives inside Moodle — AI coaching, PeBL eBooks, micro-reels, grade passback.</p>
+        <div class="actions" data-frag="3">
+          <a class="btn btn-solid" href="#talk">Book a walkthrough</a>
+          <a class="btn btn-ghost" href="#how">See how it works</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" data-frags="3" id="why">
+      <p class="kicker" data-frag="1">Why schools choose it</p>
+      <h2 data-frag="1">Moodle stays the front door. We deepen the practice.</h2>
+      <p class="lede" data-frag="2">No second gradebook. Trusted launch, class context, and scores that return home.</p>
+      <p class="stat" data-frag="3">LTI&nbsp;1.3</p>
+      <p class="lede muted" data-frag="3" style="margin-top:8px;max-width:28ch">Assignment and Grade Services — Synced, not copy-paste.</p>
+    </section>
+
+    <section class="panel" data-frags="4" id="how">
+      <p class="kicker" data-frag="1">How it works</p>
+      <h2 data-frag="1">From launch to mastery</h2>
+      <p class="lede" data-frag="1">One continuous loop — not a pile of disconnected tools.</p>
+      <div class="pipe-wrap">
+        <svg viewBox="0 0 880 120" role="img" aria-label="Moodle to EdVidura to practice to grades">
+          <path id="rail" d="M 120 60 H 760" fill="none" stroke="rgba(244,244,244,0.22)" stroke-width="6" stroke-linecap="round"/>
+          <circle class="flow-dot" r="7" cy="60">
+            <animateMotion dur="2.4s" repeatCount="indefinite">
+              <mpath href="#rail"/>
+            </animateMotion>
+          </circle>
+          <g class="pipe-node" data-frag="1">
+            <rect x="20" y="28" width="140" height="64" rx="14" fill="#f4f4f4"/>
+            <text x="90" y="68" text-anchor="middle" fill="#050505" font-family="Outfit,sans-serif" font-weight="700" font-size="15">Moodle</text>
+          </g>
+          <g class="pipe-node" data-frag="2">
+            <rect x="240" y="28" width="160" height="64" rx="14" fill="#1a1a1a" stroke="#f4f4f4" stroke-width="2"/>
+            <text x="320" y="68" text-anchor="middle" fill="#f4f4f4" font-family="Outfit,sans-serif" font-weight="700" font-size="15">EdVidura</text>
+          </g>
+          <g class="pipe-node" data-frag="3">
+            <rect x="460" y="28" width="150" height="64" rx="14" fill="#f4f4f4"/>
+            <text x="535" y="68" text-anchor="middle" fill="#050505" font-family="Outfit,sans-serif" font-weight="700" font-size="15">Practice</text>
+          </g>
+          <g class="pipe-node" data-frag="4">
+            <rect x="680" y="28" width="160" height="64" rx="14" fill="#1a1a1a" stroke="#f4f4f4" stroke-width="2"/>
+            <text x="760" y="62" text-anchor="middle" fill="#f4f4f4" font-family="Outfit,sans-serif" font-weight="700" font-size="14">Gradebook</text>
+            <text x="760" y="78" text-anchor="middle" fill="rgba(244,244,244,0.7)" font-family="Outfit,sans-serif" font-size="11">AGS sync</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <section class="panel paper" data-frags="4" id="loop">
+      <p class="kicker" data-frag="1">The learner loop</p>
+      <h2 data-frag="1">Four beats every student hits</h2>
+      <div class="steps">
+        <div class="step" data-frag="1">
+          <span class="num">01</span>
+          <div><strong>Launch from Moodle</strong><span>Trusted identity, class context, grade services in one open.</span></div>
+        </div>
+        <div class="step" data-frag="2">
+          <span class="num">02</span>
+          <div><strong>Learn in short cycles</strong><span>Skill reels, PeBL manuals with discuss, Ask Vidura on SME sources.</span></div>
+        </div>
+        <div class="step" data-frag="3">
+          <span class="num">03</span>
+          <div><strong>Assess and adapt</strong><span>Personalized quizzes and gap plans reshape the next step.</span></div>
+        </div>
+        <div class="step" data-frag="4">
+          <span class="num">04</span>
+          <div><strong>Pass grades home</strong><span>Results return to Moodle. Cloud, hybrid, or air-gapped.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" data-frags="4" id="capabilities">
+      <p class="kicker" data-frag="1">Inside the product</p>
+      <h2 data-frag="1">Built for technical training</h2>
+      <p class="lede" data-frag="1">Welding labs, trades, competency programs — not generic courseware.</p>
+      <div class="bento">
+        <div class="tile scale-in" data-frag="1">
+          <div class="num">01</div>
+          <h3>Ask Vidura</h3>
+          <p>Study coach with citations, Indian-language voice, PeBL-aligned xAPI.</p>
+        </div>
+        <div class="tile scale-in" data-frag="2">
+          <div class="num">02</div>
+          <h3>PeBL eBooks</h3>
+          <p>Class manuals, chapter discussion, offline post sync — no separate chat app.</p>
+        </div>
+        <div class="tile scale-in" data-frag="3">
+          <div class="num">03</div>
+          <h3>Micro-learning</h3>
+          <p>Teacher skill reels students swipe, then practice — priority from real gaps.</p>
+        </div>
+        <div class="tile scale-in" data-frag="4">
+          <div class="num">04</div>
+          <h3>One App API</h3>
+          <p>Same JSON for web and mobile after LTI — one contract, both platforms.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel paper" data-frags="3" id="proof">
+      <p class="kicker" data-frag="1">What ships</p>
+      <h2 data-frag="1">Ready for your next cohort</h2>
+      <div class="bars">
+        <div class="bar-row" data-frag="1">
+          <div class="bar-label"><span>LTI + AGS grade passback</span><span>Live</span></div>
+          <div class="bar-track"><div class="bar-fill" style="--w:100%"></div></div>
+        </div>
+        <div class="bar-row" data-frag="2">
+          <div class="bar-label"><span>PeBL eBook + discuss + coach</span><span>Live</span></div>
+          <div class="bar-track"><div class="bar-fill" style="--w:100%"></div></div>
+        </div>
+        <div class="bar-row" data-frag="3">
+          <div class="bar-label"><span>App API for web &amp; mobile</span><span>Live</span></div>
+          <div class="bar-track"><div class="bar-fill" style="--w:92%"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel finale" data-frags="2" id="talk">
+      <div class="burst" id="burst" aria-hidden="true"></div>
+      <p class="kicker" data-frag="1">Next step</p>
+      <h2 data-frag="1">Put EdVidura in front of your next cohort.</h2>
+      <p class="lede" data-frag="2">We’ll map your Moodle course, show grade sync, and walk a learner path end to end.</p>
+      <div class="actions" data-frag="2">
+        <a class="btn btn-solid" href="mailto:hello@edvidura.com?subject=EdVidura%20walkthrough">Email for a walkthrough</a>
+        <a class="btn btn-ghost" href="/">Open the app</a>
+      </div>
+      <p class="lede muted" data-frag="2" style="margin-top:2rem;font-size:0.85rem">
+        Space / → reveal · ← back · scroll between sections
+      </p>
+    </section>
+
+    <footer>
+      <span>EdVidura · Adaptive learning for LMS-first schools</span>
+      <span><a href="/health">Status</a> · <a href="/api/v1/app/health">App API</a></span>
+    </footer>
+  </div>
+
+  <script>
+  (function () {
+    var panels = Array.prototype.slice.call(document.querySelectorAll(".panel"));
+    var progress = document.getElementById("progress");
+    var fragHint = document.getElementById("fragHint");
+    var active = 0;
+    var frag = 0;
+    var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function maxFrag(panel) {
+      return parseInt(panel.getAttribute("data-frags") || "0", 10);
+    }
+
+    function applyFrag(panel, f) {
+      var max = maxFrag(panel);
+      panel.querySelectorAll("[data-frag]").forEach(function (el) {
+        var need = parseInt(el.getAttribute("data-frag"), 10);
+        var show = reduced || need <= f;
+        el.classList.toggle("show", show);
+        var fill = el.querySelector && el.querySelector(".bar-fill");
+        if (fill) fill.classList.toggle("grow", show);
+      });
+      var more = !reduced && f < max;
+      fragHint.classList.toggle("visible", more && panel.classList.contains("on"));
+      fragHint.textContent = more ? "Space or → — reveal (" + f + "/" + max + ")" : "";
+    }
+
+    function setActive(i, resetFrag) {
+      if (resetFrag === undefined) resetFrag = true;
+      panels.forEach(function (p, idx) {
+        p.classList.toggle("on", idx === i);
+      });
+      active = i;
+      if (resetFrag) frag = reduced ? maxFrag(panels[i]) : 0;
+      applyFrag(panels[i], frag);
+      if (i === panels.length - 1) spawnConfetti();
+    }
+
+    function revealOrNext() {
+      var max = maxFrag(panels[active]);
+      if (frag < max) {
+        frag++;
+        applyFrag(panels[active], frag);
+        return;
+      }
+      if (active < panels.length - 1) {
+        panels[active + 1].scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+      }
+    }
+
+    function revealBack() {
+      if (frag > 0) {
+        frag--;
+        applyFrag(panels[active], frag);
+        return;
+      }
+      if (active > 0) {
+        panels[active - 1].scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+      }
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight" || e.key === " ") {
+        e.preventDefault();
+        revealOrNext();
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        revealBack();
+      }
+    });
+
+    function onScroll() {
+      var mid = window.scrollY + window.innerHeight * 0.42;
+      var best = 0;
+      var bestDist = Infinity;
+      panels.forEach(function (p, i) {
+        var top = p.offsetTop;
+        var h = p.offsetHeight;
+        var center = top + h * 0.35;
+        var d = Math.abs(center - mid);
+        if (d < bestDist) {
+          bestDist = d;
+          best = i;
+        }
+      });
+      if (best !== active) {
+        setActive(best, true);
+        if (!reduced) {
+          frag = 1;
+          applyFrag(panels[best], frag);
+        }
+      }
+      var doc = document.documentElement;
+      var maxScroll = doc.scrollHeight - window.innerHeight;
+      var pct = maxScroll > 0 ? (window.scrollY / maxScroll) * 100 : 0;
+      progress.style.width = pct + "%";
+    }
+
+    var ticking = false;
+    window.addEventListener("scroll", function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        onScroll();
+        ticking = false;
+      });
+    }, { passive: true });
+
+    var canvas = document.getElementById("mesh");
+    var ctx = canvas.getContext("2d");
+    var W, H, blobs;
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      blobs = Array.from({ length: 16 }, function () {
+        return {
+          x: Math.random() * W,
+          y: Math.random() * H,
+          r: 50 + Math.random() * 120,
+          vx: (Math.random() - 0.5) * 0.32,
+          vy: (Math.random() - 0.5) * 0.32,
+          a: 0.06 + Math.random() * 0.08
+        };
+      });
+    }
+    function drawMesh() {
+      ctx.fillStyle = "#050505";
+      ctx.fillRect(0, 0, W, H);
+      blobs.forEach(function (b) {
+        b.x += b.vx;
+        b.y += b.vy;
+        if (b.x < -b.r) b.x = W + b.r;
+        if (b.x > W + b.r) b.x = -b.r;
+        if (b.y < -b.r) b.y = H + b.r;
+        if (b.y > H + b.r) b.y = -b.r;
+        var g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+        g.addColorStop(0, "rgba(244,244,244," + b.a + ")");
+        g.addColorStop(1, "rgba(244,244,244,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      if (!reduced) requestAnimationFrame(drawMesh);
+    }
+    if (!reduced) {
+      resize();
+      window.addEventListener("resize", resize);
+      drawMesh();
+    } else {
+      canvas.style.display = "none";
+    }
+
+    function spawnConfetti() {
+      var burst = document.getElementById("burst");
+      if (!burst || burst.dataset.done || reduced) return;
+      burst.dataset.done = "1";
+      var shades = ["#f4f4f4", "#c8c8c8", "#888888", "#ffffff", "#555555"];
+      for (var i = 0; i < 40; i++) {
+        var p = document.createElement("div");
+        p.className = "confetti";
+        p.style.left = Math.random() * 100 + "%";
+        p.style.background = shades[i % shades.length];
+        p.style.animationDelay = Math.random() * 2 + "s";
+        p.style.animationDuration = 3 + Math.random() * 3 + "s";
+        burst.appendChild(p);
+      }
+    }
+
+    setActive(0, true);
+    if (!reduced) {
+      frag = maxFrag(panels[0]);
+      applyFrag(panels[0], frag);
+    }
+    onScroll();
+  })();
+  </script>
+</body>
+</html>

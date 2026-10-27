@@ -145,10 +145,34 @@ def build_resource_experienced_statement(
     homepage: str = "http://localhost:8085",
     activity_base: str = "http://localhost:8000",
     statement_id: UUID | str | None = None,
+    duration_seconds: int | None = None,
+    page_label: str = "",
+    chapter_slug: str = "",
 ) -> dict[str, Any]:
     sid = str(statement_id or uuid4())
     kind = (resource_kind or "manual").strip() or "manual"
-    return {
+    page = (page_label or chapter_slug or "").strip()
+    object_id = f"{activity_base.rstrip('/')}/xapi/activities/{kind}/{resource_id}"
+    if page:
+        object_id += f"/page/{_slug(page)}"
+    extensions: dict[str, Any] = {
+        "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
+        "https://edvidura.local/xapi/extensions/resource_kind": kind,
+    }
+    if page:
+        extensions["https://edvidura.local/xapi/extensions/page"] = page[:120]
+    if chapter_slug:
+        extensions["https://edvidura.local/xapi/extensions/chapter_slug"] = chapter_slug[:120]
+    result: dict[str, Any] | None = None
+    if duration_seconds is not None and int(duration_seconds) >= 0:
+        secs = int(duration_seconds)
+        result = {
+            "duration": f"PT{secs}S",
+            "extensions": {
+                "https://edvidura.local/xapi/extensions/duration_seconds": secs,
+            },
+        }
+    stmt: dict[str, Any] = {
         "id": sid,
         "actor": build_actor(
             subject=subject, learner_name=learner_name, homepage=homepage
@@ -159,9 +183,7 @@ def build_resource_experienced_statement(
         },
         "object": {
             "objectType": "Activity",
-            "id": (
-                f"{activity_base.rstrip('/')}/xapi/activities/{kind}/{resource_id}"
-            ),
+            "id": object_id,
             "definition": {
                 "name": {"en-US": resource_title or kind},
                 "type": "http://adlnet.gov/expapi/activities/media",
@@ -169,13 +191,13 @@ def build_resource_experienced_statement(
         },
         "context": {
             "platform": "EdVidura",
-            "extensions": {
-                "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
-                "https://edvidura.local/xapi/extensions/resource_kind": kind,
-            },
+            "extensions": extensions,
         },
         "timestamp": _iso_now(),
     }
+    if result:
+        stmt["result"] = result
+    return stmt
 
 
 def build_skill_assessed_statement(
@@ -491,6 +513,102 @@ def build_coach_feedback_statement(
             "success": rate == "up",
             "response": rate,
             "score": {"scaled": 1.0 if rate == "up" else 0.0},
+        },
+        "context": {
+            "platform": "EdVidura",
+            "extensions": extensions,
+        },
+        "timestamp": _iso_now(),
+    }
+
+
+def build_pebl_discussion_statement(
+    *,
+    tenant_id: UUID | str,
+    subject: str,
+    learner_name: str,
+    message_text: str,
+    thread_id: str,
+    manual_id: UUID | str | None = None,
+    manual_title: str = "",
+    chapter_slug: str = "",
+    chapter_title: str = "",
+    access_level: str = "class",
+    include_full_text: bool = True,
+    homepage: str = "http://localhost:8085",
+    activity_base: str = "http://localhost:8000",
+    statement_id: UUID | str | None = None,
+) -> dict[str, Any]:
+    """In-book PeBL discussion post → xAPI interacted (Discussion Extension)."""
+    import hashlib
+
+    sid = str(statement_id or uuid4())
+    body = (message_text or "").strip()
+    body_hash = hashlib.sha256(body.encode("utf-8")).hexdigest() if body else ""
+    preview = body[:120] + ("…" if len(body) > 120 else "")
+    tid = (thread_id or "").strip() or f"pebl-{subject or 'anon'}"
+    level = (access_level or "class").strip() or "class"
+    ch_slug = (chapter_slug or "").strip() or "general"
+    extensions: dict[str, Any] = {
+        "https://edvidura.local/xapi/extensions/tenant_id": str(tenant_id),
+        "https://edvidura.local/xapi/extensions/channel": "pebl_ebook",
+        "https://edvidura.local/xapi/extensions/thread_id": tid,
+        "https://edvidura.local/xapi/extensions/access_level": level,
+        "https://edvidura.local/xapi/extensions/pebl_discussion_aligned": True,
+        "https://edvidura.local/xapi/extensions/chapter_slug": ch_slug[:120],
+        "https://edvidura.local/xapi/extensions/message_sha256": body_hash,
+        "https://edvidura.local/xapi/extensions/message_len": len(body),
+        "https://edvidura.local/xapi/extensions/message_preview": preview,
+    }
+    if include_full_text and body:
+        extensions[
+            "https://edvidura.local/xapi/extensions/message_text"
+        ] = body[:8000]
+    if manual_id:
+        extensions[
+            "https://edvidura.local/xapi/extensions/manual_id"
+        ] = str(manual_id)
+    if (manual_title or "").strip():
+        extensions[
+            "https://edvidura.local/xapi/extensions/manual_title"
+        ] = manual_title.strip()[:160]
+    if (chapter_title or "").strip():
+        extensions[
+            "https://edvidura.local/xapi/extensions/chapter_title"
+        ] = chapter_title.strip()[:160]
+
+    return {
+        "id": sid,
+        "actor": build_actor(
+            subject=subject, learner_name=learner_name, homepage=homepage
+        ),
+        "verb": {
+            "id": verbs.VERB_INTERACTED,
+            "display": {"en-US": verbs.VERB_DISPLAY[verbs.VERB_INTERACTED]},
+        },
+        "object": {
+            "objectType": "Activity",
+            "id": (
+                f"{activity_base.rstrip('/')}/xapi/activities/pebl-ebook"
+                f"/manual/{_slug(str(manual_id or 'book'))}"
+                f"/chapter/{_slug(ch_slug)}"
+                f"/thread/{_slug(tid)}"
+            ),
+            "definition": {
+                "name": {
+                    "en-US": (
+                        f"PeBL · {(chapter_title or ch_slug or 'Discussion')[:80]}"
+                    )
+                },
+                "description": {
+                    "en-US": "In-book PeBL discussion post (Discussion Extension fields)",
+                },
+                "type": "http://adlnet.gov/expapi/activities/discussion",
+            },
+        },
+        "result": {
+            "success": True,
+            "response": (body if include_full_text and body else (body_hash[:16] if body_hash else "")),
         },
         "context": {
             "platform": "EdVidura",

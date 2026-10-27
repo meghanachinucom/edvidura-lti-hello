@@ -4,20 +4,20 @@
 ,,2,Onboarding APIs,Done,Meghana,Good to go,
 ,,3,PostgreSQL data isolation,Done,Pavan,Good to go,
 ,,4,"3 Question Quiz UI, Score Calculation, Results page",Done,Pavan,Good to go,
-,,5,AGS grade passback,Done,"Pavan, Meghana",Roadblock,
+,,5,AGS grade passback,Done,"Pavan, Meghana",Good to go,Prod quiz_attempts show grade_sent=true (e.g. subject 175 score 3/3). Result page Synced poll. Moodle Accept grades=Yes.
 ,,6,Screen Design Ideas,Done,Meghana,Good to go,
 ,08/09/2026,1,Multi-tenancy implementation,Done,Pavan,,
 ,,2,LTI authorization,Done,Pavan,,
-,,3,Check the TLA requirements at all levels and review/integrate the relevant ADL code from GitHub,Yet to Start,Meghana,,
+,,3,Check the TLA requirements at all levels and review/integrate the relevant ADL code from GitHub,Done,Pavan,,Achieved CMM-2; operating CMM-3. GET /api/v1/tla/maturity. Vendored xi-lite + CATAPULT. ELRR/LEM/federation OOS.
 ,,4,Yet Analytics LRS and Metabase integration,Done,Pavan,,
-,,5,Micro-learning integration,Work In Progress,Pavan,,
-,,6,Check PeBL integration/support for e-books,Work In Progress,Meghana,,
+,,5,Micro-learning integration,Done,Pavan,,Student /learn/micro reels + teacher DCT publish + xAPI experienced. Demo CDN clips off when AIRGAP=1.
+,,6,Check PeBL integration/support for e-books,Done,Pavan,,PeBL-lite: class manuals + reader + Discuss rail + xAPI. Not full PeBL Services/EPUB toolchain (OOS).
 ,,7,"AI-generated quizzes - The AI should create different quizzes for each student, covering the required depth and complexity of the chapters/topics for each student.",Done,Pavan,,
 ,,8,"Voice option for the coach should also be included. Voice option in multi language- Indian language beyond English, Hindi and telugu.",Done,Pavan,,
-,,9,"Air-gapped deployment - The product should support a completely air-gapped setup. We also need to check the possibilities for a hybrid setup with server and cloud, as well as a completely cloud-based setup, depending on the client’s requirements.",Yet to Start,,,
+,,9,"Air-gapped deployment - The product should support a completely air-gapped setup. We also need to check the possibilities for a hybrid setup with server and cloud, as well as a completely cloud-based setup, depending on the client’s requirements.",Done,Pavan,,deploy/airgap compose + AIRGAP=1 boot guard. Cloud/hybrid/air-gap: DEPLOYMENT_TOPOLOGIES.md + AIRGAP_PACK.md.
 ,,10,"xAPI data from chats - Check how xAPI data can be captured/generated from chat interactions as well, referring to the PeBL documentation and the books shared in the group.",Done,Pavan,,
 ,22/09/2026,1,"Quiz Generation (Multi Model Parser) should have 3 level complexity customization, overall coverage of topics and study plan validation for each individual according to their performance.",Done,,,
 ,,2,"JEV implementation, research on how it can help us when combined with our LLM and cost optimisation factor as well, implement accordingly.",Done,"Pavan, Meghana",,Code live in app/modules/jev; enable with JEV_ENABLED=1 + TYPESAFE_API_KEY.
 ,,3,Chatbot further Integration,Done,Pavan,,Phase A: shortcuts clarify thumbs integrity flashcards + portable coach modules.
 ,,4,"Chatbot discussions, LMS/Moodle interactions and VR data, all these 3 should be interconnected, and the personalized plan should adapt as per the inputs and analysis on the student. This should be for each individual learner.",Done,Pavan,,signals fuse + study plan UI + teacher coach insights (Phase B1/B2).
-,,5,Use PeBL for ebook aspects and check and confirm if chat interface is needed/ necessary for ebooks.,Work In Progress,Meghana,,
+,,5,Use PeBL for ebook aspects and check and confirm if chat interface is needed/ necessary for ebooks.,Done,Pavan,,Decision: separate chat NOT needed. Discuss (class) + Ask Vidura (AI) cover PeBL communication.

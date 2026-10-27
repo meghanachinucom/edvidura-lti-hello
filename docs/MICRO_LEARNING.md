@@ -1,4 +1,4 @@
-# Micro-learning
+# Micro-learning (complete)
 
 Skill **video reels** students swipe — teachers publish short clips from the planner.
 
@@ -6,8 +6,11 @@ Skill **video reels** students swipe — teachers publish short clips from the p
 
 | Route | Behavior |
 |-------|----------|
-| `/learn/micro` | Full-screen video reels (swipe up) — skill title + one caption |
+| `/learn/micro` | Full-screen video reels (swipe up) — skill title + caption |
 | Practice / Full lesson | CTAs on each reel |
+| xAPI | Each reel view → `experienced` (`resource_kind=micro_reel`) |
+
+Priority reels float first from the learner’s open gap plan / weak skills.
 
 ## Teacher
 
@@ -17,6 +20,8 @@ Skill **video reels** students swipe — teachers publish short clips from the p
 | Generate draft | Optional text micro-lesson for skills still missing content |
 
 Domain: `adaptive.publish_skill_reel` + `micro_learning_catalog` (reads `lessons.video_url`).
+
+Demo sample clips (public CDN) fill empty `video_url` in cloud only — **disabled when `AIRGAP=1`**.
 
 ## Flow
 

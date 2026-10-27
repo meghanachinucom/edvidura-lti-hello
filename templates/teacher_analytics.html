@@ -252,5 +252,81 @@
     </div>
   </div>
 
+  {% set hm = dash.learner_heatmap if dash else None %}
+  <div class="frosted" style="padding:var(--sp-lg);margin-top:var(--sp-lg)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md);gap:var(--sp-sm);flex-wrap:wrap">
+      <h3 class="headline-md">Noisy LRS heatmap (date × learner)</h3>
+      <span class="chip chip-mint">All xAPI verbs · last {{ hm.dates|length if hm else 0 }} days</span>
+    </div>
+    {% if hm and hm.learners %}
+    <div style="overflow-x:auto">
+      <table class="body-sm" style="border-collapse:separate;border-spacing:2px;font-family:ui-monospace,monospace;font-size:11px">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:4px 8px">Learner</th>
+            {% for lab in hm.date_labels %}
+            <th style="text-align:center;padding:2px;white-space:nowrap;color:var(--on-surface-variant)">{{ lab }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for learner in hm.learners %}
+          {% set row_i = loop.index0 %}
+          <tr>
+            <td style="padding:4px 8px;white-space:nowrap;font-weight:600">{{ learner.label }} · {{ learner.total }}</td>
+            {% for n in hm.cells[row_i] %}
+            {% set level = hm.intensity[row_i][loop.index0] %}
+            <td title="{{ learner.label }} · {{ n }} events">
+              <div style="min-width:18px;height:22px;border-radius:4px;background:{% if level >= 4 %}#b91c1c{% elif level == 3 %}#e83d4d{% elif level == 2 %}#ff6b7a{% elif level == 1 %}#ffccd5{% else %}#f1f5f9{% endif %}"></div>
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="body-sm text-muted">No LRS statements in this window yet. Cells appear once learners generate xAPI.</p>
+    {% endif %}
+  </div>
+
+  {% set ts = dash.time_series if dash else None %}
+  <div class="frosted" style="padding:var(--sp-lg);margin-top:var(--sp-md)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-md);gap:var(--sp-sm);flex-wrap:wrap">
+      <h3 class="headline-md">Per-student time series (8 charts)</h3>
+      <span class="chip">Class totals · day / week / month / quarter</span>
+    </div>
+    {% if ts and ts.charts %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--sp-md)">
+      {% for chart in ts.charts %}
+      {% set ns = namespace(peak=1) %}
+      {% if chart.unit == '%' %}{% set ns.peak = 100 %}{% endif %}
+      {% for v in chart.class_values %}
+        {% if v is not none and v > ns.peak %}{% set ns.peak = v %}{% endif %}
+      {% endfor %}
+      <div style="border:1px solid var(--outline-variant);border-radius:var(--r-lg);padding:var(--sp-md);background:var(--surface-container-lowest)">
+        <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:8px">
+          <span class="headline-sm" style="font-size:14px;font-weight:600">{{ chart.title }}</span>
+          <span class="label-caps text-muted">{{ chart.grain }}</span>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:88px">
+          {% for v in chart.class_values %}
+          {% set h = 0 if v is none else ((v / ns.peak) * 100) | int %}
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px" title="{{ chart.labels[loop.index0] }}: {{ v if v is not none else '—' }}">
+            <div style="width:100%;flex:1;display:flex;align-items:flex-end;background:var(--surface-container-high);border-radius:4px;overflow:hidden">
+              <div style="width:100%;height:{{ h }}%;background:{% if chart.metric == 'score' %}var(--secondary){% else %}var(--primary){% endif %};min-height:{% if v %}4px{% else %}0{% endif %}"></div>
+            </div>
+            <span class="label-caps" style="font-size:9px">{{ chart.labels[loop.index0] }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="body-sm text-muted">Activity and quiz averages at day, week, month, and quarter appear after xAPI or quiz attempts land.</p>
+    {% endif %}
+  </div>
+
 </div>
 {% endblock %}

@@ -52,6 +52,31 @@
   </div>
   {% endif %}
 
+  {% if quiz_assigned and group_assignment %}
+  <div class="quiz-banner quiz-banner--graded">
+    <span class="material-symbols-outlined">groups</span>
+    <span class="body-md">
+      Assigned to <strong>{{ group_assignment.group_name or group_assignment.group_id }}</strong>
+      {% if group_assignment.title %} · {{ group_assignment.title }}{% endif %}
+    </span>
+  </div>
+  {% endif %}
+  {% if quiz_quota and quiz_quota.limit and not practice_mode %}
+  <div class="quiz-banner {% if quiz_blocked == 'attempt_limit' %}quiz-banner--warn{% else %}quiz-banner--graded{% endif %}">
+    <span class="material-symbols-outlined">counter_3</span>
+    <span class="body-md">
+      Attempt {{ quiz_quota.used + 1 if quiz_quota.allowed else quiz_quota.used }} of {{ quiz_quota.limit }}
+      {% if quiz_blocked == 'attempt_limit' %} — limit reached{% endif %}
+    </span>
+  </div>
+  {% endif %}
+  {% if quiz_blocked == 'not_assigned' %}
+  <div class="quiz-banner quiz-banner--warn">
+    <span class="material-symbols-outlined">block</span>
+    <span class="body-md">This graded quiz is assigned to another class group.</span>
+  </div>
+  {% endif %}
+
   {% if personal_error %}
   <div style="display:flex;align-items:center;gap:var(--sp-sm);padding:var(--sp-md) var(--sp-lg);background:rgba(186,26,26,.08);border:1px solid rgba(186,26,26,.18);border-radius:var(--r-xl);color:var(--error);margin-bottom:var(--sp-md)">
     <span class="material-symbols-outlined">error</span>
@@ -186,7 +211,7 @@
           </span>
         </div>
         <div class="quiz-submit-actions">
-          <button type="submit" class="btn {% if practice_mode %}btn-surface{% else %}btn-primary{% endif %}" id="quiz-submit-btn">
+          <button type="submit" class="btn {% if practice_mode %}btn-surface{% else %}btn-primary{% endif %}" id="quiz-submit-btn"{% if quiz_blocked %} disabled{% endif %}>
             <span class="material-symbols-outlined" style="font-size:16px">send</span>
             {% if practice_mode %}Submit practice (no Moodle){% else %}Submit graded quiz{% endif %}
           </button>

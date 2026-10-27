@@ -119,3 +119,13 @@ def test_coach_xapi_full_text_defaults_on(monkeypatch):
     monkeypatch.delenv("COACH_XAPI_FULL_TEXT", raising=False)
     s = get_settings()
     assert s.coach_xapi_full_text is True
+
+
+def test_demo_reel_disabled_in_airgap(monkeypatch):
+    from app.modules.adaptive import service as adaptive_svc
+
+    monkeypatch.setattr(
+        "app.settings.get_settings",
+        lambda: type("S", (), {"airgap": True})(),
+    )
+    assert adaptive_svc._demo_reel_video("variables") is None

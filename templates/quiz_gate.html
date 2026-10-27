@@ -80,10 +80,12 @@
             <span class="material-symbols-outlined" style="font-size:15px">fitness_center</span>
             Practice lane (no grade)
           </a>
+          {% if not hard_gate %}
           <a class="btn btn-surface" href="/quiz?token={{ quiz_token }}&force=1" style="justify-content:flex-start;font-size:13px">
             <span class="material-symbols-outlined" style="font-size:15px">bolt</span>
             Take quiz anyway
           </a>
+          {% endif %}
           <a class="btn btn-glass" href="/learn/coach?token={{ quiz_token }}" style="justify-content:flex-start;font-size:13px">
             <span class="material-symbols-outlined" style="font-size:15px">psychology</span>
             Ask Vidura

@@ -44,6 +44,20 @@
           <div><strong>School quiz</strong><span>Graded quiz with AGS passback</span></div>
           <button class="ob-btn" type="submit">Add</button>
         </form>
+        <form method="post" action="/lti/deep-link/submit">
+          <input type="hidden" name="token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="item_type" value="practice"/>
+          <input type="hidden" name="title" value="Practice quiz"/>
+          <div><strong>Practice quiz</strong><span>Same bank, not sent to Moodle</span></div>
+          <button class="ob-btn" type="submit">Add</button>
+        </form>
+        <form method="post" action="/lti/deep-link/submit">
+          <input type="hidden" name="token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="item_type" value="bank"/>
+          <input type="hidden" name="title" value="Question bank"/>
+          <div><strong>Question bank</strong><span>Open the class quiz designer</span></div>
+          <button class="ob-btn" type="submit">Add</button>
+        </form>
       </div>
     </section>
 

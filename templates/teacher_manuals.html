@@ -17,6 +17,16 @@
     <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
     <label>Title <input name="title" required placeholder="Algebra I technical guide"/></label>
     <label>Description <input name="description" placeholder="Short summary"/></label>
+    <label>Source language (canonical body)
+      <select name="source_language">
+        {% for lang in manual_languages or [] %}
+        <option value="{{ lang.code }}" {% if lang.code == 'en-IN' %}selected{% endif %}>
+          {{ lang.name }} ({{ lang.native }})
+        </option>
+        {% endfor %}
+      </select>
+      <span class="meta">Chaganti / discourse packs: set Sanskrit, then add state languages below.</span>
+    </label>
     <label>Initial body
       <textarea name="body_md" rows="6" placeholder="Chapter text (markdown-ish paragraphs)…"></textarea>
     </label>
@@ -26,13 +36,28 @@
         <option value="0">No — keep draft</option>
       </select>
     </label>
+    {% if class_opts %}
+    <fieldset style="border:1px solid rgba(14,43,36,.12);border-radius:10px;padding:10px 12px">
+      <legend class="meta">Assign to classes</legend>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 14px">
+        {% for c in class_opts %}
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px">
+          <input type="checkbox" name="class_ids" value="{{ c.id }}"
+            {% if session_class_id and c.id == session_class_id %}checked{% endif %}/>
+          {{ c.label }}
+        </label>
+        {% endfor %}
+      </div>
+      <p class="meta" style="margin:6px 0 0">Unchecked + launched from a class → auto-assigns to that class.</p>
+    </fieldset>
+    {% endif %}
     <button type="submit" class="btn primary">Create manual</button>
   </form>
 </section>
 
 <section class="panel">
   <h2>Import from PDF / text (D10)</h2>
-  <p class="meta">Extracts text into a new versioned manual (or adds a version to an existing one). No quiz generation.</p>
+  <p class="meta">Extracts text into a versioned manual. Set <strong>Sanskrit</strong> (or another source) so the reader language dropdown can auto-translate for each state. Text PDFs work; scanned image PDFs need OCR first.</p>
   <form method="post" action="/teacher/manuals/from-pdf" enctype="multipart/form-data" class="teach-form">
     <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
     <label>File
@@ -42,6 +67,15 @@
       <input name="title" placeholder="Imported handbook"/>
     </label>
     <label>Description <input name="description" placeholder="Optional"/></label>
+    <label>Source language of this PDF
+      <select name="source_language">
+        {% for lang in manual_languages or [] %}
+        <option value="{{ lang.code }}" {% if lang.code == 'sa-IN' %}selected{% endif %}>
+          {{ lang.name }} ({{ lang.native }})
+        </option>
+        {% endfor %}
+      </select>
+    </label>
     <label>Add as version to existing
       <select name="manual_id">
         <option value="">— create new manual —</option>
@@ -66,7 +100,41 @@
     <h2>{{ m.title }}</h2>
     <a class="btn secondary" href="/manuals/{{ m.id }}?token={{ quiz_token }}">Student view</a>
   </div>
-  <p class="meta">{{ m.status }} · {{ m.slug }}</p>
+  <p class="meta">{{ m.status }} · {{ m.slug }} · source {{ m.source_language or 'en-IN' }}</p>
+  <form method="post" action="/teacher/manuals/{{ m.id }}/source-language" class="teach-form" style="margin:0 0 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:end">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <label style="margin:0">Source language
+      <select name="source_language">
+        {% for lang in manual_languages or [] %}
+        <option value="{{ lang.code }}" {% if lang.code == (m.source_language or 'en-IN') %}selected{% endif %}>
+          {{ lang.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn secondary" style="font-size:12px;padding:4px 10px">Save source lang</button>
+  </form>
+  {% if class_opts %}
+  <form method="post" action="/teacher/manuals/{{ m.id }}/classes" class="teach-form" style="margin:8px 0 12px">
+    <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+    <fieldset style="border:1px solid rgba(14,43,36,.12);border-radius:10px;padding:10px 12px">
+      <legend class="meta">Visible to classes</legend>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center">
+        {% for c in class_opts %}
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px">
+          <input type="checkbox" name="class_ids" value="{{ c.id }}"
+            {% if c.id in m.class_ids %}checked{% endif %}/>
+          {{ c.label }}
+        </label>
+        {% endfor %}
+        <button type="submit" class="btn secondary" style="font-size:12px;padding:4px 10px">Save classes</button>
+      </div>
+      {% if not m.class_ids %}
+      <p class="meta" style="margin:6px 0 0;color:#b45309">Not assigned — students will not see this manual.</p>
+      {% endif %}
+    </fieldset>
+  </form>
+  {% endif %}
   {% if m.versions %}
   <table>
     <thead><tr><th>Ver</th><th>Status</th><th>Changelog</th><th></th></tr></thead>
@@ -98,6 +166,52 @@
       <label>Body <textarea name="body_md" rows="5" required></textarea></label>
       <label><input type="checkbox" name="publish" value="1"/> Publish immediately</label>
       <button type="submit" class="btn primary">Save version</button>
+    </form>
+  </details>
+  <details class="teach-edit" open>
+    <summary>State languages (translations)</summary>
+    <p class="meta">Keep one Sanskrit (or English) source version; publish Telugu / Tamil / Hindi … for each state.</p>
+    {% if m.locales %}
+    <ul class="meta" style="margin:0 0 10px;padding-left:1.1rem">
+      {% for loc in m.locales %}
+      <li>
+        {{ loc.language_code }}{% if loc.title %} — {{ loc.title }}{% endif %}
+        · {% if loc.is_published %}published{% else %}draft{% endif %}
+        · <a class="link" href="/manuals/{{ m.id }}?token={{ quiz_token }}&amp;lang={{ loc.language_code }}">Preview</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <form method="post" action="/teacher/manuals/{{ m.id }}/locales" class="teach-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <label>State (optional — sets language)
+        <select name="state">
+          <option value="">— pick language below —</option>
+          {% for st in manual_states or [] %}
+          <option value="{{ st.code }}">{{ st.name }} → {{ st.language_name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Language
+        <select name="language_code" required>
+          {% for lang in manual_languages or [] %}
+          <option value="{{ lang.code }}">{{ lang.name }} ({{ lang.native }})</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Localized title (optional)
+        <input name="title" placeholder="Title in this language"/>
+      </label>
+      <label>Body in this language
+        <textarea name="body_md" rows="5" required placeholder="## Chapter…&#10;&#10;Translated body…"></textarea>
+      </label>
+      <label>Publish?
+        <select name="publish">
+          <option value="1">Yes</option>
+          <option value="0">Draft</option>
+        </select>
+      </label>
+      <button type="submit" class="btn primary">Save language</button>
     </form>
   </details>
 </section>

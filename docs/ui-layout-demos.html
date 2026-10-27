@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EdVidura · UI direction demos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  /* ── Chooser chrome (neutral, not a “product”) ── */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    background: #1a1b1e;
+    color: #e8e8ea;
+  }
+  .chooser {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 12px 16px;
+    background: #121316;
+    border-bottom: 1px solid #2c2e33;
+  }
+  .chooser strong { font-size: 13px; font-weight: 600; margin-right: 8px; letter-spacing: .02em; }
+  .chooser button {
+    font: inherit; font-size: 12px; font-weight: 500;
+    padding: 7px 12px; border-radius: 4px;
+    border: 1px solid #3a3d45; background: transparent; color: #c8c9ce;
+    cursor: pointer;
+  }
+  .chooser button[aria-pressed="true"] {
+    background: #e8e8ea; color: #121316; border-color: #e8e8ea;
+  }
+  .chooser .hint { margin-left: auto; font-size: 11px; color: #8b8e98; max-width: 360px; text-align: right; }
+  .panel { display: none; }
+  .panel.is-on { display: block; }
+  .note {
+    max-width: 960px; margin: 0 auto; padding: 16px 20px 8px;
+    font-size: 13px; color: #9a9da6; line-height: 1.45;
+  }
+  .note code { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: #c8c9ce; }
+
+  /* Shared mock frame */
+  .frame {
+    max-width: 1080px; margin: 12px auto 48px;
+    border: 1px solid rgba(0,0,0,.12);
+    box-shadow: 0 24px 60px rgba(0,0,0,.35);
+    overflow: hidden;
+  }
+  .fake-nav {
+    display: flex; align-items: center; gap: 20px;
+    padding: 0 22px; height: 52px;
+    font-size: 13px;
+  }
+  .fake-nav .brand { font-weight: 700; letter-spacing: -.02em; }
+  .fake-nav a { text-decoration: none; opacity: .72; }
+  .fake-nav a.on { opacity: 1; font-weight: 600; }
+  .fake-nav .spacer { flex: 1; }
+  .content { padding: 28px 32px 40px; }
+  @media (max-width: 640px) {
+    .content { padding: 20px 16px 32px; }
+    .chooser .hint { display: none; }
+  }
+
+  /* ═══════════════════════════════════════════
+     1 PATH STUDIO — ink + parchment
+     ═══════════════════════════════════════════ */
+  #d1 .frame { background: #f3efe6; color: #1c1914; }
+  #d1 .fake-nav { background: #1c1914; color: #f3efe6; }
+  #d1 .fake-nav a { color: #f3efe6; }
+  #d1 {
+    --ink: #1c1914;
+    --paper: #f3efe6;
+    --rule: #d4cdc0;
+    --accent: #9a3412; /* burnt clay — not mint, not purple */
+    --muted: #6b6458;
+  }
+  #d1 .path-kicker {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 10px;
+  }
+  #d1 h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 600; letter-spacing: -.03em;
+    margin: 0 0 8px; line-height: 1.1;
+  }
+  #d1 .lede { color: var(--muted); max-width: 34rem; margin: 0 0 28px; font-size: 1.05rem; line-height: 1.5; }
+  #d1 .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px; }
+  #d1 .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 18px; font-size: 14px; font-weight: 600;
+    text-decoration: none; border-radius: 2px;
+  }
+  #d1 .btn-primary { background: var(--accent); color: #fff7ed; }
+  #d1 .btn-ghost { color: var(--ink); border-bottom: 1px solid var(--ink); padding: 11px 4px; border-radius: 0; }
+  #d1 .path {
+    border-top: 1px solid var(--rule);
+    list-style: none; margin: 0; padding: 0;
+  }
+  #d1 .path li {
+    display: grid; grid-template-columns: 48px 1fr auto;
+    gap: 16px; align-items: baseline;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  #d1 .path .n {
+    font-family: "Fraunces", serif; font-size: 1.35rem; font-weight: 600;
+    color: var(--accent);
+  }
+  #d1 .path h3 { margin: 0; font-size: 1.05rem; font-weight: 600; }
+  #d1 .path p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+  #d1 .path .go { font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; }
+  #d1 .path li.done .n { color: var(--muted); }
+  #d1 .path li.now { background: rgba(154,52,18,.06); margin: 0 -12px; padding-left: 12px; padding-right: 12px; }
+
+  /* ═══════════════════════════════════════════
+     2 WORKBENCH — slate + signal amber
+     ═══════════════════════════════════════════ */
+  #d2 .frame { background: #e9ecef; color: #1e2933; }
+  #d2 .fake-nav { background: #243039; color: #e9ecef; }
+  #d2 .fake-nav a { color: #e9ecef; }
+  #d2 .content { padding: 0; display: grid; grid-template-columns: 240px 1fr; min-height: 520px; }
+  #d2 .rail {
+    background: #2c3842; color: #d5dde3;
+    padding: 22px 18px; font-size: 13px;
+  }
+  #d2 .rail h2 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a9aa8; margin: 0 0 14px; font-weight: 600;
+  }
+  #d2 .rail ol { list-style: none; margin: 0; padding: 0; }
+  #d2 .rail li { margin: 0 0 2px; }
+  #d2 .rail a {
+    display: block; padding: 9px 10px; border-radius: 3px;
+    color: inherit; text-decoration: none;
+  }
+  #d2 .rail a:hover, #d2 .rail a.on { background: #3a4955; color: #fff; }
+  #d2 .rail a.on { border-left: 3px solid #e8a317; padding-left: 7px; }
+  #d2 .main { padding: 28px 32px; background: #f4f6f7; }
+  #d2 .main .meta {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px;
+    color: #6b7c8a; margin-bottom: 8px;
+  }
+  #d2 .main h1 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(1.6rem, 3vw, 2.1rem); font-weight: 600;
+    letter-spacing: -.03em; margin: 0 0 10px;
+  }
+  #d2 .main .lede { color: #5a6b78; margin: 0 0 22px; max-width: 36rem; line-height: 1.5; }
+  #d2 .panel-box {
+    background: #fff; border: 1px solid #d0d7dd;
+    padding: 20px 22px; margin-bottom: 16px;
+  }
+  #d2 .panel-box h3 {
+    margin: 0 0 6px; font-size: 15px; font-family: "Space Grotesk", sans-serif;
+  }
+  #d2 .panel-box p { margin: 0 0 14px; font-size: 13px; color: #5a6b78; }
+  #d2 .btn {
+    display: inline-block; padding: 10px 16px; font-size: 13px; font-weight: 600;
+    background: #e8a317; color: #1e1808; text-decoration: none; border-radius: 2px;
+  }
+  #d2 .btn-sec {
+    background: transparent; border: 1px solid #9aabB8; color: #243039;
+    margin-left: 8px;
+  }
+  @media (max-width: 720px) {
+    #d2 .content { grid-template-columns: 1fr; }
+  }
+
+  /* ═══════════════════════════════════════════
+     3 MAGAZINE — bone + midnight blue
+     ═══════════════════════════════════════════ */
+  #d3 .frame { background: #faf8f4; color: #14181f; }
+  #d3 .fake-nav {
+    background: transparent; color: #14181f;
+    border-bottom: 1px solid #14181f; height: 56px;
+  }
+  #d3 .fake-nav a { color: #14181f; opacity: .55; }
+  #d3 .fake-nav a.on { opacity: 1; }
+  #d3 .hero {
+    padding: 48px 0 40px;
+    border-bottom: 1px solid #14181f;
+    display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px;
+    align-items: end;
+  }
+  #d3 .eyebrow {
+    font-family: "Newsreader", Georgia, serif; font-style: italic;
+    font-size: 15px; color: #3d4f7a; margin: 0 0 12px;
+  }
+  #d3 h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: clamp(2.4rem, 5vw, 3.4rem);
+    font-weight: 500; line-height: 1.05; letter-spacing: -.03em;
+    margin: 0 0 16px;
+  }
+  #d3 .lede {
+    font-size: 1.05rem; line-height: 1.55; color: #3a404c;
+    max-width: 28rem; margin: 0;
+  }
+  #d3 .hero-aside {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    line-height: 1.7; color: #3a404c;
+    border-left: 2px solid #14181f; padding-left: 16px;
+  }
+  #d3 .cta {
+    display: inline-block; margin-top: 28px;
+    font-size: 14px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; text-decoration: none; color: #faf8f4;
+    background: #1e3a6e; padding: 14px 22px;
+  }
+  #d3 .index { padding-top: 8px; }
+  #d3 .index a {
+    display: grid; grid-template-columns: 2rem 1fr auto;
+    gap: 12px; align-items: baseline;
+    padding: 16px 0; border-bottom: 1px solid #ddd6c8;
+    text-decoration: none; color: inherit;
+  }
+  #d3 .index a:hover h3 { color: #1e3a6e; }
+  #d3 .index .ix { font-family: "Newsreader", serif; font-style: italic; color: #3d4f7a; }
+  #d3 .index h3 { margin: 0; font-family: "Newsreader", serif; font-weight: 500; font-size: 1.2rem; }
+  #d3 .index span { font-size: 12px; color: #6a6570; }
+  @media (max-width: 720px) {
+    #d3 .hero { grid-template-columns: 1fr; gap: 24px; }
+  }
+
+  /* ═══════════════════════════════════════════
+     4 DENSE OPS — graphite + electric teal (functional)
+     ═══════════════════════════════════════════ */
+  #d4 .frame { background: #f0f1f3; color: #111827; }
+  #d4 .fake-nav { background: #111827; color: #e5e7eb; height: 44px; font-size: 12px; }
+  #d4 .fake-nav a { color: #e5e7eb; }
+  #d4 .strip {
+    display: flex; flex-wrap: wrap; gap: 0;
+    border: 1px solid #c5c9d1; background: #fff; margin-bottom: 16px;
+  }
+  #d4 .strip div {
+    flex: 1; min-width: 120px; padding: 12px 14px;
+    border-right: 1px solid #c5c9d1; font-size: 12px;
+  }
+  #d4 .strip div:last-child { border-right: 0; }
+  #d4 .strip b {
+    display: block; font-family: "IBM Plex Mono", monospace;
+    font-size: 18px; font-weight: 500; margin-top: 2px;
+  }
+  #d4 h1 {
+    font-family: "DM Sans", sans-serif;
+    font-size: 1.35rem; font-weight: 600; margin: 0 0 4px;
+  }
+  #d4 .sub { font-size: 13px; color: #4b5563; margin: 0 0 16px; }
+  #d4 table {
+    width: 100%; border-collapse: collapse; background: #fff;
+    border: 1px solid #c5c9d1; font-size: 13px;
+  }
+  #d4 th {
+    text-align: left; font-size: 10px; letter-spacing: .08em;
+    text-transform: uppercase; color: #6b7280;
+    padding: 10px 12px; border-bottom: 1px solid #c5c9d1;
+    background: #f8f9fb; font-weight: 600;
+  }
+  #d4 td { padding: 11px 12px; border-bottom: 1px solid #e5e7eb; }
+  #d4 tr:last-child td { border-bottom: 0; }
+  #d4 tr.now { background: #ecfeff; }
+  #d4 .link {
+    color: #0f766e; font-weight: 600; text-decoration: none;
+  }
+  #d4 .bar {
+    display: flex; gap: 8px; margin-bottom: 14px;
+  }
+  #d4 .bar a {
+    font-size: 12px; font-weight: 600; padding: 8px 12px;
+    background: #0f766e; color: #fff; text-decoration: none; border-radius: 2px;
+  }
+  #d4 .bar a.sec { background: #fff; color: #111827; border: 1px solid #9ca3af; }
+</style>
+</head>
+<body>
+  <div class="chooser">
+    <strong>Directions</strong>
+    <button type="button" data-demo="d1" aria-pressed="true">1 · Path studio</button>
+    <button type="button" data-demo="d2" aria-pressed="false">2 · Workbench</button>
+    <button type="button" data-demo="d3" aria-pressed="false">3 · Magazine</button>
+    <button type="button" data-demo="d4" aria-pressed="false">4 · Dense ops</button>
+    <span class="hint">Student home mockups · same content, four systems · pick a letter after browsing</span>
+  </div>
+
+  <!-- 1 -->
+  <section class="panel is-on" id="d1" aria-label="Path studio">
+    <p class="note"><strong>1 · Path studio</strong> — Parchment + ink + burnt clay. Learning as a numbered path. No cards. Type: Fraunces + Plex.</p>
+    <div class="frame">
+      <div class="fake-nav">
+        <span class="brand">EdVidura</span>
+        <a href="#" class="on">Home</a>
+        <a href="#">Lessons</a>
+        <a href="#">Manual</a>
+        <a href="#">Quiz</a>
+        <span class="spacer"></span>
+        <span style="opacity:.65;font-size:12px">Welding 101 · Riverside</span>
+      </div>
+      <div class="content">
+        <p class="path-kicker">Class path · 42% complete</p>
+        <h1>Continue where the bead starts.</h1>
+        <p class="lede">Next up is SMAW practice — review the handbook section, then take the graded quiz when you’re ready.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#">Resume lesson</a>
+          <a class="btn btn-ghost" href="#">Open handbook</a>
+        </div>
+        <ol class="path">
+          <li class="done">
+            <span class="n">01</span>
+            <div><h3>Safety &amp; joints</h3><p>Lesson complete</p></div>
+            <a class="go" href="#">Review</a>
+          </li>
+          <li class="now">
+            <span class="n">02</span>
+            <div><h3>SMAW practice note</h3><p>In progress · ~12 min</p></div>
+            <a class="go" href="#">Continue →</a>
+          </li>
+          <li>
+            <span class="n">03</span>
+            <div><h3>Welding fundamentals</h3><p>Manual · discuss with class</p></div>
+            <a class="go" href="#">Open</a>
+          </li>
+          <li>
+            <span class="n">04</span>
+            <div><h3>Class quiz</h3><p>Unique questions · syncs to Moodle</p></div>
+            <a class="go" href="#">Start</a>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="panel" id="d2" aria-label="Workbench">
+    <p class="note"><strong>2 · Workbench</strong> — Slate rail + paper canvas + signal amber. Index left, work right. Type: Space Grotesk + Plex Mono.</p>
+    <div class="frame">
+      <div class="fake-nav">
+        <span class="brand">EdVidura</span>
+        <a href="#" class="on">Workspace</a>
+        <a href="#">Results</a>
+        <a href="#">Ask Vidura</a>
+        <span class="spacer"></span>
+        <span style="opacity:.65;font-size:12px">ada · Welding 101</span>
+      </div>
+      <div class="content">
+        <aside class="rail">
+          <h2>This class</h2>
+          <ol>
+            <li><a href="#" class="on">Up next</a></li>
+            <li><a href="#">Lessons</a></li>
+            <li><a href="#">Manual</a></li>
+            <li><a href="#">Quiz</a></li>
+            <li><a href="#">My plan</a></li>
+            <li><a href="#">Progress</a></li>
+          </ol>
+        </aside>
+        <div class="main">
+          <p class="meta">SESSION · WELDING 101 · CONTEXT BOUND</p>
+          <h1>Up next: SMAW practice</h1>
+          <p class="lede">You’ve finished Safety &amp; joints. Work the practice note, then open the handbook if you need PPE or polarity refreshers.</p>
+          <div class="panel-box">
+            <h3>Primary task</h3>
+            <p>Complete the SMAW practice note and log three setup checks before the arc.</p>
+            <a class="btn" href="#">Open lesson</a>
+            <a class="btn btn-sec" href="#">Handbook</a>
+          </div>
+          <div class="panel-box">
+            <h3>Also available</h3>
+            <p style="margin:0">Graded quiz · Practice lane (no Moodle sync) · Ask Vidura on approved sources</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="panel" id="d3" aria-label="Magazine">
+    <p class="note"><strong>3 · Magazine</strong> — Bone paper + midnight blue. Editorial home: one story, then an index. Type: Newsreader. Almost no chrome.</p>
+    <div class="frame">
+      <div class="fake-nav">
+        <span class="brand" style="font-family:Newsreader,serif;font-size:1.15rem">EdVidura</span>
+        <a href="#" class="on">Today</a>
+        <a href="#">Library</a>
+        <a href="#">Assess</a>
+        <span class="spacer"></span>
+        <span style="font-size:12px;opacity:.55">Riverside High</span>
+      </div>
+      <div class="content">
+        <div class="hero">
+          <div>
+            <p class="eyebrow">Welding 101 · Tuesday session</p>
+            <h1>The arc can wait until the checklist is honest.</h1>
+            <p class="lede">Resume SMAW practice. When you’re ready, the class quiz still syncs to Moodle — practice lane won’t.</p>
+            <a class="cta" href="#">Continue the lesson</a>
+          </div>
+          <aside class="hero-aside">
+            Progress&nbsp;&nbsp;42%<br/>
+            Lessons&nbsp;&nbsp;2 / 5<br/>
+            Last score&nbsp;&nbsp;—<br/>
+            Manual&nbsp;&nbsp;assigned
+          </aside>
+        </div>
+        <div class="index">
+          <a href="#"><span class="ix">i</span><h3>Welding fundamentals</h3><span>Handbook</span></a>
+          <a href="#"><span class="ix">ii</span><h3>Class quiz</h3><span>Assess</span></a>
+          <a href="#"><span class="ix">iii</span><h3>Ask Vidura</h3><span>Coach</span></a>
+          <a href="#"><span class="ix">iv</span><h3>My plan</h3><span>Gaps</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="panel" id="d4" aria-label="Dense ops">
+    <p class="note"><strong>4 · Dense ops</strong> — Graphite UI + functional teal. Summary strip + action table. Type: DM Sans + Plex Mono. Built for speed.</p>
+    <div class="frame">
+      <div class="fake-nav">
+        <span class="brand">EdVidura</span>
+        <a href="#" class="on">Home</a>
+        <a href="#">Lessons</a>
+        <a href="#">Manual</a>
+        <a href="#">Quiz</a>
+        <a href="#">Plan</a>
+        <span class="spacer"></span>
+        <span style="opacity:.65">Welding 101</span>
+      </div>
+      <div class="content">
+        <h1>Welding 101</h1>
+        <p class="sub">Ada · Riverside High · LTI class bound</p>
+        <div class="strip">
+          <div>Progress<b>42%</b></div>
+          <div>Lessons<b>2/5</b></div>
+          <div>Attempts<b>1</b></div>
+          <div>Last score<b>—</b></div>
+        </div>
+        <div class="bar">
+          <a href="#">Continue lesson</a>
+          <a class="sec" href="#">Take quiz</a>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Type</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Safety &amp; joints</td><td>Lesson</td><td>Done</td><td><a class="link" href="#">Open</a></td></tr>
+            <tr class="now"><td>SMAW practice note</td><td>Lesson</td><td>Now</td><td><a class="link" href="#">Continue</a></td></tr>
+            <tr><td>Welding fundamentals</td><td>Manual</td><td>Assigned</td><td><a class="link" href="#">Open</a></td></tr>
+            <tr><td>Class quiz</td><td>Assessment</td><td>Ready</td><td><a class="link" href="#">Start</a></td></tr>
+            <tr><td>Ask Vidura</td><td>Coach</td><td>—</td><td><a class="link" href="#">Ask</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll(".chooser button[data-demo]");
+  var panels = document.querySelectorAll(".panel");
+  buttons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var id = btn.getAttribute("data-demo");
+      buttons.forEach(function (b) {
+        b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+      });
+      panels.forEach(function (p) {
+        p.classList.toggle("is-on", p.id === id);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

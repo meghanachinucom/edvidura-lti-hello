@@ -62,6 +62,19 @@ def hint_for_missed_question(
     return run_ai(openai_fn=_openai, local_fn=_local, feature="hint")
 
 
+def _page_or_section(chunk: dict[str, Any]) -> str:
+    focus = str(chunk.get("focus") or "").strip()
+    title = str(chunk.get("title") or "")
+    for source in (focus, title):
+        m = re.search(r"(?:page|p\.?)\s*(\d+)", source, re.I)
+        if m:
+            return f"p.{m.group(1)}"
+        m = re.search(r"section\s+(\d+)", source, re.I)
+        if m:
+            return f"§{m.group(1)}"
+    return focus or title[:80]
+
+
 def _citation_links(
     chunks: list[dict[str, Any]], citations: list[str]
 ) -> list[dict[str, Any]]:
@@ -85,6 +98,7 @@ def _citation_links(
         excerpt = _strip_markdown(body)[:180]
         if len(body) > 180:
             excerpt += "…"
+        page = _page_or_section(c)
         out.append(
             {
                 "title": str(c["title"]),
@@ -93,6 +107,8 @@ def _citation_links(
                 "excerpt": excerpt,
                 "version": c.get("version"),
                 "focus": str(c.get("focus") or ""),
+                "page": page,
+                "section": str(c.get("focus") or c.get("title") or ""),
             }
         )
     return out

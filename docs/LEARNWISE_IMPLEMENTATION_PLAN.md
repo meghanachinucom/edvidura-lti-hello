@@ -49,21 +49,21 @@ Shared LearnWise ideas we **do** want in EdVidura language:
 | LW ID | Idea (plain) | EdVidura today | Plan |
 |-------|--------------|----------------|------|
 | TU-01 | Course-scoped LTI tutor | **Have** — Ask Vidura + course bind | Keep; harden tests |
-| TU-02 | Sync LMS course files | **Partial** — lessons/manuals/SME, not full Moodle scrape | Phase B: optional Moodle content import |
+| TU-02 | Sync LMS course files | **Partial** — lessons/manuals/SME, not full Moodle scrape | Later: optional Moodle content import |
 | TU-03 | Extra course files | **Partial** — manuals / SME upload | Extend SME kinds carefully |
 | TU-04 | Cross-course chat | **Skip** by default (breaks walled garden) | Flag only if requested |
-| TU-05 | Study plans | **Partial** — adaptive / PLE / signals | Phase B: student-visible plan UI |
-| TU-06 | Quizzes + flashcards | **Partial** — quizzes yes; flashcards **Missing** | Phase A: flashcards from lesson chunks |
+| TU-05 | Study plans | **Have** — adaptive / PLE / My progress + `/learn/gap` | Polish student plan UX |
+| TU-06 | Quizzes + flashcards | **Have** — quizzes + `/learn/flashcards` | Keep |
 | TU-07 | Role-play | **Missing** | Phase C (nice) |
 | TU-08 | H5P | **Missing** | Skip unless PeBL/ebook needs it |
-| TU-09 | Won’t write exams | **Partial** — off-class refuse; add integrity style | Phase A: integrity prompt + JEV gate |
-| TU-10 | Teacher shortcuts / welcome | **Missing** | Phase A: coach shortcuts |
-| TU-11 | Teacher insights | **Partial** — Yet/Metabase/xAPI | Phase B: coach dashboard slice |
+| TU-09 | Won’t write exams | **Have** — integrity gate + off-class refuse | Keep |
+| TU-10 | Teacher shortcuts / welcome | **Have** — `/teacher/coach/shortcuts` | Keep |
+| TU-11 | Teacher insights | **Have** — `/teacher/coach/insights` (+ Metabase/xAPI) | Keep |
 | TU-12 | Video timestamps | **Missing** | Phase C |
-| CS-01/02 | Cited Q&A | **Have** / partial click-through | Phase A: stronger citation links |
-| CS-05 | Clarify when unclear | **Missing** | Phase A |
-| CS-15 | Thumbs on answers | **Missing** | Phase A → xAPI |
-| CS-04 | Role-aware | **Partial** (LTI roles exist) | Phase B |
+| CS-01/02 | Cited Q&A | **Have** — citations + App API parity | Keep |
+| CS-05 | Clarify when unclear | **Have** — `ai_tutor.clarify` | Keep |
+| CS-15 | Thumbs on answers | **Have** — feedback → xAPI | Keep |
+| CS-04 | Role-aware | **Partial** (LTI roles exist) | Optional deepen |
 | CS-10 | Multilingual | **Have** (voice + languages) | Keep |
 
 ### Explicitly Skip (until product decision)

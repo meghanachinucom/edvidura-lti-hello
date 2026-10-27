@@ -92,12 +92,26 @@ def resolve_quiz_session(
 ) -> dict[str, Any] | None:
     # Prefer quiz token (tied to this launch) over cookie session, which can
     # be stale after a reload or a dropped Set-Cookie.
+    # Cookie never holds answer keys; full bank lives in quiz_token context.
+    from app.modules.quiz.service import cookie_safe_session
+
     cached = load_quiz_context(token)
     if cached and cached.get("tenant_id") and cached.get("subject"):
-        request.session[SESSION_KEY] = cached
+        request.session[SESSION_KEY] = cookie_safe_session(cached)
         return dict(cached)
     data = request.session.get(SESSION_KEY)
     if isinstance(data, dict) and data.get("tenant_id") and data.get("subject"):
+        # Upgrade cookie → server context so grading still has keys.
+        tok = (token or str(data.get("quiz_token") or "")).strip()
+        if tok:
+            cached2 = load_quiz_context(tok)
+            if (
+                cached2
+                and cached2.get("tenant_id")
+                and cached2.get("subject")
+            ):
+                request.session[SESSION_KEY] = cookie_safe_session(cached2)
+                return dict(cached2)
         return dict(data)
     return None
 
@@ -262,6 +276,38 @@ async def quiz_submit(
         form = await request.form()
         practice_mode = str(form.get("practice_mode") or "") == "1"
         personalized_mode = str(form.get("personalized_mode") or "") == "1"
+        staff = bool(session.get("is_instructor") or session.get("is_school_admin"))
+        if not practice_mode and not staff:
+            from app.modules import lti_groups as groups_mod
+
+            access = groups_mod.activity_access(
+                session["tenant_id"],
+                str(session.get("subject") or ""),
+                "quiz",
+                "school-quiz",
+            )
+            if not access.get("allowed"):
+                return _page(
+                    "Not assigned",
+                    """
+                    <h1>Not assigned to your group</h1>
+                    <p class="sub">This graded quiz is assigned to another class group.</p>
+                    """,
+                    status_code=403,
+                )
+            quota = quiz_mod.attempt_quota(
+                session["tenant_id"],
+                str(session.get("subject") or ""),
+            )
+            if not quota.get("allowed"):
+                return _page(
+                    "Attempt limit",
+                    f"""
+                    <h1>Attempt limit reached</h1>
+                    <p class="sub">You have used {quota.get('used')} of {quota.get('limit')} graded attempts.</p>
+                    """,
+                    status_code=403,
+                )
         personal_bank = session.get("personal_quiz_bank") if personalized_mode else None
         graded = quiz_mod.grade_submitted_form(
             tenant_id=session["tenant_id"],
@@ -288,6 +334,13 @@ async def quiz_submit(
 
         if not practice_mode:
             launch_id = str(session.get("launch_id") or "")
+            if launch_id:
+                try:
+                    db.touch_launch_snapshot(
+                        launch_id, tenant_id=session.get("tenant_id")
+                    )
+                except Exception:  # noqa: BLE001
+                    pass
             launch_data = _load_launch_data(launch_id) if launch_id else None
             background_tasks.add_task(
                 _ags_background,
@@ -309,7 +362,7 @@ async def quiz_submit(
                 {**session, "quiz_token": quiz_token},
                 cache_set=LAUNCH_CACHE.set,
             )
-        request.session[SESSION_KEY] = session
+        request.session[SESSION_KEY] = quiz_mod.cookie_safe_session(session)
 
         token_q = f"?token={quiz_token}" if quiz_token else ""
         return RedirectResponse(

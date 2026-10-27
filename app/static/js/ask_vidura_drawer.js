@@ -119,12 +119,25 @@
           })
           .then(function (d) {
             var st = bar.querySelector(".askv-feedback__st");
-            if (st) st.textContent = d.ok ? "Thanks" : "";
-            bar.querySelectorAll("button").forEach(function (b) {
-              b.disabled = true;
-            });
+            if (!st) return;
+            if (d && d.ok) {
+              st.textContent = "Thanks";
+              st.classList.remove("askv-feedback__st--err");
+              bar.querySelectorAll("button").forEach(function (b) {
+                b.disabled = true;
+              });
+            } else {
+              st.textContent = (d && d.error) || "Couldn’t save — try again";
+              st.classList.add("askv-feedback__st--err");
+            }
           })
-          .catch(function () {});
+          .catch(function () {
+            var st = bar.querySelector(".askv-feedback__st");
+            if (st) {
+              st.textContent = "Network error — try again";
+              st.classList.add("askv-feedback__st--err");
+            }
+          });
       });
     });
     if (thread) {
@@ -164,6 +177,30 @@
 
   loadShortcuts();
 
+  function ebookContext() {
+    var reader = document.querySelector(".ebook-reader");
+    if (!reader) return "";
+    var title = (reader.getAttribute("data-ebook-title") || "").trim();
+    var focusLabel = (reader.getAttribute("data-ebook-focus-label") || "").trim();
+    var focus = (reader.getAttribute("data-ebook-focus") || "").trim();
+    if (!title) return "";
+    var bits = ["Reading manual: " + title];
+    if (focusLabel || focus) bits.push("section: " + (focusLabel || focus));
+    return bits.join(" · ");
+  }
+
+  (function welcomeForEbook() {
+    var ctx = ebookContext();
+    var welcome = document.getElementById("askv-welcome");
+    if (!ctx || !welcome) return;
+    welcome.innerHTML =
+      "<p>You are in the ebook reader. Ask about <strong>" +
+      esc(ctx) +
+      "</strong>. Answers stay on approved class sources.</p>";
+    if (qEl && !qEl.placeholder) qEl.placeholder = "Ask about this chapter…";
+    else if (qEl) qEl.placeholder = "Ask about this chapter…";
+  })();
+
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     var question = (qEl && qEl.value || "").trim();
@@ -171,6 +208,10 @@
       setStatus("Type a question first.");
       return;
     }
+    var ctx = ebookContext();
+    var questionForApi = ctx
+      ? "(" + ctx + ")\n\nStudent question: " + question
+      : question;
     var token = tokenValue();
     var reply_language = langEl ? langEl.value : "en-IN";
     lastQuestion = question;
@@ -187,7 +228,7 @@
       },
       body: JSON.stringify({
         token: token,
-        question: question,
+        question: questionForApi,
         reply_language: reply_language,
       }),
     })

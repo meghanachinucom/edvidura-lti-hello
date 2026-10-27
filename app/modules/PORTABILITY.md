@@ -40,6 +40,7 @@ Modules **must not** import FastAPI, Starlette `Request`, or Jinja2.
 
 - Cookie / Starlette session middleware
 - `require_session` / admin API key / OIDC redirect dance
+- **App API** `app.api.app_client` (`/api/v1/app`) — same JSON for web + mobile; thin over modules
 - Template names, redirects, `BackgroundTasks` (e.g. AGS after module returns attempt)
 - Static files
 

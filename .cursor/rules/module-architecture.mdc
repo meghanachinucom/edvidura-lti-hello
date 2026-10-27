@@ -28,11 +28,13 @@ EdVidura keeps **domain logic in reusable modules**, not in FastAPI route files 
 
 ## Existing modules
 
-- `tenancy` — LTI → tenant, context, tool conf  
+- `tenancy` — LTI → tenant, context, tool conf; school|corporate|government segment + capability flags 
 - `content` — courses, lessons, progress, authoring  
 - `quiz` — question bank, grading  
 - `school` — classes, curriculum links, LTI context→class bindings (people in Moodle)  
 - `manuals` — versioned technical manuals / PeBL eBook (TOC, signed standalone reader)
+- `pebl` — in-book chapter micro-forums (class-scoped threads + offline post buffer)
+- `pravachana` — AP government video library (series/episodes, progress, notes; not school)
 - `events` — EVENT_ENVELOPE_V1 outbox + D17 webhook drain  
 - `ai_assessment` — MCQs, simplify, grade assist, suggestions; E04 OpenAI / local HTTP  
 - `ai_tutor` — student hints + study coach (citations / retention stance)

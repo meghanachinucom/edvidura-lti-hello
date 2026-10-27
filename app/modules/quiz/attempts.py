@@ -24,6 +24,97 @@ def list_attempts_for_tenant(tenant_id: UUID | str, **kwargs: Any) -> list[dict[
     return db.list_quiz_attempts_for_tenant(tenant_id, **kwargs)
 
 
+DEFAULT_MAX_ATTEMPTS = 3
+
+
+def remaining_attempts(
+    used: int,
+    limit: int,
+    *,
+    practice: bool = False,
+) -> dict[str, Any]:
+    """Pure attempt-limit math (F-7). Practice never consumes the quota."""
+    cap = max(1, int(limit or DEFAULT_MAX_ATTEMPTS))
+    used_n = max(0, int(used or 0))
+    if practice:
+        return {
+            "used": used_n,
+            "limit": cap,
+            "remaining": cap,
+            "allowed": True,
+            "practice": True,
+        }
+    left = max(0, cap - used_n)
+    return {
+        "used": used_n,
+        "limit": cap,
+        "remaining": left,
+        "allowed": left > 0,
+        "practice": False,
+    }
+
+
+def count_graded_attempts(
+    tenant_id: UUID | str,
+    subject: str,
+    *,
+    activity_id: str | None = None,
+) -> int:
+    """Graded (non-practice) attempts for one learner."""
+    uid = (subject or "").strip()
+    if not uid:
+        return 0
+    aid = (activity_id or "").strip()
+    with db.tenant_connection(tenant_id) as conn:
+        if aid:
+            row = conn.execute(
+                """
+                SELECT COUNT(*)::int AS n
+                FROM quiz_attempts
+                WHERE subject = %s
+                  AND COALESCE(answers->>'mode', '') <> 'practice'
+                  AND (
+                        COALESCE(answers->>'activity_id', '') = %s
+                     OR COALESCE(course_label, '') = %s
+                  )
+                """,
+                (uid, aid, aid),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                """
+                SELECT COUNT(*)::int AS n
+                FROM quiz_attempts
+                WHERE subject = %s
+                  AND COALESCE(answers->>'mode', '') <> 'practice'
+                """,
+                (uid,),
+            ).fetchone()
+    return int((row or {}).get("n") or 0)
+
+
+def attempt_quota(
+    tenant_id: UUID | str,
+    subject: str,
+    *,
+    practice: bool = False,
+    activity_id: str | None = None,
+    max_attempts: int | None = None,
+) -> dict[str, Any]:
+    from app.modules.quiz.personalized import get_max_attempts
+
+    cap = (
+        int(max_attempts)
+        if max_attempts is not None
+        else get_max_attempts(tenant_id)
+    )
+    used = count_graded_attempts(tenant_id, subject, activity_id=activity_id)
+    pack = remaining_attempts(used, cap, practice=practice)
+    pack["subject"] = (subject or "").strip()
+    pack["activity_id"] = (activity_id or "school-quiz").strip() or "school-quiz"
+    return pack
+
+
 def update_attempt_grade(**kwargs: Any) -> Any:
     return db.update_quiz_attempt_grade(**kwargs)
 
@@ -116,6 +207,51 @@ def grade_submitted_form(
         questions = all_questions
     submitted = {q.id: str(get_answer(q.id) or "") for q in questions}
     score, detail = grade_answers(submitted, questions)
+    essay_qs = [
+        q for q in questions if str(getattr(q, "qtype", "") or "") == "essay"
+    ]
+    if essay_qs:
+        chunks: list[dict[str, Any]] = []
+        try:
+            from app.modules import content as content_mod
+            from app.modules.ai_tutor import curriculum_chunks_for_session
+
+            _, chunks = curriculum_chunks_for_session(
+                str(tenant_id),
+                str(course_id) if course_id else None,
+                list_lessons_fn=content_mod.list_lessons,
+                get_bound_course_fn=content_mod.get_bound_course,
+            )
+        except Exception:  # noqa: BLE001
+            chunks = []
+        from app.modules.ai_assessment import grade_essay_against_instructor
+
+        for q in essay_qs:
+            info = detail.get(q.id) if isinstance(detail, dict) else None
+            if not isinstance(info, dict):
+                continue
+            try:
+                packed = grade_essay_against_instructor(
+                    submitted.get(q.id, ""),
+                    prompt=q.prompt,
+                    instructor_answer=getattr(q, "correct_text", "") or "",
+                    rag_chunks=chunks,
+                    max_score=5,
+                )
+            except Exception:  # noqa: BLE001
+                continue
+            info["essay"] = {
+                "percent": packed.get("percent"),
+                "compared_to": packed.get("compared_to"),
+                "feedback": packed.get("feedback"),
+                "citations": packed.get("citations") or [],
+            }
+            info["correct"] = int(packed.get("percent") or 0) >= 60
+        score = sum(
+            1
+            for q in questions
+            if isinstance(detail.get(q.id), dict) and detail[q.id].get("correct")
+        )
     max_score = len(questions)
 
     answers_payload: dict[str, Any] = {
@@ -135,11 +271,16 @@ def grade_submitted_form(
                 "prompt": q.prompt,
                 "choices": list(q.choices),
                 "correct_index": q.correct_index,
+                "qtype": getattr(q, "qtype", "single") or "single",
+                "correct_text": getattr(q, "correct_text", "") or "",
+                "correct_indices": list(getattr(q, "correct_indices", ()) or ()),
             }
             for q in questions
         ]
     if retry_from.strip():
         answers_payload["retry_from"] = retry_from.strip()
+
+    from app.modules.quiz.service import PASS_PERCENT, passed_attempt
 
     return {
         "score": score,
@@ -149,6 +290,8 @@ def grade_submitted_form(
         "questions": questions,
         "practice_mode": practice_mode,
         "personalized_mode": personalized_mode,
+        "pass_percent": PASS_PERCENT,
+        "passed": passed_attempt(score, max_score),
     }
 
 
@@ -241,5 +384,9 @@ __all__ = [
     "list_attempts_for_tenant",
     "quiz_attempt_class_summary",
     "record_graded_attempt",
+    "remaining_attempts",
+    "count_graded_attempts",
+    "attempt_quota",
+    "DEFAULT_MAX_ATTEMPTS",
     "update_attempt_grade",
 ]

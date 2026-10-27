@@ -42,6 +42,10 @@ docs/management-proof/videos/storage_state_teacher.json
 docs/management-proof/videos/by-feature/_audio/
 docs/management-proof/videos/by-feature/*.silent.mp4
 
+# Vite SPA (extracted zip FE)
+frontend/node_modules/
+frontend/dist/
+
 # Local packaging / scratch
 edvidura-lti-hello-starter.zip
 _bind.py
@@ -49,4 +53,14 @@ moodle/_*.php
 moodle/_cj.txt
 scripts/_set_db_url.py
 scripts/_set_railway_app_vars.py
+
+# One-off design / meeting dumps (keep real docs in docs/*.md)
+docs/palette-preview*.html
+docs/session-20*.html
+docs/proof-sheet.csv
+docs/~$*
+remix-edvidura---academic-learning-&-lti-classroom.zip
+docs/edvidura---academic-learning-&-lti-classroom.zip
+app/static/css/*.backup.css
+scripts/_probe_app_api.py
 

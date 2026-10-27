@@ -56,8 +56,18 @@ Ops auth: `X-Admin-Key` or Keycloak Bearer (`OpsAuth`).
 | `GET` | `/api/v1/xapi/statements?tenant_id=&tier=&attempt_id=&subject=` | List + tier counts |
 | `POST` | `/api/v1/xapi/statements/{id}/promote?tenant_id=` | Set tier; optional `send_lrs` |
 | `POST` | `/api/v1/xapi/retry-lrs?tenant_id=` | Re-send failed LRS posts |
+| `GET` | `/api/v1/xapi/assignments?tenant_id=&subject=` | F-3 assignment dashboard (groups + quota) |
+| `GET` | `/api/v1/xapi/files/{id}?tenant_id=` | F-4 structured JSON file fetcher (`quiz`, `assignments`, stored JSON) |
+| `GET` | `/api/v1/xapi/files/{id}/stream?tenant_id=` | F-9 universal file streamer |
+| `GET` | `/api/v1/xapi/files/{id}/meta?tenant_id=` | F-10 type detection + json/stream routing |
+| `POST` | `/api/v1/xapi/files` | Store a JSON or binary file |
+| `POST` | `/api/v1/xapi/grades` | F-5 inbound grade from an external module (records attempt + xAPI; does not replace Moodle AGS) |
+| `GET` | `/api/v1/xapi/attempts?tenant_id=&subject=` | F-6 attempt counters (local graded + synced) |
+| `POST` | `/api/v1/xapi/attempts/sync` | F-6 merge an external attempt count |
 
-Domain: `store_raw_statement`, `promote_tier`, `list_statements`, `retry_failed_lrs`.
+App API mirrors (learner/staff token): `GET /api/v1/app/assignments`, `GET /api/v1/app/files/{id}` (+ `/stream`, `/meta`), `POST /api/v1/app/grades`, `GET /api/v1/app/attempts` (includes `quota`). Graded quiz GET/POST enforce F-7 attempt limits and LMS F-6 group assignment.
+
+Domain: `store_raw_statement`, `promote_tier`, `list_statements`, `retry_failed_lrs`, `assignment_dashboard`, `fetch_json_file`, `stream_file`, `detect_file_kind`, `ingest_external_grade`, `attempt_counters`, `sync_attempt_counter`.
 
 Dev-only mirrors (404 in production): `GET /dev/xapi/statements/{tenant_id}`, `POST /dev/xapi/retry-lrs/{tenant_id}`.
 

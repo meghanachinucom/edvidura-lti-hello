@@ -18,3 +18,5 @@ keys/*.json
 !keys/.gitkeep
 .cursor
 agent-transcripts
+frontend/node_modules
+frontend/dist

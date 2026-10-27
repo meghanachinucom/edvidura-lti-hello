@@ -185,12 +185,51 @@ def set_tenant_quiz_settings(
         comp_out = "auto"
     else:
         comp_out = normalize_complexity(comp_s)
+    blob = _read_tenant_quiz_blob(tenant_id)
+    packed = {"difficulty": diff_out, "complexity": comp_out}
+    if "max_attempts" in blob:
+        packed["max_attempts"] = blob.get("max_attempts")
     LAUNCH_CACHE.set(
         tenant_quiz_difficulty_key(tenant_id),
-        {"difficulty": diff_out, "complexity": comp_out},
+        packed,
         exp=_DIFFICULTY_CACHE_TTL,
     )
     return {"difficulty": diff_out, "complexity": comp_out}
+
+
+DEFAULT_MAX_ATTEMPTS = 3
+
+
+def get_max_attempts(tenant_id: UUID | str) -> int:
+    """Teacher-set graded attempt cap (default 3, clamp 1–20)."""
+    blob = _read_tenant_quiz_blob(tenant_id)
+    raw = blob.get("max_attempts")
+    try:
+        n = int(raw)
+    except (TypeError, ValueError):
+        n = DEFAULT_MAX_ATTEMPTS
+    return max(1, min(n, 20))
+
+
+def set_max_attempts(tenant_id: UUID | str, max_attempts: int | str | None) -> int:
+    from app.launch_cache import LAUNCH_CACHE
+
+    settings = get_tenant_quiz_settings(tenant_id)
+    try:
+        n = int(max_attempts) if max_attempts is not None else DEFAULT_MAX_ATTEMPTS
+    except (TypeError, ValueError):
+        n = DEFAULT_MAX_ATTEMPTS
+    n = max(1, min(n, 20))
+    LAUNCH_CACHE.set(
+        tenant_quiz_difficulty_key(tenant_id),
+        {
+            "difficulty": settings.get("difficulty") or "auto",
+            "complexity": settings.get("complexity") or "auto",
+            "max_attempts": n,
+        },
+        exp=_DIFFICULTY_CACHE_TTL,
+    )
+    return n
 
 
 def infer_difficulty(
@@ -1067,15 +1106,24 @@ def questions_from_payload(payload: list[dict[str, Any]] | None) -> tuple[Questi
     for item in payload:
         if not isinstance(item, dict):
             continue
+        from app.modules.quiz.service import _normalize_qtype
+
+        qtype = _normalize_qtype(str(item.get("qtype") or "single"))
         choices = item.get("choices") or []
-        if not isinstance(choices, list) or len(choices) < 2:
+        if not isinstance(choices, list):
+            choices = []
+        if qtype in {"single", "true_false", "multi"} and len(choices) < 2:
             continue
         try:
             ci = int(item.get("correct_index", 0))
         except (TypeError, ValueError):
             ci = 0
-        choices_t = tuple(str(c) for c in choices[:4])
-        ci = max(0, min(ci, len(choices_t) - 1))
+        limit = 8 if qtype == "multi" else 4
+        choices_t = tuple(str(c) for c in choices[:limit])
+        if choices_t:
+            ci = max(0, min(ci, len(choices_t) - 1))
+        indices_raw = item.get("correct_indices") or ()
+        indices = tuple(int(i) for i in indices_raw if str(i).strip() != "") if isinstance(indices_raw, (list, tuple)) else ()
         out.append(
             Question(
                 id=str(item.get("id") or f"pq{len(out)}"),
@@ -1083,6 +1131,9 @@ def questions_from_payload(payload: list[dict[str, Any]] | None) -> tuple[Questi
                 choices=choices_t,
                 correct_index=ci,
                 topic=str(item.get("topic") or ""),
+                qtype=qtype,
+                correct_text=str(item.get("correct_text") or ""),
+                correct_indices=indices,
             )
         )
     return tuple(out)
@@ -1099,6 +1150,8 @@ __all__ = [
     "get_tenant_quiz_complexity",
     "get_tenant_quiz_difficulty",
     "get_tenant_quiz_settings",
+    "get_max_attempts",
+    "set_max_attempts",
     "infer_complexity",
     "infer_difficulty",
     "normalize_complexity",

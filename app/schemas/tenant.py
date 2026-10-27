@@ -12,6 +12,16 @@ class TenantCreate(BaseModel):
     slug: str = Field(..., min_length=2, max_length=64, pattern=r"^[a-z0-9][a-z0-9_-]*$")
     name: str = Field(..., min_length=2, max_length=200)
     status: str = Field(default="active", pattern=r"^(active|disabled)$")
+    segment: str = Field(
+        default="school", pattern=r"^(school|corporate|government)$"
+    )
+    capabilities: Optional[dict] = None
+
+
+class TenantSegmentUpdate(BaseModel):
+    segment: str = Field(..., pattern=r"^(school|corporate|government)$")
+    capabilities: Optional[dict] = None
+    reset_capabilities: bool = True
 
 
 class TenantResponse(BaseModel):
@@ -21,6 +31,8 @@ class TenantResponse(BaseModel):
     slug: str
     name: str
     status: str
+    segment: str = "school"
+    capabilities: Optional[dict] = None
     created_at: datetime
 
 

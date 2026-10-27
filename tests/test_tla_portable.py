@@ -67,9 +67,11 @@ def test_shape_profile_and_assess():
     assert prof["schema"] == SCHEMA_PROFILE
     assert prof["competency_count"] == 1
     report = assess_requirements()
-    assert report["schema"] == "edvidura.tla.requirements.v2"
+    assert report["schema"] == "edvidura.tla.requirements.v3"
     assert report["maturity_pct"] > 0
     assert len(report["by_cmm"]) == 4
+    assert report["achieved_cmm"] >= 2
+    assert report["operating_cmm"] >= report["achieved_cmm"]
     assert any(i["id"] == "tla.cmm1.xapi_emit" for i in report["requirements"])
 
 
@@ -112,3 +114,7 @@ def test_maturity_report_includes_adl_and_vendor():
     assert any(r["id"] == "xi_lite" for r in list_adl_refs())
     assert m["vendored"]["cmi5_requirements"].endswith("requirements.json")
     assert "portable_modules" in m["reuse"]
+    assert m["achieved_cmm"] == 2
+    assert m["achieved_label"].startswith("CMM-2")
+    assert m["operating_cmm"] >= 3
+    assert "apis" in m

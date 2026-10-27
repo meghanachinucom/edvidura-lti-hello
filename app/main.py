@@ -20,6 +20,9 @@ from app import db
 from app.api.admin_tenants import router as admin_tenants_router
 from app.api.ai import router as ai_api_router
 from app.api.analytics import router as analytics_api_router
+from app.api.app_client import AppApiError
+from app.api.app_client import router as app_client_router
+from app.api.app_client.envelope import fail as app_fail
 from app.api.events import router as events_api_router
 from app.api.institution import router as institution_router
 from app.api.skills import router as skills_api_router
@@ -35,6 +38,7 @@ from app.lti_fastapi import (
     FastAPIRequest,
     make_launch_data_storage,
 )
+from app.dev_routes import router as dev_router
 from app.onboard_routes import router as onboard_router
 from app.auth_routes import router as auth_router
 from app.ops_routes import router as ops_router
@@ -66,17 +70,33 @@ assert_safe_for_environment(_boot)
 
 app = FastAPI(
     title="EdVidura",
-    description="Multi-tenant LTI 1.3 learning platform for schools (Moodle front door).",
+    description=(
+        "Multi-tenant LTI 1.3 learning platform. "
+        "App API for web + mobile: /api/v1/app (see docs/MOBILE_API.md)."
+    ),
     version="0.8.0",
     docs_url=None if _boot.is_production else "/docs",
     redoc_url=None if _boot.is_production else "/redoc",
     openapi_url=None if _boot.is_production else "/openapi.json",
 )
 
+
+@app.exception_handler(AppApiError)
+async def _app_api_error_handler(_request: Request, exc: AppApiError):
+    return app_fail(
+        exc.message,
+        code=exc.code,
+        status_code=exc.status_code,
+        details=exc.details,
+    )
+
+
+app.include_router(app_client_router)
 app.include_router(admin_tenants_router)
 app.include_router(auth_router)
 app.include_router(ops_router)
 app.include_router(onboard_router)
+app.include_router(dev_router)
 app.include_router(deep_link_router)
 app.include_router(lti_register_router)
 app.include_router(shell_router)
@@ -93,6 +113,10 @@ app.include_router(quiz_router)
 _STATIC = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 
+_SPA_DIST = Path(__file__).resolve().parents[1] / "frontend" / "dist"
+if (_SPA_DIST / "index.html").is_file():
+    app.mount("/app", StaticFiles(directory=str(_SPA_DIST), html=True), name="spa")
+
 
 @app.get("/requirements-board")
 def requirements_board():
@@ -107,6 +131,13 @@ def session_today_deck():
     path = _STATIC / "session-today.html"
     return FileResponse(path, media_type="text/html; charset=utf-8")
 
+
+@app.get("/product")
+def product_marketing():
+    """Public black-and-white marketing / selling page."""
+    path = _STATIC / "marketing" / "index.html"
+    return FileResponse(path, media_type="text/html; charset=utf-8")
+
 app.add_middleware(
     RateLimitMiddleware,
     enabled=_boot.rate_limit_enabled,
@@ -119,11 +150,32 @@ app.add_middleware(
     https_only=_boot.app_base_url.startswith("https"),
 )
 
+# Added last so it wraps outbound responses (SPA on Vite :3000 in development).
+if not _boot.is_production_like:
+    from fastapi.middleware.cors import CORSMiddleware
+
+    _spa_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    extra = (_boot.frontend_origin or "").rstrip("/")
+    if extra and extra not in _spa_origins:
+        _spa_origins.append(extra)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_spa_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 
 @app.get("/health")
-def health():
+def health(detail: int = 0):
+    """Public probe: lean JSON. Pass ``?detail=1`` for ops fields (dev/staging always)."""
     platforms = 0
     db_ok = False
+    db_error = ""
     cache_backend = "unknown"
     try:
         from app.launch_cache import LAUNCH_CACHE
@@ -135,23 +187,21 @@ def health():
         platforms = len(db.fetch_all_active_platforms())
         db_ok = True
     except Exception as exc:  # noqa: BLE001
-        return {
-            "ok": False,
-            "service": "edvidura",
-            "version": app.version,
-            "environment": _boot.environment,
-            "db_ok": False,
-            "db_error": str(exc),
-            "platforms": 0,
-            "cache_backend": cache_backend,
-            "rate_limit": _boot.rate_limit_enabled,
-        }
-    return {
-        "ok": True,
+        db_error = str(exc)
+
+    lean = {
+        "ok": db_ok,
         "service": "edvidura",
         "version": app.version,
-        "environment": _boot.environment,
         "db_ok": db_ok,
+    }
+    show_detail = bool(detail) or not _boot.is_production_like
+    if not show_detail:
+        return lean
+
+    out = {
+        **lean,
+        "environment": _boot.environment,
         "platforms": platforms,
         "cache_backend": cache_backend,
         "rate_limit": _boot.rate_limit_enabled,
@@ -167,8 +217,12 @@ def health():
                 and getattr(_boot, "metabase_secret_key", "")
                 and int(getattr(_boot, "metabase_embed_dashboard_id", 0) or 0) > 0
             ),
+            "airgap": bool(getattr(_boot, "airgap", False)),
         },
     }
+    if db_error:
+        out["db_error"] = db_error
+    return out
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -498,6 +552,7 @@ async def lti_launch(request: Request):
                 )
                 if not matched and (
                     "priya" in (given or name or email).lower()
+                    or "padmavathi" in (given or name or email).lower()
                 ):
                     matched = match_class_for_context(
                         tenant.tenant_id,
@@ -551,6 +606,7 @@ async def lti_launch(request: Request):
             "ags_has_lineitem": bool(ags_claim.get("lineitem")),
             "ags_has_lineitems": bool(ags_claim.get("lineitems")),
             "nrps_available": False,
+            "gs_available": False,
             "client_id": client_id,
             "lms_name": lms_name,
             "lms_return_url": moodle_return,
@@ -567,6 +623,21 @@ async def lti_launch(request: Request):
             ) or nrps_mod.has_nrps_on_launch(launch_data)
         except Exception:  # noqa: BLE001
             quiz_ctx["nrps_available"] = False
+        try:
+            from app.modules import lti_groups as groups_mod
+
+            quiz_ctx["gs_available"] = groups_mod.has_gs_on_launch(launch_data)
+        except Exception:  # noqa: BLE001
+            quiz_ctx["gs_available"] = False
+        try:
+            from app.modules.tenancy import attach_to_session
+
+            attach_to_session(quiz_ctx)
+        except Exception as exc:  # noqa: BLE001
+            print(f"Warning: tenant segment attach failed: {exc}", flush=True)
+            quiz_ctx.setdefault("segment", "school")
+            quiz_ctx.setdefault("capabilities", {})
+            quiz_ctx.setdefault("is_corporate", False)
         # Keep launch JWT body in memory and Postgres (survives uvicorn --reload)
         launch_id = message_launch.get_launch_id()
         LAUNCH_CACHE.set(launch_id, launch_data, exp=3600)
@@ -590,7 +661,11 @@ async def lti_launch(request: Request):
             return RedirectResponse(
                 url=f"/lti/deep-link?token={quiz_token}", status_code=303
             )
-        return RedirectResponse(url=f"/launch-hub?token={quiz_token}", status_code=303)
+        from app.frontend_handoff import launch_destination
+
+        return RedirectResponse(
+            url=launch_destination(quiz_token), status_code=303
+        )
     except LtiException as exc:
         print(f"LTI launch failed: {exc}", flush=True)
         return PlainTextResponse(f"LTI launch failed: {exc}", status_code=400)

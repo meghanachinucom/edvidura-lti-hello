@@ -1,0 +1,64 @@
+# Air-gap style stack — no public cloud services required.
+# Build the app image on a connected machine, then load tarballs on the LAN.
+#
+#   docker compose -f deploy/airgap/docker-compose.yml up -d
+#
+# Point Moodle LTI URLs at http://edvidura:8000 (same Docker network) or
+# http://<host>:8000 from browsers on the LAN.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: edvidura
+      POSTGRES_PASSWORD: edvidura
+      POSTGRES_DB: edvidura
+    volumes:
+      - airgap_pg:/var/lib/postgresql/data
+      - ../../db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edvidura -d edvidura"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [airgap]
+
+  edvidura:
+    image: edvidura-app:airgap
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    # Prefer env.airgap (copy from env.airgap.example); example works for first smoke.
+    env_file:
+      - path: ./env.airgap
+        required: false
+      - path: ./env.airgap.example
+        required: false
+    environment:
+      DATABASE_URL: postgresql://edvidura:edvidura@db:5432/edvidura
+      AIRGAP: "1"
+      ENVIRONMENT: production
+      RUN_MIGRATIONS: "1"
+    volumes:
+      - airgap_keys:/app/keys
+    networks: [airgap]
+
+  # Optional local LLM (OpenAI-compatible). Uncomment when weights are on LAN.
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   volumes:
+  #     - airgap_ollama:/root/.ollama
+  #   networks: [airgap]
+
+networks:
+  airgap:
+
+volumes:
+  airgap_pg:
+  airgap_keys:
+  # airgap_ollama:

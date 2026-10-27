@@ -410,13 +410,14 @@ def save_launch_snapshot(
 
 
 def get_launch_snapshot(launch_id: str) -> dict[str, Any] | None:
+    """Load launch JWT body. Window is 24h so AGS survives a school day + reload."""
     with capability_connection() as conn:
         row = conn.execute(
             """
             SELECT launch_data
             FROM lti_launch_snapshots
             WHERE launch_id = %s
-              AND created_at > now() - interval '6 hours'
+              AND created_at > now() - interval '24 hours'
             """,
             (launch_id,),
         ).fetchone()
@@ -431,6 +432,37 @@ def get_launch_snapshot(launch_id: str) -> dict[str, Any] | None:
             parsed = json.loads(data)
             return dict(parsed) if isinstance(parsed, dict) else None
         return None
+
+
+def touch_launch_snapshot(launch_id: str, *, tenant_id: UUID | str | None = None) -> bool:
+    """Slide snapshot TTL while the learner is still active (quiz/coach)."""
+    lid = str(launch_id or "").strip()
+    if not lid:
+        return False
+    try:
+        if tenant_id:
+            with tenant_connection(tenant_id) as conn:
+                cur = conn.execute(
+                    """
+                    UPDATE lti_launch_snapshots
+                    SET created_at = now()
+                    WHERE launch_id = %s
+                    """,
+                    (lid,),
+                )
+                return bool(getattr(cur, "rowcount", 0))
+        with capability_connection() as conn:
+            cur = conn.execute(
+                """
+                UPDATE lti_launch_snapshots
+                SET created_at = now()
+                WHERE launch_id = %s
+                """,
+                (lid,),
+            )
+            return bool(getattr(cur, "rowcount", 0))
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def save_quiz_context(token: str, context: dict[str, Any], *, ttl_sec: int = 3600) -> None:
@@ -584,16 +616,38 @@ def list_all_platforms() -> list[dict[str, Any]]:
         return list(rows)
 
 
-def create_tenant(*, slug: str, name: str, status: str = "active") -> dict[str, Any]:
+def create_tenant(
+    *,
+    slug: str,
+    name: str,
+    status: str = "active",
+    segment: str = "school",
+    capabilities: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    import json
+
+    from app.modules.tenancy.capabilities import (
+        merge_capabilities,
+        normalize_segment,
+    )
+
+    seg = normalize_segment(segment)
+    caps = merge_capabilities(seg, capabilities)
     with connect() as conn:
         with conn.transaction():
             row = conn.execute(
                 """
-                INSERT INTO tenants (slug, name, status)
-                VALUES (%s, %s, %s)
-                RETURNING id, slug, name, status, created_at
+                INSERT INTO tenants (slug, name, status, segment, capabilities)
+                VALUES (%s, %s, %s, %s, %s::jsonb)
+                RETURNING id, slug, name, status, segment, capabilities, created_at
                 """,
-                (slug.strip().lower(), name.strip(), status),
+                (
+                    slug.strip().lower(),
+                    name.strip(),
+                    status,
+                    seg,
+                    json.dumps(caps),
+                ),
             ).fetchone()
             return dict(row)
 
@@ -602,7 +656,10 @@ def get_tenant_by_slug(slug: str) -> dict[str, Any] | None:
     with connect() as conn:
         row = conn.execute(
             """
-            SELECT id, slug, name, status, created_at
+            SELECT id, slug, name, status, segment, capabilities,
+                   COALESCE(preferred_state, '') AS preferred_state,
+                   COALESCE(preferred_language, '') AS preferred_language,
+                   created_at
             FROM tenants
             WHERE slug = %s
             """,
@@ -615,7 +672,10 @@ def list_tenants() -> list[dict[str, Any]]:
     with connect() as conn:
         rows = conn.execute(
             """
-            SELECT id, slug, name, status, created_at
+            SELECT id, slug, name, status, segment, capabilities,
+                   COALESCE(preferred_state, '') AS preferred_state,
+                   COALESCE(preferred_language, '') AS preferred_language,
+                   created_at
             FROM tenants
             ORDER BY created_at ASC
             """
@@ -627,13 +687,90 @@ def get_tenant(tenant_id: UUID | str) -> dict[str, Any] | None:
     with connect() as conn:
         row = conn.execute(
             """
-            SELECT id, slug, name, status, created_at
+            SELECT id, slug, name, status, segment, capabilities,
+                   COALESCE(preferred_state, '') AS preferred_state,
+                   COALESCE(preferred_language, '') AS preferred_language,
+                   created_at
             FROM tenants
             WHERE id = %s
             """,
             (str(tenant_id),),
         ).fetchone()
         return dict(row) if row else None
+
+
+def update_tenant_prefs(
+    tenant_id: UUID | str,
+    *,
+    preferred_state: str | None = None,
+    preferred_language: str | None = None,
+) -> dict[str, Any] | None:
+    """Set optional reader defaults (IN state / BCP-47 language)."""
+    from app.modules.manuals.locales import normalize_state
+    from app.modules.ai_tutor.voice import normalize_voice_lang
+
+    existing = get_tenant(tenant_id) or {}
+    state = (
+        normalize_state(preferred_state)
+        if preferred_state is not None
+        else str(existing.get("preferred_state") or "")
+    )
+    if preferred_language is not None:
+        lang = (
+            normalize_voice_lang(preferred_language)
+            if str(preferred_language).strip()
+            else ""
+        )
+    else:
+        lang = str(existing.get("preferred_language") or "")
+    with connect() as conn:
+        with conn.transaction():
+            row = conn.execute(
+                """
+                UPDATE tenants
+                SET preferred_state = %s, preferred_language = %s
+                WHERE id = %s
+                RETURNING id, slug, name, status, segment, capabilities,
+                          preferred_state, preferred_language, created_at
+                """,
+                (state, lang, str(tenant_id)),
+            ).fetchone()
+            return dict(row) if row else None
+
+
+def update_tenant_segment(
+    tenant_id: UUID | str,
+    *,
+    segment: str,
+    capabilities: dict[str, Any] | None = None,
+    reset_capabilities: bool = True,
+) -> dict[str, Any] | None:
+    """Set segment; by default refresh capabilities to segment defaults."""
+    import json
+
+    from app.modules.tenancy.capabilities import (
+        merge_capabilities,
+        normalize_segment,
+    )
+
+    seg = normalize_segment(segment)
+    if reset_capabilities or capabilities is not None:
+        caps = merge_capabilities(seg, capabilities if not reset_capabilities else None)
+    else:
+        existing = get_tenant(tenant_id) or {}
+        caps = merge_capabilities(seg, existing.get("capabilities"))
+    with connect() as conn:
+        with conn.transaction():
+            row = conn.execute(
+                """
+                UPDATE tenants
+                SET segment = %s, capabilities = %s::jsonb
+                WHERE id = %s
+                RETURNING id, slug, name, status, segment, capabilities, created_at
+                """,
+                (seg, json.dumps(caps), str(tenant_id)),
+            ).fetchone()
+            return dict(row) if row else None
 
 
 def create_institution(

@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EdVidura · D &amp; F story slides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Geist+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{font-family:"Outfit",system-ui,sans-serif;background:#0e0e10;color:#ececf0}
+
+  .chooser{
+    position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    padding:12px 16px;background:#08080a;border-bottom:1px solid #2a2a30;
+  }
+  .chooser strong{font-size:13px}
+  .chooser button{
+    font:inherit;font-size:12px;font-weight:600;padding:7px 12px;cursor:pointer;
+    border:1px solid #3a3a44;background:transparent;color:#c8c8d0;border-radius:6px;
+  }
+  .chooser button[aria-pressed="true"]{background:#f4f4f5;color:#111;border-color:#f4f4f5}
+  .chooser .hint{margin-left:auto;font-size:11px;color:#888896}
+
+  .sys{display:none}.sys.is-on{display:block}
+  .slides-nav{
+    display:flex;flex-wrap:wrap;gap:6px;max-width:1100px;margin:12px auto 0;padding:0 16px;
+  }
+  .slides-nav button{
+    font:inherit;font-size:11px;font-weight:600;padding:6px 10px;cursor:pointer;
+    border:1px solid #3a3a44;background:#16161a;color:#b0b0ba;border-radius:999px;
+  }
+  .slides-nav button[aria-pressed="true"]{background:#ff5a1f;border-color:#ff5a1f;color:#fff}
+  #f-sys .slides-nav button[aria-pressed="true"]{background:#171717;border-color:#171717}
+
+  .slide{display:none;padding-bottom:48px}
+  .slide.is-on{display:block}
+  .cap{max-width:1100px;margin:0 auto;padding:10px 20px;font-size:12px;color:#9a9aa6}
+  .frame{max-width:1100px;margin:0 auto;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+
+  /* ═══════════════ D SYSTEM ═══════════════ */
+  #d-sys .frame{background:#f7f4ef;color:#14120f}
+  .d-sky{
+    background:linear-gradient(180deg,#87b7ff 0%,#c5ddff 42%,#f7f4ef 100%);
+    padding:20px 28px 8px;
+  }
+  .d-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600}
+  .d-top nav{display:flex;gap:14px}
+  .d-top a{color:#14120f;text-decoration:none;opacity:.55;font-weight:600}
+  .d-top a.on{opacity:1}
+  .d-h1{
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+    font-size:clamp(1.8rem,4vw,2.8rem);letter-spacing:-.04em;line-height:1.05;margin:22px 0 8px;
+  }
+  .d-lede{margin:0 0 20px;color:#2a3548;max-width:34rem;font-size:15px;line-height:1.45}
+  .d-pass{
+    margin:0 20px 24px;background:#fff;border-radius:16px;border:1px solid #e4ddd2;
+    box-shadow:0 12px 40px rgba(40,60,100,.1);
+    display:grid;grid-template-columns:1.35fr .95fr;overflow:hidden;
+  }
+  .d-pass-main{padding:20px 22px}
+  .d-fromto{display:flex;align-items:flex-end;gap:12px;margin-bottom:16px}
+  .d-code{font-family:"Bricolage Grotesque",sans-serif;font-size:2.2rem;font-weight:800;letter-spacing:-.04em;line-height:1}
+  .d-arrow{flex:1;height:2px;background:#14120f;margin-bottom:12px;position:relative}
+  .d-arrow::after{content:"";position:absolute;right:-2px;top:-4px;border:5px solid transparent;border-left-color:#14120f}
+  .d-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7a7368;font-weight:700}
+  .d-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:13px}
+  .d-row b{display:block;font-size:15px;margin-top:2px}
+  .d-pass-side{
+    background:#14120f;color:#f7f4ef;padding:20px;border-left:2px dashed #3a3530;
+    display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .d-gate{font-family:"Geist Mono",monospace;font-size:11px;letter-spacing:.14em;opacity:.7}
+  .d-pass-side h3{font-family:"Bricolage Grotesque",sans-serif;font-size:1.25rem;margin:8px 0;font-weight:700}
+  .d-board{
+    display:inline-block;margin-top:10px;padding:12px 16px;background:#ff5a1f;color:#fff;
+    text-decoration:none;font-weight:700;font-size:13px;border-radius:8px;text-align:center;
+  }
+  .d-body{padding:8px 28px 32px}
+  .d-h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#7a7368;margin:0 0 12px;font-weight:700}
+  .d-leg{
+    display:grid;grid-template-columns:56px 1fr auto;gap:14px;align-items:center;
+    padding:12px 0;border-bottom:1px solid #e4ddd2;font-size:14px;
+  }
+  .d-leg .t{font-family:"Geist Mono",monospace;font-size:12px;color:#7a7368}
+  .d-leg.now{background:#fff4ec;margin:0 -10px;padding-left:10px;padding-right:10px;border-radius:8px;border-bottom-color:transparent}
+  .d-leg a{color:#ff5a1f;font-weight:700;text-decoration:none;font-size:13px}
+
+  /* Lesson in-flight */
+  .d-cabin{padding:0 28px 32px}
+  .d-progress{
+    height:6px;background:#e4ddd2;border-radius:99px;overflow:hidden;margin:0 0 20px;
+  }
+  .d-progress i{display:block;height:100%;width:35%;background:#ff5a1f;border-radius:99px}
+  .d-prose{
+    background:#fff;border:1px solid #e4ddd2;border-radius:14px;padding:22px 24px;
+    font-size:15px;line-height:1.6;max-width:40rem;
+  }
+  .d-prose h3{font-family:"Bricolage Grotesque",sans-serif;margin:0 0 10px;font-size:1.2rem}
+  .d-prose ul{margin:10px 0;padding-left:1.2rem}
+  .d-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .d-btn{
+    padding:12px 16px;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;
+    background:#14120f;color:#f7f4ef;
+  }
+  .d-btn.sec{background:transparent;color:#14120f;border:1.5px solid #14120f}
+
+  /* Manual = in-flight magazine */
+  .d-mag{
+    display:grid;grid-template-columns:200px 1fr;gap:0;margin:0 20px 28px;
+    background:#fff;border:1px solid #e4ddd2;border-radius:16px;overflow:hidden;min-height:420px;
+  }
+  .d-mag-toc{background:#14120f;color:#f7f4ef;padding:18px 16px}
+  .d-mag-toc h3{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.55;margin:0 0 12px}
+  .d-mag-toc a{
+    display:block;padding:8px 8px;border-radius:6px;color:inherit;text-decoration:none;font-size:13px;margin-bottom:2px;
+  }
+  .d-mag-toc a.on,.d-mag-toc a:hover{background:#2a2622}
+  .d-mag-body{padding:22px 24px}
+  .d-mag-body .tag{font-family:"Geist Mono",monospace;font-size:10px;letter-spacing:.12em;color:#ff5a1f;margin-bottom:8px}
+  .d-mag-body h2{font-family:"Bricolage Grotesque",sans-serif;font-size:1.6rem;margin:0 0 12px;letter-spacing:-.03em}
+  .d-mag-body p{font-size:15px;line-height:1.6;color:#3a3228;margin:0 0 12px}
+  .d-discuss{
+    margin-top:20px;padding-top:16px;border-top:1px dashed #e4ddd2;
+  }
+  .d-discuss .msg{font-size:13px;padding:10px 12px;background:#f7f4ef;border-radius:10px;margin-bottom:8px}
+  .d-discuss textarea{
+    width:100%;border:1px solid #e4ddd2;border-radius:10px;padding:10px;font:inherit;min-height:64px;resize:vertical;
+  }
+
+  /* Quiz = checkpoint */
+  .d-quiz{padding:0 28px 32px}
+  .d-q{
+    background:#fff;border:1px solid #e4ddd2;border-radius:14px;padding:20px 22px;margin-bottom:14px;
+  }
+  .d-q .n{font-family:"Geist Mono",monospace;font-size:11px;color:#7a7368;margin-bottom:8px}
+  .d-q h3{margin:0 0 14px;font-size:1.05rem;font-family:"Bricolage Grotesque",sans-serif}
+  .d-opt{
+    display:block;padding:12px 14px;border:1.5px solid #e4ddd2;border-radius:10px;
+    margin-bottom:8px;font-size:14px;cursor:pointer;
+  }
+  .d-opt:hover,.d-opt.on{border-color:#ff5a1f;background:#fff4ec}
+
+  /* Coach = radio tower */
+  .d-coach{padding:0 28px 32px;display:grid;grid-template-columns:1fr 280px;gap:16px}
+  .d-thread{background:#fff;border:1px solid #e4ddd2;border-radius:14px;padding:18px;min-height:320px}
+  .d-bubble{max-width:90%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.45;margin-bottom:10px}
+  .d-bubble.bot{background:#14120f;color:#f7f4ef}
+  .d-bubble.user{background:#fff4ec;margin-left:auto}
+  .d-side{background:#14120f;color:#f7f4ef;border-radius:14px;padding:16px;font-size:13px}
+  .d-side h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin:0 0 10px}
+  .d-side li{margin-bottom:8px}
+
+  @media(max-width:800px){
+    .d-pass,.d-mag,.d-coach{grid-template-columns:1fr}
+    .d-pass-side{border-left:0;border-top:2px dashed #3a3530}
+  }
+
+  /* ═══════════════ F SYSTEM — Outfit + Fraunces (same as F deep) ═══════════════ */
+  #f-sys .frame{
+    background:#f7f7f5;color:#141414;
+    font-family:"Outfit",system-ui,sans-serif;
+    box-shadow:0 28px 70px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06);
+    border-radius:4px;
+  }
+  .f-nav{
+    display:flex;gap:14px;align-items:center;padding:16px 24px;
+    border-bottom:1px solid #e8e8e4;font-size:13px;font-weight:600;
+    background:#fff;
+  }
+  .f-nav .brand{
+    font-family:"Outfit",sans-serif;font-weight:700;letter-spacing:-.03em;font-size:15px;
+  }
+  .f-nav a{color:#737373;text-decoration:none}
+  .f-nav a.on{color:#141414}
+  .f-nav .sp{flex:1}
+  .f-chat{max-width:560px;margin:0 auto;padding:28px 22px 40px}
+  .f-day{
+    text-align:center;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    color:#a1a1a1;margin-bottom:24px;font-weight:600;
+  }
+  .f-msg{display:flex;gap:12px;margin-bottom:16px;align-items:flex-end}
+  .f-msg.me{flex-direction:row-reverse}
+  .f-ava{
+    width:34px;height:34px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+    font-size:11px;font-weight:700;
+  }
+  .f-ava.v{background:#141414;color:#f7f7f5}
+  .f-ava.u{background:#e4e4e0;color:#141414}
+  .f-bub{
+    max-width:85%;padding:12px 15px;border-radius:18px;font-size:15px;line-height:1.5;
+    font-weight:400;
+  }
+  .f-msg.v .f-bub{background:#141414;color:#f7f7f5;border-bottom-left-radius:5px}
+  .f-msg.me .f-bub{background:#fff;color:#141414;border:1px solid #e8e8e4;border-bottom-right-radius:5px}
+  .f-msg.v .f-bub strong{color:#86efac;font-weight:600}
+  .f-choices{display:flex;flex-direction:column;gap:8px;margin:22px 0 0;padding-left:46px}
+  .f-choices a{
+    display:block;padding:14px 16px;border:1.5px solid #141414;border-radius:14px;
+    text-decoration:none;color:#141414;font-weight:600;font-size:14px;background:#fff;
+    letter-spacing:-.01em;
+  }
+  .f-choices a.primary{background:#141414;color:#f7f7f5}
+  .f-choices a small{
+    display:block;font-weight:500;opacity:.5;margin-top:3px;font-size:11px;letter-spacing:0;
+  }
+
+  .f-lesson-card{
+    margin:12px 0 16px;padding:16px 18px;border-radius:16px;background:#fff;
+    border:1px solid #e8e8e4;font-size:14px;line-height:1.55;
+    box-shadow:0 8px 24px rgba(20,20,20,.04);
+  }
+  .f-lesson-card h3{
+    margin:0 0 8px;font-size:1.05rem;
+    font-family:"Fraunces",Georgia,serif;font-weight:600;letter-spacing:-.02em;
+  }
+  .f-check{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .f-check label{
+    display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;
+    background:#f7f7f5;font-size:13px;cursor:pointer;
+  }
+  .f-check input{margin-top:2px}
+
+  .f-doc{
+    margin:8px 0;border-radius:16px;overflow:hidden;border:1px solid #e8e8e4;background:#fff;
+    box-shadow:0 8px 24px rgba(20,20,20,.04);
+  }
+  .f-doc .hd{padding:10px 14px;background:#f0f0ec;font-size:11px;font-weight:600;color:#525252;letter-spacing:.02em}
+  .f-doc .bd{padding:16px 18px;font-size:14px;line-height:1.55}
+  .f-doc .bd h3{
+    margin:0 0 8px;font-size:1.15rem;
+    font-family:"Fraunces",Georgia,serif;font-weight:600;letter-spacing:-.02em;
+  }
+  .f-composer{
+    display:flex;gap:8px;margin-top:18px;padding-left:46px;
+  }
+  .f-composer input{
+    flex:1;border:1.5px solid #e8e8e4;border-radius:999px;padding:12px 16px;
+    font:inherit;background:#fff;
+  }
+  .f-composer button{
+    border:0;background:#141414;color:#fff;border-radius:999px;padding:0 18px;
+    font-weight:700;cursor:pointer;font-family:inherit;
+  }
+
+  .f-quiz-card{
+    margin:8px 0 12px;padding:18px;border-radius:16px;background:#fff;border:1px solid #e8e8e4;
+    box-shadow:0 8px 24px rgba(20,20,20,.04);
+  }
+  .f-quiz-card .n{font-size:10px;color:#737373;font-weight:600;margin-bottom:8px;letter-spacing:.1em;text-transform:uppercase}
+  .f-quiz-card strong{
+    font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:1.15rem;letter-spacing:-.02em;
+    display:block;margin-bottom:4px;
+  }
+  .f-opt{
+    display:block;padding:11px 12px;border:1.5px solid #e8e8e4;border-radius:10px;
+    margin-top:8px;font-size:14px;text-decoration:none;color:inherit;
+  }
+  .f-opt:hover{border-color:#141414}
+
+  .f-score{
+    text-align:center;padding:28px 16px;border-radius:20px;background:#141414;color:#f7f7f5;margin:12px 0 16px;
+  }
+  .f-score .big{
+    font-family:"Fraunces",Georgia,serif;font-size:3.4rem;font-weight:600;letter-spacing:-.04em;line-height:1;
+  }
+</style>
+</head>
+<body>
+  <div class="chooser">
+    <strong>System</strong>
+    <button type="button" data-sys="d-sys" aria-pressed="true">D · Boarding pass</button>
+    <button type="button" data-sys="f-sys" aria-pressed="false">F · Mentor chat</button>
+    <span class="hint">Same story across screens — flip slides under each system</span>
+  </div>
+
+  <!-- ================= D ================= -->
+  <div class="sys is-on" id="d-sys">
+    <div class="slides-nav" id="d-nav">
+      <button type="button" data-slide="d1" aria-pressed="true">1 Home / gate</button>
+      <button type="button" data-slide="d2" aria-pressed="false">2 In flight · lesson</button>
+      <button type="button" data-slide="d3" aria-pressed="false">3 Magazine · manual</button>
+      <button type="button" data-slide="d4" aria-pressed="false">4 Checkpoint · quiz</button>
+      <button type="button" data-slide="d5" aria-pressed="false">5 Tower · Ask Vidura</button>
+      <button type="button" data-slide="d6" aria-pressed="false">6 Arrived · result</button>
+    </div>
+
+    <section class="slide is-on" id="d1">
+      <p class="cap">D1 · Home — boarding pass. Excitement = departure.</p>
+      <div class="frame">
+        <div class="d-sky">
+          <div class="d-top">
+            <span>EdVidura</span>
+            <nav><a class="on" href="#">Gate</a><a href="#">Flights</a><a href="#">Tower</a></nav>
+            <span style="opacity:.65">Welding 101</span>
+          </div>
+          <h1 class="d-h1">Your flight is boarding.</h1>
+          <p class="d-lede">Destination: SMAW practice. You’ve cleared Safety. Next stop is the checklist — then the quiz terminal.</p>
+          <div class="d-pass">
+            <div class="d-pass-main">
+              <div class="d-fromto">
+                <div><div class="d-label">From</div><div class="d-code">SAFE</div></div>
+                <div class="d-arrow"></div>
+                <div><div class="d-label">To</div><div class="d-code">SMAW</div></div>
+              </div>
+              <div class="d-row">
+                <div><div class="d-label">Passenger</div><b>Ada</b></div>
+                <div><div class="d-label">Class</div><b>W101</b></div>
+                <div><div class="d-label">Progress</div><b>42%</b></div>
+              </div>
+            </div>
+            <div class="d-pass-side">
+              <div>
+                <div class="d-gate">GATE B · NOW</div>
+                <h3>SMAW practice note</h3>
+                <div style="font-size:12px;opacity:.7">~12 min · three checks</div>
+              </div>
+              <a class="d-board" href="#">Board lesson →</a>
+            </div>
+          </div>
+        </div>
+        <div class="d-body">
+          <h2 class="d-h2">Itinerary</h2>
+          <div class="d-leg"><span class="t">01</span><div><strong>Safety &amp; joints</strong></div><span>Landed</span></div>
+          <div class="d-leg now"><span class="t">02</span><div><strong>SMAW practice</strong></div><a href="#">Board</a></div>
+          <div class="d-leg"><span class="t">03</span><div><strong>Handbook</strong></div><span>Soon</span></div>
+          <div class="d-leg"><span class="t">04</span><div><strong>Class quiz</strong></div><span>Final</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="d2">
+      <p class="cap">D2 · Lesson — “in flight.” Progress bar = altitude; content is the cabin brief.</p>
+      <div class="frame">
+        <div class="d-sky" style="min-height:auto;padding-bottom:16px">
+          <div class="d-top">
+            <span>EdVidura · In flight</span>
+            <nav><a href="#">Gate</a><a class="on" href="#">Cabin</a><a href="#">Tower</a></nav>
+            <span style="opacity:.65">EP 02</span>
+          </div>
+          <h1 class="d-h1" style="font-size:clamp(1.5rem,3vw,2rem)">Cabin brief: SMAW practice</h1>
+          <p class="d-lede">Seatbelt sign is on until you finish the three checks.</p>
+        </div>
+        <div class="d-cabin">
+          <div class="d-progress"><i></i></div>
+          <div class="d-prose">
+            <h3>Before you strike the arc</h3>
+            <p>Shielded Metal Arc Welding uses a consumable electrode with flux. Set polarity and amperage for the electrode diameter.</p>
+            <ul>
+              <li>Confirm PPE and booth clear of flammables</li>
+              <li>Check cable and ground clamp</li>
+              <li>Set amperage for electrode diameter</li>
+            </ul>
+            <div class="d-actions">
+              <a class="d-btn" href="#">Mark checks done →</a>
+              <a class="d-btn sec" href="#">Call the tower (Ask Vidura)</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="d3">
+      <p class="cap">D3 · Manual — in-flight magazine + seatback discuss thread.</p>
+      <div class="frame">
+        <div class="d-sky" style="min-height:auto;padding-bottom:12px">
+          <div class="d-top">
+            <span>EdVidura · Onboard magazine</span>
+            <nav><a href="#">Gate</a><a class="on" href="#">Magazine</a><a href="#">Tower</a></nav>
+            <span style="opacity:.65">v1 published</span>
+          </div>
+          <h1 class="d-h1" style="font-size:clamp(1.5rem,3vw,2rem)">Welding fundamentals</h1>
+          <p class="d-lede">Deep reading while you cruise — discuss with your class below.</p>
+        </div>
+        <div class="d-mag">
+          <aside class="d-mag-toc">
+            <h3>Chapters</h3>
+            <a href="#">Safety first</a>
+            <a class="on" href="#">SMAW basics</a>
+            <a href="#">GMAW basics</a>
+            <a href="#">Inspection cues</a>
+          </aside>
+          <div class="d-mag-body">
+            <div class="tag">SEATBACK · CHAPTER</div>
+            <h2>SMAW basics (stick)</h2>
+            <p>Strike the arc, keep a short arc length, and travel at a steady speed so the bead is even without undercut.</p>
+            <p>When in doubt, stop and ask a qualified inspector — do not guess on structural work.</p>
+            <div class="d-discuss">
+              <div class="d-h2">Class discussion</div>
+              <div class="msg"><strong>Sam:</strong> Anyone else forget the ground clamp once?</div>
+              <div class="msg"><strong>Ada:</strong> Guilty — that’s why check #2 exists.</div>
+              <textarea placeholder="Add to the thread…"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="d4">
+      <p class="cap">D4 · Quiz — security checkpoint before arrival.</p>
+      <div class="frame">
+        <div class="d-sky" style="min-height:auto;padding-bottom:12px">
+          <div class="d-top">
+            <span>EdVidura · Checkpoint</span>
+            <nav><a href="#">Gate</a><a class="on" href="#">Security</a><a href="#">Tower</a></nav>
+            <span style="opacity:.65">Q 2 of 8</span>
+          </div>
+          <h1 class="d-h1" style="font-size:clamp(1.5rem,3vw,2rem)">Security check</h1>
+          <p class="d-lede">Unique questions for you. Clear them to land a Moodle score.</p>
+        </div>
+        <div class="d-quiz">
+          <div class="d-progress"><i style="width:25%"></i></div>
+          <div class="d-q">
+            <div class="n">QUESTION 02 · PPE</div>
+            <h3>Which item is required before striking an arc?</h3>
+            <label class="d-opt">A · Cotton hoodie only</label>
+            <label class="d-opt on">B · Filter lens / helmet</label>
+            <label class="d-opt">C · Open-toe shoes</label>
+            <label class="d-opt">D · No gloves for dexterity</label>
+          </div>
+          <div class="d-actions">
+            <a class="d-btn" href="#">Next question →</a>
+            <a class="d-btn sec" href="#">Practice lane (no Moodle)</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="d5">
+      <p class="cap">D5 · Ask Vidura — control tower. Grounded answers only.</p>
+      <div class="frame">
+        <div class="d-sky" style="min-height:auto;padding-bottom:12px">
+          <div class="d-top">
+            <span>EdVidura · Control tower</span>
+            <nav><a href="#">Gate</a><a href="#">Cabin</a><a class="on" href="#">Tower</a></nav>
+            <span style="opacity:.65">Class SME only</span>
+          </div>
+          <h1 class="d-h1" style="font-size:clamp(1.5rem,3vw,2rem)">Tower, request clearance</h1>
+          <p class="d-lede">Ask Vidura answers from approved manuals and lessons — not the open web.</p>
+        </div>
+        <div class="d-coach">
+          <div class="d-thread">
+            <div class="d-bubble user">What PPE do I need before SMAW?</div>
+            <div class="d-bubble bot">From <em>Welding fundamentals · Safety first</em>: helmet with filter lens, gloves, leather apron, closed shoes. Keep flammables away from the arc.</div>
+            <div class="d-bubble user">Why short arc length?</div>
+            <div class="d-bubble bot">SMAW basics: short arc length helps an even bead and reduces undercut — travel steady.</div>
+          </div>
+          <aside class="d-side">
+            <h3>On frequency</h3>
+            <ul style="margin:0;padding-left:1.1rem">
+              <li>Welding fundamentals v1</li>
+              <li>SMAW practice note</li>
+              <li>Class discussion open</li>
+            </ul>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="d6">
+      <p class="cap">D6 · Result — you’ve landed. Boarding pass becomes arrival card.</p>
+      <div class="frame">
+        <div class="d-sky">
+          <div class="d-top">
+            <span>EdVidura · Arrivals</span>
+            <nav><a class="on" href="#">Arrivals</a><a href="#">Gate</a></nav>
+            <span style="opacity:.65">Synced to Moodle</span>
+          </div>
+          <h1 class="d-h1">Welcome to the gate.</h1>
+          <p class="d-lede">Quiz complete. Your score is on the ground — Moodle has it if AGS is live.</p>
+          <div class="d-pass">
+            <div class="d-pass-main">
+              <div class="d-fromto">
+                <div><div class="d-label">From</div><div class="d-code">QUIZ</div></div>
+                <div class="d-arrow"></div>
+                <div><div class="d-label">To</div><div class="d-code">HOME</div></div>
+              </div>
+              <div class="d-row">
+                <div><div class="d-label">Score</div><b>7 / 8</b></div>
+                <div><div class="d-label">Status</div><b>Landed</b></div>
+                <div><div class="d-label">AGS</div><b>Sent</b></div>
+              </div>
+            </div>
+            <div class="d-pass-side">
+              <div>
+                <div class="d-gate">BAG CLAIM · NEXT</div>
+                <h3>Close the gaps</h3>
+                <div style="font-size:12px;opacity:.7">One missed PPE item — review handbook</div>
+              </div>
+              <a class="d-board" href="#">Open remediation →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= F ================= -->
+  <div class="sys" id="f-sys">
+    <div class="slides-nav" id="f-nav">
+      <button type="button" data-slide="f1" aria-pressed="true">1 Home / chat</button>
+      <button type="button" data-slide="f2" aria-pressed="false">2 Lesson in thread</button>
+      <button type="button" data-slide="f3" aria-pressed="false">3 Manual share</button>
+      <button type="button" data-slide="f4" aria-pressed="false">4 Quiz as DMs</button>
+      <button type="button" data-slide="f5" aria-pressed="false">5 Ask Vidura</button>
+      <button type="button" data-slide="f6" aria-pressed="false">6 Score drop</button>
+    </div>
+
+    <section class="slide is-on" id="f1">
+      <p class="cap">F1 · Home — mentor opens the day. Choices = your next plot beat.</p>
+      <div class="frame">
+        <div class="f-nav">
+          <span class="brand">EdVidura</span>
+          <a class="on" href="#">Today</a>
+          <a href="#">Library</a>
+          <a href="#">Progress</a>
+          <span class="sp"></span>
+          <span style="color:#a3a3a3;font-weight:500">Welding 101</span>
+        </div>
+        <div class="f-chat">
+          <div class="f-day">Today · Episode 2</div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">Hey Ada — yesterday you nailed joints. <strong>Today we earn the arc.</strong></div></div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">SMAW practice is unlocked. Three setup checks before you touch the stinger. Ready?</div></div>
+          <div class="f-msg me"><div class="f-ava u">A</div><div class="f-bub">What’s my path look like?</div></div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">Safety ✓ → <strong>SMAW (now)</strong> → Handbook → Quiz. How do you want to continue?</div></div>
+          <div class="f-choices">
+            <a class="primary" href="#">Enter SMAW practice <small>Recommended · ~12 min</small></a>
+            <a href="#">Open the handbook first <small>Refresher</small></a>
+            <a href="#">Ask something first <small>Grounded coach</small></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="f2">
+      <p class="cap">F2 · Lesson — content arrives as a card inside the conversation; mentor nudges.</p>
+      <div class="frame">
+        <div class="f-nav">
+          <span class="brand">EdVidura</span>
+          <a class="on" href="#">Today</a>
+          <a href="#">Library</a>
+          <span class="sp"></span>
+          <span style="color:#a3a3a3;font-weight:500">SMAW · in progress</span>
+        </div>
+        <div class="f-chat">
+          <div class="f-day">Lesson · SMAW practice</div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">Here’s today’s page. Tick the checks — I’ll wait.</div></div>
+          <div class="f-msg v" style="align-items:stretch">
+            <div class="f-ava v">EV</div>
+            <div style="flex:1">
+              <div class="f-lesson-card">
+                <h3>Before you strike</h3>
+                Set polarity and amperage for the electrode diameter. Keep a short arc length.
+                <div class="f-check">
+                  <label><input type="checkbox" checked/> PPE + booth clear</label>
+                  <label><input type="checkbox" checked/> Cable + ground clamp</label>
+                  <label><input type="checkbox"/> Amperage set for diameter</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">One left. When it’s checked, we move — or open the handbook if you want backup.</div></div>
+          <div class="f-choices">
+            <a class="primary" href="#">Mark complete →</a>
+            <a href="#">Send handbook chapter</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="f3">
+      <p class="cap">F3 · Manual — mentor “shares” a chapter into the chat; discuss stays conversational.</p>
+      <div class="frame">
+        <div class="f-nav">
+          <span class="brand">EdVidura</span>
+          <a href="#">Today</a>
+          <a class="on" href="#">Library</a>
+          <span class="sp"></span>
+          <span style="color:#a3a3a3;font-weight:500">Manual</span>
+        </div>
+        <div class="f-chat">
+          <div class="f-day">Shared · Welding fundamentals</div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">Pinning the SMAW chapter. Read it, then tell me what you’d check first.</div></div>
+          <div class="f-msg v" style="align-items:stretch">
+            <div class="f-ava v">EV</div>
+            <div style="flex:1">
+              <div class="f-doc">
+                <div class="hd">📎 Class manual · v1 · SMAW basics</div>
+                <div class="bd">
+                  <h3>SMAW basics (stick)</h3>
+                  Strike the arc, keep a short arc length, travel steady — even bead, no undercut.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="f-msg me"><div class="f-ava u">A</div><div class="f-bub">Ground clamp — I always rush that.</div></div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">Good. Sam said the same in class discuss. Want to post that tip to the chapter thread?</div></div>
+          <div class="f-choices">
+            <a class="primary" href="#">Post tip to class discuss</a>
+            <a href="#">Back to SMAW lesson</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="f4">
+      <p class="cap">F4 · Quiz — questions land like messages; answers are taps.</p>
+      <div class="frame">
+        <div class="f-nav">
+          <span class="brand">EdVidura</span>
+          <a class="on" href="#">Today</a>
+          <span class="sp"></span>
+          <span style="color:#a3a3a3;font-weight:500">Quiz · 2/8</span>
+        </div>
+        <div class="f-chat">
+          <div class="f-day">Graded quiz · Moodle sync on</div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">Quick fire. No spoilers from me — pick clean.</div></div>
+          <div class="f-msg v" style="align-items:stretch">
+            <div class="f-ava v">EV</div>
+            <div style="flex:1">
+              <div class="f-quiz-card">
+                <div class="n">Q2 · PPE</div>
+                <strong>Required before striking an arc?</strong>
+                <a class="f-opt" href="#">Cotton hoodie only</a>
+                <a class="f-opt" href="#" style="border-color:#171717;background:#f5f5f5">Filter lens / helmet ✓</a>
+                <a class="f-opt" href="#">Open-toe shoes</a>
+              </div>
+            </div>
+          </div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">Locked in. Next one when you’re ready.</div></div>
+          <div class="f-choices">
+            <a class="primary" href="#">Next question →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="f5">
+      <p class="cap">F5 · Ask Vidura — same chat chrome; citations feel like replies with sources.</p>
+      <div class="frame">
+        <div class="f-nav">
+          <span class="brand">EdVidura</span>
+          <a class="on" href="#">Ask Vidura</a>
+          <span class="sp"></span>
+          <span style="color:#a3a3a3;font-weight:500">SME grounded</span>
+        </div>
+        <div class="f-chat">
+          <div class="f-day">Coach · approved sources only</div>
+          <div class="f-msg me"><div class="f-ava u">A</div><div class="f-bub">What PPE before SMAW?</div></div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">Helmet with filter lens, gloves, leather apron, closed shoes. Keep flammables clear.<br/><br/><strong>Source:</strong> Welding fundamentals · Safety first</div></div>
+          <div class="f-msg me"><div class="f-ava u">A</div><div class="f-bub">Write my exam answers for me</div></div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">Can’t do that — I’ll help you understand the handbook instead. Want the SMAW section?</div></div>
+          <div class="f-composer">
+            <input placeholder="Ask about class sources…"/>
+            <button type="button">Send</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="f6">
+      <p class="cap">F6 · Result — score drops in as a message beat, then next-story choices.</p>
+      <div class="frame">
+        <div class="f-nav">
+          <span class="brand">EdVidura</span>
+          <a class="on" href="#">Today</a>
+          <span class="sp"></span>
+          <span style="color:#a3a3a3;font-weight:500">Results</span>
+        </div>
+        <div class="f-chat">
+          <div class="f-day">Just now</div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">You’re done. Here’s how it landed — Moodle has the grade if sync is live.</div></div>
+          <div class="f-msg v" style="align-items:stretch">
+            <div class="f-ava v">EV</div>
+            <div style="flex:1">
+              <div class="f-score">
+                <div style="opacity:.65;font-size:12px;letter-spacing:.12em;text-transform:uppercase">Score</div>
+                <div class="big">7/8</div>
+                <div style="opacity:.75;font-size:13px">AGS · sent</div>
+              </div>
+            </div>
+          </div>
+          <div class="f-msg v"><div class="f-ava v">EV</div><div class="f-bub">One miss on PPE. Want the handbook chapter, or jump to your gap plan?</div></div>
+          <div class="f-choices">
+            <a class="primary" href="#">Open Safety chapter</a>
+            <a href="#">Show my plan</a>
+            <a href="#">Back to today’s chat</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+(function(){
+  function wireSys(){
+    var sysBtns=document.querySelectorAll(".chooser button[data-sys]");
+    var systems=document.querySelectorAll(".sys");
+    sysBtns.forEach(function(btn){
+      btn.addEventListener("click",function(){
+        var id=btn.getAttribute("data-sys");
+        sysBtns.forEach(function(b){b.setAttribute("aria-pressed",b===btn?"true":"false")});
+        systems.forEach(function(s){s.classList.toggle("is-on",s.id===id)});
+      });
+    });
+  }
+  function wireSlides(navId){
+    var nav=document.getElementById(navId);
+    if(!nav) return;
+    var btns=nav.querySelectorAll("button[data-slide]");
+    btns.forEach(function(btn){
+      btn.addEventListener("click",function(){
+        var id=btn.getAttribute("data-slide");
+        var root=nav.parentElement;
+        btns.forEach(function(b){b.setAttribute("aria-pressed",b===btn?"true":"false")});
+        root.querySelectorAll(".slide").forEach(function(s){s.classList.toggle("is-on",s.id===id)});
+      });
+    });
+  }
+  wireSys();
+  wireSlides("d-nav");
+  wireSlides("f-nav");
+})();
+</script>
+</body>
+</html>

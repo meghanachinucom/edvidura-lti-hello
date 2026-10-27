@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · theme glimpses</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Sora, system-ui, sans-serif;
+      background: #e8e6e0;
+      color: #121714;
+      padding: 2rem 1.25rem 4rem;
+    }
+    h1 {
+      font-family: Fraunces, Georgia, serif;
+      font-size: clamp(1.75rem, 4vw, 2.4rem);
+      font-weight: 700;
+      margin: 0 0 0.35rem;
+    }
+    .lede {
+      color: #5a5e58;
+      max-width: 44rem;
+      margin: 0 0 2rem;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1.15rem;
+    }
+    .theme {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 8px 24px -8px rgba(0,0,0,.12);
+      display: flex;
+      flex-direction: column;
+      min-height: 400px;
+    }
+    .swatches { display: flex; height: 40px; }
+    .swatches span { flex: 1; }
+    .preview {
+      flex: 1;
+      padding: 1.15rem 1.25rem 1.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      background: var(--paper);
+      color: var(--ink);
+      background-image: linear-gradient(180deg, var(--paper) 0%, var(--panel) 100%);
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding-bottom: 0.65rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.68rem;
+      font-weight: 500;
+    }
+    .mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-family: Fraunces, Georgia, serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .mark i {
+      width: 20px; height: 20px;
+      border-radius: 5px;
+      background: var(--ink);
+      color: var(--paper);
+      display: grid; place-items: center;
+      font-style: normal;
+      font-family: Sora, sans-serif;
+      font-size: 0.5rem;
+      font-weight: 600;
+    }
+    .ctx { color: var(--muted); margin-right: 0.35rem; }
+    .nav a { color: var(--ink); text-decoration: none; margin-left: 0.5rem; opacity: 0.65; }
+    .nav a.on { opacity: 1; border-bottom: 2px solid var(--accent); padding-bottom: 1px; }
+    .hero-brand {
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin: 0;
+    }
+    .hi {
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    .sub {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .ctas { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .btn {
+      border: none;
+      font-family: Sora, sans-serif;
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 0.5rem 0.8rem;
+      border-radius: 10px;
+      cursor: default;
+    }
+    .btn-primary { background: var(--accent); color: var(--on-accent); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    .bar {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--line);
+      overflow: hidden;
+      margin-top: auto;
+    }
+    .bar i {
+      display: block;
+      height: 100%;
+      width: 42%;
+      background: var(--accent);
+    }
+    .meta { font-size: 0.68rem; color: var(--muted); margin: 0; }
+    .label {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0;
+    }
+    .name {
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    .fit {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <h1>EdVidura theme glimpses</h1>
+  <p class="lede" id="count-lede">Same Home composition — pick one for Lovable; don’t mix themes.</p>
+  <div class="grid" id="grid"></div>
+
+  <script>
+    const themes = [
+      {
+        n: "01", id: "paper", name: "Paper studio", fit: "Warm paper + mint. Default product shell.",
+        paper: "#f3f1ea", panel: "#ebe7dc", accent: "#1b6b57", sky: "#2f5d7a", ink: "#121714",
+        muted: "#5a635e", line: "#cfc9ba", on: "#f3f1ea",
+      },
+      {
+        n: "02", id: "coastal", name: "Coastal chalk", fit: "Board-white + sea-glass. Airy lessons.",
+        paper: "#f7fafb", panel: "#eef3f5", accent: "#2a7a6f", sky: "#3d6f8c", ink: "#152028",
+        muted: "#5a6a72", line: "#c5d0d6", on: "#f7fafb",
+      },
+      {
+        n: "03", id: "oak", name: "Library oak", fit: "Parchment + brass. Manual / eBook.",
+        paper: "#f5efe6", panel: "#ebe3d4", accent: "#8a6d3b", sky: "#5c4a32", ink: "#1a1512",
+        muted: "#6b5e4e", line: "#d2c4ae", on: "#f5efe6",
+      },
+      {
+        n: "04", id: "lab", name: "Lab daylight", fit: "Cool paper + signal blue. Quiz calm.",
+        paper: "#f0f3f5", panel: "#e4eaee", accent: "#1e5a8a", sky: "#166534", ink: "#0e1418",
+        muted: "#55606a", line: "#c2ccd4", on: "#f0f3f5",
+      },
+      {
+        n: "05", id: "forest", name: "Forest margin", fit: "Mist green + pine. Ask Vidura.",
+        paper: "#eef3ef", panel: "#e2ebe4", accent: "#3f7d5a", sky: "#2d5a40", ink: "#122018",
+        muted: "#4d5c52", line: "#b9c9be", on: "#eef3ef",
+      },
+      {
+        n: "06", id: "inkwell", name: "Inkwell dawn", fit: "Fog ivory + iron blue. Editorial.",
+        paper: "#f4f2ec", panel: "#e9e5db", accent: "#2c4a6e", sky: "#6b7c8a", ink: "#1c1f24",
+        muted: "#5c636b", line: "#cdc7bb", on: "#f4f2ec",
+      },
+      {
+        n: "07", id: "saffron", name: "Saffron desk", fit: "Warm white + deep saffron. Energetic but school-safe.",
+        paper: "#faf7f0", panel: "#f1ebe0", accent: "#b45309", sky: "#44403c", ink: "#1c1917",
+        muted: "#78716c", line: "#d6d3d1", on: "#faf7f0",
+      },
+      {
+        n: "08", id: "slate", name: "Slate orchard", fit: "Cool stone + plum-leaf green. Modern campus.",
+        paper: "#f5f6f4", panel: "#e9ece8", accent: "#4a6741", sky: "#57534e", ink: "#1c1917",
+        muted: "#6b7280", line: "#d1d5db", on: "#f5f6f4",
+      },
+      {
+        n: "09", id: "clay", name: "River clay", fit: "Pale clay + indigo-denim. Textbook serious.",
+        paper: "#f6f3ef", panel: "#ece6df", accent: "#334155", sky: "#94a3b8", ink: "#0f172a",
+        muted: "#64748b", line: "#cbd5e1", on: "#f6f3ef",
+      },
+      {
+        n: "10", id: "citrus", name: "Citrus margin", fit: "Soft lemon wash + charcoal. Fresh, not neon.",
+        paper: "#fbfaf3", panel: "#f3f0e4", accent: "#3f3f46", sky: "#a16207", ink: "#18181b",
+        muted: "#71717a", line: "#d4d0c4", on: "#fbfaf3",
+      },
+      {
+        n: "11", id: "harbor", name: "Harbor linen", fit: "Linen + navy rope. Classic LMS tool.",
+        paper: "#f7f5f0", panel: "#efebe3", accent: "#1e3a5f", sky: "#6b8cae", ink: "#111827",
+        muted: "#6b7280", line: "#d1cbc0", on: "#f7f5f0",
+      },
+      {
+        n: "12", id: "bloom", name: "Quiet bloom", fit: "Blush paper + berry ink. Soft Help surfaces.",
+        paper: "#faf6f7", panel: "#f2eaec", accent: "#6b3a4a", sky: "#9a7b84", ink: "#1f1216",
+        muted: "#7a646c", line: "#ddd0d4", on: "#faf6f7",
+      },
+      {
+        n: "13", id: "graphite", name: "Graphite kiln", fit: "Near-white + graphite. Minimal industrial.",
+        paper: "#fafafa", panel: "#f0f0f0", accent: "#292524", sky: "#78716c", ink: "#0c0a09",
+        muted: "#78716c", line: "#d6d3d1", on: "#fafafa",
+      },
+      {
+        n: "14", id: "lagoon", name: "Lagoon grid", fit: "Ice paper + lagoon teal. Clean tech-school.",
+        paper: "#f2f8f7", panel: "#e5f0ee", accent: "#0f766e", sky: "#155e75", ink: "#042f2e",
+        muted: "#5b7a76", line: "#b8d4cf", on: "#f2f8f7",
+      },
+      {
+        n: "15", id: "lumen", name: "Lumen (recommended)", fit: "Ivory paper + lagoon CTA + harbor. Next-level brief.",
+        paper: "#F6F1E8", panel: "#EBE4D6", accent: "#0E7C66", sky: "#1F4E79", ink: "#0F1C24",
+        muted: "#5C6568", line: "#D4CBB8", on: "#F6F1E8",
+      },
+    ];
+
+    const grid = document.getElementById("grid");
+    document.getElementById("count-lede").textContent =
+      `Same Home composition — ${themes.length} palettes. Pick one for Lovable; don’t mix.`;
+
+    for (const t of themes) {
+      const el = document.createElement("article");
+      el.className = "theme";
+      el.style.setProperty("--ink", t.ink);
+      el.style.setProperty("--paper", t.paper);
+      el.style.setProperty("--panel", t.panel);
+      el.style.setProperty("--line", t.line);
+      el.style.setProperty("--accent", t.accent);
+      el.style.setProperty("--on-accent", t.on);
+      el.style.setProperty("--muted", t.muted);
+      el.innerHTML = `
+        <div class="swatches" aria-hidden="true">
+          <span style="background:${t.paper}"></span>
+          <span style="background:${t.panel}"></span>
+          <span style="background:${t.accent}"></span>
+          <span style="background:${t.sky}"></span>
+          <span style="background:${t.ink}"></span>
+        </div>
+        <div class="preview">
+          <p class="label">${t.n} · ${t.id}</p>
+          <p class="name">${t.name}</p>
+          <p class="fit">${t.fit}</p>
+          <div class="nav">
+            <span class="mark"><i>EV</i> EdVidura</span>
+            <span><span class="ctx">Algebra I</span><a class="on" href="#">Home</a><a href="#">Lessons</a></span>
+          </div>
+          <p class="hero-brand">EdVidura</p>
+          <p class="hi">Hi, Ada</p>
+          <p class="sub">Pick up where you left off.</p>
+          <div class="ctas">
+            <span class="btn btn-primary">Continue learning</span>
+            <span class="btn btn-ghost">Ask Vidura</span>
+          </div>
+          <div class="bar" aria-hidden="true"><i></i></div>
+          <p class="meta">3 of 8 lessons</p>
+        </div>`;
+      grid.appendChild(el);
+    }
+  </script>
+</body>
+</html>
