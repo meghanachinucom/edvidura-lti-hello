@@ -22,6 +22,12 @@ Teacher UI: **Teach → Skills registry** (`/teacher/skills`)
 
 Ops API: `/api/v1/skills/framework/*`, `/api/v1/skills/to-proposals/*` (ops auth).
 
+**Competency Assessment Tool (CAT):** `app.modules.skills.mapper` + `cat.py`
+
+- F-1 — `POST /api/v1/app/cat/bank` drafts **20+** questions from a Technical Order or PDF/DOCX/TXT upload; items are tagged to mapped skills and stored as a review bank (`source_kind=technical_order`).
+- F-4 — `POST /api/v1/app/cat/map` extracts TO/EO/objective lines and matches or proposes skills; teachers approve via `/cat/proposals/{id}/approve`.
+- `GET /api/v1/app/cat` returns the catalog plus a class competency map (staff) or the learner profile.
+
 Seed (`reset_seed_single_school.py`) creates Algebra competencies for Riverside + a versioned handbook with focus headings + difference-training roles.
 
 ## Closed remediation loop

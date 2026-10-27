@@ -2,6 +2,8 @@
  * EdVidura Application State Management (Pure Vanilla JS / TS)
  */
 
+import type { LiveCat } from './api';
+
 export type UserRole = 'student' | 'teacher' | 'admin';
 
 export type ScreenId =
@@ -385,6 +387,7 @@ export interface AppState {
   } | null;
   liveQuizCanSubmit: boolean;
   liveQuizBlocked: string;
+  liveCat: LiveCat | null;
   liveAssignmentDash: {
     assignments?: Array<{ group_name?: string; title?: string; activity_type?: string }>;
     learners?: Array<{
@@ -883,6 +886,7 @@ export const state: AppState = {
   liveQuizAssignment: null,
   liveQuizCanSubmit: true,
   liveQuizBlocked: '',
+  liveCat: null,
   liveAssignmentDash: null,
   liveBankItems: [],
   liveBankCount: 0,

@@ -229,6 +229,46 @@ def approve_framework_import(
     }
 
 
+def record_to_proposals(
+    tenant_id: UUID | str,
+    proposals: list[dict[str, Any]],
+    *,
+    proposed_by: str = "cat_mapper",
+    source_label: str = "",
+) -> int:
+    """Insert TO→skill review rows from the CAT mapper (idempotent-ish)."""
+    if not proposals:
+        return 0
+    tid = str(tenant_id)
+    saved = 0
+    with db.tenant_connection(tid) as conn:
+        for row in proposals:
+            to_code = str(row.get("to_code") or "").strip()
+            skill_code = str(row.get("skill_code") or "").strip()
+            if not to_code or not skill_code:
+                continue
+            conn.execute(
+                """
+                INSERT INTO to_skill_proposals (
+                    tenant_id, to_code, to_label, skill_id, skill_code,
+                    confidence, status, proposed_by
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, 'pending', %s)
+                """,
+                (
+                    tid,
+                    to_code[:80],
+                    (row.get("to_label") or source_label or to_code)[:200],
+                    row.get("skill_id") or None,
+                    skill_code,
+                    float(row.get("confidence") or 0.55),
+                    (proposed_by or "cat_mapper")[:40],
+                ),
+            )
+            saved += 1
+    return saved
+
+
 def list_to_proposals(
     tenant_id: UUID | str, *, status: str = "pending", limit: int = 100
 ) -> list[dict[str, Any]]:

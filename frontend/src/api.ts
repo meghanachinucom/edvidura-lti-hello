@@ -323,6 +323,92 @@ export function getTestBank(batchId = '', status = '') {
   }>(`/api/v1/app/quiz/bank${qs ? `?${qs}` : ''}`);
 }
 
+export type CatCompetency = {
+  id?: string;
+  to_code?: string;
+  to_label?: string;
+  skill_code?: string;
+  label: string;
+  skill_id?: string;
+  confidence?: number;
+  matched?: boolean;
+  status?: string;
+  percent?: number | null;
+  samples?: number;
+  correct?: number;
+  total?: number;
+};
+
+export type LiveCat = {
+  skills: Array<{ skill_code: string; label: string; question_keys?: string[] }>;
+  class_map: CatCompetency[];
+  profile: CatCompetency[];
+  proposals: Array<{
+    id: string;
+    to_code: string;
+    to_label: string;
+    skill_code: string;
+    confidence: number;
+    status: string;
+  }>;
+};
+
+export function mapCatDocument(body: {
+  text?: string;
+  filename?: string;
+  title?: string;
+  base64?: string;
+  persist?: boolean;
+}) {
+  return api<{
+    competencies: CatCompetency[];
+    mapped_count: number;
+    source_filename?: string;
+    page_count?: number | null;
+  }>('/api/v1/app/cat/map', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function generateCatBank(body: {
+  text?: string;
+  filename?: string;
+  title?: string;
+  base64?: string;
+  count?: number;
+  persist?: boolean;
+}) {
+  return api<{
+    questions: Array<{
+      prompt: string;
+      choices: string[];
+      skill_code?: string;
+      topic?: string;
+      qtype?: string;
+    }>;
+    bank_size: number;
+    mapped_count: number;
+    competencies: CatCompetency[];
+    batch?: { id: string; item_count: number } | null;
+    items?: Array<{ id: string; prompt: string; qtype?: string; topic?: string }>;
+  }>('/api/v1/app/cat/bank', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function getCatOverview() {
+  return api<LiveCat>('/api/v1/app/cat');
+}
+
+export function reviewCatProposal(id: string, action: 'approve' | 'reject') {
+  return api<{ id: string; status: string }>(
+    `/api/v1/app/cat/proposals/${encodeURIComponent(id)}/${action}`,
+    { method: 'POST', body: JSON.stringify({}) }
+  );
+}
+
 export function reviewTestBank(body: {
   batch_id?: string;
   item_ids: string[];

@@ -21,6 +21,7 @@ import {
   getQuiz,
   getGroups,
   getAssignments,
+  getCatOverview,
   getTestBank,
   getToken,
   postManualDiscussion,
@@ -30,7 +31,7 @@ import {
   type LiveAttempt,
   type LiveSession,
 } from './api';
-import { notify, setScreen, showToast, state, type StudentRow, type UserRole } from './state';
+import { notify, setScreen, showToast, state, competenciesList, type CompetencyItem, type StudentRow, type UserRole } from './state';
 import { getLocale, localizeText, setLocale } from './i18n';
 
 export function isGovernment(): boolean {
@@ -192,6 +193,15 @@ export async function hydrateFromApi(): Promise<boolean> {
           state.liveAssignmentDash = null;
         })
     );
+    extras.push(
+      getCatOverview()
+        .then(pack => {
+          state.liveCat = pack;
+        })
+        .catch(() => {
+          state.liveCat = null;
+        })
+    );
   } else {
     extras.push(
       getAttempts()
@@ -215,6 +225,15 @@ export async function hydrateFromApi(): Promise<boolean> {
         })
         .catch(() => {
           state.liveAssignmentDash = null;
+        })
+    );
+    extras.push(
+      getCatOverview()
+        .then(pack => {
+          state.liveCat = pack;
+        })
+        .catch(() => {
+          state.liveCat = null;
         })
     );
   }
@@ -521,4 +540,31 @@ export function firstName(): string {
 
 export function classLabel(): string {
   return localizeText(state.classLabel || 'ZPHS Vijayawada · Class 8 Mathematics');
+}
+
+export function displayCompetencies(): CompetencyItem[] {
+  const cat = state.liveCat;
+  const rows = (cat?.profile?.length ? cat.profile : cat?.class_map) || [];
+  const live = rows.filter(r => (r.total ?? r.samples ?? 0) > 0 || r.percent != null);
+  if (!live.length) return competenciesList;
+  return live.map(row => {
+    const score = row.percent == null ? 0 : Number(row.percent);
+    const target = 60;
+    const gap = Math.max(0, target - score);
+    const level: CompetencyItem['level'] =
+      score >= 90 ? 'advanced' : score >= 75 ? 'proficient' : score >= 60 ? 'developing' : 'novice';
+    const code = row.id || row.skill_code || row.label;
+    return {
+      id: code,
+      code,
+      name: row.label,
+      domain: row.status || 'CAT',
+      level,
+      score,
+      targetScore: target,
+      gap,
+      evidenceCount: row.total ?? row.samples ?? 0,
+      evidenceItems: [],
+    };
+  });
 }

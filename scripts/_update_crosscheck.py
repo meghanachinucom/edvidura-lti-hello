@@ -65,8 +65,10 @@ TEST_URLS: dict[tuple[str, str], str] = {
     ("xAPI Middleware", "F-8"): f"{APP}/onboard",
     ("xAPI Middleware", "F-9"): f"{SPA}#teacher-diagnostics",
     ("xAPI Middleware", "F-10"): f"{SPA}#teacher-diagnostics",
+    ("Competency Assessment Tool", "F-1"): f"{SPA}#quiz",
     ("Competency Assessment Tool", "F-2"): f"{SPA}#quiz",
     ("Competency Assessment Tool", "F-3"): f"{SPA}#quiz",
+    ("Competency Assessment Tool", "F-4"): f"{SPA}#teacher-diagnostics",
     ("DCT (Content Authoring and Lesson Planner)", "F-1"): f"{APP}/teacher/ai",
     ("DCT (Content Authoring and Lesson Planner)", "F-3"): f"{APP}/teacher/ai",
     ("DCT (Content Authoring and Lesson Planner)", "F-4"): f"{SPA}#my-progress",
@@ -145,6 +147,8 @@ WAVE = {
     ("xAPI Middleware", "F-7"): "2",
     ("xAPI Middleware", "F-9"): "2",
     ("xAPI Middleware", "F-10"): "2",
+    ("Competency Assessment Tool", "F-1"): "2",
+    ("Competency Assessment Tool", "F-4"): "2",
     ("Interactive eBook", "R-1 / F-1"): "3",
     ("Interactive eBook", "F-2"): "3",
     ("Interactive eBook", "F-3"): "3",
@@ -366,11 +370,23 @@ STATUS_UPDATES = {
         "None",
         "Detect PDF route on Diagnostics xAPI tab",
     ),
+    ("Competency Assessment Tool", "F-1"): (
+        "Implemented (code present)",
+        "POST /api/v1/app/cat/bank drafts 20+ items from TO text or PDF/DOCX; SPA Checkpoint CAT generator; review then promote",
+        "None",
+        "Live 20+ TO question bank on Checkpoint",
+    ),
     ("Competency Assessment Tool", "F-2"): (
         "Implemented (code present)",
         "Same autograder as AI F-2 for MCQ and the other five types",
         "None",
         "Typed autograde shared with CAT",
+    ),
+    ("Competency Assessment Tool", "F-4"): (
+        "Implemented (code present)",
+        "POST /api/v1/app/cat/map extracts TO/EO/objective lines and matches or proposes skills; Diagnostics CAT mapper + proposal approve",
+        "None",
+        "Live AI competency mapper on Diagnostics",
     ),
     ("Competency Assessment Tool", "F-3"): (
         "Implemented (code present)",
@@ -546,7 +562,9 @@ def main() -> None:
     headers = [c.value for c in ws[1]]
     if "Wave" not in headers:
         ws.cell(1, 7, "Wave")
-        ws.cell(1, 8, "Now (27 Oct 2026)")
+        ws.cell(1, 8, "Now (28 Oct 2026)")
+    else:
+        ws.cell(1, 8, "Now (28 Oct 2026)")
     if "Test URL" not in headers:
         ws.cell(1, 9, "Test URL")
     for col in (7, 8, 9):
@@ -655,7 +673,7 @@ def main() -> None:
         [
             "park",
             "Do not spend sprint time",
-            "XR store, LTI groups, essay RAG, AR recorder, 100+ test bank, ML PLE",
+            "XR store, ML PLE, AR recorder, ADA checker, ETIMS, semantic search",
         ]
     )
     if "Test" in wb.sheetnames:
@@ -742,15 +760,20 @@ def main() -> None:
 
     for col in range(1, 10):
         ws.column_dimensions[get_column_letter(col)].width = 40 if col >= 9 else (28 if col > 3 else 22)
+    closed = PATH.with_name(PATH.stem + "_closed.xlsx")
     saved = PATH
     try:
         wb.save(PATH)
     except PermissionError:
-        saved = PATH.with_name(PATH.stem + "_closed.xlsx")
+        saved = closed
         wb.save(saved)
+    else:
+        wb.save(closed)
     print(
         "Updated",
         saved,
+        "and",
+        closed,
         "Implemented",
         totals["Implemented"],
         "Partial",

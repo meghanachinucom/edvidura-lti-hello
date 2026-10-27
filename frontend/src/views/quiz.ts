@@ -11,7 +11,9 @@ import { state, setScreen, showToast, notify } from '../state';
 import { escapeHtml, firstName, submitLiveQuiz } from '../boot';
 import {
   exportAssessment,
+  generateCatBank,
   generateTestBank,
+  mapCatDocument,
   reviewTestBank,
 } from '../api';
 
@@ -586,8 +588,14 @@ function renderAiGeneratorModal(): string {
             <select id="gen-count-select" class="w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-white font-mono">
               <option value="3">3 (quick draft)</option>
               <option value="12">12</option>
+              <option value="20">20 — CAT bank from a Technical Order</option>
               <option value="120" selected>120 — test bank (review required)</option>
             </select>
+          </div>
+          <div>
+            <label class="block font-bold text-[#0F172A] mb-1">Technical Order or upload (CAT F-1 / F-4)</label>
+            <textarea id="cat-to-text" class="w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-white font-mono min-h-[72px]" placeholder="Paste TO / objective text, or attach a PDF/DOCX below"></textarea>
+            <input id="cat-to-file" type="file" accept=".pdf,.docx,.txt,.md" class="mt-2 text-[11px] font-mono" />
           </div>
           <div>
             <label class="block font-bold text-[#0F172A] mb-1">Question Type to Generate:</label>
@@ -611,9 +619,15 @@ function renderAiGeneratorModal(): string {
           </div>
         </div>
 
-        <div class="pt-3 border-t border-[#E2E8F0] flex justify-end gap-2">
+        <div class="pt-3 border-t border-[#E2E8F0] flex justify-end gap-2 flex-wrap">
           <button id="close-dialog-btn-2" class="btn-secondary-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">
             Cancel
+          </button>
+          <button id="run-cat-map-btn" class="btn-secondary-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">
+            Map competencies
+          </button>
+          <button id="run-cat-bank-btn" class="btn-navy-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">
+            Generate CAT bank (20+)
           </button>
           <button id="run-ai-generate-btn" class="btn-primary-3d px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md">
             <span class="material-symbols-outlined text-[16px]">bolt</span>
@@ -750,6 +764,57 @@ export function bindQuizEvents(container: HTMLElement): void {
       state.activeDialog = null;
       notify();
     });
+  });
+
+  const readCatSource = (): Promise<{ text: string; filename: string; base64: string }> => {
+    const text = (container.querySelector('#cat-to-text') as HTMLTextAreaElement | null)?.value || '';
+    const file = (container.querySelector('#cat-to-file') as HTMLInputElement | null)?.files?.[0];
+    if (!file) return Promise.resolve({ text, filename: '', base64: '' });
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const raw = String(reader.result || '');
+        const base64 = raw.includes(',') ? raw.split(',')[1] : raw;
+        resolve({ text, filename: file.name, base64 });
+      };
+      reader.onerror = () => reject(new Error('Could not read the Technical Order file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  container.querySelector('#run-cat-map-btn')?.addEventListener('click', () => {
+    showToast('Mapping competencies from the Technical Order…', 'hub');
+    void readCatSource()
+      .then(src => mapCatDocument({ ...src, persist: true }))
+      .then(pack => {
+        showToast(`Mapped ${pack.mapped_count} competencies`, 'account_tree');
+        notify();
+      })
+      .catch(err => {
+        showToast(err instanceof Error ? err.message : 'Map failed', 'error');
+      });
+  });
+
+  container.querySelector('#run-cat-bank-btn')?.addEventListener('click', () => {
+    showToast('Drafting 20+ CAT items from the Technical Order…', 'auto_awesome');
+    void readCatSource()
+      .then(src => generateCatBank({ ...src, count: 20, persist: true }))
+      .then(pack => {
+        state.bankDraft = pack;
+        state.liveBankItems = (pack.items || pack.questions || []).map((q, i) => ({
+          id: String((q as { id?: string }).id || i),
+          prompt: q.prompt,
+          qtype: q.qtype,
+          topic: q.topic || ('skill_code' in q ? q.skill_code : undefined),
+          status: 'draft',
+        }));
+        state.activeDialog = 'question-bank';
+        showToast(`CAT bank: ${pack.bank_size} items · ${pack.mapped_count} skills`, 'inventory_2');
+        notify();
+      })
+      .catch(err => {
+        showToast(err instanceof Error ? err.message : 'CAT generate failed', 'error');
+      });
   });
 
   // AI Generate Run

@@ -21,7 +21,7 @@ Import domain logic from `app.modules.*` — not from FastAPI route files.
 | `app.modules.ai_authoring` | D13 teacher SME authoring assistant (grounded drafts) | Authoring |
 | `app.modules.ai_tutor` | Student hints + Ask Vidura; portable `run_coach_turn` / feedback / flashcards | Tutoring (copy module) |
 | `app.modules.jev` | TypeSafe Jev System One decisions (coach strategy / on-topic + LLM cost routing + quiz coverage judge) | AI routing / gates |
-| `app.modules.skills` | C8 competency registry + D23 roles + D08 framework import / TO review | Adaptive / gap / difference |
+| `app.modules.skills` | C8 competency registry + D23 roles + D08 framework import / CAT mapper + 20+ TO question bank | Adaptive / gap / difference |
 | `app.modules.adaptive` | C9/C10 + PLE + `learner_plan_summary` (Phase B1) + DCT / micro-learning | Tutoring / remediation |
 | `app.modules.signals` | Fuse chatbot + Moodle/LMS + VR xAPI → adapt each learner’s open plan ([SIGNALS.md](SIGNALS.md)) | Personalization / PLE |
 | `app.modules.sme` | C13 SME source registry: approved manuals/lessons for Ask Vidura | Tutoring / RAG grounding |

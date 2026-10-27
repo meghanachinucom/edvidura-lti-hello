@@ -204,7 +204,7 @@ def promote_approved(
     skipped = 0
     for q in items:
         try:
-            add_quiz_question(
+            created = add_quiz_question(
                 tenant_id=tenant_id,
                 prompt=str(q.get("prompt") or ""),
                 choices=[str(c) for c in (q.get("choices") or [])] or ["Correct", "Incorrect"],
@@ -214,6 +214,17 @@ def promote_approved(
                 topic=str(q.get("topic") or ""),
             )
             saved += 1
+            qkey = str((created or {}).get("question_key") or "")
+            topic = str(q.get("topic") or q.get("skill_code") or "")
+            if qkey and topic:
+                try:
+                    from app.modules.skills.cat import link_question_if_skill_code
+
+                    link_question_if_skill_code(
+                        tenant_id, question_key=qkey, skill_code=topic
+                    )
+                except Exception:  # noqa: BLE001
+                    pass
         except Exception:  # noqa: BLE001
             skipped += 1
     if batch_id and saved:

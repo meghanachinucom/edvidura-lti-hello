@@ -922,6 +922,15 @@ class FilePutIn(BaseModel):
     base64: str = ""
 
 
+class CatDocumentIn(BaseModel):
+    text: str = ""
+    filename: str = ""
+    title: str = ""
+    base64: str = ""
+    count: int = 20
+    persist: bool = True
+
+
 @router.post("/quiz/bank/generate")
 def app_quiz_bank_generate(payload: BankGenerateIn, session: LearnerSession) -> Any:
     from app.modules import ai_assessment as ai_mod
@@ -1010,6 +1019,140 @@ def app_quiz_bank_review(payload: BankReviewIn, session: LearnerSession) -> Any:
             session["tenant_id"], batch_id=payload.batch_id or None
         )
     return ok({"updated": updated, "promoted": promoted})
+
+
+def _cat_source(payload: CatDocumentIn) -> tuple[str, bytes, str]:
+    text = (payload.text or "").strip()
+    raw = b""
+    if payload.base64.strip():
+        import base64
+
+        try:
+            raw = base64.b64decode(payload.base64)
+        except Exception as exc:  # noqa: BLE001
+            raise AppApiError("invalid base64", code="validation") from exc
+    return text, raw, (payload.filename or payload.title or "").strip()
+
+
+@router.post("/cat/map")
+def app_cat_map(payload: CatDocumentIn, session: LearnerSession) -> Any:
+    """CAT F-4: map a Technical Order / upload onto competencies."""
+    from app.modules import skills as skills_mod
+
+    if not _is_staff(session):
+        raise AppApiError("Teachers map competencies.", code="forbidden", status_code=403)
+    text, raw, filename = _cat_source(payload)
+    try:
+        page_count = None
+        if raw:
+            from app.modules.ai_assessment.service import extract_text_from_bytes
+
+            extracted = extract_text_from_bytes(
+                raw, filename=filename or "upload.pdf"
+            )
+            text = extracted["text"]
+            filename = extracted.get("filename") or filename
+            page_count = extracted.get("page_count")
+        if len(text) < 40:
+            raise AppApiError(
+                "Paste Technical Order text or upload a PDF/DOCX.",
+                code="validation",
+            )
+        mapped = skills_mod.map_source(
+            session["tenant_id"],
+            text,
+            title=payload.title or filename,
+            persist=payload.persist,
+            filename=filename,
+        )
+        return ok(
+            json_safe(
+                {
+                    "competencies": mapped,
+                    "mapped_count": len(mapped),
+                    "source_filename": filename,
+                    "page_count": page_count,
+                }
+            )
+        )
+    except ValueError as exc:
+        raise AppApiError(str(exc), code="validation") from exc
+
+
+@router.post("/cat/bank")
+def app_cat_bank(payload: CatDocumentIn, session: LearnerSession) -> Any:
+    """CAT F-1: 20+ question bank from a Technical Order or upload."""
+    from app.modules import skills as skills_mod
+
+    if not _is_staff(session):
+        raise AppApiError(
+            "Teachers generate the competency bank.", code="forbidden", status_code=403
+        )
+    text, raw, filename = _cat_source(payload)
+    try:
+        if raw:
+            pack = skills_mod.cat_from_document(
+                session["tenant_id"],
+                raw,
+                filename=filename or "upload.pdf",
+                title=payload.title,
+                count=payload.count,
+                persist=payload.persist,
+            )
+        else:
+            if len(text) < 40:
+                raise AppApiError(
+                    "Paste Technical Order text or upload a PDF/DOCX.",
+                    code="validation",
+                )
+            pack = skills_mod.cat_from_text(
+                session["tenant_id"],
+                text,
+                title=payload.title or filename or "Technical order",
+                count=payload.count,
+                persist=payload.persist,
+                filename=filename,
+            )
+    except ValueError as exc:
+        raise AppApiError(str(exc), code="validation") from exc
+    return ok(json_safe(pack))
+
+
+@router.get("/cat")
+def app_cat_overview(session: LearnerSession) -> Any:
+    """Competency catalog, class map (staff), or learner profile."""
+    from app.modules import skills as skills_mod
+
+    pack = skills_mod.cat_overview(
+        session["tenant_id"],
+        subject=str(session.get("subject") or ""),
+        is_staff=_is_staff(session),
+    )
+    return ok(json_safe(pack))
+
+
+@router.post("/cat/proposals/{proposal_id}/approve")
+def app_cat_approve(proposal_id: UUID, session: LearnerSession) -> Any:
+    from app.modules import skills as skills_mod
+
+    if not _is_staff(session):
+        raise AppApiError("Teachers approve mappings.", code="forbidden", status_code=403)
+    row = skills_mod.approve_to_proposal(session["tenant_id"], proposal_id)
+    if not row:
+        raise AppApiError("Proposal not found", code="not_found", status_code=404)
+    return ok(json_safe(row))
+
+
+@router.post("/cat/proposals/{proposal_id}/reject")
+def app_cat_reject(proposal_id: UUID, session: LearnerSession) -> Any:
+    from app.modules import skills as skills_mod
+
+    if not _is_staff(session):
+        raise AppApiError("Teachers reject mappings.", code="forbidden", status_code=403)
+    row = skills_mod.reject_to_proposal(session["tenant_id"], proposal_id)
+    if not row:
+        raise AppApiError("Proposal not found", code="not_found", status_code=404)
+    return ok(json_safe(row))
 
 
 @router.get("/quiz/export")

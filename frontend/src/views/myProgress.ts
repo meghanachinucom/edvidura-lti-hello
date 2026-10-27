@@ -5,11 +5,12 @@
  * - Module 7: Difference Training Application (competency gap analysis, training recommendations, progress tracking)
  * - Module 9: Personalised Learning Engine (recommendations, learning goals, progress, and suggested activities)
  */
-import { state, setScreen, showToast, notify, competenciesList, learningGoalsList, suggestedActivitiesList, CompetencyItem } from '../state';
-import { classLabel, displayName, escapeHtml } from '../boot';
+import { state, setScreen, showToast, notify, learningGoalsList, suggestedActivitiesList } from '../state';
+import { classLabel, displayCompetencies, displayName, escapeHtml } from '../boot';
 
 export function renderMyProgress(): string {
   const activeTab = state.progressActiveTab || 'roadmap';
+  const comps = displayCompetencies();
 
   return `
     <div class="flex flex-col w-full bg-[#FAFBFC]">
@@ -90,7 +91,7 @@ export function renderMyProgress(): string {
           >
             <span class="material-symbols-outlined text-[16px] ${activeTab === 'competencies' ? 'text-[#FF4757]' : 'text-[#64748B]'}">fact_check</span>
             <span>Competencies &amp; Evidence (Mod 5)</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] ${activeTab === 'competencies' ? 'bg-[#FF4757] text-white' : 'bg-[#E2E8F0] text-[#475569]'} font-mono">${competenciesList.length}</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] ${activeTab === 'competencies' ? 'bg-[#FF4757] text-white' : 'bg-[#E2E8F0] text-[#475569]'} font-mono">${comps.length}</span>
           </button>
 
           <button
@@ -299,6 +300,7 @@ function renderRoadmapTab(): string {
 // TAB 2: MODULE 5 — Competency Assessment Tool
 // =========================================================================
 function renderCompetenciesTab(): string {
+  const comps = displayCompetencies();
   return `
     <!-- Hero Banner for Competencies -->
     <div class="card-depth-interactive rounded-3xl p-6 sm:p-7 bg-white border border-[#CBD5E1] space-y-3">
@@ -322,7 +324,7 @@ function renderCompetenciesTab(): string {
 
     <!-- Competencies List with 4-Level Visual Indicator -->
     <div class="space-y-4">
-      ${competenciesList.map(comp => {
+      ${comps.map(comp => {
         const levelConfig: Record<string, { label: string; bg: string; text: string; border: string }> = {
           novice: { label: 'Novice (0-59%)', bg: 'bg-[#FEF2F2]', text: 'text-[#EF4444]', border: 'border-[#FECACA]' },
           developing: { label: 'Developing (60-74%)', bg: 'bg-[#FFFBEB]', text: 'text-[#D97706]', border: 'border-[#FDE68A]' },
@@ -394,6 +396,7 @@ function renderCompetenciesTab(): string {
 // TAB 3: MODULE 7 — Difference Training Application
 // =========================================================================
 function renderDifferenceTrainingTab(): string {
+  const comps = displayCompetencies();
   return `
     <div class="card-depth-interactive rounded-3xl p-6 sm:p-7 bg-white border border-[#FFCCD5] space-y-3">
       <div class="flex items-center gap-2 text-xs text-[#FF4757] font-bold font-mono uppercase tracking-wider">
@@ -410,7 +413,7 @@ function renderDifferenceTrainingTab(): string {
 
     <!-- Gap Trajectory Cards -->
     <div class="space-y-4">
-      ${competenciesList.filter(c => c.gap > 0).map(c => `
+      ${comps.filter(c => c.gap > 0).map(c => `
         <div class="card-depth-interactive rounded-2xl p-6 bg-white border border-[#FFCCD5] space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
@@ -594,7 +597,7 @@ export function bindMyProgressEvents(container: HTMLElement): void {
 
   // Module 5 Export
   container.querySelector('#export-competencies-btn')?.addEventListener('click', () => {
-    const jsonStr = JSON.stringify(competenciesList, null, 2);
+    const jsonStr = JSON.stringify(displayCompetencies(), null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

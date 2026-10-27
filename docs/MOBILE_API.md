@@ -82,6 +82,11 @@ require a class binding for learners (no tenant-wide fallback).
 | POST | `/api/v1/app/files` | Teacher: store a middleware file |
 | POST | `/api/v1/app/grades` | Teacher: F-5 inbound grade from an external module (never replaces Moodle AGS) |
 | POST | `/api/v1/app/quiz/bank/generate` | Teacher: 100+ draft test bank + review flags |
+| POST | `/api/v1/app/cat/map` | Teacher CAT F-4: map Technical Order / PDF/DOCX text onto competencies |
+| POST | `/api/v1/app/cat/bank` | Teacher CAT F-1: 20+ question bank from a TO/upload, tagged to mapped skills |
+| GET | `/api/v1/app/cat` | Skills + class competency map (staff) or learner profile |
+| POST | `/api/v1/app/cat/proposals/{id}/approve` | Teacher: approve a TO→skill mapping |
+| POST | `/api/v1/app/cat/proposals/{id}/reject` | Teacher: reject a TO→skill mapping |
 | GET | `/api/v1/app/quiz/bank` | Teacher: draft bank items + live quiz count |
 | POST | `/api/v1/app/quiz/bank/review` | Teacher: approve/reject drafts; optional promote into live quiz |
 | GET | `/api/v1/app/quiz/export?format=md\|pdf` | Teacher: Markdown or base64 PDF of the live assessment |

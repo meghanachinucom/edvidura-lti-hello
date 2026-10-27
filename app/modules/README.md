@@ -24,7 +24,7 @@ Take `app/modules/` + migrations into another project; provide `app.db` / `app.s
 | `app.modules.ai_authoring` | D13 teacher SME authoring assistant (grounded drafts) | Authoring |
 | `app.modules.ai_tutor` | Student hints + Ask Vidura (citations, voice, shortcuts, clarify-once, integrity refuse, flashcards) | Tutoring — portable domain; routes stay thin |
 | `app.modules.jev` | TypeSafe Jev System One: coach on-topic/strategy + LLM cost routing + quiz coverage judge | AI gates |
-| `app.modules.skills` | C8 competency registry + D23 roles + D08 framework import / TO review | Adaptive / gap / difference |
+| `app.modules.skills` | C8 competency registry + D23 roles + D08 framework import / CAT mapper + 20+ TO question bank | Adaptive / gap / difference |
 | `app.modules.adaptive` | C9/C10 adaptive next + gap/difference paths + PLE + DCT order/planner | Tutoring / remediation |
 | `app.modules.signals` | Fuse chatbot + Moodle/LMS + VR xAPI → adapt each learner’s open plan | Personalization / PLE |
 | `app.modules.sme` | C13 SME source registry: approved manuals/lessons for Ask Vidura | Tutoring / RAG grounding |

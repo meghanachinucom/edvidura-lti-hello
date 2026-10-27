@@ -1,5 +1,13 @@
 """Skills / competency registry (PRD C8) + role matrices (D23) + D08 import."""
 
+from app.modules.skills.cat import (
+    cat_from_document,
+    cat_from_text,
+    cat_overview,
+    generate_cat_bank,
+    link_question_if_skill_code,
+    map_source,
+)
 from app.modules.skills.framework import (
     approve_framework_import,
     approve_to_proposal,
@@ -9,8 +17,10 @@ from app.modules.skills.framework import (
     normalize_spec,
     parse_framework_csv,
     parse_framework_json,
+    record_to_proposals,
     reject_to_proposal,
 )
+from app.modules.skills.mapper import extract_objectives, map_competencies_from_text
 from app.modules.skills.service import (
     add_role_skill,
     bind_default_lesson,
@@ -60,4 +70,13 @@ __all__ = [
     "list_to_proposals",
     "approve_to_proposal",
     "reject_to_proposal",
+    "record_to_proposals",
+    "extract_objectives",
+    "map_competencies_from_text",
+    "generate_cat_bank",
+    "map_source",
+    "cat_from_text",
+    "cat_from_document",
+    "cat_overview",
+    "link_question_if_skill_code",
 ]

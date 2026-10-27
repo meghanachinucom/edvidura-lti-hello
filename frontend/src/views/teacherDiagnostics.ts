@@ -5,9 +5,9 @@
  * - Module 4: xAPI Middleware (Activity statements, filtering, statement details inspector modal, LRS data retrieval & export)
  * - Module 7: Difference Training Application (Competency gap analysis, training recommendations, progress tracking)
  */
-import { state, setScreen, showToast, notify, xapiStatementsList, competenciesList, XApiStatement } from '../state';
-import { classLabel, displayName, escapeHtml } from '../boot';
-import { fetchJsonFile, getFileMeta, ingestExternalGrade, streamFile } from '../api';
+import { state, setScreen, showToast, notify, xapiStatementsList, XApiStatement } from '../state';
+import { classLabel, displayCompetencies, displayName, escapeHtml } from '../boot';
+import { fetchJsonFile, getCatOverview, getFileMeta, ingestExternalGrade, mapCatDocument, reviewCatProposal, streamFile } from '../api';
 
 const HEAT_INTENSITY = [
   'bg-[#F1F5F9] border-[#E2E8F0]',
@@ -996,7 +996,31 @@ function renderXApiMiddlewareTab(verbFilter: string, statements: XApiStatement[]
 // SUBTAB 4: MODULE 7 — Difference Training Application
 // =========================================================================
 function renderDifferenceTrainingTab(): string {
+  const comps = displayCompetencies();
+  const proposals = state.liveCat?.proposals || [];
   return `
+    <div class="card-depth-interactive rounded-3xl p-6 bg-white border border-[#E2E8F0] space-y-3">
+      <div class="flex items-center gap-2 text-xs text-[#0284C7] font-bold font-mono uppercase tracking-wider">
+        <span class="material-symbols-outlined text-[18px]">account_tree</span>
+        <span>Competency Assessment Tool</span>
+      </div>
+      <h3 class="text-base font-bold text-[#0F172A] font-headline">AI competency mapper (TO → skills)</h3>
+      <p class="text-xs text-[#64748B]">Paste a Technical Order or objective list. EdVidura extracts TO/EO lines and matches or proposes skills.</p>
+      <textarea id="cat-map-text" class="w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-white font-mono text-xs min-h-[80px]" placeholder="TO-100 Welding Safety&#10;The technician shall identify PPE required for SMAW."></textarea>
+      <div class="flex flex-wrap gap-2">
+        <button id="cat-map-run-btn" class="btn-primary-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer" type="button">Map competencies</button>
+      </div>
+      ${proposals.length ? `
+        <div class="space-y-2">
+          ${proposals.slice(0, 8).map(p => `
+            <div class="flex items-center justify-between gap-2 text-xs p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+              <span class="font-mono"><span class="font-bold">${escapeHtml(p.to_code)}</span> → ${escapeHtml(p.skill_code)}</span>
+              <button class="cat-approve-btn btn-secondary-3d px-2 py-1 rounded-lg text-[11px] font-bold cursor-pointer" type="button" data-id="${escapeHtml(p.id)}">Approve</button>
+            </div>
+          `).join('')}
+        </div>
+      ` : '<p class="text-xs text-[#64748B]">No pending TO→skill proposals yet.</p>'}
+    </div>
     <!-- Difference Training Hero Explainer -->
     <div class="card-depth-interactive rounded-3xl p-6 sm:p-7 bg-white border border-[#FFCCD5] space-y-3">
       <div class="flex items-center gap-2 text-xs text-[#FF4757] font-bold font-mono uppercase tracking-wider">
@@ -1013,7 +1037,7 @@ function renderDifferenceTrainingTab(): string {
 
     <!-- Gap Matrix Cards -->
     <div class="space-y-4">
-      ${competenciesList.map(comp => {
+      ${comps.map(comp => {
         const hasGap = comp.gap > 0;
         const gapColor = hasGap ? 'text-[#FF4757]' : 'text-[#10B981]';
         const badgeBg = hasGap ? 'bg-[#FFF0F3] text-[#FF4757] border-[#FFCCD5]' : 'bg-[#ECFDF5] text-[#10B981] border-[#A7F3D0]';
@@ -1273,6 +1297,39 @@ export function bindTeacherDiagnosticsEvents(container: HTMLElement): void {
     btn.addEventListener('click', (e) => {
       const drill = (e.currentTarget as HTMLElement).getAttribute('data-drill');
       showToast(`Assigned difference training drill: ${drill}`, 'task_alt');
+    });
+  });
+
+  container.querySelector('#cat-map-run-btn')?.addEventListener('click', () => {
+    const text = (container.querySelector('#cat-map-text') as HTMLTextAreaElement | null)?.value || '';
+    showToast('Mapping Technical Order competencies…', 'hub');
+    void mapCatDocument({ text, persist: true })
+      .then(pack => {
+        showToast(`Mapped ${pack.mapped_count} competencies`, 'account_tree');
+        return getCatOverview();
+      })
+      .then(overview => {
+        state.liveCat = overview;
+        notify();
+      })
+      .catch(err => {
+        showToast(err instanceof Error ? err.message : 'Map failed', 'error');
+      });
+  });
+
+  container.querySelectorAll('.cat-approve-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = (e.currentTarget as HTMLElement).getAttribute('data-id') || '';
+      void reviewCatProposal(id, 'approve')
+        .then(() => getCatOverview())
+        .then(overview => {
+          state.liveCat = overview;
+          showToast('Approved TO→skill mapping', 'task_alt');
+          notify();
+        })
+        .catch(err => {
+          showToast(err instanceof Error ? err.message : 'Approve failed', 'error');
+        });
     });
   });
 }
