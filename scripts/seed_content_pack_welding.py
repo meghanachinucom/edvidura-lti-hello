@@ -179,7 +179,7 @@ def main() -> None:
         except Exception as exc:  # noqa: BLE001
             print(f"Micro reel skip: {exc}")
 
-    print("Done. Open Manuals → Welding fundamentals; Ask Vidura cites SME.")
+    print("Done. Open Manuals -> Welding fundamentals; Ask Vidura cites SME.")
 
 
 if __name__ == "__main__":
