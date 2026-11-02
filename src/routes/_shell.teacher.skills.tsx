@@ -4,7 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { XCircle } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
-import { DataTable, type Column } from "@/components/shared/DataTable";
+import { skillGaps } from "@/data/teacherInsights";
 import { StatusBanner } from "@/components/shared/StatusBanner";
 import { skills as seedSkills, targetRoles, type Skill } from "@/data/skills";
 import { mockState } from "@/data/mockState";
@@ -42,15 +42,9 @@ function Page() {
   const role = roles.find((r) => r.id === sel);
   const rows = role ? role.skills.map((c) => allSkills.find((k) => k.code === c)).filter((k): k is Skill => !!k) : [];
 
-  const cols: Column<Skill>[] = [
-    { key: "name", header: s("colName"), cell: (k) => k.title },
-    { key: "code", header: s("colCode"), cell: (k) => k.code },
-    { key: "status", header: s("colStatus"), cell: (k) => (
-      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-sm font-medium ${k.link === "linked" ? "border-ink text-ink" : "border-dashed border-border-control text-ink"}`}><StatusGem tone={k.link === "linked" ? "synced" : "attention"}>{s(k.link)}</StatusGem></span>
-    ) },
-    { key: "action", header: s("colAction"), cell: (k) => k.link === "missing"
-      ? <Link to="/teacher/ai/remediation" className="inline-flex min-h-11 items-center text-ink underline">{s("generate")}</Link> : "—" },
-  ];
+  const stateFor = (skill: Skill): "missing" | "practising" | "passed" =>
+    skill.link === "missing" ? "missing" : skillGaps.some((gap) => gap.code === skill.code) ? "practising" : "passed";
+  const stateTone = { missing: "attention", practising: "progress", passed: "done" } as const;
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
@@ -93,8 +87,20 @@ function Page() {
         </div>
         <div className="min-w-0 space-y-3">
           <p className="text-ink">{s("caption")}</p>
+          <ul aria-label={s("legend")} className="flex flex-wrap gap-4 text-sm text-ink">
+            {(["missing", "practising", "passed"] as const).map((state) => <li key={state}><StatusGem tone={stateTone[state]}>{s(`state.${state}`)}</StatusGem></li>)}
+          </ul>
           {!role ? <p className="text-ink-muted">{s("noRole")}</p> : (
-            <DataTable caption={s("skills", { role: role.title })} columns={cols} rows={rows} rowKey={(r) => r.code} />
+            <ul className="grid gap-3 tablet:grid-cols-2 desktop:grid-cols-3" aria-label={s("skills", { role: role.title })}>
+              {rows.map((skill) => {
+                const state = stateFor(skill);
+                return <li key={skill.code} className="rounded-surface border border-border bg-surface p-4">
+                  <div className="flex items-start justify-between gap-3"><h2 className="font-heading text-[18px] text-ink">{skill.title}</h2><StatusGem tone={stateTone[state]}>{s(`state.${state}`)}</StatusGem></div>
+                  <p className="mt-2 font-mono text-sm text-ink-muted">{skill.code}</p>
+                  {state === "missing" && <Link to="/teacher/ai/remediation" className="mt-2 inline-flex min-h-11 items-center text-secondary underline">{s("generate")}</Link>}
+                </li>;
+              })}
+            </ul>
           )}
         </div>
       </div>

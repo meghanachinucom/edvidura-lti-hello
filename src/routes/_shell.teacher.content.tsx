@@ -51,6 +51,9 @@ function Page() {
   const [questions, setQuestions] = useState<QRow[]>(checkpointQuiz.questions.map((q) => ({ id: q.id, text: q.text })));
   const [lessonForm, setLessonForm] = useState<null | { id?: string }>(null);
   const [qForm, setQForm] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
+  const [questionText, setQuestionText] = useState("");
+  const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<string | null>(null);
   const lessonSave = useSaving();
   const qSave = useSaving();
@@ -109,12 +112,32 @@ function Page() {
         <ol className="space-y-2">
           {questions.map((q, i) => (
             <li key={q.id} className="rounded-surface border border-border bg-surface p-3 text-ink">
-              <span className="font-semibold">{i + 1}. </span>{q.text}
+              {editingQuestion === q.id ? (
+                <div className="space-y-2">
+                  <label htmlFor={`question-edit-${q.id}`} className="font-semibold">{s("questionText")}</label>
+                  <textarea id={`question-edit-${q.id}`} rows={3} value={questionText} onChange={(event) => setQuestionText(event.target.value)} className={`${input} py-2`} />
+                  <div className="flex gap-2">
+                    <button type="button" className="btn-primary" onClick={() => { if (questionText.trim()) setQuestions((items) => items.map((item) => item.id === q.id ? { ...item, text: questionText.trim() } : item)); setEditingQuestion(null); }}>{s("save")}</button>
+                    <button type="button" className="btn-secondary" onClick={() => setEditingQuestion(null)}>{s("cancel")}</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p><span className="font-semibold">{i + 1}. </span>{q.text}</p>
+                  <div className="mt-2 flex gap-2">
+                    <button type="button" className="btn-secondary" onClick={() => { setEditingQuestion(q.id); setQuestionText(q.text); }}>{s("edit")}</button>
+                    <button type="button" className="btn-secondary" onClick={() => setQuestionToDelete(q.id)}>{s("delete")}</button>
+                  </div>
+                </>
+              )}
             </li>
           ))}
         </ol>
       </section>
 
+      <ConfirmDialog open={questionToDelete !== null} title={s("deleteQuestionTitle")} body={s("deleteQuestionBody")}
+        confirmLabel={s("delete")} cancelLabel={s("cancel")} onCancel={() => setQuestionToDelete(null)}
+        onConfirm={() => { setQuestions((items) => items.filter((item) => item.id !== questionToDelete)); setQuestionToDelete(null); }} />
       <ConfirmDialog open={toDelete !== null} title={s("deleteTitle")} body={s("deleteBody")}
         confirmLabel={s("delete")} cancelLabel={s("cancel")} onCancel={() => setToDelete(null)}
         onConfirm={() => { setLessons((ls) => ls.filter((l) => l.id !== toDelete)); setToDelete(null); }} />

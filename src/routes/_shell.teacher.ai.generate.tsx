@@ -36,12 +36,20 @@ function Page() {
   const [picked, setPicked] = useState<boolean[]>(qs.map(() => true));
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<null | "saved" | "error">(null);
+  const [savedQuestions, setSavedQuestions] = useState<number[]>([]);
   const [discarded, setDiscarded] = useState(false);
   const count = picked.filter(Boolean).length;
 
   const save = () => {
     setSaving(true); setResult(null);
-    setTimeout(() => { setSaving(false); setResult(m.save === "error" ? "error" : "saved"); }, m.savingMs);
+    setTimeout(() => {
+      setSaving(false);
+      if (m.save === "error") setResult("error");
+      else {
+        setSavedQuestions((current) => [...new Set([...current, ...picked.flatMap((selected, index) => selected ? [index] : [])])]);
+        setResult("saved");
+      }
+    }, m.savingMs);
   };
 
   return (
@@ -49,7 +57,7 @@ function Page() {
       <div>
         <div className="flex items-center justify-between gap-2">
           <PageHeading text={s("title")} />
-          {m.state === "loaded" && !discarded && result !== "saved" && <DraftBadge />}
+          {m.state === "loaded" && !discarded && savedQuestions.length < qs.length && <DraftBadge />}
         </div>
         <p className="mt-2 text-ink">{m.source === "file" ? s("fromFile", { name: m.fileName }) : s("fromPrompt")}</p>
       </div>
@@ -66,7 +74,10 @@ function Page() {
                     className="size-5 accent-accent" aria-label={`${s("save")}: ${s("question", { n: i + 1 })}`} />
                   {s("save")}
                 </label>
-                <h2 className="mt-2 font-semibold text-ink">{s("question", { n: i + 1 })}: {q.text}</h2>
+                <div className="mt-2 flex items-start justify-between gap-3">
+                  <h2 className="font-semibold text-ink">{s("question", { n: i + 1 })}: {q.text}</h2>
+                  {!savedQuestions.includes(i) && <DraftBadge />}
+                </div>
                 <ul className="mt-2 space-y-1">
                   {q.options.map((o, j) => (
                     <li key={j} className={`flex items-start gap-2 rounded-surface p-2 text-ink ${j === q.correctIndex ? "border border-success" : ""}`}>

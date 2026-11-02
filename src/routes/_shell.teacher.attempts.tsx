@@ -16,6 +16,7 @@ import { checkpointQuiz, historyQuizzes, quizTitle } from "@/data/quiz";
 import { mockState } from "@/data/mockState";
 import { formatIST } from "@/lib/time";
 import { downloadBlob } from "@/lib/download";
+import { StatusGem, type GemTone } from "@/components/shared/StatusGem";
 
 // TC-01 Class results. No risk scores, predictions, rankings or colour-coding.
 export const Route = createFileRoute("/_shell/teacher/attempts")({
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/_shell/teacher/attempts")({
   component: Page,
 });
 
-const s = (k: string) => t(`TC-01.${k}`);
+const s = (k: string, v?: Record<string, string | number>) => t(`TC-01.${k}`, v);
 const quizzes = [checkpointQuiz, ...historyQuizzes];
 
 const columns: Column<Attempt>[] = [
@@ -40,6 +41,10 @@ const columns: Column<Attempt>[] = [
   { key: "quiz", header: s("colQuiz"), cell: (a) => quizTitle(a.quizId) },
   { key: "type", header: s("colType"), cell: (a) => s(a.kind) },
   { key: "score", header: s("colScore"), cell: (a) => t("shared.scoreOf", { n: a.score }) },
+  { key: "status", header: s("colStatus"), cell: (a) => {
+    const tone: GemTone = a.moodleStatus === "sent" ? "synced" : a.moodleStatus === "practice" ? "progress" : "attention";
+    return <StatusGem tone={tone}>{t(`shared.moodleStatus.${a.moodleStatus}`)}</StatusGem>;
+  } },
   { key: "when", header: s("colSubmitted"), cell: (a) => formatIST(a.submittedAt) },
 ];
 
@@ -51,6 +56,8 @@ function Page() {
   const [highlightedSkill, setHighlightedSkill] = useState<string | null>(null);
   const all = m.attempts === "empty" ? [] : classAttempts;
   const rows = quiz === "all" ? all : all.filter((a) => a.quizId === quiz);
+  const gradedRows = rows.filter((attempt) => attempt.kind === "graded");
+  const passRate = gradedRows.length ? Math.round((gradedRows.filter((attempt) => attempt.score / attempt.outOf >= 0.6).length / gradedRows.length) * 100) : 0;
 
   const downloadJson = () => {
     const payload = { exportedAt: new Date().toISOString(), quizFilter: quiz, attempts: rows };
@@ -58,10 +65,10 @@ function Page() {
   };
   const downloadCsv = () => {
     const esc = (v: string) => `"${v.replaceAll('"', '""')}"`;
-    const header = [s("colLearner"), s("colQuiz"), s("colType"), s("colScore"), s("colSubmitted")].map(esc).join(",");
+    const header = [s("colLearner"), s("colQuiz"), s("colType"), s("colScore"), s("colStatus"), s("colSubmitted")].map(esc).join(",");
     const lines = rows.map((a) => [
       personById(a.personId)?.name ?? "", quizTitle(a.quizId), s(a.kind),
-      t("shared.scoreOf", { n: a.score }), formatIST(a.submittedAt),
+      t("shared.scoreOf", { n: a.score }), t(`shared.moodleStatus.${a.moodleStatus}`), formatIST(a.submittedAt),
     ].map(esc).join(","));
     downloadBlob(new Blob([[header, ...lines].join("\n")], { type: "text/csv;charset=utf-8" }), "class-results.csv");
   };
@@ -82,6 +89,11 @@ function Page() {
 
       {!loading && rows.length > 0 && (
         <>
+          <section aria-label={s("passRateLabel")} className="rounded-surface border border-border bg-surface p-5">
+            <p className="text-sm font-semibold text-ink-muted">{s("passRateLabel")}</p>
+            <p className="mt-1 font-heading text-[40px] font-extrabold leading-tight text-accent">{passRate}%</p>
+            <p className="text-sm text-ink-muted">{s("passRateCount", { passed: gradedRows.filter((attempt) => attempt.score / attempt.outOf >= 0.6).length, total: gradedRows.length })}</p>
+          </section>
           <div className="grid gap-6 desktop:grid-cols-2">
             <QuietClassRadar onSkillHighlight={setHighlightedSkill} />
             <WhoLacksWhat highlightedSkill={highlightedSkill} />

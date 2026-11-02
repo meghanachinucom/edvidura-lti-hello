@@ -8,6 +8,8 @@ import { classAttempts } from "@/data/attempts";
 import { checkpointQuiz, historyQuizzes } from "@/data/quiz";
 import { mockState } from "@/data/mockState";
 import { PercentageBar } from "@/components/shared/PercentageBar";
+import { Download } from "lucide-react";
+import { downloadBlob } from "@/lib/download";
 
 // TC-03 Analytics. Class scope only — no risk flags, mastery, time-on-task or rankings.
 export const Route = createFileRoute("/_shell/teacher/analytics")({
@@ -37,6 +39,15 @@ function Page() {
     .map((q) => { const as = rows.filter((a) => a.quizId === q.id); return { title: q.title, value: as.length ? pct(as.reduce((x, a) => x + a.score, 0), as.length * 5) : null }; })
     .filter((m): m is { title: string; value: number } => m.value !== null);
   const sorted = [...modules].sort((a, b) => a.value - b.value);
+  const exportJson = () => downloadBlob(new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), average: avg, practiceAttempts: practice, gradebookWaiting: waiting, modules }, null, 2)], { type: "application/json;charset=utf-8" }), "class-analytics.json");
+  const exportCsv = () => {
+    const esc = (value: string) => `"${value.replaceAll('"', '""')}"`;
+    const lines = [
+      [s("colModule"), s("colScore")].map(esc).join(","),
+      ...modules.map((module) => [module.title, `${module.value}%`].map(esc).join(",")),
+    ];
+    downloadBlob(new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" }), "class-analytics.csv");
+  };
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
@@ -46,8 +57,8 @@ function Page() {
           <p className="mt-1 text-ink">{s("scope")}</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <button type="button" className="btn-secondary">{s("exportJson")}</button>
-          <button type="button" className="btn-secondary">{s("exportCsv")}</button>
+          <button type="button" className="btn-secondary" onClick={exportJson}><Download aria-hidden size={18} />{s("exportJson")}</button>
+          <button type="button" className="btn-secondary" onClick={exportCsv}><Download aria-hidden size={18} />{s("exportCsv")}</button>
         </div>
       </div>
 
@@ -74,6 +85,9 @@ function Page() {
             colLabel={s("colModule")} valueLabel={s("colScore")}
             format={(v) => `${v}%`} percentage
           />
+          <ul aria-label={s("chartLegend")} className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink">
+            {modules.map((module, index) => <li key={module.title} className="flex items-center gap-2"><span aria-hidden className="size-3 rounded-sm" style={{ backgroundColor: ["var(--accent)", "var(--secondary)", "var(--tertiary)", "var(--metric)"][index % 4] }} />{module.title}</li>)}
+          </ul>
           <p className="max-w-reading text-ink-muted">{s("guidance")}</p>
         </>
       )}
