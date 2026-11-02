@@ -33,11 +33,19 @@ function Page() {
   const [reviewingPractice, setReviewingPractice] = useState(false);
   const [confidence, setConfidence] = useState<Record<string, FlashcardConfidence>>({});
   const counts = confidenceCounts(confidence);
-  const deck = reviewingPractice ? allCards.filter((item) => confidence[item.id] === "practice") : allCards;
+  const missedCards = allCards.filter((item) => confidence[item.id] === "practice");
+  const deck = reviewingPractice ? missedCards : allCards;
   const atEnd = i >= deck.length;
   const card = deck[i];
   const deckRef = useRef<HTMLDivElement>(null);
   const restoreFocus = useRef(false);
+  useEffect(() => {
+    if (!reviewingPractice && atEnd && missedCards.length > 0) {
+      setReviewingPractice(true);
+      setI(0);
+      setBack(false);
+    }
+  }, [reviewingPractice, atEnd, missedCards.length]);
   useEffect(() => {
     if (restoreFocus.current) {
       deckRef.current?.querySelector<HTMLButtonElement>(`.${back ? "flashcard-back" : "flashcard-front"} button`)?.focus({ preventScroll: true });

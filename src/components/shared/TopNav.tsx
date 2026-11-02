@@ -16,7 +16,7 @@ export function TopNav() {
         <span className="shrink-0 rounded-full border border-white/30 px-2 py-1 text-xs text-white">{t(`roles.${role}`)}</span>
         <nav aria-label={t("nav.primary")} className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto whitespace-nowrap">
           {navItems.map((item) => <Link key={item.to} to={item.to} aria-current={active?.to === item.to ? "page" : undefined}
-            className={`flex min-h-11 shrink-0 items-center border-b-2 px-2 text-sm text-white ${active?.to === item.to ? "border-secondary font-bold" : "border-transparent font-normal"}`}>
+            className={`flex min-h-11 shrink-0 items-center border-b-[3px] px-3 text-sm text-white ${active?.to === item.to ? "border-secondary bg-white/10 font-bold" : "border-transparent font-normal hover:bg-white/5"}`}>
             {t(item.labelKey)}
           </Link>)}
         </nav>

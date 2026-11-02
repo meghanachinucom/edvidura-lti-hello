@@ -40,7 +40,8 @@ export const mockState = {
     /** true = every answer shown as correct (no-misses state). */
     resultNoMisses: false,
     gradedRetryAvailable: true,
-    /** LR-05 Quiz session. */
+    /** LR-05 Quiz session states. */
+    sessionScreen: "ready" as "ready" | "loading" | "empty" | "error",
     sessionType: "practice" as "graded" | "practice",
     /** slow = takes 5 s so SlowNetworkNote shows; sessionExpired = SessionExpired on submit. */
     submit: "success" as "success" | "error" | "slow" | "sessionExpired",
