@@ -1,7 +1,7 @@
 import { StatusGem } from "@/components/shared/StatusGem";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, CirclePlay, ClipboardCheck, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { HeroBand } from "@/components/shared/HeroBand";
@@ -61,29 +61,23 @@ function Page() {
           )}
           <section aria-labelledby="all-lessons">
             <h2 id="all-lessons" className="sr-only">{s("list")}</h2>
-            <ol className="grid gap-4 sm:grid-cols-2 desktop:grid-cols-3">
-              {list.map((l) => {
-                const TopicIcon = l.kind === "video" ? CirclePlay : l.kind === "quiz" ? ClipboardCheck : BookOpen;
-                return (
-                  <li key={l.id} className="min-w-0">
-                    <Link to="/lessons/$lessonId" params={{ lessonId: l.id }}
-                      className={`group flex h-full min-h-64 flex-col rounded-surface border border-border bg-surface p-4 text-ink shadow-sm transition-shadow hover:shadow-md ${l.markedDone ? "opacity-80" : ""}`}>
-                      <span className="flex aspect-square max-h-48 w-full items-center justify-center rounded-surface bg-secondary-container text-secondary" aria-hidden>
-                        <TopicIcon size={64} strokeWidth={1.5} />
+            <ol className="divide-y divide-border rounded-surface border border-border bg-surface">
+              {list.map((l) => (
+                <li key={l.id}>
+                  <Link to="/lessons/$lessonId" params={{ lessonId: l.id }}
+                    className={`flex min-h-14 items-center gap-3 px-4 py-3 ${l.markedDone ? "text-ink-muted" : "text-ink"}`}>
+                    <span aria-hidden className="w-6 shrink-0 font-semibold">{l.order}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="sr-only">{s("lessonN", { n: l.order })}: </span>
+                      <span className="block font-medium">{l.title} <span className="font-mono text-sm text-ink-muted">{classes[0]?.code}</span></span>
+                      <span className="block text-sm">
+                        {t(`shared.lessonKind.${l.kind}`)} · <StatusGem tone={l.markedDone ? "done" : "notStarted"}>{l.markedDone ? s("done") : s("todo")}</StatusGem>
                       </span>
-                      <span className="mt-4 flex items-start gap-2">
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-xs font-semibold uppercase tracking-wide text-ink-muted">{s("lessonN", { n: l.order })} · {t(`shared.lessonKind.${l.kind}`)}</span>
-                          <span className="mt-1 block font-heading text-lg font-semibold">{l.title}</span>
-                          <span className="mt-1 block font-mono text-sm text-ink-muted">{classes[0]?.code}</span>
-                        </span>
-                        <ChevronRight aria-hidden size={18} className="mt-1 shrink-0 text-secondary transition-transform group-hover:translate-x-1" />
-                      </span>
-                      <span className="mt-auto pt-3 text-sm"><StatusGem tone={l.markedDone ? "done" : "notStarted"}>{l.markedDone ? s("done") : s("todo")}</StatusGem></span>
-                    </Link>
-                  </li>
-                );
-              })}
+                    </span>
+                    <ChevronRight aria-hidden size={18} className="shrink-0" />
+                  </Link>
+                </li>
+              ))}
             </ol>
           </section>
         </>

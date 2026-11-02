@@ -1,8 +1,9 @@
 import { useId, useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, CirclePlay, ClipboardCheck, XCircle } from "lucide-react";
+import { XCircle } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
+import { DataTable, type Column } from "@/components/shared/DataTable";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { StatusBanner } from "@/components/shared/StatusBanner";
 import { lessons as seedLessons, type LessonKind } from "@/data/lessons";
@@ -57,6 +58,18 @@ function Page() {
   const lessonSave = useSaving();
   const qSave = useSaving();
 
+  const lessonCols: Column<LessonRow>[] = [
+    { key: "title", header: s("colTitle"), cell: (l) => l.title },
+    { key: "type", header: s("colType"), cell: (l) => t(`shared.lessonKind.${l.kind}`) },
+    { key: "status", header: s("colStatus"), cell: (l) => s(l.published ? "published" : "draft") },
+    { key: "actions", header: s("colActions"), cell: (l) => (
+      <span className="flex flex-wrap gap-2">
+        <button type="button" className="btn-secondary" aria-label={`${s("edit")}: ${l.title}`} onClick={() => { lessonSave.setSaved(false); setLessonForm({ id: l.id }); }}>{s("edit")}</button>
+        <button type="button" className="btn-secondary" aria-label={`${s("delete")}: ${l.title}`} onClick={() => setToDelete(l.id)}>{s("delete")}</button>
+      </span>
+    ) },
+  ];
+
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
       <div>
@@ -80,26 +93,7 @@ function Page() {
               setLessonForm(null);
             })} />
         )}
-        <ul className="grid gap-4 sm:grid-cols-2 desktop:grid-cols-3">
-          {lessons.map((lesson) => {
-            const TopicIcon = lesson.kind === "video" ? CirclePlay : lesson.kind === "quiz" ? ClipboardCheck : BookOpen;
-            return (
-              <li key={lesson.id} className="flex min-w-0 flex-col rounded-surface border border-border bg-surface p-4 text-ink shadow-sm">
-                <div aria-hidden className="flex aspect-square max-h-48 w-full items-center justify-center rounded-surface bg-secondary-container text-secondary">
-                  <TopicIcon size={64} strokeWidth={1.5} />
-                </div>
-                <div className="flex flex-1 flex-col pt-4">
-                  <span className="text-sm text-ink-muted">{t(`shared.lessonKind.${lesson.kind}`)} · {s(lesson.published ? "published" : "draft")}</span>
-                  <h3 className="mt-1 font-heading text-lg font-semibold">{lesson.title}</h3>
-                  <div className="mt-auto flex flex-wrap gap-2 pt-4">
-                    <button type="button" className="btn-secondary" aria-label={`${s("edit")}: ${lesson.title}`} onClick={() => { lessonSave.setSaved(false); setLessonForm({ id: lesson.id }); }}>{s("edit")}</button>
-                    <button type="button" className="btn-secondary" aria-label={`${s("delete")}: ${lesson.title}`} onClick={() => setToDelete(lesson.id)}>{s("delete")}</button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <DataTable caption={s("lessons")} columns={lessonCols} rows={lessons} rowKey={(r) => r.id} />
       </section>
 
       <section aria-labelledby="sec-q" className="space-y-4">
