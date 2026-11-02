@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Download } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
+import { CountUp } from "@/components/shared/CountUp";
 import { HeroBand } from "@/components/shared/HeroBand";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -91,7 +92,7 @@ function Page() {
         <>
           <section aria-label={s("passRateLabel")} className="rounded-surface border border-border bg-surface p-5">
             <p className="text-sm font-semibold text-ink-muted">{s("passRateLabel")}</p>
-            <p className="mt-1 font-heading text-[40px] font-extrabold leading-tight text-accent">{passRate}%</p>
+            <p className="mt-1"><CountUp value={passRate} suffix="%" /></p>
             <p className="text-sm text-ink-muted">{s("passRateCount", { passed: gradedRows.filter((attempt) => attempt.score / attempt.outOf >= 0.6).length, total: gradedRows.length })}</p>
           </section>
           <div className="grid gap-6 desktop:grid-cols-2">

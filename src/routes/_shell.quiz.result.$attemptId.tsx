@@ -4,6 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
+import { CountUp } from "@/components/shared/CountUp";
 import { AccessUnavailable } from "@/components/shared/AccessUnavailable";
 import { StatusBanner } from "@/components/shared/StatusBanner";
 import { LoopStepper } from "@/components/shared/LoopStepper";
@@ -49,6 +50,7 @@ function Result({ attempt }: { attempt: Attempt }) {
   const m = mockState.quiz;
   const rows = (attemptAnswers[attempt.id] ?? []).map((r) => (m.resultNoMisses ? { ...r, given: r.correctAnswer, correct: true } : r));
   const score = rows.filter((r) => r.correct).length;
+  const scoreTail = s("score", { n: "" });
   const missed = rows.some((r) => !r.correct);
   const [gb, setGb] = useState<GradebookState>("sent");
 
@@ -57,7 +59,7 @@ function Result({ attempt }: { attempt: Attempt }) {
       <div>
         <PageHeading text={s("title")} />
         <p className="mt-1 text-ink-muted">{quizTitle(attempt.quizId)}</p>
-        <p className="mt-4 font-heading text-[52px] font-extrabold leading-tight text-accent">{s("score", { n: score })}</p>
+        <p className="mt-4 font-heading text-[28px] font-extrabold leading-tight text-metric"><CountUp value={score} />{scoreTail}</p>
         <p className="mt-1 text-ink">{attempt.kind === "graded" ? s("graded") : s("practice")}</p>
       </div>
 

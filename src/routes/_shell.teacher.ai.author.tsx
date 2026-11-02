@@ -63,7 +63,7 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 pb-28 pt-8 tablet:pb-8">
       <PageHeading text={s("title")} />
-      <div className="grid gap-6 desktop:grid-cols-2">
+      <div className="grid gap-6 desktop:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-4">
           <div>
             <label htmlFor={`${id}-m`} className="block font-semibold text-ink">{s("mode")}</label>

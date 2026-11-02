@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Activity, BarChart3, BookOpenCheck, GraduationCap, Users } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
+import { CountUp } from "@/components/shared/CountUp";
 import { HeroBand } from "@/components/shared/HeroBand";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { institute } from "@/data/institute";
@@ -58,7 +59,7 @@ function Page() {
               {figures.map(([l, v]) => (
                 <div key={l} className="min-w-0">
                   <dt className="text-sm text-ink-muted">{l}</dt>
-                  <dd className="font-heading text-[24px] font-extrabold text-metric">{v}</dd>
+                  <dd><CountUp value={v} /></dd>
                 </div>
               ))}
             </dl>

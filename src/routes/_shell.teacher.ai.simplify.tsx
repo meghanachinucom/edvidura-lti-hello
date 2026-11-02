@@ -64,7 +64,7 @@ function Page() {
       <div>
         <PageHeading text={s("title")} />
       </div>
-      <div className="grid gap-6 tablet:grid-cols-2">
+      <div className="studio-grid">
         <div className="space-y-4">
           <div>
             <label htmlFor={`${id}-l`} className="block font-semibold text-ink">{s("lesson")}</label>

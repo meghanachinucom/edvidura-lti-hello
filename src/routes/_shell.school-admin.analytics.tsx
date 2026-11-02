@@ -5,6 +5,7 @@ import { Download } from "lucide-react";
 import { t } from "@/i18n";
 import { downloadBlob } from "@/lib/download";
 import { PageHeading } from "@/components/shared/PageHeading";
+import { CountUp } from "@/components/shared/CountUp";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { SimpleBarChart } from "@/components/admin/SimpleBarChart";
@@ -95,7 +96,7 @@ function Page() {
               {figures.map(([l, v]) => (
                 <div key={l} className="kpi-figure">
                   <dt className="text-sm text-ink-muted">{l}</dt>
-                  <dd className="font-heading text-[24px] font-extrabold text-ink">{v}</dd>
+                  <dd><CountUp value={v} /></dd>
                   {typeof v === "string" && v.endsWith("%") && <div className="mt-2"><PercentageBar value={Number.parseFloat(v)} /></div>}
                 </div>
               ))}

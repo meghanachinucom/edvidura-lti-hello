@@ -65,7 +65,7 @@ function Page() {
       {m.state === "unreadable" ? <ErrorAlert message={s("unreadable")} /> : m.state === "none" || discarded ? (
         <EmptyState title={s("none")} help="" action={<Link to="/teacher/ai" className="btn-secondary">{s("tryAgain")}</Link>} />
       ) : (
-        <div className="grid gap-6 desktop:grid-cols-[1fr_340px]">
+        <div className="studio-grid">
           <ol className="space-y-4">
             {qs.map((q, i) => (
               <li key={i} className="rounded-surface border border-border bg-surface p-4">

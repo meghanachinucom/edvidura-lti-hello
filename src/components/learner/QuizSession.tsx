@@ -51,7 +51,7 @@ export function QuizSession() {
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); setConfirm(true); }} className="mx-auto w-full max-w-content px-4">
-      <div className="sticky top-14 z-10 -mx-4 border-b border-border bg-page-bg px-4 py-3">
+      <div className="sticky top-24 z-10 -mx-4 border-b border-border bg-page-bg px-4 py-3 tablet:top-14">
         <div className="grid grid-cols-1 items-center gap-2 tablet:grid-cols-[minmax(0,1fr)_auto] tablet:gap-3">
           <div className="min-w-0"><PageHeading text={quiz.title} /></div>
           <div className="min-w-0 text-left tablet:shrink-0 tablet:text-right">
@@ -91,7 +91,7 @@ export function QuizSession() {
                   const on = answers[q.id] === o.key;
                   const crossed = struck[q.id]?.includes(o.key) ?? false;
                   return (
-                    <div key={o.key} className={`flex min-h-14 flex-wrap items-center gap-2 rounded-surface border-2 px-3 py-2 text-ink ${on ? "border-secondary bg-primary-fixed" : "border-border-control bg-surface"}`}>
+                    <div key={o.key} className={`flex min-h-14 flex-wrap items-center gap-2 rounded-surface border-2 px-3 py-2 text-ink transition-colors duration-150 ${on ? "border-secondary bg-primary-fixed" : "border-border-control bg-surface"}`}>
                       <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3">
                         <input type="radio" name={q.id} value={o.key} checked={on} className="size-5 shrink-0 accent-secondary"
                           onChange={() => setAnswers((a) => ({ ...a, [q.id]: o.key }))} />

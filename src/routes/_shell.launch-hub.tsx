@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
+import { CountUp } from "@/components/shared/CountUp";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { HeroBand } from "@/components/shared/HeroBand";
 import { targetRoles } from "@/data/skills";
@@ -84,7 +85,7 @@ function LearnerHome() {
       <section aria-label={s("progress")} className="rounded-surface border border-border bg-surface p-5">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="font-heading text-[20px] text-ink">{s("progress")}</h2>
-          <p className="font-heading text-2xl font-extrabold text-accent tabular-nums">{learnerHub.lessonsDone}<span className="text-base font-medium text-ink-muted"> / {learnerHub.lessonsTotal}</span></p>
+          <p><CountUp value={learnerHub.lessonsDone} /><span className="text-base font-medium text-ink-muted"> / {learnerHub.lessonsTotal}</span></p>
         </div>
         <div className="mt-3 h-3 overflow-hidden rounded-full bg-border" role="progressbar" aria-label={s("progress")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
           <div className="h-full rounded-full bg-secondary" style={{ width: `${progress}%` }} />
@@ -125,13 +126,13 @@ function LearnerHome() {
 
 function TeacherHome() {
   const recent = [...classAttempts].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)).slice(0, 4);
-  const kpis: { key: string; value: string | number; note?: string }[] = [
-    { key: "kpiAttempts", value: teacherHub.attempts }, { key: "kpiAvg", value: teacherHub.avgScore },
-    { key: "kpiPass", value: teacherHub.passRate, note: s("passMark", { mark: teacherHub.passMark }) },
+  const kpis: { key: string; value: number; suffix?: string; decimals?: number; note?: string }[] = [
+    { key: "kpiAttempts", value: teacherHub.attempts }, { key: "kpiAvg", value: Number.parseFloat(teacherHub.avgScore), suffix: "%" },
+    { key: "kpiPass", value: Number.parseFloat(teacherHub.passRate), suffix: "%", decimals: 1, note: s("passMark", { mark: teacherHub.passMark }) },
   ];
   return (
     <>
-      <section aria-labelledby="hub-kpis"><h2 id="hub-kpis" className="font-heading text-[22px] text-ink">{s("classSnapshot")}</h2><ul className="mt-3 grid gap-2 tablet:grid-cols-3">{kpis.map((k) => <li key={k.key} className="rounded-surface border border-border bg-surface p-4"><p className="text-sm text-ink-muted">{s(k.key)}</p><p className="mt-1 font-heading text-[28px] font-extrabold text-metric">{k.value}</p>{k.note && <p className="mt-1 text-sm text-ink-muted">{k.note}</p>}</li>)}</ul><p className="mt-3 text-ink">{s("nextStep", { passRate: teacherHub.passRate, passMark: teacherHub.passMark, avg: teacherHub.avgScore, attempts: teacherHub.attempts })}</p></section>
+      <section aria-labelledby="hub-kpis"><h2 id="hub-kpis" className="font-heading text-[22px] text-ink">{s("classSnapshot")}</h2><ul className="mt-3 grid gap-2 tablet:grid-cols-3">{kpis.map((k) => <li key={k.key} className="rounded-surface border border-border bg-surface p-4"><p className="text-sm text-ink-muted">{s(k.key)}</p><p className="mt-1"><CountUp value={k.value} suffix={k.suffix} decimals={k.decimals} /></p>{k.note && <p className="mt-1 text-sm text-ink-muted">{k.note}</p>}</li>)}</ul><p className="mt-3 text-ink">{s("nextStep", { passRate: teacherHub.passRate, passMark: teacherHub.passMark, avg: teacherHub.avgScore, attempts: teacherHub.attempts })}</p></section>
       <section aria-labelledby="hub-recent"><h2 id="hub-recent" className="font-heading text-[22px] text-ink">{s("recentAttempts")}</h2><ul className="mt-3 divide-y divide-border rounded-surface bg-surface">{recent.map((a) => <li key={a.id} className="grid gap-1 p-4 tablet:grid-cols-[minmax(0,1fr)_auto] tablet:gap-4"><div className="min-w-0"><p className="font-semibold text-ink">{quizTitle(a.quizId)}</p><p className="text-sm text-ink-muted">{personById(a.personId)?.name} · {formatIST(a.submittedAt)}</p></div><div className="tablet:text-right"><p className="text-ink">{t("shared.scoreOf", { n: a.score })}</p><p className="text-sm text-ink-muted">{t(`shared.moodleStatus.${a.moodleStatus}`)}</p></div></li>)}</ul></section>
       <QuickActions role="instructor" />
     </>
@@ -147,7 +148,7 @@ function AdminHome() {
   const counts: { key: string; value: number }[] = [{ key: "countClasses", value: adminHub.classes }, { key: "countTeachers", value: adminHub.teachers }, { key: "countStudents", value: adminHub.students }];
   return (
     <>
-      <section aria-labelledby="hub-counts"><h2 id="hub-counts" className="font-heading text-[22px] text-ink">{s("instituteSnapshot")}</h2><ul className="mt-3 grid gap-2 tablet:grid-cols-3">{counts.map((c) => <li key={c.key} className="rounded-surface border border-border bg-surface p-4"><p className="text-sm text-ink-muted">{s(c.key)}</p><p className="mt-1 font-heading text-[28px] font-bold text-ink">{c.value}</p></li>)}</ul></section>
+      <section aria-labelledby="hub-counts"><h2 id="hub-counts" className="font-heading text-[22px] text-ink">{s("instituteSnapshot")}</h2><ul className="mt-3 grid gap-2 tablet:grid-cols-3">{counts.map((c) => <li key={c.key} className="rounded-surface border border-border bg-surface p-4"><p className="text-sm text-ink-muted">{s(c.key)}</p><p className="mt-1"><CountUp value={c.value} /></p></li>)}</ul></section>
       <DataTable caption={s("classesTable")} columns={classColumns} rows={adminHubClasses} rowKey={(r) => r.code} />
       <QuickActions role="trainingOfficer" />
     </>

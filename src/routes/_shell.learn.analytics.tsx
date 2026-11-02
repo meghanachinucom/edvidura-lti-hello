@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
+import { CountUp } from "@/components/shared/CountUp";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { BarChartTable } from "@/components/shared/BarChartTable";
@@ -65,7 +66,7 @@ function Page() {
           {stats.map((x) => (
             <div key={x.label} className="kpi-figure tablet:min-w-36">
               <dt className="text-sm text-ink-muted">{x.label}</dt>
-              <dd className="font-heading text-[24px] font-extrabold text-ink">{x.value}</dd>
+              <dd><CountUp value={x.value} /></dd>
               {x.value.endsWith("%") && <div className="mt-2"><PercentageBar value={Number.parseFloat(x.value)} /></div>}
             </div>
           ))}

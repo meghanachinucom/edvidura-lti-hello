@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
+import { CountUp } from "@/components/shared/CountUp";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { BarChartTable } from "@/components/shared/BarChartTable";
@@ -71,7 +72,7 @@ function Page() {
               {[[s("average"), `${avg}%`], [s("practice"), String(practice)], [s("waiting"), String(waiting)]].map(([l, v]) => (
                 <div key={l} className="kpi-figure tablet:min-w-36">
                   <dt className="text-sm text-ink-muted">{l}</dt>
-                  <dd className="font-heading text-[24px] font-extrabold text-ink">{v}</dd>
+                  <dd><CountUp value={v ?? "0"} /></dd>
                   {v?.endsWith("%") && <div className="mt-2"><PercentageBar value={Number.parseFloat(v)} /></div>}
                 </div>
               ))}

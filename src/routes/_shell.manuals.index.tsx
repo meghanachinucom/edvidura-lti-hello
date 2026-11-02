@@ -40,7 +40,7 @@ function Page() {
       <div role="group" aria-label={s("filters")} className="flex flex-wrap gap-2">
         {CHIPS.map((c) => (
           <button key={c} type="button" aria-pressed={chip === c} onClick={() => setChip(c)}
-            className={`min-h-11 rounded-surface border px-4 ${chip === c ? "border-accent bg-accent text-accent-ink" : "border-border-control bg-surface text-ink"}`}>
+            className={`filter-chip min-h-11 rounded-surface border px-4 ${chip === c ? "border-secondary bg-secondary-container text-secondary" : "border-border-control bg-surface text-ink"}`}>
             {s(`chip.${c}`)}
           </button>
         ))}
