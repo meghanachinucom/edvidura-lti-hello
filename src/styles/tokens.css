@@ -1,0 +1,46 @@
+/* Design tokens — the only colour source. Values match the Master prompt exactly. */
+:root {
+  --page-bg: #e6fff5;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --ink: #032019;
+  --ink-muted: #3c4a42;
+  --border: #d5f5ea; /* DECORATIVE dividers only. Never for form controls. */
+  --border-control: #6c7a71;
+  --accent: #006c4b;
+  --accent-ink: #ffffff;
+  --secondary: #00668a; /* blueprint blue; pairs with accent for rules, gradients and focus */
+  --highlight: #c4e7ff;
+  --success: #006c4b;
+  --warning: #8a5a00;
+  --error: #ba1a1a;
+  --focus-ring: #00668a;
+
+  /* Pass 1 button tokens (values from the brief). */
+  --btn-primary-mid: #00855d;
+  --btn-primary-edge: rgba(255,255,255,0.22);
+  --btn-primary-shadow: rgba(0,108,75,0.38);
+  --btn-primary-inset: rgba(255,255,255,0.25);
+  --btn-secondary-ink: #00506b;
+  --btn-secondary-tint: #edfaf4;
+  --btn-secondary-hover-a: #e0f8ee;
+  --btn-secondary-hover-b: #d4f0ff;
+  --btn-secondary-shadow: rgba(3,32,25,0.06);
+
+
+  /* Pass B railway palette (values from the brief). */
+  --tertiary: #476800; --tertiary-container: #99ca41; --tertiary-fixed: #bff365;
+  --secondary-container: #40c2fd; --secondary-fixed: #c4e7ff;
+  --primary-container: #34d399; --primary-fixed: #68fcbf;
+  --inverse-surface: #19352e; --inverse-on-surface: #d8f8ec; --inverse-primary: #45dfa4;
+  --metric: #a85d00; /* darker amber for readable text (brief value #f59e0b kept as --gem-warning) */ --gem-warning: #f59e0b;
+  --surface-container-low: #dbfbef; --surface-container: #d5f5ea; --surface-container-high: #cfefe4;
+  --outline-variant: #bbcac0; --on-surface-variant: #3c4a42;
+  --card-edge: rgba(14,43,36,.07);
+  --glow-emerald: rgba(52,211,153,.28); --glow-sky: rgba(64,194,253,.22); --glow-lime: rgba(190,242,100,.18);
+
+  /* Breakpoints (reference values; media queries use Tailwind's tablet: and desktop: variants).
+     Mobile: up to 639px. Tablet: 640px to 1279px. Desktop: 1280px and wider. */
+  --bp-mobile-max: 639px;
+  --bp-tablet-max: 1279px;
+}

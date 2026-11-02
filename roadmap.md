@@ -1,0 +1,14 @@
+# Roadmap
+- [x] L4 Ask Vidura, AI hint, Flashcards
+- [x] L5 My plan and Micro-learning (LR-09)
+- [x] M1 Login, role homes and guards
+- [x] M2 Ask Vidura panel, languages, citations, check questions
+- [x] M3 Learner completions
+- [x] Pass 2 chart gradients, reference line, table bars and ring glow
+- [x] Pass 2 linked radar skills and elevated analytics figures
+- [x] Pass 2 sequential LOTO checklist and role transition delta
+- [x] Pass 2 tests and signed-in screen checks
+- [x] Pass 3 live circuit workbench on lessons and micro-learning
+- [x] Pass 3 read-aloud and selected-passage mock explanations
+- [x] Pass 3 existing starter chips and flashcard keys/confidence
+- [x] Pass 3 tests and signed-in interaction checks (speech delivery verified with browser API instrumentation; audible output unavailable in headless browser)

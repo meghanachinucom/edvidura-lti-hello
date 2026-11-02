@@ -1,0 +1,300 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@import "./styles/fonts.css";
+@import "./styles/tokens.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-page-bg: var(--page-bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-border: var(--border);
+  --color-border-control: var(--border-control);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-secondary: var(--secondary);
+  --color-highlight: var(--highlight);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-focus-ring: var(--focus-ring);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-tertiary-fixed: var(--tertiary-fixed);
+  --color-secondary-container: var(--secondary-container);
+  --color-secondary-fixed: var(--secondary-fixed);
+  --color-primary-container: var(--primary-container);
+  --color-primary-fixed: var(--primary-fixed);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-inverse-primary: var(--inverse-primary);
+  --color-metric: var(--metric);
+  --color-gem-warning: var(--gem-warning);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-outline-variant: var(--outline-variant);
+  --color-on-surface-variant: var(--on-surface-variant);
+  /* shadcn compatibility */
+  --color-background: var(--page-bg);
+  --color-foreground: var(--ink);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--accent-ink);
+  --color-muted-foreground: var(--ink-muted);
+  --color-input: var(--border-control);
+  --color-ring: var(--focus-ring);
+  --breakpoint-tablet: 640px;
+  --breakpoint-desktop: 1280px;
+  --radius-surface: 12px;
+  --radius-control: 8px;
+  --max-width-content: 960px;
+  --max-width-reading: 68ch;
+  --font-sans: "Noto Serif", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada", Georgia, serif;
+  --font-heading: "Noto Serif", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada", Georgia, serif;
+  --font-mono: ui-monospace, monospace;
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html { font-size: 16px; }
+  body { background: var(--page-bg); color: var(--ink); font-family: var(--font-sans); }
+  :focus-visible { outline: 3px solid var(--secondary); outline-offset: 2px; }
+  h1:focus { outline: none; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    .max-w-content > * { animation: none !important; }
+    .bg-surface.border, .btn-primary, .btn-secondary, .icon-btn { transition: none !important; transform: none !important; }
+  }
+}
+
+/* M6 section markers: numbered 01, 02, 03 before each section title. */
+main { counter-reset: section; }
+main section h2::before {
+  counter-increment: section;
+  content: counter(section, decimal-leading-zero) "  ";
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--secondary));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* Pass 1 typography: weight and hierarchy only. */
+main h2 { font-weight: 700; }
+main th, main label, .rounded-full { font-weight: 600; }
+main dl.grid dd, main dl.flex dd { font-weight: 800; }
+
+/* M6 cards, hover, press and staggered fade-in. */
+@layer components {
+  .bg-surface.border {
+    box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 6%, transparent), 0 6px 16px color-mix(in oklab, var(--ink) 8%, transparent);
+    transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+  }
+  .btn-primary, .btn-secondary, .icon-btn { transition: transform 120ms ease-out, background 120ms, filter 120ms; }
+  .btn-primary:active, .btn-secondary:active { transform: scale(0.97); }
+  @media (hover: hover) and (pointer: fine) {
+    .bg-surface.border:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 4px color-mix(in oklab, var(--ink) 8%, transparent), 0 12px 28px color-mix(in oklab, var(--ink) 12%, transparent);
+    }
+    a:hover { text-decoration: underline; }
+    .btn-primary:hover { transform: translateY(-1.5px); filter: brightness(1.06); }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-secondary:hover {
+      background: linear-gradient(180deg, var(--btn-secondary-hover-a) 0%, var(--btn-secondary-hover-b) 100%);
+      border-color: var(--accent);
+    }
+  }
+  .max-w-content > * { animation: fade-up 250ms ease-out both; }
+  .max-w-content > *:nth-child(2) { animation-delay: 40ms; }
+  .max-w-content > *:nth-child(3) { animation-delay: 80ms; }
+  .max-w-content > *:nth-child(4) { animation-delay: 120ms; }
+  .max-w-content > *:nth-child(5) { animation-delay: 160ms; }
+  .max-w-content > *:nth-child(6) { animation-delay: 200ms; }
+  .max-w-content > *:nth-child(n+7) { animation-delay: 240ms; }
+}
+@keyframes fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* M6 blueprint grid: 24px lines at 6% accent. */
+@utility blueprint-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--accent) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--accent) 6%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+/* M6 thin gradient rule under each page title, accent to secondary. */
+@utility title-rule {
+  height: 2px; width: 96px; margin-top: 8px; border-radius: 9999px;
+  background: linear-gradient(to right, var(--accent), var(--secondary));
+}
+/* M6 home hero: soft accent-to-secondary tint gradient under the blueprint grid. */
+@utility hero-gradient {
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--accent) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--accent) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(135deg, color-mix(in oklab, var(--accent) 12%, var(--surface)), color-mix(in oklab, var(--secondary) 14%, var(--surface)));
+  background-size: 24px 24px, 24px 24px, 100% 100%;
+}
+@utility skip-link {
+  position: absolute; left: 8px; top: -100px; z-index: 50;
+  background: var(--accent); color: var(--accent-ink); padding: 10px 16px; border-radius: 6px;
+  &:focus { top: 8px; }
+}
+@utility nav-btn {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px;
+  border-radius: 6px; color: var(--ink); font-weight: 500; transition: background 120ms;
+  &:hover { background: var(--page-bg); }
+}
+@utility nav-link {
+  display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 4px; color: var(--ink);
+  &:hover { background: var(--page-bg); }
+  &[aria-current="page"] { color: var(--accent); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
+}
+@utility nav-active {
+  color: var(--accent); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px;
+}
+@utility icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 8px; color: var(--ink);
+}
+@utility btn-secondary {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px;
+  border: 1.5px solid var(--secondary); border-radius: 8px; color: var(--btn-secondary-ink); font-weight: 600;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--btn-secondary-tint) 100%);
+  box-shadow: 0 2px 6px var(--btn-secondary-shadow);
+}
+
+@utility border-control {
+  border: 1px solid var(--border-control);
+}
+@utility btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px;
+  border-radius: 8px; color: var(--accent-ink); font-weight: 600;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--btn-primary-mid) 52%, var(--secondary) 100%);
+  border: 1px solid var(--btn-primary-edge);
+  box-shadow: 0 4px 14px -2px var(--btn-primary-shadow), inset 0 1px 0 var(--btn-primary-inset);
+}
+@utility skeleton {
+  background: var(--border); border-radius: 4px;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+  @media (prefers-reduced-motion: reduce) { animation: none !important; }
+}
+@keyframes skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+@utility animate-pulse-once {
+  animation: pulse-once 1.2s ease-in-out 1;
+  @media (prefers-reduced-motion: reduce) { animation: none !important; }
+}
+@keyframes pulse-once { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* M7 flashcard flip: 3D rotateY on an inner element, both faces hidden from the back. */
+.flashcard { perspective: 1000px; }
+.flashcard-inner {
+  position: relative; display: block; width: 100%; min-height: 14rem;
+  transform-style: preserve-3d; transition: transform 250ms ease;
+}
+.flashcard-inner.is-flipped { transform: rotateY(180deg); }
+.flashcard-face {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; backface-visibility: hidden;
+}
+.flashcard-back { transform: rotateY(180deg); }
+.flashcard-face { min-height: 18rem; }
+.flashcard-inner { min-height: 18rem; }
+.flashcard-back { gap: 12px; }
+.flashcard-copy { flex: 1; width: 100%; white-space: normal; height: auto; flex-direction: column; }
+.learning-control:focus-visible { outline: 3px solid var(--secondary); outline-offset: 2px; }
+.learning-control.btn-primary, .learning-control.btn-primary:hover { color: var(--accent-ink); }
+.circuit-slider { accent-color: var(--accent); }
+.circuit-flow { animation: circuit-current 1.2s linear infinite; }
+@keyframes circuit-current { to { stroke-dashoffset: -54; } }
+.speech-equaliser { display: inline-flex; align-items: center; gap: 3px; height: 20px; }
+.speech-equaliser span { width: 3px; height: 16px; border-radius: 2px; background: currentColor; animation: speech-level 700ms ease-in-out infinite alternate; }
+.speech-equaliser span:nth-child(2) { animation-delay: 180ms; }
+.speech-equaliser span:nth-child(3) { animation-delay: 360ms; }
+@keyframes speech-level { from { transform: scaleY(.3); } to { transform: scaleY(1); } }
+
+/* M7 chart bars: value label revealed on hover and keyboard focus. */
+.chart-bar { outline: none; cursor: default; }
+.chart-bar-value { opacity: 0; pointer-events: none; }
+.chart-bar:hover .chart-bar-value, .chart-bar:focus .chart-bar-value { opacity: 1; }
+
+/* Pass 2: all gradients, glow and shadows inherit the approved palette. */
+.gradient-accent { stop-color: var(--accent); }
+.gradient-secondary { stop-color: var(--secondary); }
+.gradient-accent-bright { stop-color: color-mix(in oklab, var(--accent) 80%, var(--surface)); }
+.gradient-secondary-bright { stop-color: color-mix(in oklab, var(--secondary) 80%, var(--surface)); }
+.chart-bar-bright { opacity: 0; transition: opacity 150ms ease-out; }
+.chart-bar:hover .chart-bar-bright, .chart-bar:focus .chart-bar-bright { opacity: 1; }
+.chart-bar:focus-visible { outline: 3px solid var(--secondary); outline-offset: 2px; }
+.percentage-track { height: 6px; overflow: hidden; border-radius: 9999px; background: var(--border); }
+.percentage-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--primary-container)); }
+.percentage-animate { animation: percentage-fill 400ms ease-out both; transform-origin: left; }
+@keyframes percentage-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.progress-ring-stroke { transition: stroke-dashoffset 1s ease; filter: drop-shadow(0 0 3px color-mix(in oklab, var(--accent) 30%, transparent)); }
+.kpi-figure { min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 6%, transparent), 0 6px 16px color-mix(in oklab, var(--ink) 8%, transparent); }
+.loop-step:not(:last-child)::after { content: ""; position: absolute; left: 27px; top: 30px; bottom: -24px; width: 2px; background: var(--border-control); }
+@media (min-width: 640px) {
+  .loop-step:not(:last-child)::after { top: 21px; bottom: auto; height: 2px; width: calc(100% + 8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .percentage-animate { animation: none !important; transform: none !important; }
+  .progress-ring-stroke, .chart-bar-bright { transition: none !important; }
+  /* Flip becomes a cross-fade; no rotation. */
+  .flashcard-inner, .flashcard-inner.is-flipped, .flashcard-back { transform: none !important; }
+  .flashcard-face { transition: opacity 250ms ease !important; }
+  .flashcard-back { opacity: 0; }
+  .flashcard-inner.is-flipped .flashcard-front { opacity: 0; }
+  .flashcard-inner.is-flipped .flashcard-back { opacity: 1; }
+  /* Pass 1: no button transforms on hover or press. */
+  .btn-primary, .btn-primary:hover, .btn-primary:active, .btn-secondary:hover, .btn-secondary:active { transform: none !important; }
+  /* Chart value labels stay visible; no hover reveal needed. */
+  .chart-bar-value { opacity: 1; }
+  .circuit-flow, .speech-equaliser span { animation: none !important; transform: none !important; }
+  .flashcard-face { transition: none !important; }
+}
+
+/* Pass B railway design. */
+.hero-band {
+  position: relative; overflow: hidden; border-radius: 20px; padding: 20px;
+  background-color: var(--inverse-surface); color: var(--inverse-on-surface);
+  background-image:
+    radial-gradient(circle at 100% 0%, var(--glow-emerald), transparent 55%),
+    radial-gradient(circle at 0% 100%, var(--glow-sky), transparent 55%),
+    radial-gradient(circle at 100% 100%, var(--glow-lime), transparent 50%);
+}
+@media (min-width: 640px) { .hero-band { padding: 32px; } }
+.hero-band h1, .hero-band h2, .hero-band p, .hero-band .text-ink, .hero-band .text-ink-muted { color: var(--inverse-on-surface); }
+.hero-band .text-accent { color: var(--inverse-primary); }
+.hero-band .blueprint-grid { background-image: none; }
+main .bg-surface.border, .kpi-figure {
+  background-color: var(--surface); border-color: var(--card-edge); border-radius: 16px;
+  box-shadow: 0 1px 2px var(--card-edge), 0 8px 24px -8px color-mix(in oklab, var(--inverse-surface) 18%, transparent), inset 0 1px 0 var(--surface);
+  animation: card-up 350ms ease-out both;
+}
+@keyframes card-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (hover: hover) and (pointer: fine) {
+  main .bg-surface.border:hover, .kpi-figure:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px var(--card-edge), 0 16px 32px -10px color-mix(in oklab, var(--inverse-surface) 28%, transparent), inset 0 1px 0 var(--surface);
+  }
+}
+.kpi-figure { transition: transform 150ms ease-out, box-shadow 150ms ease-out; }
+.kpi-figure dd { color: var(--metric); font-weight: 800; }
+.kpi-figure dt { color: var(--ink-muted); }
+.status-gem { display: inline-block; width: 10px; height: 10px; flex-shrink: 0; border-radius: 9999px; }
+.pill-tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 9999px; background: var(--surface-container-low); }
+.pill-tab { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 9999px; font-weight: 600; color: var(--ink); transition: background 150ms, color 150ms; }
+.pill-tab[aria-current="page"], .pill-tab[aria-pressed="true"], .pill-tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+.reader-chapter[aria-current="true"] { box-shadow: inset 4px 0 0 var(--secondary-container); background: var(--secondary-fixed); }
+.login-role[aria-pressed="true"] { border-color: var(--secondary); background: var(--secondary-fixed); }
+@media (prefers-reduced-motion: reduce) {
+  main .bg-surface.border, .kpi-figure { animation: none !important; transition: none !important; transform: none !important; }
+  main .bg-surface.border:hover, .kpi-figure:hover { transform: none !important; }
+  .pill-tab { transition: none !important; }
+}
