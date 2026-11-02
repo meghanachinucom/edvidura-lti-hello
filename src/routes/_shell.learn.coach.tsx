@@ -115,10 +115,11 @@ function Reply({ ex, noSources }: { ex: CoachExchange; noSources: boolean }) {
       {noSources ? <p>{s("notFound")}</p> : (
         <>
           <p>{ex.answer}</p>
-          <p className="mt-2"><span className="font-semibold">{s("checkYourself")}</span> {ex.checkYourself}</p>
+          <div className="mt-3 rounded-surface bg-highlight p-3"><p><span className="font-semibold">{s("checkYourself")}</span> {ex.checkYourself}</p></div>
+          <ul aria-label={t("shared.ai.sourcesLearner")} className="mt-3 flex flex-wrap gap-2">{ex.sources.map((source) => <li key={source} className="rounded-full border border-secondary bg-primary-fixed px-3 py-1 text-sm text-secondary">{source}</li>)}</ul>
         </>
       )}
-      <AITrustNote audience="learner" sources={noSources ? [] : ex.sources} />
+      <AITrustNote audience="learner" sources={[]} />
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className="text-sm">{s("helpful")}</span>
         {(["up", "down"] as const).map((v) => {

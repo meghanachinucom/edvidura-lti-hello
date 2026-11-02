@@ -8,6 +8,7 @@ import { HeroBand } from "@/components/shared/HeroBand";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { lessons } from "@/data/lessons";
+import { classes } from "@/data/course";
 import { mockState } from "@/data/mockState";
 
 // LR-01 Lessons.
@@ -52,7 +53,7 @@ function Page() {
                 className="mt-3 flex min-h-11 items-center justify-between gap-3 rounded-surface border-l-4 border-accent bg-surface p-4 text-ink">
                 <span className="min-w-0">
                   <span className="block text-sm text-ink-muted">{t(`shared.lessonKind.${next.kind}`)}</span>
-                  <span className="block text-[18px] font-semibold">{next.title}</span>
+                  <span className="block text-[18px] font-semibold">{next.title} <span className="font-mono text-sm text-ink-muted">{classes[0]?.code}</span></span>
                 </span>
                 <ChevronRight aria-hidden className="shrink-0 text-accent" />
               </Link>
@@ -68,7 +69,7 @@ function Page() {
                     <span aria-hidden className="w-6 shrink-0 font-semibold">{l.order}</span>
                     <span className="min-w-0 flex-1">
                       <span className="sr-only">{s("lessonN", { n: l.order })}: </span>
-                      <span className="block font-medium">{l.title}</span>
+                      <span className="block font-medium">{l.title} <span className="font-mono text-sm text-ink-muted">{classes[0]?.code}</span></span>
                       <span className="block text-sm">
                         {t(`shared.lessonKind.${l.kind}`)} · <StatusGem tone={l.markedDone ? "done" : "notStarted"}>{l.markedDone ? s("done") : s("todo")}</StatusGem>
                       </span>

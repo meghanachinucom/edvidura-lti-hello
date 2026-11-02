@@ -27,11 +27,13 @@ export const Route = createFileRoute("/_shell/learn/flashcards")({
 const s = (k: string, v?: Record<string, string | number>) => t(`LR-10.${k}`, v);
 
 function Page() {
-  const deck = mockState.flashcards.deck === "empty" ? [] : flashcards;
+  const allCards = mockState.flashcards.deck === "empty" ? [] : flashcards;
   const [i, setI] = useState(0);
   const [back, setBack] = useState(false);
+  const [reviewingPractice, setReviewingPractice] = useState(false);
   const [confidence, setConfidence] = useState<Record<string, FlashcardConfidence>>({});
   const counts = confidenceCounts(confidence);
+  const deck = reviewingPractice ? allCards.filter((item) => confidence[item.id] === "practice") : allCards;
   const atEnd = i >= deck.length;
   const card = deck[i];
   const deckRef = useRef<HTMLDivElement>(null);
@@ -53,16 +55,18 @@ function Page() {
 
       {deck.length > 0 && <div className="max-w-reading space-y-3">
         <div role="progressbar" aria-label={t("pass3.flashcards.progress")} aria-valuemin={0} aria-valuemax={deck.length} aria-valuenow={Math.min(i + 1, deck.length)} className="flex h-2 gap-1">
-          {deck.map((item, index) => <span key={item.id} className={`min-w-0 flex-1 rounded-full ${confidence[item.id] === "mastered" ? "bg-accent" : confidence[item.id] === "practice" ? "bg-secondary" : index <= i ? "bg-border-control" : "bg-border"}`} />)}
+          {deck.map((item, index) => <span key={item.id} className={`min-w-0 flex-1 rounded-full ${confidence[item.id] === "mastered" ? "bg-secondary" : confidence[item.id] === "practice" ? "bg-accent" : index <= i ? "bg-border-control" : "bg-border"}`} />)}
         </div>
-        <div role="status" className="flex flex-wrap gap-x-5 gap-y-1 text-sm tabular-nums text-ink-muted">
-          <span>{t("pass3.flashcards.practiceCount", { n: counts.practice })}</span><span>{t("pass3.flashcards.masteredCount", { n: counts.mastered })}</span>
+        <div role="status" className="flex flex-wrap gap-x-5 gap-y-1 text-sm tabular-nums">
+          <span className="font-semibold text-accent">{t("pass3.flashcards.practiceCount", { n: counts.practice })}</span><span className="font-semibold text-secondary">{t("pass3.flashcards.masteredCount", { n: counts.mastered })}</span>
         </div>
       </div>}
-      {deck.length === 0 ? <EmptyState title={s("empty")} help="" /> : atEnd ? (
+      {allCards.length === 0 ? <EmptyState title={s("empty")} help="" /> : atEnd ? (
         <div className="max-w-reading rounded-surface border border-border bg-surface p-6 text-center text-ink">
           <p role="status">{s("end")}</p>
-          <button type="button" onClick={() => go(0)} className="btn-primary mt-4">{s("again")}</button>
+          {counts.practice > 0 && !reviewingPractice && <button type="button" onClick={() => { setReviewingPractice(true); go(0); }} className="btn-primary mt-4">{s("reviewPractice", { n: counts.practice })}</button>}
+          {reviewingPractice && <p className="mt-3 text-secondary">{s("practiceReviewed")}</p>}
+          <button type="button" onClick={() => { setReviewingPractice(false); go(0); }} className="btn-secondary mt-4">{s("again")}</button>
         </div>
       ) : card && (
         <div className="max-w-reading space-y-4">

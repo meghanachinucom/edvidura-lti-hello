@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_shell/manuals/")({
 });
 
 const s = (k: string, v?: Record<string, string | number>) => t(`LR-14.${k}`, v);
-const COVER: Record<CoverTone, string> = { accent: "bg-accent text-accent-ink", ink: "bg-ink text-surface", focus: "bg-focus-ring text-surface" };
+const COVER: Record<CoverTone, string> = { accent: "bg-accent", ink: "bg-ink", focus: "bg-secondary" };
 const CHIPS: ("all" | EbookCategory)[] = ["all", "vocational", "life", "physical", "maths"];
 
 function Page() {
@@ -57,11 +57,14 @@ function Page() {
         <ul className="grid gap-4 tablet:grid-cols-2 desktop:grid-cols-3">
           {list.map((b) => (
             <li key={b.id} className="flex flex-col rounded-surface border border-border bg-surface">
-              <div aria-hidden className={`flex aspect-[3/2] items-end rounded-t-surface p-4 font-heading text-[22px] leading-tight ${COVER[b.cover]}`}>{b.title}</div>
+              <div aria-hidden className={`h-3 rounded-t-surface ${COVER[b.cover]}`} />
               <div className="flex flex-1 flex-col gap-1 p-4 text-ink">
                 <h2 className="font-heading text-[20px]">{b.title}</h2>
                 <p>{b.description}</p>
                 <p className="text-ink-muted">{b.currentPage ? s("progress", { n: b.currentPage, total: b.pages }) : s("notStarted")}</p>
+                <div className="mt-1 h-2 overflow-hidden rounded-full bg-border" role="progressbar" aria-label={s("progress", { n: b.currentPage ?? 0, total: b.pages })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={b.currentPage ? Math.round((b.currentPage / b.pages) * 100) : 0}>
+                  <div className="h-full rounded-full bg-secondary" style={{ width: `${b.currentPage ? (b.currentPage / b.pages) * 100 : 0}%` }} />
+                </div>
                 <Link to="/manuals/$manualId" params={{ manualId: b.id }} aria-label={s("openBook", { title: b.title })} className="btn-primary mt-3 self-start">{s("open")}</Link>
               </div>
             </li>

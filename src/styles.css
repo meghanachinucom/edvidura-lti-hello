@@ -192,9 +192,17 @@ header, [data-topbar], .top-bar { background-color: var(--topbar); color: #FFFFF
 [aria-current="page"], .progress-fill, [role="progressbar"] { accent-color: var(--secondary); }
 .reader-highlight, mark { background-color: var(--highlight); }
 [aria-selected="true"], .is-selected { background-color: var(--selected); }
+.learner-home-hero { position: relative; overflow: hidden; border-radius: 12px; background: #17313A; padding: 28px; color: #FFFFFF; }
+.learner-home-hero h1, .learner-home-hero p { color: #FFFFFF; }
+.learner-home-hero .blueprint-grid { background: transparent; padding: 0; }
+.learner-home-hero .title-rule { background: #0F6E6E; }
+.reader-dark { background: #17313A; color: #FFFFFF; }
+.reader-dark p, .reader-dark h2, .reader-dark button { color: #FFFFFF; }
+.reader-selection-toolbar { position: fixed; z-index: 30; bottom: calc(1rem + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); border: 1px solid var(--border-control); border-radius: 9999px; background: var(--surface); padding: 6px; box-shadow: 0 4px 18px rgba(27, 42, 48, .18); }
+.reel-frame { aspect-ratio: 9 / 16; max-height: 72vh; }
 
 @media (prefers-reduced-motion: reduce) {
-  .percentage-animate, .circuit-flow, .speech-equaliser span { animation: none !important; }
+  .percentage-animate, .circuit-flow, .speech-equaliser span, .reader-selection-toolbar { animation: none !important; transition: none !important; }
   .progress-ring-stroke, .chart-bar-bright, .flashcard-inner { transition: none !important; }
   .flashcard-inner, .flashcard-inner.is-flipped, .flashcard-back { transform: none !important; }
   .flashcard-face { transition: none !important; }

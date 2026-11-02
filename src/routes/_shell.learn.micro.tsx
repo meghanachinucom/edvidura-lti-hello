@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PlayCircle, Volume2, VolumeX } from "lucide-react";
+import { Captions, PlayCircle, Volume2, VolumeX } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -29,6 +29,7 @@ function Page() {
   const list = mockState.micro.reels === "empty" ? [] : reels;
   const [i, setI] = useState(0);
   const [sound, setSound] = useState(false);
+  const [captions, setCaptions] = useState(true);
   const startY = useRef<number | null>(null);
   const reel = list[i];
   const go = (n: number) => setI(Math.max(0, Math.min(list.length - 1, n)));
@@ -48,8 +49,14 @@ function Page() {
             <p className="text-sm text-ink-muted">{s("counter", { n: i + 1, total: list.length })}</p>
             <h2 className="font-heading text-[22px]">{reel.title}</h2>
             <p>{reel.idea}</p>
-            <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-surface bg-border">
+            <div className="reel-frame relative mx-auto flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-[28px] border-4 border-ink bg-ink text-white">
               <PlayCircle aria-hidden size={48} /><span>{s("video")}</span>
+              {captions && <p className="absolute bottom-5 left-3 right-3 rounded bg-black/80 px-3 py-2 text-center text-white">{reel.idea}</p>}
+            </div>
+            <button type="button" aria-pressed={captions} onClick={() => setCaptions((value) => !value)} className="btn-secondary self-start"><Captions aria-hidden size={18} className="mr-2" />{s(captions ? "captionsOn" : "captionsOff")}</button>
+            <div className="rounded-surface border border-border bg-highlight p-3 text-ink">
+              <p className="font-semibold">{s("practicePrompt")}</p>
+              <p className="mt-1">{s("explainPrompt")} {reel.idea}</p>
             </div>
             <div className="mt-auto flex flex-col gap-2 tablet:flex-row">
               <Link to="/lessons/$lessonId" params={{ lessonId: reel.lessonId }} className="btn-primary">{s("full")}</Link>

@@ -38,6 +38,9 @@ export function EbookReader({ book }: { book: Ebook }) {
   const [pending, setPending] = useState<Omit<Mark, "id"> | null>(null);
   const [tocOpen, setTocOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [fontSize, setFontSize] = useState(18);
+  const [darkMode, setDarkMode] = useState(false);
+  const [wideReading, setWideReading] = useState(false);
   const [toDelete, setToDelete] = useState<Mark | null>(null);
   const [hint, setHint] = useState(false);
   const [speechAvailable, setSpeechAvailable] = useState(false);
@@ -152,7 +155,7 @@ export function EbookReader({ book }: { book: Ebook }) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-content px-4 py-6 desktop:max-w-[1200px]">
+    <div className={`mx-auto w-full max-w-content px-4 py-6 desktop:max-w-[1400px] ${darkMode ? "reader-dark rounded-surface" : ""}`}>
       <header className="space-y-3 border-b border-border pb-3">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
           <div className="min-w-0">
@@ -176,17 +179,22 @@ export function EbookReader({ book }: { book: Ebook }) {
             {t(`pass3.reader.${speaking ? "stop" : "listen"}`)}
           </Button>
         </div>
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <label className="flex items-center gap-2">{s("fontSize")}<input type="range" min={16} max={24} step={2} value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} aria-label={s("fontSize")} /></label>
+          <button type="button" aria-pressed={darkMode} onClick={() => setDarkMode((value) => !value)} className="btn-secondary">{s(darkMode ? "lightMode" : "darkMode")}</button>
+          <button type="button" aria-pressed={wideReading} onClick={() => setWideReading((value) => !value)} className="btn-secondary">{s(wideReading ? "narrowWidth" : "wideWidth")}</button>
+        </div>
         {!speechAvailable && <p id="speech-unavailable" className="text-sm text-ink-muted">{t("pass3.reader.unavailable")}</p>}
       </header>
 
-      <div className="mt-6 desktop:grid desktop:grid-cols-[260px_minmax(0,1fr)] desktop:gap-10">
+      <div className="mt-6 desktop:grid desktop:grid-cols-[220px_minmax(0,1fr)_260px] desktop:gap-8">
         <aside className="hidden desktop:block"><Toc /></aside>
 
         <div className="min-w-0">
           {m.state === "renderError" ? <ErrorAlert message={s("renderError")} /> :
             !chapter ? <ErrorAlert message={s("chapterMissing")} /> :
             loading ? <div className="max-w-reading space-y-3"><LoadingSkeleton count={6} /><SlowNetworkNote pending={loading} /></div> : (
-            <article className="max-w-reading">
+            <article className={wideReading ? "max-w-none" : "max-w-reading"}>
               <div className="mb-4">
                 <div role="progressbar" aria-label={s("progress")} aria-valuemin={1} aria-valuemax={book.pages} aria-valuenow={page} aria-valuetext={s("page", { n: page, total: book.pages })}
                   className="h-1 w-full rounded-surface bg-border">
@@ -196,14 +204,14 @@ export function EbookReader({ book }: { book: Ebook }) {
               </div>
 
               <h2 className="font-heading text-[24px] text-ink">{chapter.title}</h2>
-              <div ref={textRef} className="mt-4 space-y-5 text-[18px] leading-[1.7] text-ink"
+              <div ref={textRef} style={{ fontSize, lineHeight: 1.7 }} className={`mt-4 space-y-5 ${darkMode ? "text-white" : "text-ink"}`}
                 onMouseUp={() => { setSel(readSelection()); setExplanation(null); }} onTouchEnd={() => setTimeout(() => { setSel(readSelection()); setExplanation(null); }, 50)}>
                 {chapter.paragraphs.map((p, i) => <p key={i} data-para={i}>{renderPara(p, i)}</p>)}
               </div>
 
               <div className="mt-6 space-y-2 border-t border-border pt-4">
                 {sel && (
-                  <div role="toolbar" aria-label={s("highlight")} className="flex flex-wrap gap-2 rounded-surface border border-border-control bg-surface-raised p-2">
+                  <div role="toolbar" aria-label={s("highlight")} className="reader-selection-toolbar flex flex-wrap gap-2">
                     <button type="button" onClick={() => highlight(sel)} className="btn-secondary gap-2"><Highlighter aria-hidden size={18} />{s("highlight")}</button>
                     <button type="button" onClick={() => openNote(sel)} className="btn-secondary">{s("addNote")}</button>
                     <Button type="button" variant="ghost" className="btn-secondary learning-control h-auto whitespace-normal"
@@ -227,6 +235,10 @@ export function EbookReader({ book }: { book: Ebook }) {
             </article>
           )}
         </div>
+        <aside className="hidden desktop:block">
+          <h2 className="font-heading text-[18px]">{s("notes")}</h2>
+          {chapterMarks.length === 0 ? <p className="mt-2 text-sm text-ink-muted">{s("emptyNotes")}</p> : <ul className="mt-2 space-y-3">{chapterMarks.map((mark) => <li key={mark.id} className="rounded-surface border border-border p-3 text-sm"><p><mark className="bg-highlight text-ink">{mark.text}</mark></p>{mark.note && <p className="mt-2">{mark.note}</p>}</li>)}</ul>}
+        </aside>
       </div>
 
       <BottomSheet open={tocOpen} title={s("chapters")} onClose={() => setTocOpen(false)}><Toc /></BottomSheet>

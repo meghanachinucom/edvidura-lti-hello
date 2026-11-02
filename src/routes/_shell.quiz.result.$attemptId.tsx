@@ -11,6 +11,7 @@ import { myAttempts, type Attempt } from "@/data/attempts";
 import { attemptAnswers } from "@/data/attemptAnswers";
 import { quizTitle } from "@/data/quiz";
 import { mockState } from "@/data/mockState";
+import { downloadBlob } from "@/lib/download";
 
 // LR-06 Quiz result.
 export const Route = createFileRoute("/_shell/quiz/result/$attemptId")({
@@ -56,7 +57,7 @@ function Result({ attempt }: { attempt: Attempt }) {
       <div>
         <PageHeading text={s("title")} />
         <p className="mt-1 text-ink-muted">{quizTitle(attempt.quizId)}</p>
-        <p className="mt-4 font-heading text-[40px] leading-tight text-ink">{s("score", { n: score })}</p>
+        <p className="mt-4 font-heading text-[52px] font-extrabold leading-tight text-accent">{s("score", { n: score })}</p>
         <p className="mt-1 text-ink">{attempt.kind === "graded" ? s("graded") : s("practice")}</p>
       </div>
 
@@ -107,7 +108,10 @@ function Result({ attempt }: { attempt: Attempt }) {
       <section aria-labelledby="receipt" className="rounded-surface border border-border bg-surface p-4">
         <h2 id="receipt" className="font-heading text-[20px] text-ink">{s("receipt")}</h2>
         <p className="mt-2 text-ink">{t(`shared.moodleStatus.${attempt.moodleStatus}`)}</p>
-        <button type="button" className="btn-secondary mt-3">{s("download")}</button>
+        <button type="button" className="btn-secondary mt-3" onClick={() => {
+          const receipt = `${quizTitle(attempt.quizId)}\n${s("score", { n: score })}\n${rows.map((r) => `Question ${r.questionNo}: ${r.correct ? "Correct" : "Missed"} — ${r.correct ? r.given : `Correct answer: ${r.correctAnswer}`}`).join("\n")}`;
+          downloadBlob(new Blob([receipt], { type: "text/plain;charset=utf-8" }), `edvidura-receipt-${attempt.id}.txt`);
+        }}>{s("download")}</button>
       </section>
     </div>
   );

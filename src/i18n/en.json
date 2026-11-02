@@ -398,6 +398,10 @@
       "activity": "Activity"
     },
     "progress": "My progress",
+    "continueLesson": "Continue lesson",
+    "careerPathway": "Career pathway",
+    "credentialNext": "Next credential",
+    "viewPathway": "View pathway",
     "noAttempts": "No attempts yet.",
     "ring": "{done} of {total} lessons done",
     "myResults": "My results",
@@ -499,7 +503,7 @@
     "upNext": "Up next",
     "list": "All lessons, in order",
     "lessonN": "Lesson {n}",
-    "done": "Marked done",
+    "done": "Done",
     "todo": "To do",
     "emptyTitle": "No lessons yet",
     "emptyHelp": "No lessons yet. Your instructor hasn't published any."
@@ -625,6 +629,8 @@
     "practice": "Practice — not sent to Moodle. Try without notes; this is how you learn.",
     "graded": "Graded quiz — your score goes to the Moodle gradebook when sync is working.",
     "questionOf": "Question {n} of 5",
+    "bookmarkQuestion": "Bookmark question {n}",
+    "strikeOut": "Strike out choice {key}",
     "submit": "Submit quiz",
     "submitting": "Submitting…",
     "error": "Your answers weren't submitted. Your choices are still here. Try again.",
@@ -681,6 +687,8 @@
     "counter": "Card {n} of {total}",
     "end": "You've reached the end.",
     "again": "Start again",
+    "reviewPractice": "Review Need practice cards ({n})",
+    "practiceReviewed": "You've reviewed the Need practice cards.",
     "empty": "No flashcards yet — ask your instructor to publish class lessons.",
     "thinkFirst": "Try the answer in your head before you flip."
   },
@@ -714,6 +722,10 @@
     "next": "Next idea",
     "swipe": "Swipe up or use the buttons.",
     "sound": "Sound",
+    "captionsOn": "Captions on",
+    "captionsOff": "Captions off",
+    "practicePrompt": "Practice prompt",
+    "explainPrompt": "Explain this idea in your own words:",
     "counter": "Idea {n} of {total}",
     "empty": "No reels yet.",
     "emptyHelp": "Your instructor hasn't added any yet."
@@ -817,7 +829,12 @@
     "listenNote": "Not available in this prototype.",
     "renderError": "This book couldn't be displayed. Ask your instructor to check the file.",
     "chapterMissing": "This chapter isn't available.",
-    "backLibrary": "All eBooks"
+    "backLibrary": "All eBooks",
+    "fontSize": "Text size",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode",
+    "wideWidth": "Wide reading",
+    "narrowWidth": "Standard width"
   },
   "LR-16": {
     "back": "Back to eBooks",
