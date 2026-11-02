@@ -1,5 +1,4 @@
 import type React from "react";
-import { StatusGem } from "@/components/shared/StatusGem";
 import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { t } from "@/i18n";
@@ -55,7 +54,7 @@ function Page() {
   const details: [string, React.ReactNode][] = [
     [s("name"), instituteDetail.name], [s("code"), instituteDetail.code], [s("course"), instituteDetail.course],
     [s("recorded"), String(instituteDetail.learnersRecorded)], [s("inMoodle"), String(instituteDetail.inMoodle)],
-    [s("moodleStatus"), <StatusGem tone={m.moodleSynced ? "synced" : "attention"}>{s(m.moodleSynced ? "synced" : "notSynced")}</StatusGem>],
+    [s("moodleStatus"), s(m.moodleSynced ? "synced" : "notSynced")],
     [s("admins"), String(instituteDetail.schoolAdmins)],
     [s("quiz"), att.length ? s("quizLine", { n: att.length, avg }) : "—"],
   ];

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Activity, BarChart3, BookOpenCheck, GraduationCap, Users } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { HeroBand } from "@/components/shared/HeroBand";
@@ -40,9 +41,11 @@ function Page() {
     [s("bindings"), f.moodleBindings], [s("classes"), f.classesLinks],
   ];
   const big = [
-    { to: "/school-admin/classes", label: s("classes") },
-    { to: "/school-admin/analytics", label: s("analytics") },
-    { to: "/school-admin/activity", label: s("activity") },
+    { to: "/school-admin/classes", label: s("classes"), Icon: BookOpenCheck },
+    { to: "/school-admin/analytics", label: s("analytics"), Icon: BarChart3 },
+    { to: "/school-admin/activity", label: s("activity"), Icon: Activity },
+    { to: "/school-admin/teachers", label: s("instructors"), Icon: GraduationCap },
+    { to: "/school-admin/students", label: s("students"), Icon: Users },
   ] as const;
 
   return (
@@ -64,17 +67,12 @@ function Page() {
           <ul className="grid gap-3 tablet:grid-cols-3">
             {big.map((b) => (
               <li key={b.to}>
-                <Link to={b.to} className="flex min-h-20 items-center rounded-surface border border-border-control bg-surface px-5 font-heading text-[20px] text-ink hover:bg-highlight">{b.label}</Link>
+                <Link to={b.to} className="flex min-h-20 items-center gap-4 rounded-surface border border-border-control bg-surface px-5 font-heading text-[20px] text-ink hover:bg-highlight">
+                  <b.Icon aria-hidden size={24} className="shrink-0 text-accent" />{b.label}
+                </Link>
               </li>
             ))}
           </ul>
-          <section aria-labelledby="manage">
-            <h2 id="manage" className="font-heading text-[22px] text-ink">{s("manage")}</h2>
-            <ul className="mt-2 space-y-1">
-              <li><Link to="/school-admin/teachers" className="inline-flex min-h-11 items-center text-ink underline">{s("instructors")}</Link></li>
-              <li><Link to="/school-admin/students" className="inline-flex min-h-11 items-center text-ink underline">{s("students")}</Link></li>
-            </ul>
-          </section>
         </>
       )}
     </div>
