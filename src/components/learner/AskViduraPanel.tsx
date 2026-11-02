@@ -3,6 +3,8 @@ import { MessageCircle, X } from "lucide-react";
 import { t } from "@/i18n";
 import { useFocusTrap } from "@/components/shared/useFocusTrap";
 import { CoachStarterChips } from "@/components/shared/CoachStarterChips";
+import { CitationChip } from "@/components/shared/CitationChip";
+import { CheckQuestionCard } from "@/components/shared/CheckQuestionCard";
 import { askViduraLanguages, pickViduraAnswer, VIDURA_OFF_SCOPE, type ViduraAnswer } from "@/data/askVidura";
 
 // M2 Ask Vidura side panel. Learner role only; mock answers from class lessons.
@@ -124,29 +126,6 @@ function Panel({ visible, onClose }: { visible: boolean; onClose: () => void }) 
   );
 }
 
-function Citation({ lesson, section }: { lesson: string; section: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <span className="group relative inline-block">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="min-h-11 px-1 text-accent underline underline-offset-4"
-      >
-        {lesson}
-      </button>
-      <span
-        role="note"
-        className={`absolute bottom-full left-0 z-10 mb-1 w-56 rounded-surface border border-border bg-surface-raised p-3 text-left shadow-sm ${open ? "block" : "hidden group-hover:block group-focus-within:block"}`}
-      >
-        <span className="block font-semibold text-ink">{lesson}</span>
-        <span className="block text-sm text-ink-muted">{section}</span>
-      </span>
-    </span>
-  );
-}
-
 function Answer({ answer }: { answer: ViduraAnswer | null }) {
   const [vote, setVote] = useState<"helpful" | "notHelpful" | null>(null);
   return (
@@ -160,15 +139,12 @@ function Answer({ answer }: { answer: ViduraAnswer | null }) {
           <div>
             <p className="text-sm font-semibold">{s("citations")}</p>
             <p>
-              <Citation {...answer.citations[0]} />
+              <CitationChip {...answer.citations[0]} />
               {" · "}
-              <Citation {...answer.citations[1]} />
+              <CitationChip {...answer.citations[1]} />
             </p>
           </div>
-          <div className="rounded-surface border border-border bg-surface p-3">
-            <p className="text-sm font-semibold">{s("checkQuestion")}</p>
-            <p>{answer.check}</p>
-          </div>
+          <CheckQuestionCard label={s("checkQuestion")} question={answer.check} />
         </>
       )}
       <div className="flex flex-wrap items-center gap-2">

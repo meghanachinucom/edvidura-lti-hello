@@ -13,7 +13,7 @@ export function ConfirmDialog({ open, title, body, confirmLabel, cancelLabel, on
       <div ref={ref} role="alertdialog" aria-modal="true" aria-labelledby={`${id}-t`} aria-describedby={`${id}-b`} className="w-full max-w-md rounded-surface bg-surface-raised p-5">
         <h2 id={`${id}-t`} className="font-heading text-[22px] text-ink">{title}</h2>
         <p id={`${id}-b`} className="mt-2 text-ink">{body}</p>
-        <div className="mt-5 flex flex-col-reverse gap-2 tablet:flex-row tablet:justify-end">
+        <div className="mt-5 flex flex-row justify-end gap-2">
           <button type="button" onClick={onCancel} className="btn-secondary">{cancelLabel}</button>
           <button type="button" onClick={onConfirm} className="btn-primary">{confirmLabel}</button>
         </div>

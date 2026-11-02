@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { t } from "@/i18n";
 
 /** The page's single h1. Sets document.title and receives focus on route change. */
-export function PageHeading({ titleKey, text }: { titleKey?: string; text?: string }) {
+export function PageHeading({ titleKey, text, context }: { titleKey?: string; text?: string; context?: string }) {
   const label = text ?? t(titleKey ?? "");
   const ref = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -14,6 +14,7 @@ export function PageHeading({ titleKey, text }: { titleKey?: string; text?: stri
       <h1 ref={ref} tabIndex={-1} className="font-heading text-[28px] font-extrabold tracking-[-0.02em] leading-tight text-ink tablet:text-[36px]">
         {label}
       </h1>
+      {context && <p className="mt-2 max-w-reading text-ink-muted">{context}</p>}
       <div aria-hidden className="title-rule" />
     </div>
   );
