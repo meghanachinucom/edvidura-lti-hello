@@ -247,6 +247,18 @@ main th { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transfo
 .section-card[data-status="attention"] { border-left-color: var(--warning); }
 .section-card[data-status="coral"] { border-left-color: var(--accent); }
 .section-card > .card-action { align-self: flex-end; margin-top: auto; }
+.studio-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.studio-grid > :first-child, .studio-grid > :nth-child(2) { grid-column: span 4; min-width: 0; }
+@media (min-width: 640px) {
+  .studio-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .studio-grid > :first-child { grid-column: span 5; }
+  .studio-grid > :nth-child(2) { grid-column: span 3; }
+}
+@media (min-width: 1280px) {
+  .studio-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .studio-grid > :first-child { grid-column: span 8; }
+  .studio-grid > :nth-child(2) { grid-column: span 4; }
+}
 .skeleton { background: linear-gradient(100deg, var(--border) 30%, color-mix(in srgb, var(--surface) 75%, var(--border)) 50%, var(--border) 70%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
 .toast-enter { animation: toast-in 200ms ease-out both; }
 @keyframes shimmer { to { background-position: -200% 0; } }
