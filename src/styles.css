@@ -52,16 +52,16 @@
   --radius-control: 8px;
   --max-width-content: 960px;
   --max-width-reading: 68ch;
-  --font-sans: "Outfit", "Noto Sans", Arial, sans-serif;
-  --font-heading: "Syne", "Noto Serif", Georgia, serif;
+  --font-sans: "Maven Pro", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada", "Noto Sans", Arial, sans-serif;
+  --font-heading: "Maven Pro", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada", "Noto Sans", Arial, sans-serif;
   --font-mono: ui-monospace, monospace;
 }
 
 @layer base {
   * { border-color: var(--color-border); }
   html { font-size: 16px; }
-  body { background: var(--page-bg); color: var(--ink); font-family: "Outfit", "Noto Sans", Arial, sans-serif; }
-  h1, h2, h3, h4, h5, h6 { font-family: "Syne", "Noto Serif", Georgia, serif; }
+  body { background: var(--page-bg); color: var(--ink); font-family: var(--font-sans); }
+  h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   :focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
   h1:focus { outline: none; }
   button, [role="button"], input, select, textarea, a { min-height: 44px; }
