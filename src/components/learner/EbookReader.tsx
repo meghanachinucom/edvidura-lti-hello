@@ -10,6 +10,8 @@ import { BottomSheet } from "@/components/shared/BottomSheet";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast } from "@/components/shared/Toast";
 import { ebookChapters, type Chapter } from "@/data/ebookContent";
+import { LessonRows } from "@/components/shared/LessonList";
+import { lessons } from "@/data/lessons";
 import type { Ebook } from "@/data/ebooks";
 import { mockState } from "@/data/mockState";
 import { explanationFor } from "@/data/readerExplanations";
@@ -129,14 +131,7 @@ export function EbookReader({ book }: { book: Ebook }) {
     <div className="space-y-6 text-ink">
       <nav aria-label={s("chapters")}>
         <h2 className="font-heading text-[18px]">{s("chapters")}</h2>
-        <ol className="mt-2 space-y-1">
-          {chapters.map((c, i) => (
-            <li key={c.id}>
-              <button type="button" aria-current={i === ci ? "true" : undefined} onClick={() => { go(i); setTocOpen(false); }}
-                className={`reader-chapter min-h-11 w-full rounded-surface px-2 text-left ${i === ci ? "font-semibold text-accent" : ""}`}>{c.title}</button>
-            </li>
-          ))}
-        </ol>
+        <div className="mt-2" onClick={() => setTocOpen(false)}><LessonRows items={lessons} /></div>
       </nav>
       <section>
         <h2 className="font-heading text-[18px]">{s("bookmarks")}</h2>

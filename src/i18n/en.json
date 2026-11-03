@@ -1,4 +1,9 @@
 {
+  "lessonList": {
+    "upNext": "Up next",
+    "done": "Done",
+    "todo": "To do"
+  },
   "pass3": {
     "circuit": {
       "title": "Live Domestic Circuit & Ohm's Law Workbench",
@@ -784,7 +789,7 @@
     "filters": "Filter by subject",
     "chip": {
       "all": "All",
-      "vocational": "Vocational & Welding",
+      "vocational": "Vocational",
       "life": "Life Sciences",
       "physical": "Physical Sciences",
       "maths": "Mathematics"

@@ -29,7 +29,7 @@ const s = (k: string, v?: Record<string, string | number>) => t(`TC-02.${k}`, v)
 const input = "mt-2 min-h-11 w-full rounded-surface bg-surface px-3 text-ink border-control";
 const keys: OptionKey[] = ["A", "B", "C", "D"];
 
-interface LessonRow { id: string; title: string; kind: LessonKind; published: boolean }
+interface LessonRow { id: string; title: string; kind: LessonKind; published: boolean; courseCode: string }
 interface QRow { id: string; text: string }
 
 function FieldError({ id, children }: { id: string; children: ReactNode }) {
@@ -47,7 +47,7 @@ function useSaving() {
 }
 
 function Page() {
-  const [lessons, setLessons] = useState<LessonRow[]>(seedLessons.map((l) => ({ id: l.id, title: l.title, kind: l.kind, published: true })));
+  const [lessons, setLessons] = useState<LessonRow[]>(seedLessons.map((l) => ({ id: l.id, title: l.title, kind: l.kind, published: true, courseCode: l.courseCode })));
   const [questions, setQuestions] = useState<QRow[]>(checkpointQuiz.questions.map((q) => ({ id: q.id, text: q.text })));
   const [lessonForm, setLessonForm] = useState<null | { id?: string }>(null);
   const [qForm, setQForm] = useState(false);
@@ -59,7 +59,7 @@ function Page() {
   const qSave = useSaving();
 
   const lessonCols: Column<LessonRow>[] = [
-    { key: "title", header: s("colTitle"), cell: (l) => l.title },
+    { key: "title", header: s("colTitle"), cell: (l) => <>{l.title} <span className="inline-flex rounded border border-border px-1.5 py-0.5 align-middle font-mono text-xs leading-none text-ink-muted">{l.courseCode}</span></> },
     { key: "type", header: s("colType"), cell: (l) => t(`shared.lessonKind.${l.kind}`) },
     { key: "status", header: s("colStatus"), cell: (l) => s(l.published ? "published" : "draft") },
     { key: "actions", header: s("colActions"), cell: (l) => (
@@ -89,7 +89,7 @@ function Page() {
             onSave={(title) => lessonSave.run(() => {
               setLessons((ls) => lessonForm.id
                 ? ls.map((l) => (l.id === lessonForm.id ? { ...l, title } : l))
-                : [...ls, { id: `new-${ls.length + 1}`, title, kind: "reading", published: false }]);
+                : [...ls, { id: `new-${ls.length + 1}`, title, kind: "reading", published: false, courseCode: "ELE-A" }]);
               setLessonForm(null);
             })} />
         )}

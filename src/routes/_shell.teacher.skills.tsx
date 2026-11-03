@@ -7,6 +7,8 @@ import { PageHeading } from "@/components/shared/PageHeading";
 import { skillGaps } from "@/data/teacherInsights";
 import { StatusBanner } from "@/components/shared/StatusBanner";
 import { skills as seedSkills, targetRoles, type Skill } from "@/data/skills";
+import { lessonById } from "@/data/lessons";
+import { LessonName } from "@/components/shared/LessonList";
 import { mockState } from "@/data/mockState";
 
 // TC-14 Skills and roles. No standards database, automatic mapping or NSQF codes.
@@ -97,6 +99,7 @@ function Page() {
                 return <li key={skill.code} className="rounded-surface border border-border bg-surface p-4">
                   <div className="flex items-start justify-between gap-3"><h2 className="font-heading text-[18px] text-ink">{skill.title}</h2><StatusGem tone={stateTone[state]}>{s(`state.${state}`)}</StatusGem></div>
                   <p className="mt-2 font-mono text-sm text-ink-muted">{skill.code}</p>
+                  {skill.lessonId && lessonById(skill.lessonId) && <Link to="/lessons/$lessonId" params={{ lessonId: skill.lessonId }} className="mt-2 inline-flex min-h-11 items-center text-ink underline"><LessonName lesson={lessonById(skill.lessonId)!} /></Link>}
                   {state === "missing" && <Link to="/teacher/ai/remediation" className="mt-2 inline-flex min-h-11 items-center text-secondary underline">{s("generate")}</Link>}
                 </li>;
               })}

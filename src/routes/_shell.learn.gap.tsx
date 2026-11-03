@@ -9,6 +9,7 @@ import { lessonById } from "@/data/lessons";
 import { skills, targetRoles } from "@/data/skills";
 import { mockState } from "@/data/mockState";
 import { RoleTransitionDelta } from "@/components/learner/RoleTransitionDelta";
+import { LessonName } from "@/components/shared/LessonList";
 
 // LR-09 My plan. Fixed step labels only; no percentages or dates.
 export const Route = createFileRoute("/_shell/learn/gap")({
@@ -80,7 +81,7 @@ function Page() {
 
       <ol className="space-y-3">
         <Group n={1} title={s("review")}>
-          {review && <Link to="/lessons/$lessonId" params={{ lessonId: review.id }} className="inline-flex min-h-11 items-center underline">{review.title}</Link>}
+          {review && <Link to="/lessons/$lessonId" params={{ lessonId: review.id }} className="inline-flex min-h-11 items-center underline"><LessonName lesson={review} /></Link>}
           {step === 1 && <button type="button" className="btn-secondary" onClick={() => save(() => setStep(2))}>{s("markDone")}</button>}
         </Group>
         <Group n={2} title={s("practise")}>
@@ -107,7 +108,7 @@ function Page() {
             return (
               <li key={k.code}>
                 <p className="font-semibold">{k.title}</p>
-                {l ? <Link to="/lessons/$lessonId" params={{ lessonId: l.id }} className="inline-flex min-h-11 items-center underline">{l.title}</Link>
+                {l ? <Link to="/lessons/$lessonId" params={{ lessonId: l.id }} className="inline-flex min-h-11 items-center underline"><LessonName lesson={l} /></Link>
                   : <p className="text-ink-muted">{s("noLesson")}</p>}
               </li>
             );

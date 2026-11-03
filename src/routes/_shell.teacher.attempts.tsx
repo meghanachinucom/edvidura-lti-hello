@@ -18,6 +18,8 @@ import { mockState } from "@/data/mockState";
 import { formatIST } from "@/lib/time";
 import { downloadBlob } from "@/lib/download";
 import { StatusGem, type GemTone } from "@/components/shared/StatusGem";
+import { LessonName } from "@/components/shared/LessonList";
+import { lessonById } from "@/data/lessons";
 
 // TC-01 Class results. No risk scores, predictions, rankings or colour-coding.
 export const Route = createFileRoute("/_shell/teacher/attempts")({
@@ -101,7 +103,7 @@ function Page() {
           </div>
           <p className="max-w-reading text-ink">
             {t("TC-01.nextStepPre", { n: earthingMissCount })}
-            <Link to="/lessons/$lessonId" params={{ lessonId: "3" }} className="text-ink underline">{s("nextStepLesson")}</Link>
+            <Link to="/lessons/$lessonId" params={{ lessonId: "3" }} className="text-ink underline"><LessonName lesson={lessonById("3")!} /></Link>
             {s("nextStepMid")}
             <Link to="/teacher/ai/remediation" className="text-ink underline">{s("nextStepRemediation")}</Link>
             {s("nextStepPost")}

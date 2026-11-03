@@ -19,6 +19,7 @@ import { adminHub, adminHubClasses, learnerHub, teacherHub, type HubClass } from
 import { mockState } from "@/data/mockState";
 import { formatIST } from "@/lib/time";
 import { LotoCheck } from "@/components/learner/LotoCheck";
+import { UpNextCard } from "@/components/shared/LessonList";
 
 export const Route = createFileRoute("/_shell/launch-hub")({
   head: () => ({
@@ -94,12 +95,8 @@ function LearnerHome() {
 
       <section aria-labelledby="hub-continue">
         <h2 id="hub-continue" className="font-heading text-[22px] text-ink">{s("continue")}</h2>
-        {next ? (
-          <Link to="/lessons/$lessonId" params={{ lessonId: next.id }} className="mt-3 flex min-h-40 items-center justify-between gap-4 rounded-surface border border-border bg-surface p-6 text-ink shadow-md">
-            <span className="min-w-0"><span className="block text-sm text-ink-muted">{t(`shared.lessonKind.${next.kind}`)}</span><span className="mt-2 block font-heading text-2xl font-bold">{next.title}</span><span className="mt-4 inline-flex min-h-11 items-center text-secondary underline">{s("continueLesson")}</span></span>
-            <ChevronRight aria-hidden size={28} className="shrink-0 text-secondary" />
-          </Link>
-        ) : <div className="mt-3 rounded-surface bg-surface p-4 text-ink"><p>{s("endOfLessons")}</p><Link to="/active-quizzes" className="btn-primary mt-3">{s("endLink")}</Link></div>}
+        {next ? <div className="mt-3"><UpNextCard lesson={next} heading={false} /></div>
+          : <div className="mt-3 rounded-surface bg-surface p-4 text-ink"><p>{s("endOfLessons")}</p><Link to="/active-quizzes" className="btn-primary mt-3">{s("endLink")}</Link></div>}
       </section>
 
       {pathway && <section aria-labelledby="career-pathway" className="rounded-surface border border-border bg-surface p-5">

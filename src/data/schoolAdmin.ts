@@ -14,7 +14,7 @@ export const instructorAccess = [
 /** SA-03 class bindings. */
 export interface ClassBinding { code: string; name: string; moodleCourse: string | null; bound: boolean }
 export const classBindings: ClassBinding[] = [
-  { code: "ELE-A", name: "Electrician, Batch A", moodleCourse: "Electrician — Domestic Wiring (Batch A)", bound: true },
+  { code: "ELE-A", name: "Electrician, Batch A", moodleCourse: "Electrician — Domestic Wiring", bound: true },
   { code: "ELE-B", name: "Electrician, Batch B", moodleCourse: null, bound: false },
 ];
 
@@ -37,7 +37,7 @@ export const instituteActivity = { everLaunched: 8, activeToday: 3, activeNow: 1
 export const instituteDetail = {
   name: "Riverside High",
   code: "RIV-01",
-  course: "Algebra I",
+  course: "Electrician — Domestic Wiring",
   learnersRecorded: 96,
   inMoodle: 88,
   moodleSynced: true,

@@ -7,6 +7,7 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
 import { learners, instructors } from "@/data/people";
 import { classBindings, instituteAttempts, instituteDetail } from "@/data/schoolAdmin";
+import { LessonCode } from "@/components/shared/LessonList";
 import { mockState } from "@/data/mockState";
 
 // SA-07 Institute details. No client IDs, keys, URLs, delete/change institute or retry buttons.
@@ -52,7 +53,7 @@ function Page() {
   const cls = empty("classes") ? [] : classBindings;
 
   const details: [string, React.ReactNode][] = [
-    [s("name"), instituteDetail.name], [s("code"), instituteDetail.code], [s("course"), instituteDetail.course],
+    [s("name"), instituteDetail.name], [s("code"), instituteDetail.code], [s("course"), <>{instituteDetail.course} <LessonCode code="ELE-A" /></>],
     [s("recorded"), String(instituteDetail.learnersRecorded)], [s("inMoodle"), String(instituteDetail.inMoodle)],
     [s("moodleStatus"), s(m.moodleSynced ? "synced" : "notSynced")],
     [s("admins"), String(instituteDetail.schoolAdmins)],

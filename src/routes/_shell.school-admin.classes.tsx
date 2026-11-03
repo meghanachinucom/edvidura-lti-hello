@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBanner } from "@/components/shared/StatusBanner";
 import { CohortEvents } from "@/components/admin/CohortEvents";
 import { classBindings, type ClassBinding } from "@/data/schoolAdmin";
+import { LessonCode } from "@/components/shared/LessonList";
 import { mockState } from "@/data/mockState";
 
 // SA-03 Classes & links. No webhooks, live panels, credentials or grade-passback claims.
@@ -47,7 +48,7 @@ function Page() {
   const cols: Column<ClassBinding>[] = [
     { key: "class", header: s("colClass"), cell: (r) => r.name },
     { key: "code", header: s("colCode"), cell: (r) => r.code },
-    { key: "course", header: s("colCourse"), cell: (r) => r.moodleCourse ?? "—" },
+    { key: "course", header: s("colCourse"), cell: (r) => r.moodleCourse ? <>{r.moodleCourse} <LessonCode code={r.code} /></> : "—" },
     { key: "status", header: s("colStatus"), cell: (r) => r.bound ? <StatusGem tone="synced">{s("bound")}</StatusGem>
       : <button type="button" className="btn-secondary" aria-label={`${s("bind")}: ${r.code}`} onClick={() => bind(r.code)}>{s("bind")}</button> },
     { key: "how", header: s("colHow"), cell: () => <span className="text-ink-muted">{s("howText")}</span> },
