@@ -116,6 +116,8 @@ def can(caps: dict[str, Any] | None, key: str) -> bool:
 
 
 def profile_from_row(row: dict[str, Any] | None) -> dict[str, Any]:
+    from app.modules.tenancy.blocks import parse_enabled_blocks
+
     row = row or {}
     segment = normalize_segment(row.get("segment"))
     raw_caps = row.get("capabilities")
@@ -132,6 +134,7 @@ def profile_from_row(row: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "segment": segment,
         "capabilities": caps,
+        "enabled_blocks": parse_enabled_blocks(row.get("enabled_blocks")),
         "is_corporate": segment == "corporate",
         "is_school": segment == "school",
         "is_government": segment == "government",
@@ -162,6 +165,7 @@ def attach_to_session(session: dict[str, Any]) -> dict[str, Any]:
         )
     session["segment"] = profile["segment"]
     session["capabilities"] = profile["capabilities"]
+    session["enabled_blocks"] = profile.get("enabled_blocks") or []
     session["is_corporate"] = profile["is_corporate"]
     session["is_school"] = profile.get("is_school", profile["segment"] == "school")
     session["is_government"] = profile.get(

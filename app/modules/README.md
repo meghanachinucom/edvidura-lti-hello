@@ -9,7 +9,7 @@ Take `app/modules/` + migrations into another project; provide `app.db` / `app.s
 
 | Module | Responsibility | Reuse elsewhere |
 |--------|----------------|-----------------|
-| `app.modules.tenancy` | Resolve LTI → tenant, request context, tool conf; school/corporate/government segment + caps | Any LTI multi-tenant service |
+| `app.modules.tenancy` | Resolve LTI → tenant, request context, tool conf; school/corporate/government segment + caps; Lego `blocks` catalog + `merge_blocks` | Any LTI multi-tenant service |
 | `app.modules.content` | Courses, lessons, progress, teacher authoring | LMS / curriculum services |
 | `app.modules.quiz` | Question bank, grade, load per tenant; personalized AI quizzes (level + complexity + coverage + study-plan validation) | Assessment services |
 | `app.modules.school` | Classes, curriculum links, LTI context bindings (people live in Moodle) | SIS / school org |

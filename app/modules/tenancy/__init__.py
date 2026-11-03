@@ -1,5 +1,15 @@
 """Tenant identity and LTI platform resolution (DEC-006)."""
 
+from app.modules.tenancy.blocks import (
+    BLOCKS,
+    PRESETS,
+    get_block,
+    list_blocks,
+    list_presets,
+    merge_blocks,
+    parse_enabled_blocks,
+    resolve_block_ids,
+)
 from app.modules.tenancy.capabilities import (
     CAP_KEYS,
     SEGMENTS,
@@ -34,15 +44,23 @@ from app.modules.tenancy.tool_conf import build_tool_conf_from_db
 __all__ = [
     "TENANT_A_ID",
     "TENANT_B_ID",
+    "BLOCKS",
+    "PRESETS",
     "CAP_KEYS",
     "SEGMENTS",
     "attach_to_session",
     "can",
     "defaults_for_segment",
+    "get_block",
+    "list_blocks",
+    "list_presets",
+    "merge_blocks",
     "merge_capabilities",
     "normalize_segment",
+    "parse_enabled_blocks",
     "profile_for_tenant",
     "profile_from_row",
+    "resolve_block_ids",
     "ResolvedTenant",
     "resolve_platform",
     "build_tool_conf_from_db",

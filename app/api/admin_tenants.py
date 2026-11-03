@@ -13,6 +13,8 @@ from app.admin_auth import require_admin_key
 from app.schemas.tenant import (
     LtiPlatformCreate,
     LtiPlatformResponse,
+    TenantBlocksResponse,
+    TenantBlocksUpdate,
     TenantCreate,
     TenantResponse,
     TenantSegmentUpdate,
@@ -38,6 +40,7 @@ def _serialize_tenant(row: dict) -> dict:
         "status": row["status"],
         "segment": profile["segment"],
         "capabilities": profile["capabilities"],
+        "enabled_blocks": profile.get("enabled_blocks") or [],
         "created_at": row["created_at"],
     }
 
@@ -60,6 +63,14 @@ def _serialize_platform(row: dict) -> dict:
     }
 
 
+@router.get("/blocks")
+def list_sellable_blocks() -> dict:
+    """Full Lego catalog + named presets (sales ↔ engineering)."""
+    from app.modules.tenancy import list_blocks, list_presets
+
+    return {"blocks": list_blocks(), "presets": list_presets()}
+
+
 @router.post("/tenants", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
 def create_tenant(payload: TenantCreate) -> dict:
     existing = db.get_tenant_by_slug(payload.slug)
@@ -69,12 +80,28 @@ def create_tenant(payload: TenantCreate) -> dict:
             detail=f"Tenant slug '{payload.slug}' already exists.",
         )
     try:
+        caps = payload.capabilities
+        blocks = payload.enabled_blocks
+        if payload.blocks_preset or (
+            payload.enabled_blocks is not None and caps is None
+        ):
+            from app.modules.tenancy import merge_blocks
+
+            merged = merge_blocks(
+                payload.segment,
+                payload.enabled_blocks,
+                preset=payload.blocks_preset,
+                replace=True,
+            )
+            caps = merged["capabilities"]
+            blocks = merged["enabled_blocks"]
         row = db.create_tenant(
             slug=payload.slug,
             name=payload.name,
             status=payload.status,
             segment=payload.segment,
-            capabilities=payload.capabilities,
+            capabilities=caps,
+            enabled_blocks=blocks,
         )
         logger.info(
             "Created tenant slug=%s id=%s segment=%s",
@@ -83,6 +110,10 @@ def create_tenant(payload: TenantCreate) -> dict:
             row.get("segment"),
         )
         return _serialize_tenant(row)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        )
     except psycopg.errors.UniqueViolation:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -96,6 +127,60 @@ def create_tenant(payload: TenantCreate) -> dict:
 @router.get("/tenants", response_model=List[TenantResponse])
 def list_tenants() -> list[dict]:
     return [_serialize_tenant(r) for r in db.list_tenants()]
+
+
+@router.patch(
+    "/tenants/{tenant_id}/blocks",
+    response_model=TenantBlocksResponse,
+)
+def update_tenant_blocks(tenant_id: UUID, payload: TenantBlocksUpdate) -> dict:
+    if not payload.preset and payload.blocks is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide blocks[] or preset.",
+        )
+    tenant = db.get_tenant(tenant_id)
+    if not tenant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tenant '{tenant_id}' does not exist.",
+        )
+    try:
+        result = db.update_tenant_blocks(
+            tenant_id,
+            block_ids=payload.blocks,
+            preset=payload.preset,
+            segment=payload.segment,
+            replace=payload.replace,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error("update_tenant_blocks failed: %s", exc)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+    row = result.get("tenant")
+    merge = result.get("merge") or {}
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tenant '{tenant_id}' does not exist.",
+        )
+    logger.info(
+        "Updated tenant blocks id=%s preset=%s enabled=%s",
+        tenant_id,
+        merge.get("preset"),
+        merge.get("enabled_blocks"),
+    )
+    return {
+        "tenant": _serialize_tenant(row),
+        "applied_blocks": merge.get("applied_blocks") or [],
+        "unavailable": merge.get("unavailable") or [],
+        "warnings": merge.get("warnings") or [],
+        "preset": merge.get("preset"),
+    }
 
 
 @router.patch("/tenants/{tenant_id}/segment", response_model=TenantResponse)

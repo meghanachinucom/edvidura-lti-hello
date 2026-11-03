@@ -9,22 +9,36 @@ function caps(): Record<string, boolean> {
   return {};
 }
 
-function capOn(key: string, fallback = true): boolean {
+/**
+ * When a live session has capability keys: default-deny (unsold = hidden).
+ * When no profile is attached (local SPA demo): show school-full nav.
+ */
+function capOn(key: string): boolean {
   const c = caps();
-  if (!(key in c)) return fallback;
+  if (!Object.keys(c).length) return true;
   return Boolean(c[key]);
 }
 
 export function navItems(): NavItem[] {
   const staff = state.role === 'teacher' || state.role === 'admin';
   if (staff) {
-    const items: NavItem[] = [{ id: 'teacher-results', label: 'Gradebook' }];
+    const items: NavItem[] = [];
+    if (capOn('quiz_graded') || capOn('quiz_practice') || capOn('learner_progress')) {
+      items.push({ id: 'teacher-results', label: 'Gradebook' });
+    }
+    if (capOn('learner_progress')) {
+      items.push({ id: 'teacher-diagnostics', label: 'Diagnostics' });
+    }
     if (capOn('lessons')) items.push({ id: 'lessons', label: 'Lessons' });
     if (capOn('quiz_graded') || capOn('quiz_practice')) {
       items.push({ id: 'quiz', label: 'Quiz' });
     }
     if (capOn('manuals')) items.push({ id: 'manuals', label: 'Manuals' });
     if (capOn('ask_vidura')) items.push({ id: 'ask-vidura', label: 'Ask Vidura' });
+    if (capOn('video_library')) {
+      items.push({ id: 'pravachana-dept', label: 'Library' });
+    }
+    if (!items.length) items.push({ id: 'teacher-results', label: 'Gradebook' });
     return items;
   }
   const items: NavItem[] = [{ id: 'student-home', label: 'Home' }];
@@ -34,7 +48,13 @@ export function navItems(): NavItem[] {
   }
   if (capOn('manuals')) items.push({ id: 'manuals', label: 'Manuals' });
   if (capOn('ask_vidura')) items.push({ id: 'ask-vidura', label: 'Ask Vidura' });
-  if (capOn('learner_progress')) items.push({ id: 'my-progress', label: 'Progress' });
+  if (capOn('learner_progress') || capOn('study_plan')) {
+    items.push({ id: 'my-progress', label: 'Progress' });
+  }
+  if (capOn('video_library')) {
+    items.push({ id: 'pravachana-home', label: 'Library' });
+  }
+  // XR Store stays park — never in nav until a live xr cap exists
   return items;
 }
 

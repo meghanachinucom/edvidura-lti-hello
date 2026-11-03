@@ -6,7 +6,7 @@ Import domain logic from `app.modules.*` — not from FastAPI route files.
 
 | Module | Responsibility | Reuse elsewhere |
 |--------|----------------|-----------------|
-| `app.modules.tenancy` | Resolve LTI → tenant, request context, tool conf; `segment` school\|corporate\|government + capability flags | Any LTI multi-tenant service |
+| `app.modules.tenancy` | Resolve LTI → tenant, request context, tool conf; `segment` school\|corporate\|government + capability flags; sellable Lego `blocks` catalog + `merge_blocks` ([BLOCKS.md](BLOCKS.md), [LEGO_BLOCKS_PLAN.md](LEGO_BLOCKS_PLAN.md)) | Any LTI multi-tenant service |
 | `app.modules.content` | Courses, lessons, progress, teacher authoring | LMS / curriculum services |
 | `app.modules.quiz` | Bank, grade, personalized quizzes, attempts, session_ctx | Assessment (copy module) |
 | `app.modules.school` | Classes, LTI bindings, `enrich_session_from_launch` | SIS / LTI binding |
@@ -45,4 +45,4 @@ Infrastructure stays in `app.db` (Postgres + `SET LOCAL app.tenant_id`) and `app
 
 Legacy shims (`app.content`, `app.quiz_content`, `app.tenancy`, …) re-export these modules.
 
-See also: [SKILLS.md](SKILLS.md); [DIFFERENCE.md](DIFFERENCE.md); [SME.md](SME.md); [EBOOK.md](EBOOK.md); [PEBL_LITE.md](PEBL_LITE.md); [CONTENT_PACKS.md](CONTENT_PACKS.md); [AIRGAP_PACK.md](AIRGAP_PACK.md); [ADAPTIVE.md](ADAPTIVE.md) / [PLE.md](PLE.md) / [DCT.md](DCT.md); [XAPI.md](XAPI.md); [PEBL_XAPI_CHAT.md](PEBL_XAPI_CHAT.md); [ANALYTICS.md](ANALYTICS.md); [YET_LRS_METABASE.md](YET_LRS_METABASE.md); [JEV.md](JEV.md); [TLA.md](TLA.md); [TLA_REQUIREMENTS.md](TLA_REQUIREMENTS.md); [NRPS.md](NRPS.md); [RECEIPTS.md](RECEIPTS.md); [MULTI_LMS.md](MULTI_LMS.md) / [CANVAS.md](CANVAS.md); [AGS_CHECKLIST.md](AGS_CHECKLIST.md).
+See also: [BLOCKS.md](BLOCKS.md); [LEGO_BLOCKS_PLAN.md](LEGO_BLOCKS_PLAN.md); [SKILLS.md](SKILLS.md); [DIFFERENCE.md](DIFFERENCE.md); [SME.md](SME.md); [EBOOK.md](EBOOK.md); [PEBL_LITE.md](PEBL_LITE.md); [CONTENT_PACKS.md](CONTENT_PACKS.md); [AIRGAP_PACK.md](AIRGAP_PACK.md); [ADAPTIVE.md](ADAPTIVE.md) / [PLE.md](PLE.md) / [DCT.md](DCT.md); [XAPI.md](XAPI.md); [PEBL_XAPI_CHAT.md](PEBL_XAPI_CHAT.md); [ANALYTICS.md](ANALYTICS.md); [YET_LRS_METABASE.md](YET_LRS_METABASE.md); [JEV.md](JEV.md); [TLA.md](TLA.md); [TLA_REQUIREMENTS.md](TLA_REQUIREMENTS.md); [NRPS.md](NRPS.md); [RECEIPTS.md](RECEIPTS.md); [MULTI_LMS.md](MULTI_LMS.md) / [CANVAS.md](CANVAS.md); [AGS_CHECKLIST.md](AGS_CHECKLIST.md).

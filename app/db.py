@@ -623,9 +623,11 @@ def create_tenant(
     status: str = "active",
     segment: str = "school",
     capabilities: dict[str, Any] | None = None,
+    enabled_blocks: list[str] | None = None,
 ) -> dict[str, Any]:
     import json
 
+    from app.modules.tenancy.blocks import parse_enabled_blocks
     from app.modules.tenancy.capabilities import (
         merge_capabilities,
         normalize_segment,
@@ -633,13 +635,17 @@ def create_tenant(
 
     seg = normalize_segment(segment)
     caps = merge_capabilities(seg, capabilities)
+    blocks = parse_enabled_blocks(enabled_blocks)
     with connect() as conn:
         with conn.transaction():
             row = conn.execute(
                 """
-                INSERT INTO tenants (slug, name, status, segment, capabilities)
-                VALUES (%s, %s, %s, %s, %s::jsonb)
-                RETURNING id, slug, name, status, segment, capabilities, created_at
+                INSERT INTO tenants (
+                    slug, name, status, segment, capabilities, enabled_blocks
+                )
+                VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb)
+                RETURNING id, slug, name, status, segment, capabilities,
+                          enabled_blocks, created_at
                 """,
                 (
                     slug.strip().lower(),
@@ -647,6 +653,7 @@ def create_tenant(
                     status,
                     seg,
                     json.dumps(caps),
+                    json.dumps(blocks),
                 ),
             ).fetchone()
             return dict(row)
@@ -657,6 +664,7 @@ def get_tenant_by_slug(slug: str) -> dict[str, Any] | None:
         row = conn.execute(
             """
             SELECT id, slug, name, status, segment, capabilities,
+                   COALESCE(enabled_blocks, '[]'::jsonb) AS enabled_blocks,
                    COALESCE(preferred_state, '') AS preferred_state,
                    COALESCE(preferred_language, '') AS preferred_language,
                    created_at
@@ -673,6 +681,7 @@ def list_tenants() -> list[dict[str, Any]]:
         rows = conn.execute(
             """
             SELECT id, slug, name, status, segment, capabilities,
+                   COALESCE(enabled_blocks, '[]'::jsonb) AS enabled_blocks,
                    COALESCE(preferred_state, '') AS preferred_state,
                    COALESCE(preferred_language, '') AS preferred_language,
                    created_at
@@ -688,6 +697,7 @@ def get_tenant(tenant_id: UUID | str) -> dict[str, Any] | None:
         row = conn.execute(
             """
             SELECT id, slug, name, status, segment, capabilities,
+                   COALESCE(enabled_blocks, '[]'::jsonb) AS enabled_blocks,
                    COALESCE(preferred_state, '') AS preferred_state,
                    COALESCE(preferred_language, '') AS preferred_language,
                    created_at
@@ -766,11 +776,58 @@ def update_tenant_segment(
                 UPDATE tenants
                 SET segment = %s, capabilities = %s::jsonb
                 WHERE id = %s
-                RETURNING id, slug, name, status, segment, capabilities, created_at
+                RETURNING id, slug, name, status, segment, capabilities,
+                          COALESCE(enabled_blocks, '[]'::jsonb) AS enabled_blocks,
+                          created_at
                 """,
                 (seg, json.dumps(caps), str(tenant_id)),
             ).fetchone()
             return dict(row) if row else None
+
+
+def update_tenant_blocks(
+    tenant_id: UUID | str,
+    *,
+    block_ids: list[str] | None = None,
+    preset: str | None = None,
+    segment: str | None = None,
+    replace: bool = True,
+) -> dict[str, Any]:
+    """Apply Lego block selection; writes enabled_blocks + derived capabilities.
+
+    Returns {tenant, merge} where merge includes warnings / unavailable.
+    """
+    import json
+
+    from app.modules.tenancy.blocks import merge_blocks
+    from app.modules.tenancy.capabilities import normalize_segment
+
+    existing = get_tenant(tenant_id)
+    if not existing:
+        return {"tenant": None, "merge": None}
+
+    seg = normalize_segment(segment if segment is not None else existing.get("segment"))
+    merge = merge_blocks(seg, block_ids, preset=preset, replace=replace)
+    with connect() as conn:
+        with conn.transaction():
+            row = conn.execute(
+                """
+                UPDATE tenants
+                SET segment = %s,
+                    capabilities = %s::jsonb,
+                    enabled_blocks = %s::jsonb
+                WHERE id = %s
+                RETURNING id, slug, name, status, segment, capabilities,
+                          enabled_blocks, created_at
+                """,
+                (
+                    seg,
+                    json.dumps(merge["capabilities"]),
+                    json.dumps(merge["enabled_blocks"]),
+                    str(tenant_id),
+                ),
+            ).fetchone()
+            return {"tenant": dict(row) if row else None, "merge": merge}
 
 
 def create_institution(

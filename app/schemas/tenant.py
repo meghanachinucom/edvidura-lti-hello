@@ -16,12 +16,25 @@ class TenantCreate(BaseModel):
         default="school", pattern=r"^(school|corporate|government)$"
     )
     capabilities: Optional[dict] = None
+    enabled_blocks: Optional[List[str]] = None
+    blocks_preset: Optional[str] = None
 
 
 class TenantSegmentUpdate(BaseModel):
     segment: str = Field(..., pattern=r"^(school|corporate|government)$")
     capabilities: Optional[dict] = None
     reset_capabilities: bool = True
+
+
+class TenantBlocksUpdate(BaseModel):
+    """Apply a Lego block list or named preset to a tenant."""
+
+    blocks: Optional[List[str]] = None
+    preset: Optional[str] = None
+    segment: Optional[str] = Field(
+        default=None, pattern=r"^(school|corporate|government)$"
+    )
+    replace: bool = True
 
 
 class TenantResponse(BaseModel):
@@ -33,7 +46,16 @@ class TenantResponse(BaseModel):
     status: str
     segment: str = "school"
     capabilities: Optional[dict] = None
+    enabled_blocks: Optional[List[str]] = None
     created_at: datetime
+
+
+class TenantBlocksResponse(BaseModel):
+    tenant: TenantResponse
+    applied_blocks: List[str] = Field(default_factory=list)
+    unavailable: List[dict] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    preset: Optional[str] = None
 
 
 class LtiPlatformCreate(BaseModel):

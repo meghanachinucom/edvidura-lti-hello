@@ -34,17 +34,56 @@ def client():
             pytest.fail("Postgres not reachable for admin API tests")
         pytest.skip("Postgres not reachable")
 
-    # Ensure last_launch_at exists on older local DBs
+    # Ensure columns exist on older local DBs
     try:
         with db.connect() as conn:
             with conn.transaction():
                 conn.execute(
                     "ALTER TABLE lti_platforms ADD COLUMN IF NOT EXISTS last_launch_at TIMESTAMPTZ"
                 )
+                conn.execute(
+                    "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS enabled_blocks "
+                    "JSONB NOT NULL DEFAULT '[]'::jsonb"
+                )
     except Exception:  # noqa: BLE001
         pass
 
     return TestClient(app)
+
+
+def test_admin_blocks_catalog(client: TestClient):
+    headers = {"X-Admin-Key": "test-admin-key"}
+    r = client.get("/admin/blocks", headers=headers)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert len(body["blocks"]) >= 38
+    assert any(p["id"] == "classroom_starter_4" for p in body["presets"])
+
+
+def test_patch_tenant_blocks_preset(client: TestClient):
+    headers = {"X-Admin-Key": "test-admin-key"}
+    slug = f"blocks-{uuid4().hex[:8]}"
+    r = client.post(
+        "/admin/tenants",
+        headers=headers,
+        json={"slug": slug, "name": f"Blocks {slug}"},
+    )
+    assert r.status_code == 201, r.text
+    tid = r.json()["id"]
+
+    r2 = client.patch(
+        f"/admin/tenants/{tid}/blocks",
+        headers=headers,
+        json={"preset": "classroom_starter_4"},
+    )
+    assert r2.status_code == 200, r2.text
+    body = r2.json()
+    assert body["tenant"]["capabilities"]["quiz_graded"] is True
+    assert body["tenant"]["capabilities"]["ask_vidura"] is True
+    assert body["tenant"]["capabilities"]["lessons"] is False
+    assert "assessment_tool" in body["applied_blocks"]
+    assert "smp_chatbot" in body["tenant"]["enabled_blocks"]
+
 
 
 def test_admin_requires_key(client: TestClient):
