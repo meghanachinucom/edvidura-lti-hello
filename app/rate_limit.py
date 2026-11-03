@@ -19,6 +19,7 @@ DEFAULT_LIMITS: list[tuple[str, int, int]] = [
     ("/lti/launch", 120, 60),
     ("/lti/register", 30, 60),
     ("/onboard", 40, 60),
+    ("/sales", 60, 60),
     ("/ops/login", 20, 60),
     ("/auth/login", 30, 60),
     ("/auth/callback", 30, 60),

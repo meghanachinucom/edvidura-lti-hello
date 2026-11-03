@@ -37,6 +37,10 @@ class TenantBlocksUpdate(BaseModel):
     replace: bool = True
 
 
+class TenantNameUpdate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=200)
+
+
 class TenantResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

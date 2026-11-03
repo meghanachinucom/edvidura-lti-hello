@@ -748,6 +748,31 @@ def update_tenant_prefs(
             return dict(row) if row else None
 
 
+def update_tenant_name(
+    tenant_id: UUID | str,
+    *,
+    name: str,
+) -> dict[str, Any] | None:
+    """Rename a tenant (sales display name for the client)."""
+    cleaned = (name or "").strip()
+    if len(cleaned) < 2 or len(cleaned) > 200:
+        raise ValueError("Client name must be 2–200 characters")
+    with connect() as conn:
+        with conn.transaction():
+            row = conn.execute(
+                """
+                UPDATE tenants
+                SET name = %s
+                WHERE id = %s
+                RETURNING id, slug, name, status, segment, capabilities,
+                          COALESCE(enabled_blocks, '[]'::jsonb) AS enabled_blocks,
+                          created_at
+                """,
+                (cleaned, str(tenant_id)),
+            ).fetchone()
+            return dict(row) if row else None
+
+
 def update_tenant_segment(
     tenant_id: UUID | str,
     *,

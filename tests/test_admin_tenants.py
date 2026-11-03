@@ -85,6 +85,36 @@ def test_patch_tenant_blocks_preset(client: TestClient):
     assert "smp_chatbot" in body["tenant"]["enabled_blocks"]
 
 
+def test_patch_tenant_name(client: TestClient):
+    headers = {"X-Admin-Key": "test-admin-key"}
+    slug = f"rename-{uuid4().hex[:8]}"
+    r = client.post(
+        "/admin/tenants",
+        headers=headers,
+        json={"slug": slug, "name": "Old Name Co"},
+    )
+    assert r.status_code == 201, r.text
+    tid = r.json()["id"]
+    r2 = client.patch(
+        f"/admin/tenants/{tid}/name",
+        headers=headers,
+        json={"name": "New Client Brand"},
+    )
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["name"] == "New Client Brand"
+
+
+def test_sales_page_renders():
+    """HTML shell does not need Postgres."""
+    from app.main import app
+
+    with TestClient(app) as c:
+        r = c.get("/sales")
+        assert r.status_code == 200
+        assert "Client packs" in r.text
+        assert "Sell this pack" in r.text
+
+
 
 def test_admin_requires_key(client: TestClient):
     r = client.get("/admin/tenants")

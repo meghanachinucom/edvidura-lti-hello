@@ -16,6 +16,7 @@ from app.schemas.tenant import (
     TenantBlocksResponse,
     TenantBlocksUpdate,
     TenantCreate,
+    TenantNameUpdate,
     TenantResponse,
     TenantSegmentUpdate,
 )
@@ -127,6 +128,32 @@ def create_tenant(payload: TenantCreate) -> dict:
 @router.get("/tenants", response_model=List[TenantResponse])
 def list_tenants() -> list[dict]:
     return [_serialize_tenant(r) for r in db.list_tenants()]
+
+
+@router.patch("/tenants/{tenant_id}/name", response_model=TenantResponse)
+def update_tenant_name(tenant_id: UUID, payload: TenantNameUpdate) -> dict:
+    tenant = db.get_tenant(tenant_id)
+    if not tenant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tenant '{tenant_id}' does not exist.",
+        )
+    try:
+        row = db.update_tenant_name(tenant_id, name=payload.name)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error("update_tenant_name failed: %s", exc)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tenant '{tenant_id}' does not exist.",
+        )
+    logger.info("Renamed tenant id=%s name=%s", tenant_id, row.get("name"))
+    return _serialize_tenant(row)
 
 
 @router.patch(

@@ -42,6 +42,7 @@ from app.lti_fastapi import (
 )
 from app.dev_routes import router as dev_router
 from app.onboard_routes import router as onboard_router
+from app.sales_routes import router as sales_router
 from app.auth_routes import router as auth_router
 from app.ops_routes import router as ops_router
 from app.deep_link_routes import router as deep_link_router
@@ -98,6 +99,7 @@ app.include_router(admin_tenants_router)
 app.include_router(auth_router)
 app.include_router(ops_router)
 app.include_router(onboard_router)
+app.include_router(sales_router)
 app.include_router(dev_router)
 app.include_router(deep_link_router)
 app.include_router(lti_register_router)

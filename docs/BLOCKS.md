@@ -25,11 +25,19 @@ Sales sheet Components ↔ runtime gates. Plan: [LEGO_BLOCKS_PLAN.md](LEGO_BLOCK
 
 Any custom `blocks: [...]` list is also valid.
 
+## Sales desk (UI)
+
+Human UI for reps: **[/sales](/sales)** — unlock with `ADMIN_API_KEY`, pick/create client, rename, select blocks or preset, **Sell this pack**.
+
 ## Admin examples
 
 ```http
 GET /admin/blocks
 X-Admin-Key: …
+
+PATCH /admin/tenants/{uuid}/name
+X-Admin-Key: …
+{"name": "Riverside High"}
 
 PATCH /admin/tenants/{uuid}/blocks
 X-Admin-Key: …

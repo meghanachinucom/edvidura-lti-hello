@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Sales desk · EdVidura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/sales.css?v=1"/>
+</head>
+<body>
+  <header class="sx-top">
+    <a class="sx-logo" href="/sales">EdVidura Sales</a>
+    <nav class="sx-top-links">
+      <a href="/onboard">Onboard LMS</a>
+      <a href="/">Product</a>
+      {% if ops_email %}
+      <span>{{ ops_email }}</span>
+      <a href="/auth/logout">Sign out</a>
+      {% elif keycloak_enabled %}
+      <a href="/auth/login?next=/sales">Ops sign-in</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="sx" id="desk">
+    <p class="sx-kicker">Sell · Lego blocks</p>
+    <header class="sx-hero">
+      <h1>Client packs</h1>
+      <p class="sx-lede">
+        Pick a client, set their display name, choose Live/Thin blocks (or a preset), then sell.
+        Park/Partner blocks can be noted on the deal but will not unlock product UI yet.
+      </p>
+    </header>
+
+    <div id="banner" class="sx-banner" hidden></div>
+
+    <section class="sx-panel" id="unlock">
+      <h2>Unlock sales desk</h2>
+      <p class="sx-help">Paste <code>ADMIN_API_KEY</code> (same as onboard). Stored only in this browser.</p>
+      <label class="sx-field">
+        <span>Admin key</span>
+        <input type="password" id="admin-key" placeholder="Admin key" autocomplete="off"/>
+      </label>
+      <div class="sx-actions">
+        <button type="button" class="sx-btn" id="btn-unlock">Unlock</button>
+        <button type="button" class="sx-btn ghost" id="btn-lock" hidden>Lock</button>
+      </div>
+    </section>
+
+    <div class="sx-work sx-grid" id="work" hidden>
+      <aside class="sx-panel">
+        <h2>Clients</h2>
+        <p class="sx-help">Select a tenant to configure.</p>
+        <ul class="sx-list" id="client-list"></ul>
+
+        <div class="sx-create">
+          <h2>New client</h2>
+          <label class="sx-field">
+            <span>Display name</span>
+            <input id="new-name" maxlength="200" placeholder="Riverside High"/>
+          </label>
+          <label class="sx-field">
+            <span>Org ID (slug)</span>
+            <input id="new-slug" pattern="[a-z0-9][a-z0-9_-]*" maxlength="64" placeholder="riverside"/>
+          </label>
+          <label class="sx-field">
+            <span>Segment</span>
+            <select id="new-segment">
+              <option value="school">School</option>
+              <option value="corporate">Corporate</option>
+              <option value="government">Government</option>
+            </select>
+          </label>
+          <button type="button" class="sx-btn" id="btn-create">Create client</button>
+        </div>
+      </aside>
+
+      <section class="sx-panel" id="editor">
+        <h2>Configure &amp; sell</h2>
+        <p class="sx-help" id="editor-empty">Select or create a client first.</p>
+        <div id="editor-body" hidden>
+          <label class="sx-field">
+            <span>Client display name</span>
+            <input id="client-name" maxlength="200"/>
+          </label>
+          <p class="sx-help" id="client-meta"></p>
+          <div class="sx-actions" style="margin-bottom:1rem">
+            <button type="button" class="sx-btn ghost" id="btn-rename">Save name</button>
+          </div>
+
+          <h2>Pack presets</h2>
+          <div class="sx-presets" id="presets"></div>
+
+          <h2>Blocks</h2>
+          <p class="sx-help">Live &amp; Thin apply now. Partner/Park are recorded with a warning only.</p>
+          <div class="sx-blocks" id="blocks"></div>
+
+          <p class="sx-summary" id="summary"></p>
+          <button type="button" class="sx-btn sell" id="btn-sell">Sell this pack</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+  (function () {
+    var KEY = 'edvidura_sales_admin_key';
+    var state = {
+      tenants: [],
+      blocks: [],
+      presets: [],
+      selectedId: null,
+      activePreset: null
+    };
+
+    var els = {
+      key: document.getElementById('admin-key'),
+      unlock: document.getElementById('btn-unlock'),
+      lock: document.getElementById('btn-lock'),
+      work: document.getElementById('work'),
+      list: document.getElementById('client-list'),
+      banner: document.getElementById('banner'),
+      editorEmpty: document.getElementById('editor-empty'),
+      editorBody: document.getElementById('editor-body'),
+      clientName: document.getElementById('client-name'),
+      clientMeta: document.getElementById('client-meta'),
+      presets: document.getElementById('presets'),
+      blocks: document.getElementById('blocks'),
+      summary: document.getElementById('summary'),
+      sell: document.getElementById('btn-sell'),
+      rename: document.getElementById('btn-rename'),
+      create: document.getElementById('btn-create'),
+      newName: document.getElementById('new-name'),
+      newSlug: document.getElementById('new-slug'),
+      newSegment: document.getElementById('new-segment')
+    };
+
+    function banner(msg, kind) {
+      els.banner.hidden = !msg;
+      els.banner.textContent = msg || '';
+      els.banner.className = 'sx-banner ' + (kind || 'ok');
+    }
+
+    function adminKey() {
+      return (els.key.value || localStorage.getItem(KEY) || '').trim();
+    }
+
+    function setUnlocked(on) {
+      els.work.hidden = !on;
+      els.lock.hidden = !on;
+      document.getElementById('desk').classList.toggle('sx-locked', !on);
+    }
+
+    async function api(path, opts) {
+      opts = opts || {};
+      var headers = Object.assign({ 'X-Admin-Key': adminKey() }, opts.headers || {});
+      if (opts.body && !headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+      }
+      var res = await fetch(path, {
+        method: opts.method || 'GET',
+        headers: headers,
+        body: opts.body ? JSON.stringify(opts.body) : undefined
+      });
+      var text = await res.text();
+      var data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = { detail: text }; }
+      if (!res.ok) {
+        var detail = (data && (data.detail || data.error)) || res.statusText;
+        if (Array.isArray(detail)) detail = detail.map(function (d) { return d.msg || JSON.stringify(d); }).join('; ');
+        throw new Error(detail || ('HTTP ' + res.status));
+      }
+      return data;
+    }
+
+    function selectedTenant() {
+      return state.tenants.find(function (t) { return t.id === state.selectedId; }) || null;
+    }
+
+    function slugify(s) {
+      return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 63);
+    }
+
+    function renderClients() {
+      els.list.innerHTML = '';
+      if (!state.tenants.length) {
+        els.list.innerHTML = '<li><button type="button" disabled>No clients yet</button></li>';
+        return;
+      }
+      state.tenants.forEach(function (t) {
+        var li = document.createElement('li');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = t.id === state.selectedId ? 'active' : '';
+        var n = (t.enabled_blocks && t.enabled_blocks.length) || 0;
+        btn.innerHTML = '<strong></strong><span class="meta"></span>';
+        btn.querySelector('strong').textContent = t.name;
+        btn.querySelector('.meta').textContent = t.slug + ' · ' + t.segment + ' · ' + n + ' blocks';
+        btn.addEventListener('click', function () { selectClient(t.id); });
+        li.appendChild(btn);
+        els.list.appendChild(li);
+      });
+    }
+
+    function renderPresets() {
+      els.presets.innerHTML = '';
+      var clear = document.createElement('button');
+      clear.type = 'button';
+      clear.className = 'sx-chip' + (!state.activePreset ? ' active' : '');
+      clear.textContent = 'Custom';
+      clear.addEventListener('click', function () {
+        state.activePreset = null;
+        renderPresets();
+        updateSummary();
+      });
+      els.presets.appendChild(clear);
+      state.presets.forEach(function (p) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'sx-chip' + (state.activePreset === p.id ? ' active' : '');
+        b.textContent = p.id.replace(/_/g, ' ') + ' (' + p.count + ')';
+        b.title = (p.blocks || []).join(', ');
+        b.addEventListener('click', function () {
+          state.activePreset = p.id;
+          var set = {};
+          (p.blocks || []).forEach(function (id) { set[id] = true; });
+          els.blocks.querySelectorAll('input[data-block]').forEach(function (cb) {
+            cb.checked = !!set[cb.getAttribute('data-block')];
+          });
+          renderPresets();
+          updateSummary();
+        });
+        els.presets.appendChild(b);
+      });
+    }
+
+    function renderBlocks() {
+      els.blocks.innerHTML = '';
+      var order = { live: 0, thin: 1, partner: 2, park: 3 };
+      var sorted = state.blocks.slice().sort(function (a, b) {
+        return (order[a.state] || 9) - (order[b.state] || 9) || a.name.localeCompare(b.name);
+      });
+      sorted.forEach(function (blk) {
+        var row = document.createElement('div');
+        row.className = 'sx-block ' + blk.state;
+        var shippable = blk.state === 'live' || blk.state === 'thin';
+        row.innerHTML =
+          '<input type="checkbox" data-block="' + blk.id + '"/>' +
+          '<label><span class="title"></span><span class="notes"></span></label>' +
+          '<span class="sx-state ' + blk.state + '"></span>';
+        row.querySelector('.title').textContent = blk.name;
+        row.querySelector('.notes').textContent = blk.notes || blk.id;
+        row.querySelector('.sx-state').textContent = blk.state;
+        var cb = row.querySelector('input');
+        if (!shippable) {
+          cb.title = 'Will be recorded but not shippable yet';
+        }
+        cb.addEventListener('change', function () {
+          state.activePreset = null;
+          renderPresets();
+          updateSummary();
+        });
+        row.querySelector('label').addEventListener('click', function (ev) {
+          if (ev.target === cb) return;
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event('change'));
+        });
+        els.blocks.appendChild(row);
+      });
+    }
+
+    function checkedBlocks() {
+      return Array.prototype.map.call(
+        els.blocks.querySelectorAll('input[data-block]:checked'),
+        function (cb) { return cb.getAttribute('data-block'); }
+      );
+    }
+
+    function updateSummary() {
+      var ids = checkedBlocks();
+      var ship = 0, note = 0;
+      ids.forEach(function (id) {
+        var b = state.blocks.find(function (x) { return x.id === id; });
+        if (!b) return;
+        if (b.state === 'live' || b.state === 'thin') ship += 1;
+        else note += 1;
+      });
+      var preset = state.activePreset ? 'Preset: ' + state.activePreset + '. ' : 'Custom selection. ';
+      els.summary.innerHTML = '<strong>' + preset + '</strong>' +
+        ship + ' shippable · ' + note + ' park/partner (warned only) · ' +
+        ids.length + ' total selected';
+    }
+
+    function selectClient(id) {
+      state.selectedId = id;
+      state.activePreset = null;
+      var t = selectedTenant();
+      renderClients();
+      if (!t) {
+        els.editorEmpty.hidden = false;
+        els.editorBody.hidden = true;
+        return;
+      }
+      els.editorEmpty.hidden = true;
+      els.editorBody.hidden = false;
+      els.clientName.value = t.name || '';
+      els.clientMeta.textContent = 'Slug ' + t.slug + ' · segment ' + t.segment + ' · id ' + t.id;
+      var enabled = {};
+      (t.enabled_blocks || []).forEach(function (id) { enabled[id] = true; });
+      els.blocks.querySelectorAll('input[data-block]').forEach(function (cb) {
+        cb.checked = !!enabled[cb.getAttribute('data-block')];
+      });
+      renderPresets();
+      updateSummary();
+    }
+
+    async function refresh() {
+      var tenants = await api('/admin/tenants');
+      var catalog = await api('/admin/blocks');
+      state.tenants = tenants || [];
+      state.blocks = catalog.blocks || [];
+      state.presets = catalog.presets || [];
+      renderBlocks();
+      renderPresets();
+      renderClients();
+      if (state.selectedId) selectClient(state.selectedId);
+      else {
+        els.editorEmpty.hidden = false;
+        els.editorBody.hidden = true;
+      }
+    }
+
+    async function unlock() {
+      var key = adminKey();
+      if (!key) {
+        banner('Enter ADMIN_API_KEY first.', 'bad');
+        els.key.focus();
+        return;
+      }
+      localStorage.setItem(KEY, key);
+      els.key.value = key;
+      try {
+        await refresh();
+        setUnlocked(true);
+        banner('Sales desk unlocked. Pick a client to sell a pack.', 'ok');
+      } catch (err) {
+        setUnlocked(false);
+        banner(String(err.message || err), 'bad');
+      }
+    }
+
+    els.unlock.addEventListener('click', unlock);
+    els.lock.addEventListener('click', function () {
+      localStorage.removeItem(KEY);
+      els.key.value = '';
+      setUnlocked(false);
+      banner('Locked.', 'wait');
+    });
+
+    els.rename.addEventListener('click', async function () {
+      var t = selectedTenant();
+      if (!t) return;
+      try {
+        var row = await api('/admin/tenants/' + t.id + '/name', {
+          method: 'PATCH',
+          body: { name: els.clientName.value.trim() }
+        });
+        var idx = state.tenants.findIndex(function (x) { return x.id === t.id; });
+        if (idx >= 0) state.tenants[idx] = row;
+        renderClients();
+        banner('Client renamed to “' + row.name + '”.', 'ok');
+      } catch (err) {
+        banner(String(err.message || err), 'bad');
+      }
+    });
+
+    els.sell.addEventListener('click', async function () {
+      var t = selectedTenant();
+      if (!t) return;
+      var name = els.clientName.value.trim();
+      els.sell.disabled = true;
+      try {
+        if (name && name !== t.name) {
+          var renamed = await api('/admin/tenants/' + t.id + '/name', {
+            method: 'PATCH',
+            body: { name: name }
+          });
+          var i = state.tenants.findIndex(function (x) { return x.id === t.id; });
+          if (i >= 0) state.tenants[i] = Object.assign(state.tenants[i], renamed);
+        }
+        var body = state.activePreset
+          ? { preset: state.activePreset, replace: true }
+          : { blocks: checkedBlocks(), replace: true };
+        var result = await api('/admin/tenants/' + t.id + '/blocks', {
+          method: 'PATCH',
+          body: body
+        });
+        var j = state.tenants.findIndex(function (x) { return x.id === t.id; });
+        if (j >= 0) state.tenants[j] = result.tenant;
+        renderClients();
+        selectClient(t.id);
+        var warn = (result.warnings || []).length
+          ? ' Warnings: ' + result.warnings.join(' · ')
+          : '';
+        banner(
+          'Sold to “' + result.tenant.name + '” — ' +
+          (result.applied_blocks || []).length + ' blocks live.' + warn,
+          (result.warnings || []).length ? 'wait' : 'ok'
+        );
+      } catch (err) {
+        banner(String(err.message || err), 'bad');
+      } finally {
+        els.sell.disabled = false;
+      }
+    });
+
+    els.newName.addEventListener('input', function () {
+      if (!els.newSlug.dataset.touched) els.newSlug.value = slugify(els.newName.value);
+    });
+    els.newSlug.addEventListener('input', function () { els.newSlug.dataset.touched = '1'; });
+
+    els.create.addEventListener('click', async function () {
+      var name = els.newName.value.trim();
+      var slug = (els.newSlug.value || slugify(name)).trim().toLowerCase();
+      if (name.length < 2 || slug.length < 2) {
+        banner('Name and org ID required.', 'bad');
+        return;
+      }
+      try {
+        var row = await api('/admin/tenants', {
+          method: 'POST',
+          body: {
+            slug: slug,
+            name: name,
+            segment: els.newSegment.value || 'school',
+            status: 'active'
+          }
+        });
+        state.tenants.push(row);
+        els.newName.value = '';
+        els.newSlug.value = '';
+        delete els.newSlug.dataset.touched;
+        renderClients();
+        selectClient(row.id);
+        banner('Client “' + row.name + '” created. Select blocks and sell.', 'ok');
+      } catch (err) {
+        banner(String(err.message || err), 'bad');
+      }
+    });
+
+    var saved = localStorage.getItem(KEY);
+    if (saved) {
+      els.key.value = saved;
+      unlock();
+    }
+  })();
+  </script>
+</body>
+</html>
