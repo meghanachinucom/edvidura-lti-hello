@@ -94,6 +94,7 @@ export async function hydrateFromApi(): Promise<boolean> {
   captureTokenFromUrl();
   if (!getToken()) {
     state.connected = false;
+    state.apiError = null;
     return false;
   }
   try {

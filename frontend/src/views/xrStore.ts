@@ -12,260 +12,83 @@ export function renderXrStore(): string {
       ? xrAppsList
       : xrAppsList.filter(app => app.category === state.xrCategoryFilter);
 
+  const cats = [
+    { id: 'all', label: 'All apps', icon: 'apps' },
+    { id: 'spatial-math', label: 'Spatial math', icon: 'view_in_ar' },
+    { id: 'physics-lab', label: 'Physics', icon: 'biotech' },
+    { id: 'geometry-ar', label: 'Geometry', icon: 'auto_awesome' },
+    { id: 'simulations', label: 'Simulations', icon: 'toys' },
+  ];
+
+  const featured = filteredApps[0];
   return `
-    <div class="flex flex-col w-full bg-[#FAFBFC] flex-1 min-h-[calc(100vh-4rem)] relative">
-      
-      <!-- Top Scope & Hardware Bar -->
-      <section class="w-full bg-white border-b border-[#E2E8F0] px-4 sm:px-6 lg:px-8 py-3">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div class="flex items-center gap-2 text-[#0F172A] flex-wrap font-mono">
-            <span class="font-bold text-[#FF4757] font-sans flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-[18px]">view_in_ar</span>
-              EdVidura Spatial XR Store
-            </span>
-            <span class="text-[#CBD5E1]">/</span>
-            <span class="text-[#64748B] font-sans">OpenXR 1.1 &amp; WebGL 2.0 Academic Catalogue</span>
-            <span class="text-[#CBD5E1]">/</span>
-            <span class="text-[#10B981] font-bold flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
-              WebXR Device API Enabled
-            </span>
+    <div class="hub-page">
+      <div class="studio-grid">
+        <section class="hub-hero studio-main">
+          <img src="${featured?.heroImage || 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?auto=format&fit=crop&w=1600&q=80'}" alt="">
+          <div class="hub-hero-body">
+            <p class="hub-kicker">Spatial labs</p>
+            <h1>${featured ? featured.name : 'Walk the graph in 3D'}</h1>
+            <p class="hub-hero-sub">${filteredApps.length} experiences for Quest or Chrome.</p>
+            ${featured ? `<div class="hub-hero-ctas"><button class="xr-launch-btn hub-cta-light" data-app-id="${featured.id}" type="button">Launch lab</button></div>` : ''}
           </div>
-
-          <div class="flex items-center gap-2 text-xs font-mono text-[#64748B]">
-            <span class="px-2.5 py-1 rounded-lg bg-[#F1F5F9] border border-[#CBD5E1] text-[#071E2D] font-bold flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px] text-[#0284C7]">devices</span>
-              <span>Apple Vision Pro · Quest 3 · Chrome WebXR</span>
-            </span>
+        </section>
+        <section class="hub-cal studio-rail">
+          <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=70" alt="">
+          <div class="hub-cal-body">
+            <h2 class="text-base font-extrabold">Headset ready</h2>
+            <p class="text-sm text-white/75 mt-3">Open any lab in the browser or on Quest.</p>
           </div>
-        </div>
-      </section>
-
-      <!-- Hero Banner -->
-      <section class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-        <div class="max-w-7xl mx-auto">
-          <div class="hero-navy-card relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6" style="background-color: #071E2D; background-image: linear-gradient(135deg, #071E2D 0%, #0A2540 50%, #0D2E4A 100%);">
-            
-            <div class="space-y-3 max-w-2xl">
-              <div class="flex items-center gap-2 text-xs font-mono">
-                <span class="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#FF5B6B] to-[#FF4757] text-white font-bold text-[10px] uppercase tracking-wider">Spatial STEM Hub</span>
-                <span class="text-gray-400">·</span>
-                <span class="text-[#38BDF8] font-bold">OpenXR Standard</span>
-                <span class="text-gray-400">·</span>
-                <span class="text-[#10B981] font-bold">Zero-Install Browser Streaming</span>
-              </div>
-              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white font-headline leading-tight">
-                Immersive XR Classrooms: <span class="text-[#FF4757]">3D Spatial Simulations</span>
-              </h1>
-              <p class="text-xs sm:text-sm text-gray-200 leading-relaxed font-sans">
-                Step inside coordinate planes, grasp dynamic linear vectors with spatial hand tracking, and launch frictionless kinematics labs directly in WebXR or desktop 3D.
-              </p>
-            </div>
-
-            <!-- Stats Badge -->
-            <div class="flex sm:flex-col gap-3 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 shrink-0 text-center sm:text-left">
-              <div>
-                <div class="text-xl font-bold text-[#FF4757] font-mono">${xrAppsList.length} Apps</div>
-                <div class="text-[11px] text-gray-300">Certified for Algebra &amp; Physics</div>
-              </div>
-              <div class="border-t sm:border-t-white/10 pt-2">
-                <div class="text-xs font-bold text-[#38BDF8] flex items-center justify-center sm:justify-start gap-1">
-                  <span class="material-symbols-outlined text-[15px]">speed</span>
-                  <span>90 FPS Low Latency</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <!-- Category Filter Tabs & Catalogue Grid -->
-      <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1">
-        
-        <!-- Category Filter Tabs -->
-        <div class="flex items-center justify-between flex-wrap gap-4 border-b border-[#E2E8F0] pb-3">
-          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
-            ${[
-              { id: 'all', label: 'All XR Applications', icon: 'apps' },
-              { id: 'spatial-math', label: 'Spatial Mathematics', icon: 'view_in_ar' },
-              { id: 'physics-lab', label: 'Physics & Kinematics', icon: 'biotech' },
-              { id: 'geometry-ar', label: 'Augmented Geometry', icon: 'auto_awesome' },
-              { id: 'simulations', label: 'Interactive Simulations', icon: 'toys' }
-            ]
-              .map(
-                cat => `
-              <button
-                class="xr-category-btn px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  state.xrCategoryFilter === cat.id
-                    ? 'bg-[#071E2D] text-white shadow-sm'
-                    : 'bg-white hover:bg-[#F1F5F9] text-[#64748B] hover:text-[#071E2D] border border-[#CBD5E1]'
-                }"
-                data-category="${cat.id}"
-              >
-                <span class="material-symbols-outlined text-[16px] ${
-                  state.xrCategoryFilter === cat.id ? 'text-[#FF4757]' : ''
-                }">${cat.icon}</span>
-                <span>${cat.label}</span>
-              </button>
-            `
-              )
-              .join('')}
-          </div>
-
-          <div class="text-xs font-mono text-[#64748B]">
-            Showing <strong class="text-[#071E2D]">${filteredApps.length}</strong> spatial experiences
-          </div>
-        </div>
-
-        <!-- Apps Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          ${filteredApps.map(app => renderAppCard(app)).join('')}
-        </div>
-
-      </main>
-
-      <!-- Application Details Modal -->
-      ${state.xrSelectedApp ? renderAppDetailsModal(state.xrSelectedApp) : ''}
-
-      <!-- Interactive 3D WebXR Simulation Launcher Modal -->
-      ${state.xrActiveSimulation ? renderSimulationLauncherModal(state.xrActiveSimulation) : ''}
-
+        </section>
+      </div>
+      <div class="hub-seg flex-wrap">
+        ${cats
+          .map(
+            cat => `
+          <button class="xr-category-btn hub-seg-btn ${state.xrCategoryFilter === cat.id ? 'on' : ''}" data-category="${cat.id}" type="button">
+            <span class="material-symbols-outlined text-[16px]">${cat.icon}</span> ${cat.label}
+          </button>`
+          )
+          .join('')}
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        ${filteredApps.map(app => renderAppCard(app)).join('')}
+      </div>
     </div>
+      ${state.xrSelectedApp ? renderAppDetailsModal(state.xrSelectedApp) : ''}
+      ${state.xrActiveSimulation ? renderSimulationLauncherModal(state.xrActiveSimulation) : ''}
   `;
 }
 
 function renderAppCard(app: XrApp): string {
   return `
-    <div class="bg-white rounded-3xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden group">
-      
-      <!-- Hero Image -->
-      <div class="relative h-44 w-full overflow-hidden bg-[#071E2D]">
-        <img
-          src="${app.heroImage}"
-          alt="${app.name}"
-          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-[#071E2D] via-transparent to-black/20"></div>
-
-        <!-- Top Badges -->
-        <div class="absolute top-3 left-3 flex items-center gap-1.5">
-          ${
-            app.featured
-              ? `<span class="px-2.5 py-0.5 rounded-full bg-[#FF4757] text-white text-[10px] font-mono font-bold shadow-xs">Featured Lab</span>`
-              : ''
-          }
-          <span class="px-2 py-0.5 rounded-full bg-[#071E2D]/80 backdrop-blur-md text-white text-[10px] font-mono border border-white/20">
-            ${app.version}
-          </span>
-        </div>
-
-        <div class="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md text-[#071E2D] text-[11px] font-bold flex items-center gap-1 shadow-xs">
-          <span class="material-symbols-outlined text-[13px] text-[#F59E0B] fill-1">star</span>
-          <span>${app.rating}</span>
-          <span class="text-[10px] text-[#64748B]">(${app.reviewsCount})</span>
-        </div>
-
-        <!-- Bottom Title Overlay -->
-        <div class="absolute bottom-3 left-4 right-4">
-          <span class="text-[10px] uppercase font-mono tracking-wider font-bold text-[#38BDF8]">${app.category.toUpperCase()}</span>
-          <h3 class="text-base font-bold text-white font-headline leading-tight">${app.name}</h3>
+    <article class="studio-cover group">
+      <div class="studio-cover-media">
+        <img src="${app.heroImage}" alt="${app.name}" />
+        ${app.featured ? `<span class="hub-pill amber studio-cover-pill">Featured</span>` : ''}
+      </div>
+      <div class="studio-cover-body">
+        <p class="hub-kicker-ink">${app.category.replace(/-/g, ' ')}</p>
+        <h3>${app.name}</h3>
+        <p>${app.tagline}</p>
+        <div class="flex items-center gap-2 mt-auto pt-1">
+          <button class="xr-inspect-btn hub-cta-light" data-app-id="${app.id}" type="button" style="margin-top:0">Details</button>
+          <button class="xr-launch-btn hub-cta-dark" data-app-id="${app.id}" type="button">Launch</button>
         </div>
       </div>
-
-      <!-- Content Body -->
-      <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
-        
-        <div class="space-y-3">
-          <p class="text-xs text-[#64748B] leading-relaxed line-clamp-2">
-            ${app.tagline}
-          </p>
-
-          <!-- Curriculum Standards Alignment -->
-          <div class="flex flex-wrap gap-1.5">
-            ${app.curriculumStandards
-              .map(
-                std => `
-              <span class="px-2 py-0.5 rounded-md bg-[#FFF0F3] text-[#FF4757] text-[10px] font-mono font-bold border border-[#FFCCD5]">
-                ${std}
-              </span>
-            `
-              )
-              .join('')}
-          </div>
-
-          <!-- Compatibility Matrix Chips -->
-          <div class="space-y-1.5 pt-1">
-            <span class="text-[10px] font-mono uppercase tracking-wider text-[#94A3B8] font-semibold">Hardware Compatibility:</span>
-            <div class="flex flex-wrap gap-1.5 text-[10px] font-mono">
-              <span class="px-2 py-0.5 rounded-md flex items-center gap-1 ${
-                app.compatibility.webxr
-                  ? 'bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]'
-                  : 'bg-[#F1F5F9] text-[#94A3B8] line-through'
-              }">
-                <span class="w-1.5 h-1.5 rounded-full ${app.compatibility.webxr ? 'bg-[#10B981]' : 'bg-[#94A3B8]'}"></span>
-                WebXR
-              </span>
-              <span class="px-2 py-0.5 rounded-md flex items-center gap-1 ${
-                app.compatibility.appleVisionPro
-                  ? 'bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]'
-                  : 'bg-[#F1F5F9] text-[#94A3B8] line-through'
-              }">
-                <span class="w-1.5 h-1.5 rounded-full ${app.compatibility.appleVisionPro ? 'bg-[#10B981]' : 'bg-[#94A3B8]'}"></span>
-                Vision Pro
-              </span>
-              <span class="px-2 py-0.5 rounded-md flex items-center gap-1 ${
-                app.compatibility.metaQuest
-                  ? 'bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]'
-                  : 'bg-[#F1F5F9] text-[#94A3B8] line-through'
-              }">
-                <span class="w-1.5 h-1.5 rounded-full ${app.compatibility.metaQuest ? 'bg-[#10B981]' : 'bg-[#94A3B8]'}"></span>
-                Quest
-              </span>
-              <span class="px-2 py-0.5 rounded-md flex items-center gap-1 ${
-                app.compatibility.desktopWebgl
-                  ? 'bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]'
-                  : 'bg-[#F1F5F9] text-[#94A3B8] line-through'
-              }">
-                <span class="w-1.5 h-1.5 rounded-full ${app.compatibility.desktopWebgl ? 'bg-[#10B981]' : 'bg-[#94A3B8]'}"></span>
-                Desktop 3D
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="pt-3 border-t border-[#E2E8F0] flex items-center gap-2">
-          <button
-            class="xr-inspect-btn flex-1 py-2 rounded-xl bg-white hover:bg-[#F8FAFC] border border-[#CBD5E1] text-[#071E2D] text-xs font-bold transition-colors cursor-pointer"
-            data-app-id="${app.id}"
-          >
-            Details
-          </button>
-
-          <button
-            class="xr-launch-btn flex-2 py-2 px-3 rounded-xl btn-primary-3d text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs transition-all active:scale-95"
-            data-app-id="${app.id}"
-          >
-            <span class="material-symbols-outlined text-[16px]">play_circle</span>
-            <span>Launch WebXR Lab</span>
-          </button>
-        </div>
-
-      </div>
-    </div>
+    </article>
   `;
 }
 
 function renderAppDetailsModal(app: XrApp): string {
   return `
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#071E2D]/60 backdrop-blur-sm animate-fade-in">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/60 backdrop-blur-sm animate-fade-in">
       <div class="bg-white rounded-3xl shadow-2xl border border-[#E2E8F0] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         
         <!-- Header Image Header -->
-        <div class="relative h-48 bg-[#071E2D]">
+        <div class="relative h-48 bg-[#111827]">
           <img src="${app.heroImage}" alt="${app.name}" class="w-full h-full object-cover opacity-85" />
-          <div class="absolute inset-0 bg-gradient-to-t from-[#071E2D] via-black/40 to-black/20"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-[#111827] via-black/40 to-black/20"></div>
           
           <button id="close-app-details-btn" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-colors cursor-pointer">
             <span class="material-symbols-outlined text-[20px]">close</span>
@@ -286,7 +109,7 @@ function renderAppDetailsModal(app: XrApp): string {
         <!-- Body Details -->
         <div class="p-6 overflow-y-auto space-y-5 flex-1">
           <div>
-            <h4 class="text-xs font-bold text-[#071E2D] uppercase tracking-wider font-mono mb-1.5">Overview</h4>
+            <h4 class="text-xs font-bold text-[#111827] uppercase tracking-wider font-mono mb-1.5">Overview</h4>
             <p class="text-sm text-[#334155] leading-relaxed">${app.description}</p>
           </div>
 
@@ -298,7 +121,7 @@ function renderAppDetailsModal(app: XrApp): string {
                 ${app.curriculumStandards
                   .map(
                     s => `
-                  <span class="px-2 py-0.5 rounded bg-white border border-[#CBD5E1] text-[11px] font-mono font-bold text-[#071E2D]">
+                  <span class="px-2 py-0.5 rounded bg-white border border-[#CBD5E1] text-[11px] font-mono font-bold text-[#111827]">
                     ${s}
                   </span>
                 `
@@ -309,7 +132,7 @@ function renderAppDetailsModal(app: XrApp): string {
 
             <div>
               <span class="text-[10px] font-mono uppercase tracking-wider text-[#64748B] font-semibold">Developer &amp; Verification</span>
-              <p class="text-xs font-bold text-[#071E2D] mt-1">${app.developer}</p>
+              <p class="text-xs font-bold text-[#111827] mt-1">${app.developer}</p>
               <p class="text-[11px] text-[#10B981] font-mono font-semibold flex items-center gap-1 mt-0.5">
                 <span class="material-symbols-outlined text-[13px]">verified</span>
                 District FERPA &amp; OpenXR Compliant
@@ -319,7 +142,7 @@ function renderAppDetailsModal(app: XrApp): string {
 
           <!-- Hardware Requirements -->
           <div>
-            <h4 class="text-xs font-bold text-[#071E2D] uppercase tracking-wider font-mono mb-1.5">Hardware Requirements</h4>
+            <h4 class="text-xs font-bold text-[#111827] uppercase tracking-wider font-mono mb-1.5">Hardware Requirements</h4>
             <p class="text-xs text-[#64748B] font-mono bg-white p-3 rounded-xl border border-[#CBD5E1]">
               ${app.hardwareRequirements}
             </p>
@@ -348,13 +171,13 @@ function renderAppDetailsModal(app: XrApp): string {
 
 function renderSimulationLauncherModal(app: XrApp): string {
   return `
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#071E2D]/80 backdrop-blur-md animate-fade-in">
-      <div class="bg-[#0A1624] text-white rounded-3xl shadow-2xl border border-[#1E435E] w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#111827]/80 backdrop-blur-md animate-fade-in">
+      <div class="bg-[#0A1624] text-white rounded-3xl shadow-2xl border border-[#334155] w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
         
         <!-- Top Simulation Toolbar -->
-        <div class="px-6 py-4 bg-[#071E2D] border-b border-[#1E435E] flex items-center justify-between flex-wrap gap-3">
+        <div class="px-6 py-4 bg-[#111827] border-b border-[#334155] flex items-center justify-between flex-wrap gap-3">
           <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-[#FF4757] text-white flex items-center justify-center shadow-md">
+            <div class="w-9 h-9 rounded-xl bg-[#FE580D] text-white flex items-center justify-center shadow-md">
               <span class="material-symbols-outlined text-[20px]">view_in_ar</span>
             </div>
             <div>
@@ -398,8 +221,8 @@ function renderSimulationLauncherModal(app: XrApp): string {
                   <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1E3A5F" stroke-width="0.8" opacity="0.6"/>
                 </pattern>
                 <radialGradient id="planeGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#FF4757" stop-opacity="0.25"/>
-                  <stop offset="100%" stop-color="#071E2D" stop-opacity="0"/>
+                  <stop offset="0%" stop-color="#FE580D" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#111827" stop-opacity="0"/>
                 </radialGradient>
               </defs>
 
@@ -423,13 +246,13 @@ function renderSimulationLauncherModal(app: XrApp): string {
               <text x="6" y="145" fill="#F59E0B" font-size="11" font-family="monospace" font-weight="bold">-Y</text>
 
               <!-- Dynamic Linear Slope Vector (Red Glow) -->
-              <line id="sim-vector-line" x1="-120" y1="70" x2="120" y2="-90" stroke="#FF4757" stroke-width="4.5" stroke-linecap="round"/>
+              <line id="sim-vector-line" x1="-120" y1="70" x2="120" y2="-90" stroke="#FE580D" stroke-width="4.5" stroke-linecap="round"/>
               
               <!-- Points P1 & P2 -->
-              <circle cx="-60" cy="30" r="6" fill="#FF4757" stroke="#FFFFFF" stroke-width="2"/>
+              <circle cx="-60" cy="30" r="6" fill="#FE580D" stroke="#FFFFFF" stroke-width="2"/>
               <text x="-95" y="45" fill="#FFFFFF" font-size="10" font-family="monospace">P₁(x₁, y₁)</text>
 
-              <circle cx="60" cy="-50" r="6" fill="#FF4757" stroke="#FFFFFF" stroke-width="2"/>
+              <circle cx="60" cy="-50" r="6" fill="#FE580D" stroke="#FFFFFF" stroke-width="2"/>
               <text x="68" y="-55" fill="#FFFFFF" font-size="10" font-family="monospace">P₂(x₂, y₂)</text>
 
               <!-- Coordinate Intercept Glow (0, b) -->
@@ -448,14 +271,14 @@ function renderSimulationLauncherModal(app: XrApp): string {
           </div>
 
           <!-- Right Sidebar: Interactive Spatial Parameters -->
-          <div class="w-full lg:w-80 bg-[#071E2D] border-t lg:border-t-0 lg:border-l border-[#1E435E] p-5 flex flex-col justify-between space-y-4 overflow-y-auto">
+          <div class="w-full lg:w-80 bg-[#111827] border-t lg:border-t-0 lg:border-l border-[#334155] p-5 flex flex-col justify-between space-y-4 overflow-y-auto">
             
             <div class="space-y-4">
               <div>
                 <h4 class="text-xs font-bold text-white uppercase tracking-wider font-mono">Live Equation Formulation</h4>
-                <div class="p-3.5 rounded-xl bg-[#03111C] border border-[#1E435E] mt-2 font-mono text-center">
+                <div class="p-3.5 rounded-xl bg-[#03111C] border border-[#334155] mt-2 font-mono text-center">
                   <span class="text-xs text-gray-400">Canonical Line:</span>
-                  <div class="text-base font-bold text-[#FF4757] mt-0.5" id="sim-equation-readout">y = 1.50x + 2.00</div>
+                  <div class="text-base font-bold text-[#FE580D] mt-0.5" id="sim-equation-readout">y = 1.50x + 2.00</div>
                   <div class="text-[11px] text-[#38BDF8] mt-1">Perpendicular Slope: m_perp = -0.67</div>
                 </div>
               </div>
@@ -465,7 +288,7 @@ function renderSimulationLauncherModal(app: XrApp): string {
                 <div>
                   <div class="flex justify-between font-mono mb-1">
                     <span class="text-gray-300">Slope Parameter (m):</span>
-                    <span class="text-[#FF4757] font-bold" id="slope-val-display">1.50</span>
+                    <span class="text-[#FE580D] font-bold" id="slope-val-display">1.50</span>
                   </div>
                   <input
                     type="range"
@@ -474,7 +297,7 @@ function renderSimulationLauncherModal(app: XrApp): string {
                     max="4.0"
                     step="0.25"
                     value="1.50"
-                    class="w-full accent-[#FF4757] cursor-pointer"
+                    class="w-full accent-[#FE580D] cursor-pointer"
                   />
                 </div>
 
@@ -527,7 +350,7 @@ function renderSimulationLauncherModal(app: XrApp): string {
               </button>
               <button
                 id="exit-sim-bottom-btn"
-                class="w-full py-2 rounded-xl bg-[#FF4757] hover:bg-[#E83D4D] text-white text-xs font-bold transition-colors cursor-pointer"
+                class="w-full py-2 rounded-xl bg-[#FE580D] hover:bg-[#E24E0B] text-white text-xs font-bold transition-colors cursor-pointer"
               >
                 End WebXR Lab Session
               </button>

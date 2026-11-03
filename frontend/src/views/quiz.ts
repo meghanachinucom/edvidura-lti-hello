@@ -9,6 +9,7 @@
  */
 import { state, setScreen, showToast, notify } from '../state';
 import { escapeHtml, firstName, submitLiveQuiz } from '../boot';
+import { hubBar, hubCalChip } from '../components/hub';
 import {
   exportAssessment,
   generateCatBank,
@@ -42,7 +43,7 @@ export const quizQuestions: QuizQuestion[] = [
     pts: '1 point',
     standard: 'CCSS.MATH.HSA.CED.A.2',
     question:
-      'What is the slope of the line passing through the points <span class="font-mono text-[#071E2D] bg-[#FFF0F3] px-2 py-0.5 rounded text-sm font-bold border border-[#FFCCD5]">(2, 3)</span> and <span class="font-mono text-[#071E2D] bg-[#FFF0F3] px-2 py-0.5 rounded text-sm font-bold border border-[#FFCCD5]">(6, 11)</span>?',
+      'What is the slope of the line passing through the points <span class="font-mono text-[#111827] bg-[#FFF7ED] px-2 py-0.5 rounded text-sm font-bold border border-[#FED7AA]">(2, 3)</span> and <span class="font-mono text-[#111827] bg-[#FFF7ED] px-2 py-0.5 rounded text-sm font-bold border border-[#FED7AA]">(6, 11)</span>?',
     choices: [
       { key: 'A', text: 'm = 1/2' },
       { key: 'B', text: 'm = 2' },
@@ -59,7 +60,7 @@ export const quizQuestions: QuizQuestion[] = [
     pts: '1 point',
     standard: 'CCSS.MATH.HSA.CED.A.1',
     question:
-      'Which equation represents a line with a vertical intercept of <span class="font-mono text-[#071E2D] bg-[#EBF4FC] px-2 py-0.5 rounded text-sm font-bold border border-[#BAE6FD]">-4</span> and a slope of <span class="font-mono text-[#071E2D] bg-[#EBF4FC] px-2 py-0.5 rounded text-sm font-bold border border-[#BAE6FD]">3</span>?',
+      'Which equation represents a line with a vertical intercept of <span class="font-mono text-[#111827] bg-[#EBF4FC] px-2 py-0.5 rounded text-sm font-bold border border-[#BAE6FD]">-4</span> and a slope of <span class="font-mono text-[#111827] bg-[#EBF4FC] px-2 py-0.5 rounded text-sm font-bold border border-[#BAE6FD]">3</span>?',
     choices: [
       { key: 'A', text: 'y = -4x + 3', isMono: true },
       { key: 'B', text: 'y = 3x + 4', isMono: true },
@@ -76,7 +77,7 @@ export const quizQuestions: QuizQuestion[] = [
     pts: '1 point',
     standard: 'CCSS.MATH.HSA.REI.B.3',
     question:
-      'Find the horizontal x-intercept of the linear equation <span class="font-mono text-[#071E2D] bg-[#ECFDF5] px-2 py-0.5 rounded text-sm font-bold border border-[#A7F3D0]">2x - 5y = 20</span>.',
+      'Find the horizontal x-intercept of the linear equation <span class="font-mono text-[#111827] bg-[#ECFDF5] px-2 py-0.5 rounded text-sm font-bold border border-[#A7F3D0]">2x - 5y = 20</span>.',
     choices: [
       { key: 'A', text: '(10, 0)', isMono: true },
       { key: 'B', text: '(0, -4)', isMono: true },
@@ -93,7 +94,7 @@ export const quizQuestions: QuizQuestion[] = [
     pts: '1 point',
     standard: 'CCSS.MATH.HSA.CED.A.2',
     question:
-      'Line <span class="font-mono text-[#FF4757] font-bold">L₁</span> has the equation <span class="font-mono text-[#071E2D] bg-[#FFF0F3] px-2 py-0.5 rounded text-sm font-bold border border-[#FFCCD5]">y = -(2/7)x + 5</span>. What must be the slope of any line perpendicular to <span class="font-mono text-[#FF4757] font-bold">L₁</span>?',
+      'Line <span class="font-mono text-[#FE580D] font-bold">L₁</span> has the equation <span class="font-mono text-[#111827] bg-[#FFF7ED] px-2 py-0.5 rounded text-sm font-bold border border-[#FED7AA]">y = -(2/7)x + 5</span>. What must be the slope of any line perpendicular to <span class="font-mono text-[#FE580D] font-bold">L₁</span>?',
     choices: [
       { key: 'A', text: 'm = 7/2' },
       { key: 'B', text: 'm = -7/2' },
@@ -110,7 +111,7 @@ export const quizQuestions: QuizQuestion[] = [
     pts: '1 point',
     standard: 'CCSS.MATH.HSA.CED.A.2',
     question:
-      'True or False: A vertical line of equation <span class="font-mono text-[#071E2D] bg-[#FFFBEB] px-2 py-0.5 rounded text-sm font-bold border border-[#FDE68A]">x = 4</span> has a slope of zero (<span class="font-mono">m = 0</span>).',
+      'True or False: A vertical line of equation <span class="font-mono text-[#111827] bg-[#FFFBEB] px-2 py-0.5 rounded text-sm font-bold border border-[#FDE68A]">x = 4</span> has a slope of zero (<span class="font-mono">m = 0</span>).',
     choices: [
       { key: 'true', text: 'True — the slope is zero because there is no vertical tilt.' },
       { key: 'false', text: 'False — the slope is undefined because delta x is 0 in the denominator.' }
@@ -125,7 +126,7 @@ export const quizQuestions: QuizQuestion[] = [
     pts: '1 point',
     standard: 'CCSS.MATH.HSA.REI.B.3',
     question:
-      'For the linear equation <span class="font-mono text-[#071E2D] bg-[#F5F3FF] px-2 py-0.5 rounded text-sm font-bold border border-[#DDD6FE]">3x - 6y = 18</span>, calculate the numerical value of the y-coordinate at the vertical intercept <span class="font-mono">(0, y)</span>.',
+      'For the linear equation <span class="font-mono text-[#111827] bg-[#F5F3FF] px-2 py-0.5 rounded text-sm font-bold border border-[#DDD6FE]">3x - 6y = 18</span>, calculate the numerical value of the y-coordinate at the vertical intercept <span class="font-mono">(0, y)</span>.',
     placeholder: 'Enter numerical value (e.g. -3)...',
     correct: '-3'
   },
@@ -137,7 +138,7 @@ export const quizQuestions: QuizQuestion[] = [
     pts: '4 points',
     standard: 'CCSS.MATH.HSA.REI.B.3',
     question:
-      'Explain the step-by-step algebraic manipulation to convert <span class="font-mono text-[#071E2D] bg-[#FFF0F3] px-2 py-0.5 rounded text-sm font-bold border border-[#FFCCD5]">2x - 5y = 20</span> into canonical slope-intercept form <span class="font-mono">y = mx + b</span>. Explicitly explain why the slope <span class="font-mono">m</span> becomes positive (+2/5) instead of negative.',
+      'Explain the step-by-step algebraic manipulation to convert <span class="font-mono text-[#111827] bg-[#FFF7ED] px-2 py-0.5 rounded text-sm font-bold border border-[#FED7AA]">2x - 5y = 20</span> into canonical slope-intercept form <span class="font-mono">y = mx + b</span>. Explicitly explain why the slope <span class="font-mono">m</span> becomes positive (+2/5) instead of negative.',
     rubricCriteria: [
       { name: 'Conceptual Understanding (Negative Sign Division)', maxPts: 2 },
       { name: 'Step-by-Step Algebraic Correctness', maxPts: 2 }
@@ -198,177 +199,66 @@ export function renderQuiz(): string {
   const learner = firstName();
   const isGeneratorOpen = state.activeDialog === 'ai-generator';
   const isExportOpen = state.activeDialog === 'export-menu';
+  const isStaff = state.role === 'teacher' || state.role === 'admin';
+
+  const pct = (answeredCount / Math.max(totalCount, 1)) * 100;
+  const staffTools = isStaff
+    ? `
+          <button id="open-qbank-btn" class="hub-cta-light" type="button">Bank</button>
+          <button id="open-generator-btn" class="hub-cta-light" type="button">AI gen</button>
+          <div class="relative">
+            <button id="open-export-btn" class="hub-cta-light" type="button">Export</button>
+            ${
+              isExportOpen
+                ? `<div class="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-xl border border-[#E2E8F0] p-1.5 z-50 text-xs text-[#111827]">
+              <button class="export-qti-btn w-full text-left px-3 py-2 rounded-lg hover:bg-[#FFF7ED] font-semibold cursor-pointer">QTI 2.1 XML</button>
+              <button class="export-json-btn w-full text-left px-3 py-2 rounded-lg hover:bg-[#F1F5F9] font-semibold cursor-pointer">JSON</button>
+              <button class="export-pdf-btn w-full text-left px-3 py-2 rounded-lg hover:bg-[#F1F5F9] font-semibold cursor-pointer">PDF</button>
+              <button class="export-md-btn w-full text-left px-3 py-2 rounded-lg hover:bg-[#F1F5F9] font-semibold cursor-pointer">Markdown</button>
+            </div>`
+                : ''
+            }
+          </div>`
+    : `<button id="open-qbank-btn" class="sr-only" type="button"></button><button id="open-generator-btn" class="sr-only" type="button"></button><button id="open-export-btn" class="sr-only" type="button"></button>`;
 
   return `
-    <div class="flex flex-col w-full bg-[#FAFBFC]">
-      
-      <!-- Top Academic Breadcrumbs & Context Bar -->
-      <section class="w-full px-4 sm:px-6 lg:px-8 py-3.5 border-b border-[#E2E8F0] bg-white">
-        <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-y-2 gap-x-6 text-xs text-[#64748B]">
-          <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-xs font-medium flex-wrap">
-            <button id="quiz-back-btn" class="text-[#071E2D] hover:text-[#FF4757] flex items-center gap-1 cursor-pointer font-bold transition-colors">
-              <span class="material-symbols-outlined text-[16px]">arrow_back</span>
-              <span>Back to Lessons</span>
-            </button>
-            <span class="text-[#CBD5E1]">/</span>
-            <span>Algebra I</span>
-            <span class="text-[#CBD5E1]">/</span>
-            <span>Unit 2: Linear Relationships</span>
-            <span class="text-[#CBD5E1]">/</span>
-            <span class="text-[#FF4757] font-bold">Graded Checkpoint 2</span>
-          </nav>
-          
-          <!-- Assessment Tools Ribbon -->
-          <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <button id="open-qbank-btn" class="text-xs font-bold text-[#071E2D] hover:text-[#FF4757] flex items-center gap-1 cursor-pointer transition-colors" type="button">
-              <span class="material-symbols-outlined text-[16px]">inventory_2</span>
-              <span>Question Bank</span>
-            </button>
-            <button id="open-generator-btn" class="text-xs font-bold text-[#FF4757] hover:underline flex items-center gap-1 cursor-pointer transition-colors" type="button">
-              <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
-              <span>AI Question Gen</span>
-            </button>
-            <div class="relative inline-block">
-              <button id="open-export-btn" class="px-2.5 py-1 rounded-lg border border-[#CBD5E1] bg-[#F8FAFC] hover:bg-white text-xs font-bold text-[#0F172A] flex items-center gap-1 cursor-pointer" type="button">
-                <span class="material-symbols-outlined text-[15px]">file_download</span>
-                <span>Export (QTI/PDF/MD)</span>
-              </button>
-              ${isExportOpen ? `
-                <div class="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-xl border border-[#E2E8F0] p-1.5 z-50 animate-fade-rise text-xs font-sans">
-                  <button class="export-qti-btn w-full text-left px-3 py-2 rounded-lg hover:bg-[#FFF0F3] hover:text-[#FF4757] font-semibold flex items-center gap-2 cursor-pointer">
-                    <span class="material-symbols-outlined text-[16px]">integration_instructions</span>
-                    <span>QTI 2.1 XML Package</span>
-                  </button>
-                  <button class="export-json-btn w-full text-left px-3 py-2 rounded-lg hover:bg-[#F1F5F9] font-semibold flex items-center gap-2 cursor-pointer">
-                    <span class="material-symbols-outlined text-[16px]">data_object</span>
-                    <span>JSON Schema Export</span>
-                  </button>
-                  <button class="export-pdf-btn w-full text-left px-3 py-2 rounded-lg hover:bg-[#F1F5F9] font-semibold flex items-center gap-2 cursor-pointer">
-                    <span class="material-symbols-outlined text-[16px]">print</span>
-                    <span>Printable Exam PDF</span>
-                  </button>
-                  <button class="export-md-btn w-full text-left px-3 py-2 rounded-lg hover:bg-[#F1F5F9] font-semibold flex items-center gap-2 cursor-pointer">
-                    <span class="material-symbols-outlined text-[16px]">markdown</span>
-                    <span>Markdown Assessment (.md)</span>
-                  </button>
-                </div>
-              ` : ''}
-            </div>
-            <div class="flex items-center gap-2 font-mono tabular-nums text-xs pl-2 border-l border-[#CBD5E1]">
-              <span class="px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] font-bold border border-[#FDE68A]">
-                Attempt ${attemptShown} of ${attemptLimit} (Limit Enforced)
-              </span>
-              <span class="text-[#10B981] font-bold flex items-center gap-1">
-                <span class="w-2 h-2 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
-                <span>AGS Sync Active</span>
-              </span>
-            </div>
+    <div class="hub-page">
+      <div class="studio-grid">
+        <div class="studio-main flex flex-col gap-5">
+          ${hubBar({
+            lead: `<button id="quiz-back-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">arrow_back</span></button>`,
+            kicker: escapeHtml(learner),
+            title: 'Checkpoint 2',
+            meta: `Due Fri · pass 70%${assignment?.group_name ? ` · ${escapeHtml(assignment.group_name)}` : ''}`,
+            actions: `
+              ${staffTools}
+              <button id="save-draft-btn" class="hub-cta-light" type="button">Save</button>
+              <button id="submit-quiz-btn" class="hub-cta-dark ${canSubmit ? '' : 'opacity-50 pointer-events-none'}" type="button" ${canSubmit ? '' : 'disabled'}>Submit</button>`,
+          })}
+          <div class="h-1.5 rounded-full bg-[#EEF2F6] overflow-hidden">
+            <div class="h-full bg-[#FE580D]" style="width:${pct}%"></div>
           </div>
+          ${state.liveQuizBlocked ? `<div class="p-4 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] text-sm text-[#92400E] font-semibold">${escapeHtml(state.liveQuizBlocked)}</div>` : ''}
+          <div class="flex flex-col gap-5">${bank.map(q => renderQuestionCard(q)).join('')}</div>
         </div>
-      </section>
-
-      <!-- ========================================================
-           HERO BANNER: Checkpoint 2 Overview
-           ======================================================== -->
-      <section class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-        <div class="max-w-5xl mx-auto">
-          <div class="hero-navy-card relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6" style="background-color: #071E2D; background-image: linear-gradient(135deg, #071E2D 0%, #0A2540 50%, #0D2E4A 100%);">
-            
-            <div class="space-y-3 max-w-xl">
-              <div class="flex items-center gap-2 text-xs font-mono">
-                <span class="px-2.5 py-0.5 rounded-full bg-[#F59E0B] text-[#071E2D] font-bold text-[10px] uppercase tracking-wider">Multi-Format Assessment</span>
-                <span class="text-gray-400">·</span>
-                <span class="text-white font-bold">${totalCount} Questions</span>
-                <span class="text-gray-400">·</span>
-                <span class="text-[#38BDF8] font-bold">Automated &amp; Rubric Graded</span>
-              </div>
-              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white font-headline leading-tight">
-                Checkpoint 2: <span class="text-[#FF4757]">AI Evaluated Linear Assessment</span>
-              </h1>
-              <p class="text-xs sm:text-sm text-gray-200 leading-relaxed font-sans">
-                Objective multiple choice, True/False logic, coordinate fill-in-the-blank, and open essay derivation evaluated against district Common Core rubrics.
-              </p>
-            </div>
-
-            <!-- Student / Test Context Card -->
-            <div class="flex items-center gap-4 bg-[#0A2540]/90 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-white/20 shrink-0 shadow-lg">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-                alt="Ada Chen Student"
-                class="w-12 h-12 rounded-xl object-cover ring-2 ring-[#FF4757]"
-                onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80';"
-              />
-              <div class="flex flex-col">
-                <span class="text-sm font-bold text-white">${escapeHtml(learner)}</span>
-                <span class="text-xs text-[#FFCCD5] font-mono">Attempts: ${attemptUsed} of ${attemptLimit}${assignment?.group_name ? ` · ${escapeHtml(assignment.group_name)}` : ''}</span>
-                <span class="text-[10px] text-[#10B981] font-mono mt-0.5 font-bold">Passing: 70% threshold</span>
+        <aside class="studio-rail">
+          <section class="hub-cal">
+            <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=900&q=70" alt="">
+            <div class="hub-cal-body">
+              <h2 class="text-base font-extrabold">Progress</h2>
+              <p class="text-3xl font-extrabold mt-3 tabular-nums">${answeredCount}<span class="text-base font-bold text-white/70"> / ${totalCount}</span></p>
+              <p class="text-xs text-white/70 mt-1">answered · attempt ${attemptShown}/${attemptLimit}</p>
+              <div class="flex flex-col gap-2.5 mt-5">
+                ${hubCalChip('orange', 'Pass mark', '70%')}
+                ${hubCalChip('mint', 'Moodle', 'Official')}
               </div>
             </div>
-
-          </div>
-        </div>
-      </section>
-
-      <!-- ========================================================
-           QUESTIONS STREAM
-           ======================================================== -->
-      <main class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-28 flex flex-col gap-6">
-        
-        <!-- Live Progress Counter Bar -->
-        <div class="card-depth-1 rounded-2xl p-4 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 border border-[#E2E8F0]">
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-[#FF4757] text-[20px]">assignment_turned_in</span>
-            <span class="text-xs font-bold text-[#0F172A]">Quiz Completion Status:</span>
-            <span class="text-xs font-mono font-bold text-[#FF4757] tabular-nums">${answeredCount} of ${totalCount} Answered</span>
-          </div>
-          <div class="w-full sm:w-48 bg-[#F1F5F9] h-2.5 rounded-full overflow-hidden">
-            <div class="bg-gradient-to-r from-[#FF5B6B] to-[#FF4757] h-full transition-all duration-300" style="width: ${(answeredCount / totalCount) * 100}%;"></div>
-          </div>
-        </div>
-
-        ${state.liveQuizBlocked ? `
-          <div class="card-depth-1 rounded-2xl p-4 bg-[#FFFBEB] border border-[#FDE68A] text-sm text-[#92400E] font-semibold">
-            ${escapeHtml(state.liveQuizBlocked)}
-          </div>
-        ` : ''}
-        ${assignment?.group_name && !state.liveQuizBlocked ? `
-          <div class="card-depth-1 rounded-2xl p-3 bg-[#ECFDF5] border border-[#A7F3D0] text-xs font-bold text-[#047857]">
-            Assigned to ${escapeHtml(assignment.group_name)}${assignment.title ? ` · ${escapeHtml(assignment.title)}` : ''}
-          </div>
-        ` : ''}
-        ${bank.map(q => renderQuestionCard(q)).join('')}
-
-      </main>
-
-      <!-- ========================================================
-           STICKY GLASSMORPHIC SUBMIT DOCK
-           ======================================================== -->
-      <footer class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] shadow-2xl py-3 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div class="flex items-center gap-2 text-xs font-mono">
-            <span class="w-2.5 h-2.5 rounded-full ${answeredCount === totalCount ? 'bg-[#10B981]' : 'bg-[#F59E0B]'} animate-pulse"></span>
-            <span class="font-bold text-[#0F172A]">${answeredCount === totalCount ? 'All responses recorded' : `${totalCount - answeredCount} questions remaining`}</span>
-          </div>
-
-          <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap justify-center sm:justify-end">
-            <button id="save-draft-btn" class="btn-secondary-3d px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold cursor-pointer" type="button">
-              Save Progress
-            </button>
-            <button id="submit-quiz-btn" class="btn-primary-3d px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 cursor-pointer shadow-lg ${canSubmit ? '' : 'opacity-50 pointer-events-none'}" type="button" ${canSubmit ? '' : 'disabled'}>
-              <span>${canSubmit ? 'Submit for Automated AI Grading' : (state.liveQuizBlocked || 'Attempt limit reached')}</span>
-              <span class="material-symbols-outlined text-[18px]">verified</span>
-            </button>
-          </div>
-        </div>
-      </footer>
-
-      <!-- Question Bank Drawer Modal -->
-      ${isQuestionBankOpen ? renderQuestionBankModal() : ''}
-
-      <!-- AI Question Generator Modal -->
-      ${isGeneratorOpen ? renderAiGeneratorModal() : ''}
-
+          </section>
+        </aside>
+      </div>
     </div>
+    ${isQuestionBankOpen ? renderQuestionBankModal() : ''}
+    ${isGeneratorOpen ? renderAiGeneratorModal() : ''}
   `;
 }
 
@@ -386,7 +276,7 @@ function renderQuestionCard(q: QuizQuestion): string {
           return `
             <label class="relative flex items-center gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
               isSelected
-                ? 'bg-[#FFF0F3] border-[#FF4757] shadow-sm'
+                ? 'bg-[#FFF7ED] border-[#FE580D] shadow-sm'
                 : 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1] hover:bg-[#FAFBFC]'
             }">
               <input
@@ -397,7 +287,7 @@ function renderQuestionCard(q: QuizQuestion): string {
                 ${isSelected ? 'checked' : ''}
               />
               <span class="w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
-                isSelected ? 'bg-[#FF4757] text-white shadow-xs' : 'bg-[#F1F5F9] text-[#64748B]'
+                isSelected ? 'bg-[#FE580D] text-white shadow-xs' : 'bg-[#F1F5F9] text-[#64748B]'
               }">✓</span>
               <span class="text-xs sm:text-sm text-[#0F172A] font-medium">${choice.text}</span>
             </label>
@@ -413,7 +303,7 @@ function renderQuestionCard(q: QuizQuestion): string {
           return `
             <label class="relative flex items-center gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
               isSelected
-                ? 'bg-[#FFF0F3] border-[#FF4757] shadow-sm'
+                ? 'bg-[#FFF7ED] border-[#FE580D] shadow-sm'
                 : 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1] hover:bg-[#FAFBFC]'
             }">
               <input
@@ -426,7 +316,7 @@ function renderQuestionCard(q: QuizQuestion): string {
                 ${isSelected ? 'checked' : ''}
               />
               <span class="w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
-                isSelected ? 'bg-[#FF4757] text-white shadow-xs' : 'bg-[#F1F5F9] text-[#64748B]'
+                isSelected ? 'bg-[#FE580D] text-white shadow-xs' : 'bg-[#F1F5F9] text-[#64748B]'
               }">
                 ${choice.key}
               </span>
@@ -445,7 +335,7 @@ function renderQuestionCard(q: QuizQuestion): string {
         <div class="flex items-center gap-2">
           <input
             type="text"
-            class="quiz-text-input w-full p-3 rounded-xl border border-[#CBD5E1] bg-white font-mono text-sm text-[#0F172A] focus:outline-none focus:border-[#FF4757] focus:ring-2 focus:ring-[#FFCCD5]"
+            class="quiz-text-input w-full p-3 rounded-xl border border-[#CBD5E1] bg-white font-mono text-sm text-[#0F172A] focus:outline-none focus:border-[#FE580D] focus:ring-2 focus:ring-[#FED7AA]"
             placeholder="${q.placeholder || 'Type answer here...'}"
             value="${currentVal}"
             data-qid="${q.id}"
@@ -465,7 +355,7 @@ function renderQuestionCard(q: QuizQuestion): string {
           <span>Rubric: 4 Points Total</span>
         </div>
         <textarea
-          class="quiz-text-input w-full p-3.5 rounded-2xl border border-[#CBD5E1] bg-white font-mono text-xs sm:text-sm text-[#0F172A] min-h-[110px] focus:outline-none focus:border-[#FF4757] focus:ring-2 focus:ring-[#FFCCD5] leading-relaxed"
+          class="quiz-text-input w-full p-3.5 rounded-2xl border border-[#CBD5E1] bg-white font-mono text-xs sm:text-sm text-[#0F172A] min-h-[110px] focus:outline-none focus:border-[#FE580D] focus:ring-2 focus:ring-[#FED7AA] leading-relaxed"
           placeholder="Step 1: Subtract 2x from both sides... Step 2: Divide both terms by -5... Notice that -2/-5 = +2/5..."
           data-qid="${q.id}"
           data-qtype="${q.type}"
@@ -484,27 +374,18 @@ function renderQuestionCard(q: QuizQuestion): string {
   }
 
   return `
-    <div class="card-depth-interactive rounded-3xl p-6 sm:p-7 bg-white border border-[#E2E8F0] space-y-4">
-      <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-        <div class="flex items-center gap-2.5">
-          <span class="w-7 h-7 rounded-xl bg-[#071E2D] text-white flex items-center justify-center font-mono font-bold text-xs">
-            ${q.num}
-          </span>
-          <h3 class="text-base font-bold text-[#0F172A] font-headline">${q.title}</h3>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0]">
-            ${q.type}
-          </span>
+    <div class="hub-card space-y-4" id="quiz-q-${q.id}">
+      <div class="hub-card-head">
+        <span class="hub-ico">${q.num}</span>
+        <div class="min-w-0">
+          <h2>${q.title}</h2>
+          <p>${q.type}${q.standard ? ` · ${q.standard}` : ''}</p>
         </div>
-        <div class="flex items-center gap-2 font-mono text-xs text-[#64748B]">
-          ${q.standard ? `<span class="hidden sm:inline">${q.standard}</span><span class="hidden sm:inline">·</span>` : ''}
-          <span class="font-bold text-[#FF4757]">${q.pts}</span>
-        </div>
+        <span class="hub-pill sky">${q.pts}</span>
       </div>
-
       <div class="text-sm sm:text-base text-[#0F172A] leading-relaxed">
         ${q.question}
       </div>
-
       ${answerInputHtml}
     </div>
   `;
@@ -513,11 +394,11 @@ function renderQuestionCard(q: QuizQuestion): string {
 // Question Bank Drawer
 function renderQuestionBankModal(): string {
   return `
-    <div class="fixed inset-0 z-50 bg-[#071E2D]/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="fixed inset-0 z-50 bg-[#111827]/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div class="relative w-full max-w-3xl bg-white rounded-3xl border border-[#E2E8F0] shadow-2xl p-6 space-y-4 max-h-[85vh] overflow-y-auto animate-fade-rise">
         <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-[#FF4757] text-[20px]">inventory_2</span>
+            <span class="material-symbols-outlined text-[#FE580D] text-[20px]">inventory_2</span>
             <h3 class="text-base font-bold text-[#0F172A] font-headline">Question Bank (${(state.liveBankItems.length || state.liveBankCount || questionBankList.length)} items)</h3>
           </div>
           <button id="close-dialog-btn" class="w-8 h-8 rounded-lg hover:bg-[#F1F5F9] flex items-center justify-center text-[#64748B] cursor-pointer">
@@ -539,7 +420,7 @@ function renderQuestionBankModal(): string {
             <div class="p-4 rounded-2xl bg-[#FAFBFC] border border-[#E2E8F0] space-y-2">
               <div class="flex items-center justify-between text-xs">
                 <span class="font-bold text-[#0F172A]">${item.title} (${item.type})</span>
-                <span class="font-mono text-[#FF4757] font-bold">${item.pts}</span>
+                <span class="font-mono text-[#FE580D] font-bold">${item.pts}</span>
               </div>
               <p class="text-xs text-[#64748B]">${item.question.replace(/<[^>]+>/g, '')}</p>
             </div>`).join(''))}
@@ -561,11 +442,11 @@ function renderQuestionBankModal(): string {
 // AI Question Generator Modal
 function renderAiGeneratorModal(): string {
   return `
-    <div class="fixed inset-0 z-50 bg-[#071E2D]/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="fixed inset-0 z-50 bg-[#111827]/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div class="relative w-full max-w-xl bg-white rounded-3xl border border-[#E2E8F0] shadow-2xl p-6 space-y-4 animate-fade-rise">
         <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-[#FF4757] text-[20px]">auto_awesome</span>
+            <span class="material-symbols-outlined text-[#FE580D] text-[20px]">auto_awesome</span>
             <h3 class="text-base font-bold text-[#0F172A] font-headline">AI Assessment Question Generator</h3>
           </div>
           <button id="close-dialog-btn" class="w-8 h-8 rounded-lg hover:bg-[#F1F5F9] flex items-center justify-center text-[#64748B] cursor-pointer">
@@ -613,7 +494,7 @@ function renderAiGeneratorModal(): string {
             <label class="block font-bold text-[#0F172A] mb-1">Difficulty Level:</label>
             <div class="grid grid-cols-3 gap-2">
               <button class="diff-btn p-2 rounded-xl border border-[#E2E8F0] font-bold text-center bg-[#ECFDF5] text-[#10B981]">Foundational</button>
-              <button class="diff-btn p-2 rounded-xl border border-[#FF4757] font-bold text-center bg-[#FFF0F3] text-[#FF4757]">Standard</button>
+              <button class="diff-btn p-2 rounded-xl border border-[#FE580D] font-bold text-center bg-[#FFF7ED] text-[#FE580D]">Standard</button>
               <button class="diff-btn p-2 rounded-xl border border-[#E2E8F0] font-bold text-center bg-[#FAFBFC] text-[#64748B]">Rigorous</button>
             </div>
           </div>
@@ -643,6 +524,14 @@ export function bindQuizEvents(container: HTMLElement): void {
   // Navigation
   container.querySelector('#quiz-back-btn')?.addEventListener('click', () => {
     setScreen('lessons');
+  });
+
+  container.querySelectorAll('[data-jump]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = (btn as HTMLElement).getAttribute('data-jump');
+      const el = id ? container.querySelector(`#quiz-q-${id}`) : null;
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
   });
 
   // Radio Choices

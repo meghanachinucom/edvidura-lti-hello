@@ -1,103 +1,64 @@
 /**
  * View 12: Admin Overview & Institutional Governance
  * Supports all 5 administrative tabs: Governance, Teachers, Sections, Roster Vault, LTI 1.3 Keys.
- * Styled with radiant coral (#FF4757), deep midnight navy (#071E2D), emerald (#10B981), sky blue (#0284C7),
+ * Styled with radiant coral (#FE580D), deep midnight navy (#111827), emerald (#10B981), sky blue (#0284C7),
  * authentic student and educator photography, 3D tactile buttons, card depth, and active highlights.
  */
 import { state, setScreen, setAdminTab, showToast, facultyList, sectionsList, studentsList, lmsConnectionsList, gradePassbackLogsList, AdminTab } from '../state';
+import { HubDashOpts, hubMetric, hubShell, hubStat, hubStats } from '../components/hub';
 
 export function renderAdminOverview(): string {
   const activeTab: AdminTab = state.adminTab || 'governance';
+  return renderActiveTabContent(activeTab);
+}
 
-  return `
-    <div class="flex flex-col w-full bg-[#FAFBFC] min-h-[calc(100vh-4rem)]">
-      
-      <!-- Editorial Sub-Bar / Scope Anchor -->
-      <section class="w-full bg-white border-b border-[#E2E8F0] px-4 sm:px-6 lg:px-8 py-3.5">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.9)] animate-pulse"></span>
-            <span class="text-[#0F172A] font-bold font-sans uppercase tracking-wider">Institution Enclave Active</span>
-            <span class="text-[#CBD5E1]">/</span>
-            <span class="text-[#64748B] font-semibold">Riverside Unified High School · ID: RHS-9042</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="text-[#64748B]">District SIS v4.3 Handshake</span>
-            <span class="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669] font-bold border border-[#A7F3D0]">
-              0 desyncs
-            </span>
-          </div>
-        </div>
-      </section>
+function adminNav(): string {
+  const tab = state.adminTab || 'governance';
+  const items: Array<{ id: AdminTab; label: string }> = [
+    { id: 'governance', label: 'Governance' },
+    { id: 'teachers', label: 'Faculty' },
+    { id: 'sections', label: 'Sections' },
+    { id: 'roster', label: 'Roster' },
+    { id: 'keys', label: 'LTI keys' },
+    { id: 'lms-integrations', label: 'LMS' },
+  ];
+  return `<div class="hub-seg flex-wrap">${items
+    .map(
+      i =>
+        `<button class="admin-quick-nav hub-seg-btn ${tab === i.id ? 'on' : ''}" data-target="${i.id}" type="button">${i.label}</button>`
+    )
+    .join('')}</div>`;
+}
 
-      <!-- Admin Tab Switcher Sub-Bar -->
-      <section class="w-full bg-[#F1F5F9]/80 border-b border-[#E2E8F0] px-4 sm:px-6 lg:px-8 py-2">
-        <div class="max-w-7xl mx-auto flex items-center justify-start gap-2 overflow-x-auto no-scrollbar">
-          <button
-            class="admin-subtab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-2 ${activeTab === 'governance' ? 'bg-[#071E2D] text-white shadow-md' : 'bg-white text-[#475569] hover:bg-white/90 border border-[#E2E8F0]'}"
-            data-target-tab="governance"
-            type="button"
-          >
-            <span class="material-symbols-outlined text-[16px] ${activeTab === 'governance' ? 'text-[#FF4757]' : 'text-[#64748B]'}">domain</span>
-            <span>Governance &amp; SIS</span>
-          </button>
-
-          <button
-            class="admin-subtab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-2 ${activeTab === 'teachers' ? 'bg-[#071E2D] text-white shadow-md' : 'bg-white text-[#475569] hover:bg-white/90 border border-[#E2E8F0]'}"
-            data-target-tab="teachers"
-            type="button"
-          >
-            <span class="material-symbols-outlined text-[16px] ${activeTab === 'teachers' ? 'text-[#FF4757]' : 'text-[#64748B]'}">school</span>
-            <span>Teachers Directory</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] ${activeTab === 'teachers' ? 'bg-[#FF4757] text-white' : 'bg-[#E2E8F0] text-[#475569]'} font-mono">${facultyList.length}</span>
-          </button>
-
-          <button
-            class="admin-subtab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-2 ${activeTab === 'sections' ? 'bg-[#071E2D] text-white shadow-md' : 'bg-white text-[#475569] hover:bg-white/90 border border-[#E2E8F0]'}"
-            data-target-tab="sections"
-            type="button"
-          >
-            <span class="material-symbols-outlined text-[16px] ${activeTab === 'sections' ? 'text-[#FF4757]' : 'text-[#64748B]'}">class</span>
-            <span>Active Sections</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] ${activeTab === 'sections' ? 'bg-[#FF4757] text-white' : 'bg-[#E2E8F0] text-[#475569]'} font-mono">${sectionsList.length}</span>
-          </button>
-
-          <button
-            class="admin-subtab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-2 ${activeTab === 'roster' ? 'bg-[#071E2D] text-white shadow-md' : 'bg-white text-[#475569] hover:bg-white/90 border border-[#E2E8F0]'}"
-            data-target-tab="roster"
-            type="button"
-          >
-            <span class="material-symbols-outlined text-[16px] ${activeTab === 'roster' ? 'text-[#FF4757]' : 'text-[#64748B]'}">groups</span>
-            <span>Roster Vault</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] ${activeTab === 'roster' ? 'bg-[#FF4757] text-white' : 'bg-[#E2E8F0] text-[#475569]'} font-mono">${studentsList.length}</span>
-          </button>
-
-          <button
-            class="admin-subtab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-2 ${activeTab === 'keys' ? 'bg-[#071E2D] text-white shadow-md' : 'bg-white text-[#475569] hover:bg-white/90 border border-[#E2E8F0]'}"
-            data-target-tab="keys"
-            type="button"
-          >
-            <span class="material-symbols-outlined text-[16px] ${activeTab === 'keys' ? 'text-[#FF4757]' : 'text-[#64748B]'}">key</span>
-            <span>LTI 1.3 Keys</span>
-          </button>
-
-          <button
-            class="admin-subtab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-2 ${activeTab === 'lms-integrations' ? 'bg-[#071E2D] text-white shadow-md' : 'bg-white text-[#475569] hover:bg-white/90 border border-[#E2E8F0]'}"
-            data-target-tab="lms-integrations"
-            type="button"
-          >
-            <span class="material-symbols-outlined text-[16px] ${activeTab === 'lms-integrations' ? 'text-[#FF4757]' : 'text-[#64748B]'}">hub</span>
-            <span>LMS Integrations &amp; Passback</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] ${activeTab === 'lms-integrations' ? 'bg-[#FF4757] text-white' : 'bg-[#10B981] text-white'} font-mono">2 Live</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Render Content based on activeTab -->
-      ${renderActiveTabContent(activeTab)}
-
-    </div>
-  `;
+function adminDash(opts: {
+  icon: string;
+  kicker: string;
+  title: string;
+  sub?: string;
+  img?: string;
+  cta?: string;
+  quote?: string;
+  pair?: HubDashOpts['pair'];
+  after: string;
+}): string {
+  const title = opts.title.replace(/<br\s*\/?>/gi, ' ');
+  return hubShell({
+    icon: opts.icon,
+    kicker: opts.kicker,
+    title,
+    sub: opts.sub,
+    actions: opts.cta,
+    stats:
+      (state.adminTab || 'governance') === 'governance'
+        ? hubStats(
+            hubStat('school', 'Faculty', String(facultyList.length)),
+            hubStat('groups', 'Scholars', String(studentsList.length)),
+            hubStat('class', 'Sections', String(sectionsList.length)),
+            hubStat('sync', 'SIS', 'Moodle')
+          )
+        : '',
+    body: `${adminNav()}<div class="flex flex-col gap-5">${opts.after}</div>`,
+  });
 }
 
 function renderActiveTabContent(tab: AdminTab): string {
@@ -122,153 +83,66 @@ function renderActiveTabContent(tab: AdminTab): string {
 // TAB 1: GOVERNANCE & SIS
 // =========================================================================
 function renderGovernanceTab(): string {
-  return `
-    <!-- COLORFUL HERO BANNER: Administrative Governance -->
-    <section class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-      <div class="max-w-7xl mx-auto">
-        <div class="hero-navy-card relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6" style="background-color: #071E2D; background-image: linear-gradient(135deg, #071E2D 0%, #0A2540 50%, #0D2E4A 100%);">
-          
-          <div class="space-y-3 max-w-2xl">
-            <div class="flex items-center gap-2 text-xs font-mono">
-              <span class="px-2.5 py-0.5 rounded-full bg-[#FF4757] text-white font-bold text-[10px] uppercase tracking-wider">Admin Console</span>
-              <span class="text-gray-400">·</span>
-              <span class="text-[#38BDF8] font-bold">District LTI 1.3 Advantage Gateway</span>
-              <span class="text-gray-400">·</span>
-              <span class="text-white font-bold">Audit Verified</span>
-            </div>
-            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white font-headline leading-tight">
-              Riverside High <span class="text-[#FF4757]">Academic Governance</span>
-            </h1>
-            <p class="text-xs sm:text-sm text-gray-200 leading-relaxed font-sans">
-              Centralized district administration. Manage student records, teacher roster delegations, Moodle 4.3 gradebook handshakes, and student data privacy compliance.
-            </p>
-          </div>
-
-          <!-- Action Cluster with 3D Buttons -->
-          <div class="flex flex-wrap items-center gap-3 shrink-0">
-            <button class="admin-quick-nav btn-primary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md" data-target="teachers" type="button">
-              <span class="material-symbols-outlined text-[16px]">school</span>
-              <span>Faculty Directory (${facultyList.length})</span>
-            </button>
-            <button class="admin-quick-nav btn-secondary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-white/10 hover:bg-white/20 text-white border-white/20" data-target="roster" type="button">
-              <span class="material-symbols-outlined text-[16px]">groups</span>
-              <span>Scholars (340)</span>
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Main School Overview Surface -->
-    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16 flex flex-col gap-6">
-      
-      <!-- 4 Monumental Metric Cards -->
-      <section aria-label="School Metrics" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <div class="card-depth-interactive rounded-2xl p-5 bg-white border-l-4 border-l-[#FF4757] flex flex-col justify-between shadow-xs">
-          <span class="text-xs uppercase tracking-wider text-[#64748B] font-bold font-mono">Faculty Appointed</span>
-          <div class="py-2 flex items-baseline gap-2 font-mono tabular-nums">
-            <span class="text-3xl font-bold text-[#0F172A] font-headline">${facultyList.length}</span>
-            <span class="text-xs text-[#FF4757] font-semibold">Active Teachers</span>
-          </div>
-          <p class="text-xs text-[#64748B]">All authenticated via Google Workspace SSO.</p>
-        </div>
-
-        <div class="card-depth-interactive rounded-2xl p-5 bg-white border-l-4 border-l-[#10B981] flex flex-col justify-between shadow-xs">
-          <span class="text-xs uppercase tracking-wider text-[#64748B] font-bold font-mono">Enrolled Scholars</span>
-          <div class="py-2 flex items-baseline gap-2 font-mono tabular-nums">
-            <span class="text-3xl font-bold text-[#0F172A] font-headline">340</span>
-            <span class="text-xs text-[#10B981] font-semibold">100% Roster Match</span>
-          </div>
-          <p class="text-xs text-[#64748B]">8 active cohorts across Grade 9 &amp; 10.</p>
-        </div>
-
-        <div class="card-depth-interactive rounded-2xl p-5 bg-white border-l-4 border-l-[#0284C7] flex flex-col justify-between shadow-xs">
-          <span class="text-xs uppercase tracking-wider text-[#64748B] font-bold font-mono">LTI Handshake Uptime</span>
-          <div class="py-2 flex items-baseline gap-2 font-mono tabular-nums">
-            <span class="text-3xl font-bold text-[#0284C7] font-headline">99.98%</span>
-            <span class="text-xs text-[#0284C7] font-semibold">Zero Desyncs</span>
-          </div>
-          <p class="text-xs text-[#64748B]">Sub-40ms AGS grade transmission latency.</p>
-        </div>
-
-        <div class="card-depth-interactive rounded-2xl p-5 bg-white border-l-4 border-l-[#F59E0B] flex flex-col justify-between shadow-xs">
-          <span class="text-xs uppercase tracking-wider text-[#64748B] font-bold font-mono">Privacy Compliance</span>
-          <div class="py-2 flex items-baseline gap-2 font-mono tabular-nums">
-            <span class="text-3xl font-bold text-[#D97706] font-headline">Certified</span>
-            <span class="text-xs text-[#D97706] font-semibold">FERPA / COPPA</span>
-          </div>
-          <p class="text-xs text-[#64748B]">Data isolated strictly within district partition.</p>
-        </div>
-
-      </section>
-
-      <!-- Campus Image and Security Status Row -->
+  return adminDash({
+    icon: 'domain',
+    kicker: 'Admin console · RHS-9042',
+    title: 'Academic<br>governance',
+    sub: 'Teachers, sections, roster, and LTI keys. Moodle remains the SIS of record.',
+    cta: `<button class="admin-quick-nav hub-cta-light" data-target="teachers" type="button"><span class="material-symbols-outlined text-[16px]">school</span> Faculty (${facultyList.length})</button>`,
+    pair: [
+      { icon: 'school', title: 'Faculty', sub: 'This tenant', week: 'Now', body: hubMetric(String(facultyList.length)) },
+      { icon: 'sync', title: 'LTI uptime', sub: 'Handshake', week: 'Live', body: `${hubMetric('99.98%')}<p class="text-[11px] text-slate-400 mt-1">FERPA · 340 scholars</p>` },
+    ],
+    after: `
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        <div class="lg:col-span-7 card-depth-interactive rounded-3xl overflow-hidden bg-white border border-[#E2E8F0] flex flex-col justify-between shadow-xs">
-          <div class="relative h-48 sm:h-56 w-full">
-            <img
-              src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80"
-              alt="Riverside High Campus"
-              class="w-full h-full object-cover"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-            <div class="absolute bottom-4 left-4 text-white">
-              <div class="text-xs font-mono text-[#38BDF8] uppercase tracking-wider font-bold">Academic Year 2025–2026</div>
-              <h3 class="text-xl font-bold font-headline">Riverside High STEM Innovation Lab</h3>
+        <div class="lg:col-span-7 hub-card overflow-hidden flex flex-col justify-between">
+          <div class="hub-hero hub-hero-compact" style="min-height:180px;margin:-1.2rem -1.3rem 1rem">
+            <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80" alt="">
+            <div class="hub-hero-body" style="min-height:180px;max-width:80%">
+              <p class="hub-kicker">Academic year 2025–2026</p>
+              <h1>STEM lab</h1>
             </div>
           </div>
-
-          <div class="p-6 space-y-3">
-            <p class="text-xs sm:text-sm text-[#64748B] leading-relaxed">
-              The EdVidura platform connects seamlessly to Riverside High's student information system, providing students with interactive Cartesian sandboxes and teachers with automated gradebook telemetry.
-            </p>
-            <div class="flex items-center gap-3 pt-2">
-              <button class="admin-quick-nav btn-primary-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer" data-target="sections" type="button">
-                View Class Sections →
-              </button>
-              <button id="admin-export-btn" class="btn-secondary-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer" type="button">
-                Export District Roster
-              </button>
-            </div>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Lessons, quiz, and Ask Vidura launch from Moodle into this course tool.
+          </p>
+          <div class="flex items-center gap-3 pt-3">
+            <button class="admin-quick-nav hub-cta-dark" data-target="sections" type="button">View sections</button>
+            <button id="admin-export-btn" class="hub-cta-light" type="button" style="margin-top:0">Export roster</button>
           </div>
         </div>
 
-        <!-- LTI Security Credentials Deck -->
-        <div class="lg:col-span-5 card-depth-interactive rounded-3xl p-6 bg-gradient-to-br from-[#071E2D] to-[#0D2538] text-white border border-[#1E435E] flex flex-col justify-between gap-4 shadow-xs">
+        <div class="lg:col-span-5 hub-card flex flex-col justify-between gap-4">
           <div class="space-y-3">
-            <div class="flex items-center justify-between border-b border-white/15 pb-2 text-xs font-mono">
-              <span class="text-[#FF4757] font-bold">LTI 1.3 Advantage Handshake</span>
-              <span class="text-[#10B981] flex items-center gap-1">
-                <span class="w-2 h-2 rounded-full bg-[#10B981] animate-ping"></span>
-                <span>Active</span>
-              </span>
+            <div class="hub-card-head">
+              <span class="hub-ico"><span class="material-symbols-outlined text-[18px]">verified</span></span>
+              <div>
+                <h2>LTI 1.3 handshake</h2>
+                <p>Active · Moodle</p>
+              </div>
             </div>
-
-            <div class="space-y-2 text-xs font-mono">
+            <div class="space-y-2 text-xs">
               <div>
-                <div class="text-gray-400 text-[10px]">Client ID:</div>
-                <div class="text-white font-bold truncate">rhs-edvidura-prod-009842</div>
+                <div class="text-slate-400 text-[10px] font-bold">Client ID</div>
+                <div class="text-[#111827] font-bold truncate">rhs-edvidura-prod-009842</div>
               </div>
               <div>
-                <div class="text-gray-400 text-[10px]">Issuer URL:</div>
-                <div class="text-white font-bold truncate">https://moodle.riverside.edu</div>
+                <div class="text-slate-400 text-[10px] font-bold">Issuer</div>
+                <div class="text-[#111827] font-bold truncate">https://moodle.riverside.edu</div>
               </div>
               <div>
-                <div class="text-gray-400 text-[10px]">JWKS Keyset Endpoint:</div>
-                <div class="text-[#38BDF8] font-bold truncate">https://api.edvidura.org/.well-known/jwks.json</div>
+                <div class="text-slate-400 text-[10px] font-bold">JWKS</div>
+                <div class="text-[#111827] font-bold truncate">https://api.edvidura.org/.well-known/jwks.json</div>
               </div>
             </div>
           </div>
-
           <div class="space-y-2 pt-2">
-            <button id="test-handshake-btn" class="btn-primary-3d w-full py-2.5 rounded-xl text-xs font-bold text-center cursor-pointer" type="button">
-              Test Security Handshake
+            <button id="test-handshake-btn" class="hub-cta-dark w-full justify-center" type="button">
+              Test handshake
             </button>
-            <button class="admin-quick-nav w-full py-2 rounded-xl text-xs font-bold text-[#38BDF8] hover:text-white transition-colors text-center cursor-pointer" data-target="keys" type="button">
-              Configure LTI 1.3 Keyset →
+            <button class="admin-quick-nav hub-cta-light w-full justify-center" data-target="keys" type="button" style="margin-top:0">
+              Configure keys
             </button>
           </div>
         </div>
@@ -322,55 +196,26 @@ function renderGovernanceTab(): string {
           </div>
         </div>
       </section>
-
-    </div>
-  `;
+    `,
+  });
 }
 
 // =========================================================================
 // TAB 2: TEACHERS (FACULTY DIRECTORY)
 // =========================================================================
 function renderTeachersTab(): string {
-  return `
-    <!-- COLORFUL HERO BANNER: Faculty Directory -->
-    <section class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-      <div class="max-w-7xl mx-auto">
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#071E2D] via-[#0C2A3F] to-[#14324A] text-white p-6 sm:p-8 shadow-xl border border-[#1E435E] flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          
-          <div class="space-y-3 max-w-2xl">
-            <div class="flex items-center gap-2 text-xs font-mono">
-              <span class="px-2.5 py-0.5 rounded-full bg-[#10B981] text-white font-bold text-[10px] uppercase tracking-wider">Faculty Console</span>
-              <span class="text-gray-300">·</span>
-              <span class="text-[#38BDF8]">18 Appointed Educators</span>
-              <span class="text-gray-300">·</span>
-              <span>100% SSO Linked</span>
-            </div>
-            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white font-headline leading-tight">
-              Riverside High <span class="text-[#FF4757]">Faculty Directory</span>
-            </h1>
-            <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
-              Explore appointed department instructors, manage course delegations, monitor active student cohorts, and verify Google Workspace SSO federation credentials.
-            </p>
-          </div>
-
-          <!-- Quick Action Buttons -->
-          <div class="flex flex-wrap items-center gap-3 shrink-0">
-            <button id="add-teacher-btn" class="btn-primary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md" type="button">
-              <span class="material-symbols-outlined text-[16px]">person_add</span>
-              <span>Appoint Faculty</span>
-            </button>
-            <button id="sync-faculty-btn" class="btn-secondary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-white/10 hover:bg-white/20 text-white border-white/20" type="button">
-              <span class="material-symbols-outlined text-[16px]">sync</span>
-              <span>Sync with Google SSO</span>
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Teachers Surface -->
-    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16 flex flex-col gap-6">
+  return adminDash({
+    icon: 'school',
+    kicker: 'Faculty console',
+    title: 'Teachers<br>directory',
+    sub: 'Appointed instructors for this tenant. Moodle remains the SIS of record.',
+    img: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1800&q=80',
+    cta: `<button id="add-teacher-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">person_add</span> Appoint Faculty</button><button id="sync-faculty-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">sync</span> Sync SSO</button>`,
+    pair: [
+      { icon: 'school', title: 'Faculty', sub: 'This tenant', week: 'Now', body: hubMetric(String(facultyList.length)) },
+      { icon: 'sync', title: 'Google SSO', sub: 'Directory sync', week: 'Live', body: hubMetric('On') },
+    ],
+    after: `
       
       <!-- Filter and Search Toolbar -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-[#E2E8F0] shadow-xs">
@@ -380,12 +225,12 @@ function renderTeachersTab(): string {
             id="faculty-search-input"
             type="text"
             placeholder="Search faculty name, course, or email..."
-            class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] focus:bg-white focus:outline-hidden focus:border-[#FF4757] transition-all font-sans"
+            class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] focus:bg-white focus:outline-hidden focus:border-[#FE580D] transition-all font-sans"
           />
         </div>
 
         <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto no-scrollbar">
-          <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#071E2D] text-white">All (${facultyList.length})</button>
+          <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#111827] text-white">All (${facultyList.length})</button>
           <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] transition-colors">Mathematics (5)</button>
           <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] transition-colors">STEM &amp; Sciences (2)</button>
           <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] transition-colors">Computer Science (1)</button>
@@ -397,17 +242,17 @@ function renderTeachersTab(): string {
         ${facultyList
           .map(
             teacher => `
-          <div class="card-depth-interactive rounded-2xl bg-white border border-[#E2E8F0] p-5 flex flex-col justify-between gap-4 shadow-xs hover:border-[#FF4757]/40 transition-all">
+          <div class="card-depth-interactive rounded-2xl bg-white border border-[#E2E8F0] p-5 flex flex-col justify-between gap-4 shadow-xs hover:border-[#FE580D]/40 transition-all">
             <div class="space-y-3">
               <div class="flex items-start gap-3">
                 <img
                   src="${teacher.avatarUrl}"
                   alt="${teacher.name}"
-                  class="w-14 h-14 rounded-2xl object-cover ring-2 ring-[#FF4757]/30 shadow-sm shrink-0"
+                  class="w-14 h-14 rounded-2xl object-cover ring-2 ring-[#FE580D]/30 shadow-sm shrink-0"
                 />
                 <div class="overflow-hidden">
                   <h3 class="font-bold text-sm text-[#0F172A] font-headline truncate">${teacher.name}</h3>
-                  <p class="text-[11px] text-[#FF4757] font-semibold truncate">${teacher.department}</p>
+                  <p class="text-[11px] text-[#FE580D] font-semibold truncate">${teacher.department}</p>
                   <span class="inline-flex items-center gap-1 text-[10px] font-mono text-[#059669] bg-[#ECFDF5] px-2 py-0.5 rounded-full mt-1 border border-[#A7F3D0]">
                     <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
                     Google SSO Linked
@@ -443,7 +288,7 @@ function renderTeachersTab(): string {
               </div>
 
               <div class="flex items-center gap-1.5">
-                <button class="teacher-action-btn px-2.5 py-1.5 rounded-lg bg-[#071E2D] hover:bg-[#122E42] text-white text-[11px] font-bold cursor-pointer transition-colors" data-teacher-id="${teacher.id}" data-action="view-sections">
+                <button class="teacher-action-btn px-2.5 py-1.5 rounded-lg bg-[#111827] hover:bg-[#1F2937] text-white text-[11px] font-bold cursor-pointer transition-colors" data-teacher-id="${teacher.id}" data-action="view-sections">
                   Sections
                 </button>
                 <button class="teacher-action-btn p-1.5 rounded-lg bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#475569] cursor-pointer transition-colors" data-teacher-id="${teacher.id}" data-action="email">
@@ -457,51 +302,26 @@ function renderTeachersTab(): string {
           )
           .join('')}
       </div>
-
-    </div>
-  `;
+    `,
+  });
 }
 
 // =========================================================================
 // TAB 3: SECTIONS (COURSE COHORTS)
 // =========================================================================
 function renderSectionsTab(): string {
-  return `
-    <!-- COLORFUL HERO BANNER: Class Sections -->
-    <section class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-      <div class="max-w-7xl mx-auto">
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#071E2D] via-[#0C2A3F] to-[#122E42] text-white p-6 sm:p-8 shadow-xl border border-[#1E435E] flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          
-          <div class="space-y-3 max-w-2xl">
-            <div class="flex items-center gap-2 text-xs font-mono">
-              <span class="px-2.5 py-0.5 rounded-full bg-[#0284C7] text-white font-bold text-[10px] uppercase tracking-wider">Cohorts &amp; Schedules</span>
-              <span class="text-gray-300">·</span>
-              <span class="text-[#38BDF8]">8 Active Sections</span>
-              <span class="text-gray-300">·</span>
-              <span>340 Total Enrolled</span>
-            </div>
-            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white font-headline leading-tight">
-              Active Course <span class="text-[#FF4757]">Sections &amp; Cohorts</span>
-            </h1>
-            <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
-              District periods, room allocations, instructor assignments, and live Moodle courseware handshake status.
-            </p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-3 shrink-0">
-            <button id="add-section-btn" class="btn-primary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md" type="button">
-              <span class="material-symbols-outlined text-[16px]">add_circle</span>
-              <span>New Class Section</span>
-            </button>
-            <button id="sync-sections-btn" class="btn-secondary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-white/10 hover:bg-white/20 text-white border-white/20" type="button">
-              <span class="material-symbols-outlined text-[16px]">sync</span>
-              <span>Sync All to SIS</span>
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </section>
+  return adminDash({
+    icon: 'class',
+    kicker: 'Cohorts',
+    title: 'Active<br>sections',
+    sub: 'Periods and instructor assignments. Moodle remains the SIS of record.',
+    img: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=1800&q=80',
+    cta: `<button id="add-section-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">add_circle</span> New class section</button><button id="sync-sections-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">sync</span> Sync to SIS</button>`,
+    pair: [
+      { icon: 'class', title: 'Sections', sub: 'This tenant', week: 'Now', body: hubMetric(String(sectionsList.length)) },
+      { icon: 'groups', title: 'SIS', sub: 'Moodle of record', week: 'Live', body: hubMetric('Linked') },
+    ],
+    after: `
 
     <!-- Sections Grid -->
     <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16 flex flex-col gap-6">
@@ -575,14 +395,14 @@ function renderSectionsTab(): string {
                   <span class="font-bold text-[#0F172A]">${sec.enrolled} / ${sec.maxSeats}</span>
                 </div>
                 <div class="w-full bg-[#F1F5F9] h-2 rounded-full overflow-hidden">
-                  <div class="h-full bg-gradient-to-r from-[#0284C7] to-[#FF4757] rounded-full" style="width: ${(sec.enrolled / sec.maxSeats) * 100}%"></div>
+                  <div class="h-full bg-gradient-to-r from-[#0284C7] to-[#FE580D] rounded-full" style="width: ${(sec.enrolled / sec.maxSeats) * 100}%"></div>
                 </div>
               </div>
             </div>
 
             <!-- Card Actions -->
             <div class="pt-3 border-t border-[#F1F5F9] flex items-center justify-between gap-2">
-              <button class="section-action-btn flex-1 py-1.5 rounded-xl bg-[#071E2D] hover:bg-[#122E42] text-white text-xs font-bold text-center cursor-pointer transition-colors" data-section-id="${sec.id}" data-action="gradebook">
+              <button class="section-action-btn flex-1 py-1.5 rounded-xl bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-bold text-center cursor-pointer transition-colors" data-section-id="${sec.id}" data-action="gradebook">
                 Gradebook
               </button>
               <button class="section-action-btn px-3 py-1.5 rounded-xl bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#334155] text-xs font-bold cursor-pointer transition-colors" data-section-id="${sec.id}" data-action="roster">
@@ -595,55 +415,26 @@ function renderSectionsTab(): string {
           )
           .join('')}
       </div>
-
-    </div>
-  `;
+    `,
+  });
 }
 
 // =========================================================================
 // TAB 4: ROSTER VAULT (SCHOLARS DIRECTORY)
 // =========================================================================
 function renderRosterTab(): string {
-  return `
-    <!-- COLORFUL HERO BANNER: Scholar Roster Vault -->
-    <section class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-      <div class="max-w-7xl mx-auto">
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#071E2D] via-[#0C2A3F] to-[#122E42] text-white p-6 sm:p-8 shadow-xl border border-[#1E435E] flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          
-          <div class="space-y-3 max-w-2xl">
-            <div class="flex items-center gap-2 text-xs font-mono">
-              <span class="px-2.5 py-0.5 rounded-full bg-[#FF4757] text-white font-bold text-[10px] uppercase tracking-wider">FERPA Vault</span>
-              <span class="text-gray-300">·</span>
-              <span class="text-[#38BDF8]">340 District Scholars</span>
-              <span class="text-gray-300">·</span>
-              <span>100% Cryptographic Match</span>
-            </div>
-            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white font-headline leading-tight">
-              District Scholar <span class="text-[#FF4757]">Roster Vault</span>
-            </h1>
-            <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
-              FERPA-certified student master database with cryptographic Moodle LTI 1.3 token identifiers, gradebook submission histories, and guardian contacts.
-            </p>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex flex-wrap items-center gap-3 shrink-0">
-            <button id="roster-export-btn" class="btn-primary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md" type="button">
-              <span class="material-symbols-outlined text-[16px]">download</span>
-              <span>Export SIS CSV</span>
-            </button>
-            <button id="roster-sync-all-btn" class="btn-secondary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-white/10 hover:bg-white/20 text-white border-white/20" type="button">
-              <span class="material-symbols-outlined text-[16px]">sync</span>
-              <span>Force LTI Handshake</span>
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Roster Vault Table -->
-    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16 flex flex-col gap-6">
+  return adminDash({
+    icon: 'groups',
+    kicker: 'Roster',
+    title: 'Scholar<br>vault',
+    sub: 'Class roster for this tenant. Official SIS records stay in Moodle.',
+    img: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1800&q=80',
+    cta: `<button id="roster-export-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">download</span> Export CSV</button><button id="roster-sync-all-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">sync</span> LTI handshake</button>`,
+    pair: [
+      { icon: 'groups', title: 'Scholars', sub: 'This tenant', week: 'Now', body: hubMetric(String(studentsList.length)) },
+      { icon: 'sync', title: 'SIS', sub: 'Moodle of record', week: 'Live', body: hubMetric('Linked') },
+    ],
+    after: `
       
       <!-- Filter and Search Strip -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-[#E2E8F0] shadow-xs">
@@ -653,12 +444,12 @@ function renderRosterTab(): string {
             id="roster-search-input"
             type="text"
             placeholder="Search scholar name, email, or student ID..."
-            class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] focus:bg-white focus:outline-hidden focus:border-[#FF4757] transition-all font-sans"
+            class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] focus:bg-white focus:outline-hidden focus:border-[#FE580D] transition-all font-sans"
           />
         </div>
 
         <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto no-scrollbar">
-          <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#071E2D] text-white">All (${studentsList.length})</button>
+          <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#111827] text-white">All (${studentsList.length})</button>
           <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] transition-colors">Synced (10)</button>
           <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] transition-colors">Needs Review (1)</button>
           <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] transition-colors">Queued (1)</button>
@@ -720,7 +511,7 @@ function renderRosterTab(): string {
                   </td>
                   <td class="py-3.5 px-4 text-right">
                     <div class="inline-flex items-center gap-1">
-                      <button class="student-row-btn px-2.5 py-1 rounded-lg bg-[#071E2D] hover:bg-[#122E42] text-white text-[11px] font-bold cursor-pointer transition-colors" data-student-id="${student.id}" data-action="inspect">
+                      <button class="student-row-btn px-2.5 py-1 rounded-lg bg-[#111827] hover:bg-[#1F2937] text-white text-[11px] font-bold cursor-pointer transition-colors" data-student-id="${student.id}" data-action="inspect">
                         Inspect
                       </button>
                       <button class="student-row-btn px-2.5 py-1 rounded-lg bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#334155] text-[11px] font-bold cursor-pointer transition-colors" data-student-id="${student.id}" data-action="sync">
@@ -736,54 +527,26 @@ function renderRosterTab(): string {
           </table>
         </div>
       </div>
-
-    </div>
-  `;
+    `,
+  });
 }
 
 // =========================================================================
 // TAB 5: LTI 1.3 KEYS & ENTERPRISE SECURITY
 // =========================================================================
 function renderKeysTab(): string {
-  return `
-    <!-- COLORFUL HERO BANNER: LTI 1.3 Key Management -->
-    <section class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-      <div class="max-w-7xl mx-auto">
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#071E2D] via-[#0C2A3F] to-[#122E42] text-white p-6 sm:p-8 shadow-xl border border-[#1E435E] flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          
-          <div class="space-y-3 max-w-2xl">
-            <div class="flex items-center gap-2 text-xs font-mono">
-              <span class="px-2.5 py-0.5 rounded-full bg-[#10B981] text-white font-bold text-[10px] uppercase tracking-wider">Enterprise Cryptography</span>
-              <span class="text-gray-300">·</span>
-              <span class="text-[#38BDF8]">RSA 2048-bit SHA-256</span>
-              <span class="text-gray-300">·</span>
-              <span>100% Verified</span>
-            </div>
-            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white font-headline leading-tight">
-              LTI 1.3 Advantage <span class="text-[#FF4757]">Keyset &amp; Handshake</span>
-            </h1>
-            <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
-              Cryptographic keystore for IMS Global LTI 1.3 Advantage Core. Manage public JWKS endpoints, rotate RSA tokens, and run live round-trip handshakes with Moodle 4.3.
-            </p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-3 shrink-0">
-            <button id="live-test-handshake-btn" class="btn-primary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md" type="button">
-              <span class="material-symbols-outlined text-[16px]">verified</span>
-              <span>Test Handshake Now</span>
-            </button>
-            <button id="rotate-keys-btn" class="btn-secondary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-white/10 hover:bg-white/20 text-white border-white/20" type="button">
-              <span class="material-symbols-outlined text-[16px]">lock_reset</span>
-              <span>Rotate RSA Keyset</span>
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Keys Console Grid -->
-    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16 flex flex-col gap-6">
+  return adminDash({
+    icon: 'key',
+    kicker: 'LTI 1.3 Advantage',
+    title: 'Keys &<br>handshake',
+    sub: 'JWKS and RSA tokens for this tenant’s Moodle launch.',
+    img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1800&q=80',
+    cta: `<button id="live-test-handshake-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">verified</span> Test handshake</button><button id="rotate-keys-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">lock_reset</span> Rotate keys</button>`,
+    pair: [
+      { icon: 'verified', title: 'Handshake', sub: 'Moodle 4.3', week: 'Live', body: `${hubMetric('22ms')}<p class="text-[11px] text-slate-400 mt-1">Round-trip latency</p>` },
+      { icon: 'key', title: 'Keyset', sub: 'RSA-SHA256', week: 'Now', body: hubMetric('Active') },
+    ],
+    after: `
       
       <!-- Handshake Status Banner -->
       <div id="handshake-status-banner" class="p-4 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-between gap-4">
@@ -847,16 +610,18 @@ function renderKeysTab(): string {
         </div>
 
         <!-- Right: JWKS JSON Viewer -->
-        <div class="lg:col-span-5 card-depth-interactive rounded-3xl p-6 bg-[#071E2D] text-white border border-[#1E435E] flex flex-col justify-between gap-4 shadow-xs">
+        <div class="lg:col-span-5 hub-card flex flex-col justify-between gap-4">
           <div class="space-y-2">
-            <div class="flex items-center justify-between border-b border-white/15 pb-2 text-xs font-mono">
-              <span class="text-[#38BDF8] font-bold">Public JWKS Keyset</span>
-              <button id="copy-jwks-btn" class="text-xs text-[#FF4757] hover:underline cursor-pointer font-bold">
-                Copy JSON
-              </button>
+            <div class="hub-card-head">
+              <span class="hub-ico"><span class="material-symbols-outlined text-[18px]">data_object</span></span>
+              <div>
+                <h2>Public JWKS</h2>
+                <p>Keyset for Moodle</p>
+              </div>
+              <button id="copy-jwks-btn" class="hub-week" type="button">Copy JSON</button>
             </div>
 
-            <pre class="bg-[#051522] p-3.5 rounded-xl text-[11px] font-mono text-[#7DD3FC] overflow-x-auto leading-relaxed max-h-64 border border-[#122E42]">
+            <pre class="bg-[#051522] p-3.5 rounded-xl text-[11px] font-mono text-[#7DD3FC] overflow-x-auto leading-relaxed max-h-64 border border-[#1F2937]">
 {
   "keys": [
     {
@@ -879,9 +644,8 @@ function renderKeysTab(): string {
         </div>
 
       </div>
-
-    </div>
-  `;
+    `,
+  });
 }
 
 // =========================================================================
@@ -890,45 +654,18 @@ function renderKeysTab(): string {
 function renderLmsIntegrationsTab(): string {
   const activeLms = state.activeLmsPlatform || 'moodle';
 
-  return `
-    <!-- COLORFUL HERO BANNER: LMS Integrations & LTI Launch -->
-    <section class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-      <div class="max-w-7xl mx-auto">
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#071E2D] via-[#0C2A3F] to-[#122E42] text-white p-6 sm:p-8 shadow-xl border border-[#1E435E] flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          
-          <div class="space-y-3 max-w-2xl">
-            <div class="flex items-center gap-2 text-xs font-mono">
-              <span class="px-2.5 py-0.5 rounded-full bg-[#10B981] text-white font-bold text-[10px] uppercase tracking-wider">Module 3 Certified</span>
-              <span class="text-gray-300">·</span>
-              <span class="text-[#38BDF8]">LTI Advantage 1.3 &amp; AGS 2.0</span>
-              <span class="text-gray-300">·</span>
-              <span>Multi-LMS Broker</span>
-            </div>
-            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white font-headline leading-tight">
-              LMS Connection Management &amp; <span class="text-[#FF4757]">LTI Launch</span>
-            </h1>
-            <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
-              Bi-directional integration bridge for Moodle 4.3 and Canvas LMS. Configure OIDC authentication, verify assignment grade passback (AGS), inspect signed JWT claims, and simulate district LTI launches.
-            </p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-3 shrink-0">
-            <button id="add-lms-provider-btn" class="btn-secondary-3d px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-white/10 hover:bg-white/20 text-white border-white/20" type="button">
-              <span class="material-symbols-outlined text-[16px]">add_link</span>
-              <span>Register LMS Provider</span>
-            </button>
-            <button id="test-all-lms-btn" class="btn-primary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md" type="button">
-              <span class="material-symbols-outlined text-[16px]">speed</span>
-              <span>Ping All Endpoints</span>
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Main LMS Content Body -->
-    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16 flex flex-col gap-8">
+  return adminDash({
+    icon: 'hub',
+    kicker: 'Integrations',
+    title: 'LMS<br>connections',
+    sub: 'Moodle and Canvas launch plus grade passback for this tenant.',
+    img: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1800&q=80',
+    cta: `<button id="add-lms-provider-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">add_link</span> Register LMS</button><button id="test-all-lms-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">speed</span> Ping endpoints</button>`,
+    pair: [
+      { icon: 'hub', title: 'Gateways', sub: 'Configured LMS', week: 'Now', body: hubMetric(String(lmsConnectionsList.length)) },
+      { icon: 'sync', title: 'Passback', sub: 'AGS v2.0', week: 'Live', body: hubMetric('On') },
+    ],
+    after: `
       
       <!-- Connection Management Cards (Moodle & Canvas) -->
       <section class="space-y-4">
@@ -945,7 +682,7 @@ function renderLmsIntegrationsTab(): string {
             const isMoodle = conn.platform === 'moodle';
             const isCanvas = conn.platform === 'canvas';
             const iconLetter = isMoodle ? 'M' : isCanvas ? 'C' : 'S';
-            const badgeBg = isMoodle ? 'bg-[#FFF0F3] text-[#FF4757]' : isCanvas ? 'bg-[#FFE4E6] text-[#E11D48]' : 'bg-[#EBF4FC] text-[#0284C7]';
+            const badgeBg = isMoodle ? 'bg-[#FFF7ED] text-[#FE580D]' : isCanvas ? 'bg-[#FFE4E6] text-[#E11D48]' : 'bg-[#EBF4FC] text-[#0284C7]';
 
             return `
               <div class="card-depth-interactive rounded-3xl p-6 bg-white border border-[#E2E8F0] space-y-4">
@@ -1050,7 +787,7 @@ function renderLmsIntegrationsTab(): string {
         <div class="card-depth-interactive rounded-3xl p-6 bg-gradient-to-r from-[#F8FAFC] to-white border border-[#CBD5E1] space-y-3">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-[#FF4757] text-[20px]">menu_book</span>
+              <span class="material-symbols-outlined text-[#FE580D] text-[20px]">menu_book</span>
               <h3 class="text-sm font-bold text-[#0F172A] font-headline">LMS Integration Configuration Guides</h3>
             </div>
             <span class="text-xs font-mono text-[#64748B]">LTI Advantage 1.3 Whitepapers</span>
@@ -1059,7 +796,7 @@ function renderLmsIntegrationsTab(): string {
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div class="p-3 bg-white rounded-xl border border-[#E2E8F0] space-y-1">
               <div class="font-bold text-[#0F172A] flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-[#FF4757]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#FE580D]"></span>
                 <span>Moodle 4.3 Setup</span>
               </div>
               <p class="text-[11px] text-[#64748B] leading-relaxed">Add External Tool via Site Admin &gt; Plugins &gt; LTI. Paste Client ID and Keyset URL.</p>
@@ -1086,7 +823,7 @@ function renderLmsIntegrationsTab(): string {
       <section class="card-depth-interactive rounded-3xl p-6 sm:p-7 bg-white border border-[#CBD5E1] space-y-5">
         <div class="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-[#FF4757] text-[22px]">security</span>
+            <span class="material-symbols-outlined text-[#FE580D] text-[22px]">security</span>
             <div>
               <h3 class="text-base font-bold text-[#0F172A] font-headline">LTI 1.3 Advantage Launch Simulator &amp; Token Inspector</h3>
               <span class="text-xs text-[#64748B]">Verify signed RS256 OpenID Connect (OIDC) JWT claims and AGS endpoints</span>
@@ -1134,7 +871,7 @@ function renderLmsIntegrationsTab(): string {
           <!-- Right: Decoded JWT Claims Preview (7 cols) -->
           <div class="lg:col-span-7 space-y-1">
             <span class="text-xs text-[#64748B] font-mono font-bold block">Decoded id_token JWT Header &amp; Payload (RS256):</span>
-            <pre class="p-4 rounded-2xl bg-[#071E2D] text-[#38BDF8] font-mono text-[11px] overflow-x-auto leading-relaxed border border-[#1E435E] h-64">${JSON.stringify({
+            <pre class="p-4 rounded-2xl bg-[#111827] text-[#38BDF8] font-mono text-[11px] overflow-x-auto leading-relaxed border border-[#334155] h-64">${JSON.stringify({
               header: {
                 typ: 'JWT',
                 alg: 'RS256',
@@ -1210,9 +947,8 @@ function renderLmsIntegrationsTab(): string {
           </table>
         </div>
       </section>
-
-    </div>
-  `;
+    `,
+  });
 }
 
 // =========================================================================

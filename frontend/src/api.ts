@@ -4,6 +4,7 @@
  */
 
 const TOKEN_KEY = 'edvidura_token';
+const DEMO_KEY = 'edvidura_demo';
 
 export type AppEnvelope<T> = {
   ok: boolean;
@@ -29,15 +30,34 @@ export class AppApiError extends Error {
 export function captureTokenFromUrl(): string {
   const params = new URLSearchParams(window.location.search);
   const fromQuery = (params.get('token') || '').trim();
+  const demoQuery = params.get('demo') === '1';
+  let dirty = false;
+
   if (fromQuery) {
     sessionStorage.setItem(TOKEN_KEY, fromQuery);
+    sessionStorage.removeItem(DEMO_KEY);
     params.delete('token');
+    dirty = true;
+  } else if (demoQuery) {
+    sessionStorage.setItem(DEMO_KEY, '1');
+    sessionStorage.removeItem(TOKEN_KEY);
+    params.delete('demo');
+    dirty = true;
+  }
+
+  if (dirty) {
     const qs = params.toString();
     const next = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`;
     window.history.replaceState({}, '', next);
-    return fromQuery;
   }
+
+  if (fromQuery) return fromQuery;
+  if (demoQuery || sessionStorage.getItem(DEMO_KEY) === '1') return '';
   return sessionStorage.getItem(TOKEN_KEY) || '';
+}
+
+export function isDemoMode(): boolean {
+  return sessionStorage.getItem(DEMO_KEY) === '1' && !getToken();
 }
 
 export function getToken(): string {

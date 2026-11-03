@@ -19,14 +19,19 @@ DEFAULT_LIMITS: list[tuple[str, int, int]] = [
     ("/lti/launch", 120, 60),
     ("/lti/register", 30, 60),
     ("/onboard", 40, 60),
+    ("/ops/login", 20, 60),
     ("/auth/login", 30, 60),
+    ("/auth/callback", 30, 60),
     ("/admin/", 60, 60),
+    ("/dev/", 30, 60),
     ("/learn/coach", 40, 60),  # LLM cost / abuse
     ("/quiz/submit", 30, 60),
     ("/quiz", 60, 60),
     ("/api/v1/app/coach", 40, 60),
     ("/api/v1/app/quiz", 60, 60),
+    ("/api/v1/sme/", 30, 60),
     ("/api/v1/app/", 120, 60),
+    ("/webhooks/etims", 40, 60),
     ("/api/v1/", 60, 60),
 ]
 
@@ -55,10 +60,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return None
 
     def _client_key(self, request: Request, prefix: str) -> str:
+        # Prefer the TCP peer (proxy). Do not trust the left-most XFF hop —
+        # clients can rotate it to bypass limits. If XFF is present (edge
+        # proxy), use the right-most hop (closest to us).
+        peer = request.client.host if request.client else ""
         fwd = request.headers.get("x-forwarded-for") or ""
-        ip = (fwd.split(",")[0].strip() if fwd else "") or (
-            request.client.host if request.client else "unknown"
-        )
+        hops = [h.strip() for h in fwd.split(",") if h.strip()]
+        ip = (hops[-1] if hops else "") or peer or "unknown"
         return f"rl:{prefix}:{ip}"
 
     async def dispatch(self, request: Request, call_next) -> Response:

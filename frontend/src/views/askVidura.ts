@@ -8,206 +8,106 @@ import {
   IngestedDocument
 } from '../state';
 import { quizQuestions, QuizQuestion } from './quiz';
-import { classLabel, displayName, isGovernment, sendCoachQuestion } from '../boot';
+import { classLabel, displayName, escapeHtml, isGovernment, sendCoachQuestion } from '../boot';
 import { APP_LANGUAGES, getLocale, setLocale } from '../i18n';
 import { listenOnce, speak } from '../voice';
+import { hubBar, studioCover } from '../components/hub';
 
 export function renderAskVidura(): string {
+  const prompts = isGovernment()
+    ? [
+        { prompt: 'ధర్మం అంటే ఏమిటి?', label: 'What is dharma?' },
+        { prompt: 'How should we honour parents and teachers?', label: 'Parents and guru' },
+        { prompt: 'Why should we protect nature?', label: 'Care for nature' },
+      ]
+    : [
+        { prompt: 'How do I find slope when given two coordinate points?', label: 'Slope from two points' },
+        { prompt: 'Why is the product of perpendicular slopes equal to -1?', label: 'Perpendicular slopes' },
+        { prompt: 'How do I convert standard form 2x - 5y = 20 to slope-intercept?', label: 'Convert 2x − 5y = 20' },
+      ];
+
+  const sourceCovers = [
+    'https://images.unsplash.com/photo-1456513080800-7d113dc8c4b2?auto=format&fit=crop&w=640&q=70',
+    'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=640&q=70',
+    'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=640&q=70',
+  ];
+
   return `
-    <div class="flex flex-col w-full bg-[#FAFBFC] flex-1 min-h-[calc(100vh-4rem)] relative">
-      
-      <!-- Top Scope & Policy Bar -->
-      <section class="w-full bg-white border-b border-[#E2E8F0] px-4 sm:px-6 lg:px-8 py-3.5">
-        <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div class="flex items-center gap-2 text-[#0F172A] flex-wrap font-mono tabular-nums">
-            <span class="font-bold text-[#FF4757] font-sans flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-[#FF4757] animate-pulse"></span>
-              Vidura Socratic SME Node
-            </span>
-            <span class="text-[#CBD5E1]">/</span>
-            <span class="text-[#64748B] font-sans">${classLabel()}</span>
-            <span class="text-[#CBD5E1]">/</span>
-            <span class="text-[#10B981] font-bold">FERPA &amp; COPPA Protected</span>
-          </div>
-
-          <!-- Actions & Controls -->
-          <div class="flex items-center gap-3">
-            <!-- Knowledge Base & RAG Index Button -->
-            <button
-              id="open-ingestion-btn"
-              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#071E2D] hover:bg-[#0D2538] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-            >
-              <span class="material-symbols-outlined text-[16px] text-[#FF4757]">folder_shared</span>
-              <span>Course Knowledge Base (${ingestedDocsList.length})</span>
-            </button>
-
-            <!-- Language Picker (same catalog as header) -->
-            <div class="flex items-center gap-1.5 text-xs text-[#64748B]" data-no-i18n>
-              <span class="material-symbols-outlined text-[15px]">translate</span>
-              <select id="chat-lang-select" data-no-i18n class="bg-[#FAFBFC] border border-[#CBD5E1] rounded-lg px-2.5 py-1 text-xs text-[#0F172A] outline-none cursor-pointer max-w-[14rem]">
-                ${APP_LANGUAGES.map(l => `<option value="${l.code}" ${getLocale() === l.code ? 'selected' : ''}>${l.native} · ${l.state}</option>`).join('')}
-              </select>
+    <div class="hub-page">
+      <div class="studio-grid">
+        <div class="studio-main flex flex-col gap-5 min-h-[32rem]">
+          ${hubBar({
+            kicker: escapeHtml(classLabel()),
+            title: 'Ask Vidura',
+            meta: 'Hints from the handbook — not quiz answers.',
+            actions: `
+              <button id="open-ingestion-btn" class="hub-cta-light" type="button">Sources</button>
+              <label class="hub-cta-light" data-no-i18n>
+                <select id="chat-lang-select" data-no-i18n class="bg-transparent border-0 text-xs outline-none cursor-pointer">
+                  ${APP_LANGUAGES.map(l => `<option value="${l.code}" ${getLocale() === l.code ? 'selected' : ''}>${l.native}</option>`).join('')}
+                </select>
+              </label>`,
+          })}
+          <section class="hub-card flex-1 min-h-[22rem] flex flex-col gap-6" id="chat-messages-container">${state.chatMessages.map(m => renderChatMessage(m)).join('')}</section>
+          <div class="hub-card flex flex-col gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="suggestion-chips-bar">
+              ${prompts.map(p => `<button class="chip-btn studio-prompt" type="button" data-prompt="${p.prompt}"><strong>${p.label}</strong><span>Ask this</span></button>`).join('')}
             </div>
-
-            <button id="toggle-citations-btn" class="flex items-center gap-1 text-[#071E2D] hover:text-[#FF4757] text-xs font-bold cursor-pointer transition-colors">
-              <span class="material-symbols-outlined text-[16px] text-[#FF4757]">library_books</span>
-              <span>${state.citationsOpen ? 'Hide Citations' : 'Show Citations'}</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- COLORFUL HERO BANNER: Ask Vidura Socratic Node -->
-      <section class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-        <div class="max-w-5xl mx-auto">
-          <div class="hero-navy-card relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6" style="background-color: #071E2D; background-image: linear-gradient(135deg, #071E2D 0%, #0A2540 50%, #0D2E4A 100%);">
-            
-            <!-- Left Info -->
-            <div class="space-y-3 max-w-xl">
-              <div class="flex items-center gap-2 text-xs font-mono">
-                <span class="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#FF5B6B] to-[#FF4757] text-white font-bold text-[10px] uppercase tracking-wider">SME RAG Chatbot</span>
-                <span class="text-gray-400">·</span>
-                <span class="text-[#38BDF8] font-bold">Grounded in ${ingestedDocsList.reduce((acc, d) => acc + d.chunkCount, 0)} Vectors</span>
-                <span class="text-gray-400">·</span>
-                <span class="text-[#10B981] font-bold">Active 24/7</span>
-              </div>
-              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white font-headline leading-tight">
-                Ask Vidura: <span class="text-[#FF4757]">Interactive Socratic STEM Guide</span>
-              </h1>
-              <p class="text-xs sm:text-sm text-gray-200 leading-relaxed font-sans">
-                Stuck on a slope quotient or coordinate intersection? Ask Vidura questions in plain language to receive step-by-step mathematical derivations grounded directly in your syllabus and ingested course manuals.
-              </p>
-            </div>
-
-            <!-- Right Visual: Quick Ingestion Stats -->
-            <div class="relative flex flex-col sm:flex-row items-center gap-4 bg-[#0A2540]/90 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-white/20 shrink-0 shadow-lg">
-              <img
-                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=300&q=80"
-                alt="Students using AI Math Study Guide"
-                class="w-16 h-16 rounded-xl object-cover ring-2 ring-[#FF4757]"
-                onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=300&q=80';"
+            <div class="flex items-center gap-2 sm:gap-3">
+              <button
+                id="voice-toggle-btn"
+                class="w-11 h-11 rounded-2xl flex items-center justify-center border transition-all cursor-pointer ${
+                  state.isVoiceRecording
+                    ? 'bg-[#FE580D] text-white border-[#E24E0B] animate-pulse shadow-md'
+                    : 'bg-[#F8FAFC] text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] border-[#CBD5E1]'
+                }"
+                title="Voice dictation simulation"
+                type="button"
+              >
+                <span class="material-symbols-outlined text-[20px]">${state.isVoiceRecording ? 'mic' : 'mic_none'}</span>
+              </button>
+              <input
+                id="chat-user-input"
+                type="text"
+                placeholder="${isGovernment() ? 'Ask about this pravachanam…' : 'Ask about slope or intercepts…'}"
+                class="flex-1 min-h-[46px] px-4 rounded-2xl bg-[#F8FAFC] border border-[#CBD5E1] text-[#0F172A] text-sm outline-none focus:border-[#FE580D] focus:bg-white transition-all placeholder:text-[#94A3B8]"
               />
-              <div class="flex flex-col text-left">
-                <div class="text-xs font-bold text-white flex items-center gap-1.5">
-                  <span>RAG Vector Index</span>
-                  <span class="px-1.5 py-0.5 rounded bg-[#10B981]/20 text-[#10B981] text-[10px] font-mono font-bold">Live</span>
-                </div>
-                <div class="text-[11px] text-[#38BDF8] font-mono mt-0.5">3 Documents · 134 Chunks</div>
-                <button
-                  id="hero-open-kb-btn"
-                  class="mt-2 text-[11px] text-[#FF4757] hover:text-[#FF6B7A] font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[14px]">tune</span>
-                  <span>Manage Knowledge Base &amp; Index</span>
-                </button>
-              </div>
+              <button id="send-chat-btn" class="hub-cta-dark h-11 px-5 shrink-0" type="button">
+                Ask
+                <span class="material-symbols-outlined text-[16px]">send</span>
+              </button>
             </div>
-
           </div>
         </div>
-      </section>
-
-      <!-- Main Chat Area -->
-      <main class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col justify-between">
-        
-        <!-- Messages Stream -->
-        <div class="flex flex-col gap-6 mb-8" id="chat-messages-container">
-          ${state.chatMessages.map(m => renderChatMessage(m)).join('')}
-        </div>
-
-        <!-- Sticky Floating Prompt Box -->
-        <div class="sticky bottom-4 z-30 w-full bg-white/95 backdrop-blur-md rounded-3xl border border-[#E2E8F0] shadow-2xl p-4 sm:p-5 flex flex-col gap-3.5">
-          
-          <!-- Suggested Inquiries Quick Buttons -->
-          <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar" id="suggestion-chips-bar">
-            <span class="text-[#0F172A] uppercase tracking-wider font-bold whitespace-nowrap text-[11px] font-mono mr-1">Suggested Inquiries:</span>
-            
-            ${
-              isGovernment()
-                ? `
-            <button class="chip-btn px-3.5 py-1.5 rounded-xl bg-[#FFF0F3] hover:bg-[#FFE0E6] text-[#FF4757] border border-[#FFCCD5] whitespace-nowrap transition-colors cursor-pointer text-xs font-bold flex items-center gap-1.5 shadow-2xs" data-prompt="ధర్మం అంటే ఏమిటి?">
-              <span class="material-symbols-outlined text-[15px]">menu_book</span>
-              <span>What is dharma?</span>
-            </button>
-            <button class="chip-btn px-3.5 py-1.5 rounded-xl bg-[#EBF4FC] hover:bg-[#D9EDFB] text-[#0284C7] border border-[#BAE6FD] whitespace-nowrap transition-colors cursor-pointer text-xs font-bold flex items-center gap-1.5 shadow-2xs" data-prompt="How should we honour parents and teachers?">
-              <span class="material-symbols-outlined text-[15px]">family_restroom</span>
-              <span>Parents and guru</span>
-            </button>
-            <button class="chip-btn px-3.5 py-1.5 rounded-xl bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#059669] border border-[#A7F3D0] whitespace-nowrap transition-colors cursor-pointer text-xs font-bold flex items-center gap-1.5 shadow-2xs" data-prompt="Why should we protect nature?">
-              <span class="material-symbols-outlined text-[15px]">park</span>
-              <span>Care for nature</span>
-            </button>`
-                : `
-            <button class="chip-btn px-3.5 py-1.5 rounded-xl bg-[#FFF0F3] hover:bg-[#FFE0E6] text-[#FF4757] border border-[#FFCCD5] whitespace-nowrap transition-colors cursor-pointer text-xs font-bold flex items-center gap-1.5 shadow-2xs" data-prompt="How do I find slope when given two coordinate points?">
-              <span class="material-symbols-outlined text-[15px]">ssid_chart</span>
-              <span>Find slope from two points</span>
-            </button>
-
-            <button class="chip-btn px-3.5 py-1.5 rounded-xl bg-[#EBF4FC] hover:bg-[#D9EDFB] text-[#0284C7] border border-[#BAE6FD] whitespace-nowrap transition-colors cursor-pointer text-xs font-bold flex items-center gap-1.5 shadow-2xs" data-prompt="Why is the product of perpendicular slopes equal to -1?">
-              <span class="material-symbols-outlined text-[15px]">straighten</span>
-              <span>Perpendicular slope proof</span>
-            </button>
-
-            <button class="chip-btn px-3.5 py-1.5 rounded-xl bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#059669] border border-[#A7F3D0] whitespace-nowrap transition-colors cursor-pointer text-xs font-bold flex items-center gap-1.5 shadow-2xs" data-prompt="How do I convert standard form 2x - 5y = 20 to slope-intercept?">
-              <span class="material-symbols-outlined text-[15px]">calculate</span>
-              <span>Convert 2x - 5y = 20</span>
-            </button>`
-            }
-          </div>
-
-          <!-- Input Bar -->
-          <div class="flex items-center gap-2 sm:gap-3">
-            <button
-              id="voice-toggle-btn"
-              class="w-11 h-11 rounded-2xl flex items-center justify-center border transition-all cursor-pointer ${
-                state.isVoiceRecording
-                  ? 'bg-[#FF4757] text-white border-[#E83D4D] animate-pulse shadow-md'
-                  : 'bg-[#F8FAFC] text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] border-[#CBD5E1]'
-              }"
-              title="Voice dictation simulation"
-              type="button"
-            >
-              <span class="material-symbols-outlined text-[20px]">${state.isVoiceRecording ? 'mic' : 'mic_none'}</span>
-            </button>
-
-            <input
-              id="chat-user-input"
-              type="text"
-              placeholder="${isGovernment() ? 'Ask about this pravachanam (dharma, parents, nature)…' : 'Ask anything about Algebra I (e.g. slope, intercepts, equation conversion)...'}"
-              class="flex-1 min-h-[46px] px-4 rounded-2xl bg-[#F8FAFC] border border-[#CBD5E1] text-[#0F172A] text-sm outline-none focus:border-[#FF4757] focus:bg-white transition-all placeholder:text-[#94A3B8]"
-            />
-
-            <button
-              id="send-chat-btn"
-              class="h-11 px-3.5 sm:px-6 rounded-2xl btn-primary-3d text-xs sm:text-sm font-bold flex items-center justify-center gap-1 sm:gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer shrink-0"
-              type="button"
-            >
-              <span class="hidden sm:inline">Ask Vidura</span>
-              <span class="sm:hidden">Ask</span>
-              <span class="material-symbols-outlined text-[16px]">send</span>
-            </button>
-          </div>
-
-          <div class="flex items-center justify-between text-[11px] text-[#64748B] font-mono px-1">
-            <span>Socratic companion guides thinking; does not give direct quiz solutions.</span>
-            <span>Grounding: 3 Ingested Syllabi (${ingestedDocsList.reduce((acc, d) => acc + d.chunkCount, 0)} Chunks)</span>
-          </div>
-
-        </div>
-
-      </main>
-
-      <!-- ========================================================
-           KNOWLEDGE BASE & DOCUMENT INGESTION MODAL / DRAWER
-           ======================================================== -->
-      ${state.ingestionModalOpen ? renderIngestionModal() : ''}
-
-      <!-- ========================================================
-           SOURCE CITATION INSPECTOR MODAL
-           ======================================================== -->
-      ${state.citationModal.isOpen ? renderCitationModal() : ''}
-
+        <aside class="studio-rail flex flex-col gap-5">
+          <section class="hub-hero hub-hero-compact">
+            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80" alt="">
+            <div class="hub-hero-body">
+              <p class="hub-kicker">Handbook</p>
+              <h1>Cited sources</h1>
+            </div>
+          </section>
+          ${(ingestedDocsList.length
+            ? ingestedDocsList.slice(0, 2).map((doc, i) => studioCover({
+                img: sourceCovers[i % sourceCovers.length],
+                kicker: 'Approved',
+                title: escapeHtml(doc.title || 'Handbook chapter'),
+                meta: escapeHtml(doc.summary || doc.filename || 'Class source'),
+              }))
+            : [studioCover({
+                img: sourceCovers[0],
+                kicker: 'Approved',
+                title: 'Algebra I guide',
+                meta: 'Lesson 03 · intercepts',
+              })]
+          ).join('')}
+          <button id="toggle-citations-btn" class="hub-cta-light" type="button">Citations ${state.citationsOpen ? 'on' : 'off'}</button>
+          <button id="hero-open-kb-btn" class="sr-only" type="button" tabindex="-1" aria-hidden="true">Sources</button>
+        </aside>
+      </div>
     </div>
+      ${state.ingestionModalOpen ? renderIngestionModal() : ''}
+      ${state.citationModal.isOpen ? renderCitationModal() : ''}
   `;
 }
 
@@ -216,21 +116,21 @@ function renderChatMessage(m: ChatMessage): string {
 
   if (isStudent) {
     return `
-      <div class="flex items-start gap-3 justify-end">
-        <div class="flex flex-col items-end max-w-xl">
+      <div class="flex items-start gap-2 sm:gap-3 justify-end min-w-0 w-full">
+        <div class="flex flex-col items-end min-w-0 max-w-[calc(100%-3.25rem)]">
           <div class="flex items-center gap-2 mb-1.5 text-xs text-[#64748B] font-mono">
             <span class="font-bold text-[#0F172A] font-sans">${m.author}</span>
             <span>·</span>
             <span>${m.time}</span>
           </div>
-          <div class="p-4 sm:p-5 rounded-3xl rounded-tr-none bg-gradient-to-br from-[#071E2D] to-[#0D2538] text-white text-sm shadow-md leading-relaxed border border-[#1E435E]">
+          <div class="p-4 sm:p-5 rounded-[22px] rounded-tr-md bg-[#111827] text-white text-sm leading-relaxed">
             ${m.text}
           </div>
         </div>
         <img
           src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"
           alt="Ada Chen"
-          class="w-10 h-10 rounded-2xl object-cover ring-2 ring-[#FF4757] shadow-sm shrink-0 mt-1"
+          class="w-10 h-10 rounded-2xl object-cover ring-2 ring-[#FE580D] shadow-sm shrink-0 mt-1"
         />
       </div>
     `;
@@ -238,16 +138,16 @@ function renderChatMessage(m: ChatMessage): string {
 
   // AI Vidura message
   return `
-    <div class="flex items-start gap-3.5 justify-start animate-fade-rise">
-      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF5B6B] to-[#FF4757] text-white flex items-center justify-center shrink-0 mt-1 shadow-md font-bold text-xs tracking-wider">
+      <div class="flex items-start gap-2 sm:gap-3.5 justify-start animate-fade-rise min-w-0 w-full">
+      <div class="hub-ico w-10 h-10 rounded-[11px] text-white flex items-center justify-center shrink-0 mt-1 font-bold text-xs tracking-wider">
         <span class="material-symbols-outlined text-[22px]">auto_awesome</span>
       </div>
 
-      <div class="flex flex-col items-start max-w-3xl flex-1">
+      <div class="flex flex-col items-start max-w-3xl flex-1 min-w-0">
         <div class="flex items-center gap-2 mb-1.5 flex-wrap text-xs font-mono tabular-nums">
           <span class="font-bold text-[#0F172A] font-sans">${m.author}</span>
           <span class="text-[#CBD5E1]">·</span>
-          <span class="${m.isRefusal ? 'text-[#D97706]' : 'text-[#FF4757]'} font-semibold">
+          <span class="${m.isRefusal ? 'text-[#D97706]' : 'text-[#FE580D]'} font-semibold">
             ${m.badge || 'Syllabus Verified'}
           </span>
           <span class="text-[#CBD5E1]">·</span>
@@ -276,9 +176,9 @@ function renderChatMessage(m: ChatMessage): string {
                   ${m.suggestedInquiries
                     .map(
                       s => `
-                    <button class="chip-btn text-left p-3 rounded-xl bg-[#F8FAFC] hover:bg-[#FFF0F3] hover:text-[#FF4757] text-[#0F172A] border border-[#E2E8F0] transition-colors flex items-center justify-between cursor-pointer" data-prompt="${s}">
+                    <button class="chip-btn text-left p-3 rounded-xl bg-[#F8FAFC] hover:bg-[#FFF7ED] hover:text-[#FE580D] text-[#0F172A] border border-[#E2E8F0] transition-colors flex items-center justify-between cursor-pointer" data-prompt="${s}">
                       <span>${s}</span>
-                      <span class="material-symbols-outlined text-[15px] text-[#FF4757]">arrow_forward</span>
+                      <span class="material-symbols-outlined text-[15px] text-[#FE580D]">arrow_forward</span>
                     </button>
                   `
                     )
@@ -301,7 +201,7 @@ function renderChatMessage(m: ChatMessage): string {
                     b => `
                   <div class="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs">
                     <strong class="text-[#0F172A] font-semibold">Step ${b.step}: ${b.title}</strong>
-                    <div class="font-mono text-[#FF4757] font-bold text-sm mt-1.5 bg-white px-3.5 py-2 rounded-xl border border-[#FFCCD5] shadow-2xs">
+                    <div class="font-mono text-[#FE580D] font-bold text-sm mt-1.5 bg-white px-3.5 py-2 rounded-xl border border-[#FED7AA] shadow-2xs">
                       ${b.equation}
                     </div>
                   </div>
@@ -316,7 +216,7 @@ function renderChatMessage(m: ChatMessage): string {
             ${
               m.summaryCallout
                 ? `
-              <div class="p-3.5 rounded-2xl bg-[#FFF0F3] border border-[#FFCCD5] text-xs text-[#0F172A] font-medium leading-relaxed">
+              <div class="p-3.5 rounded-2xl bg-[#FFF7ED] border border-[#FED7AA] text-xs text-[#0F172A] font-medium leading-relaxed">
                 ${m.summaryCallout}
               </div>
             `
@@ -328,7 +228,7 @@ function renderChatMessage(m: ChatMessage): string {
                 ? `
               <div class="pt-3 border-t border-[#E2E8F0] space-y-1.5">
                 <span class="text-[10px] font-mono uppercase tracking-wider text-[#64748B] font-semibold flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-[14px] text-[#FF4757]">verified</span>
+                  <span class="material-symbols-outlined text-[14px] text-[#FE580D]">verified</span>
                   <span>Ingested Grounding Citations (Click to inspect source text):</span>
                 </span>
                 <div class="flex flex-wrap gap-2">
@@ -336,7 +236,7 @@ function renderChatMessage(m: ChatMessage): string {
                     .map(
                       c => `
                     <button
-                      class="citation-inspect-btn text-xs px-3 py-1.5 rounded-xl bg-[#FFF0F3] hover:bg-[#FFE0E6] text-[#FF4757] font-bold flex items-center gap-1.5 border border-[#FFCCD5] cursor-pointer transition-all shadow-2xs hover:scale-102"
+                      class="citation-inspect-btn text-xs px-3 py-1.5 rounded-xl bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#FE580D] font-bold flex items-center gap-1.5 border border-[#FED7AA] cursor-pointer transition-all shadow-2xs hover:scale-102"
                       data-title="${c.label}"
                       data-ref="${c.ref}"
                       data-chapter="Chapter 04: Slope Dynamics &amp; Rate of Change"
@@ -344,7 +244,7 @@ function renderChatMessage(m: ChatMessage): string {
                       data-standard="CCSS.MATH.HSA.CED.A.2"
                       data-snippet="Definition: The slope m of a non-vertical line passing through points (x₁, y₁) and (x₂, y₂) is the quotient of vertical delta over horizontal delta: m = (y₂ - y₁) / (x₂ - x₁). When m₁ · m₂ = -1, the lines meet at a Euclidean perpendicular angle (90°)."
                     >
-                      <span class="material-symbols-outlined text-[15px] text-[#FF4757]">menu_book</span>
+                      <span class="material-symbols-outlined text-[15px] text-[#FE580D]">menu_book</span>
                       <span>${c.label}</span>
                       <span class="material-symbols-outlined text-[13px] text-[#94A3B8]">visibility</span>
                     </button>
@@ -370,17 +270,17 @@ function renderChatMessage(m: ChatMessage): string {
  */
 function renderIngestionModal(): string {
   return `
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#071E2D]/60 backdrop-blur-sm animate-fade-in">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/60 backdrop-blur-sm animate-fade-in">
       <div class="bg-white rounded-3xl shadow-2xl border border-[#E2E8F0] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         
         <!-- Header -->
         <div class="px-6 py-5 border-b border-[#E2E8F0] flex items-center justify-between bg-gradient-to-r from-[#F8FAFC] to-white">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-[#071E2D] text-white flex items-center justify-center shadow-md">
-              <span class="material-symbols-outlined text-[20px] text-[#FF4757]">folder_shared</span>
+            <div class="w-10 h-10 rounded-2xl bg-[#111827] text-white flex items-center justify-center shadow-md">
+              <span class="material-symbols-outlined text-[20px] text-[#FE580D]">folder_shared</span>
             </div>
             <div>
-              <h2 class="text-lg font-bold text-[#071E2D] font-headline">Course Knowledge Base &amp; SME Ingestion</h2>
+              <h2 class="text-lg font-bold text-[#111827] font-headline">Course Knowledge Base &amp; SME Ingestion</h2>
               <p class="text-xs text-[#64748B]">Manage textbook PDFs, vector index status, semantic search, and document permissions</p>
             </div>
           </div>
@@ -393,14 +293,14 @@ function renderIngestionModal(): string {
         <div class="p-6 overflow-y-auto space-y-6 flex-1">
           
           <!-- Upload Dropzone -->
-          <div class="border-2 border-dashed border-[#CBD5E1] hover:border-[#FF4757] rounded-2xl p-6 bg-[#FAFBFC] hover:bg-[#FFF0F3]/30 transition-all text-center flex flex-col items-center justify-center gap-2 group cursor-pointer" id="dropzone-area">
+          <div class="border-2 border-dashed border-[#CBD5E1] hover:border-[#FE580D] rounded-2xl p-6 bg-[#FAFBFC] hover:bg-[#FFF7ED]/30 transition-all text-center flex flex-col items-center justify-center gap-2 group cursor-pointer" id="dropzone-area">
             <input type="file" id="file-upload-input" class="hidden" accept=".pdf,.docx,.epub,.txt" />
-            <div class="w-12 h-12 rounded-2xl bg-white group-hover:bg-[#FFF0F3] text-[#64748B] group-hover:text-[#FF4757] border border-[#E2E8F0] flex items-center justify-center shadow-xs transition-colors">
+            <div class="w-12 h-12 rounded-2xl bg-white group-hover:bg-[#FFF7ED] text-[#64748B] group-hover:text-[#FE580D] border border-[#E2E8F0] flex items-center justify-center shadow-xs transition-colors">
               <span class="material-symbols-outlined text-[26px]">cloud_upload</span>
             </div>
             <div>
-              <p class="text-xs sm:text-sm font-bold text-[#071E2D]">
-                Drop syllabus PDF or curriculum documents here, or <span class="text-[#FF4757] underline">browse files</span>
+              <p class="text-xs sm:text-sm font-bold text-[#111827]">
+                Drop syllabus PDF or curriculum documents here, or <span class="text-[#FE580D] underline">browse files</span>
               </p>
               <p class="text-[11px] text-[#64748B] mt-0.5 font-mono">Supports PDF, DOCX, EPUB (Max 50MB) · Auto-chunked via sentence embeddings</p>
             </div>
@@ -409,7 +309,7 @@ function renderIngestionModal(): string {
           <!-- Semantic Search Preview Bar -->
           <div class="bg-[#F8FAFC] p-4 rounded-2xl border border-[#E2E8F0] space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-[#071E2D] flex items-center gap-1.5">
+              <span class="text-xs font-bold text-[#111827] flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-[16px] text-[#0284C7]">manage_search</span>
                 <span>Semantic Vector Search Inspector</span>
               </span>
@@ -435,7 +335,7 @@ function renderIngestionModal(): string {
                 <span class="text-[#0284C7] font-bold">Top Vector Match (Cosine Sim: 0.962)</span>
                 <span class="text-[#64748B]">Chunk #14 · Page 42</span>
               </div>
-              <p class="text-[#071E2D] leading-relaxed italic bg-[#F0F9FF] p-2.5 rounded-lg border border-[#E0F2FE]">
+              <p class="text-[#111827] leading-relaxed italic bg-[#F0F9FF] p-2.5 rounded-lg border border-[#E0F2FE]">
                 "Theorem 4.2: Two non-vertical lines with slopes m₁ and m₂ are perpendicular if and only if m₁ · m₂ = -1. That is, each slope is the negative reciprocal of the other."
               </p>
             </div>
@@ -444,7 +344,7 @@ function renderIngestionModal(): string {
           <!-- Ingested Documents Table -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-bold text-[#071E2D] uppercase tracking-wider font-mono">
+              <h3 class="text-xs font-bold text-[#111827] uppercase tracking-wider font-mono">
                 Ingested Curriculum Documents (${ingestedDocsList.length})
               </h3>
               <span class="text-[11px] text-[#10B981] font-mono font-bold flex items-center gap-1">
@@ -460,8 +360,8 @@ function renderIngestionModal(): string {
                 <div class="p-4 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-[#CBD5E1] transition-all">
                   <div class="space-y-1 flex-1">
                     <div class="flex items-center gap-2 flex-wrap">
-                      <span class="material-symbols-outlined text-[#FF4757] text-[20px]">picture_as_pdf</span>
-                      <span class="font-bold text-[#071E2D] text-sm">${doc.title}</span>
+                      <span class="material-symbols-outlined text-[#FE580D] text-[20px]">picture_as_pdf</span>
+                      <span class="font-bold text-[#111827] text-sm">${doc.title}</span>
                       <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
                         doc.indexingStatus === 'indexed'
                           ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
@@ -489,7 +389,7 @@ function renderIngestionModal(): string {
                     <div class="flex flex-col text-right">
                       <span class="text-[10px] font-mono text-[#64748B] uppercase">Permissions</span>
                       <select
-                        class="doc-permission-select text-xs font-bold rounded-lg px-2.5 py-1 bg-[#F8FAFC] border border-[#CBD5E1] text-[#071E2D] outline-none cursor-pointer"
+                        class="doc-permission-select text-xs font-bold rounded-lg px-2.5 py-1 bg-[#F8FAFC] border border-[#CBD5E1] text-[#111827] outline-none cursor-pointer"
                         data-doc-id="${doc.id}"
                       >
                         <option value="public" ${doc.permission === 'public' ? 'selected' : ''}>Public (All)</option>
@@ -500,7 +400,7 @@ function renderIngestionModal(): string {
 
                     <!-- Generate Quiz from Doc Action -->
                     <button
-                      class="gen-quiz-from-doc-btn px-3 py-1.5 rounded-xl bg-[#FFF0F3] hover:bg-[#FFE0E6] text-[#FF4757] text-xs font-bold border border-[#FFCCD5] flex items-center gap-1.5 cursor-pointer transition-colors"
+                      class="gen-quiz-from-doc-btn px-3 py-1.5 rounded-xl bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#FE580D] text-xs font-bold border border-[#FED7AA] flex items-center gap-1.5 cursor-pointer transition-colors"
                       data-doc-id="${doc.id}"
                       data-doc-title="${doc.title}"
                       title="Synthesize 5 AI formative questions directly from this syllabus"
@@ -522,7 +422,7 @@ function renderIngestionModal(): string {
         <!-- Footer -->
         <div class="px-6 py-4 bg-[#F8FAFC] border-t border-[#E2E8F0] flex items-center justify-between text-xs text-[#64748B]">
           <span>Embeddings generated with cosine similarity threshold 0.85</span>
-          <button id="close-ingestion-footer-btn" class="px-4 py-2 rounded-xl bg-[#071E2D] hover:bg-[#0D2538] text-white font-bold cursor-pointer transition-colors">
+          <button id="close-ingestion-footer-btn" class="px-4 py-2 rounded-xl bg-[#111827] hover:bg-[#1F2937] text-white font-bold cursor-pointer transition-colors">
             Done
           </button>
         </div>
@@ -538,21 +438,21 @@ function renderIngestionModal(): string {
 function renderCitationModal(): string {
   const c = state.citationModal;
   return `
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#071E2D]/60 backdrop-blur-sm animate-fade-in">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/60 backdrop-blur-sm animate-fade-in">
       <div class="bg-white rounded-3xl shadow-2xl border border-[#E2E8F0] w-full max-w-xl flex flex-col overflow-hidden">
         
         <!-- Header -->
-        <div class="px-6 py-5 border-b border-[#E2E8F0] flex items-center justify-between bg-gradient-to-r from-[#FFF0F3] to-white">
+        <div class="px-6 py-5 border-b border-[#E2E8F0] flex items-center justify-between bg-gradient-to-r from-[#FFF7ED] to-white">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-[#FF4757] text-white flex items-center justify-center shadow-md">
+            <div class="w-10 h-10 rounded-2xl bg-[#FE580D] text-white flex items-center justify-center shadow-md">
               <span class="material-symbols-outlined text-[20px]">menu_book</span>
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 rounded-md bg-[#071E2D] text-white text-[10px] font-mono font-bold">Curriculum Grounding</span>
-                <span class="text-[11px] font-mono text-[#FF4757] font-bold">${c.standard}</span>
+                <span class="px-2 py-0.5 rounded-md bg-[#111827] text-white text-[10px] font-mono font-bold">Curriculum Grounding</span>
+                <span class="text-[11px] font-mono text-[#FE580D] font-bold">${c.standard}</span>
               </div>
-              <h2 class="text-base font-bold text-[#071E2D] font-headline mt-0.5">${c.docTitle}</h2>
+              <h2 class="text-base font-bold text-[#111827] font-headline mt-0.5">${c.docTitle}</h2>
             </div>
           </div>
           <button id="close-citation-modal-btn" class="w-8 h-8 rounded-full hover:bg-[#F1F5F9] text-[#64748B] hover:text-[#0F172A] flex items-center justify-center transition-colors cursor-pointer">
@@ -563,8 +463,8 @@ function renderCitationModal(): string {
         <!-- Body -->
         <div class="p-6 space-y-4">
           <div class="flex items-center justify-between text-xs text-[#64748B] font-mono">
-            <span>Location: <strong class="text-[#071E2D] font-bold">${c.chapter}</strong></span>
-            <span class="bg-[#F1F5F9] px-2 py-0.5 rounded-md font-bold text-[#071E2D]">Page ${c.page}</span>
+            <span>Location: <strong class="text-[#111827] font-bold">${c.chapter}</strong></span>
+            <span class="bg-[#F1F5F9] px-2 py-0.5 rounded-md font-bold text-[#111827]">Page ${c.page}</span>
           </div>
 
           <div class="p-4 rounded-2xl bg-[#FAFBFC] border border-[#CBD5E1] relative">
@@ -584,7 +484,7 @@ function renderCitationModal(): string {
 
         <!-- Footer -->
         <div class="px-6 py-4 bg-[#F8FAFC] border-t border-[#E2E8F0] flex items-center justify-between">
-          <button id="jump-reader-from-citation-btn" class="px-4 py-2 rounded-xl bg-[#071E2D] hover:bg-[#0D2538] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs">
+          <button id="jump-reader-from-citation-btn" class="px-4 py-2 rounded-xl bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs">
             <span class="material-symbols-outlined text-[15px]">auto_stories</span>
             <span>Open Handbook to Page ${c.page}</span>
           </button>

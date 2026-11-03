@@ -1,6 +1,8 @@
 """LMS platform helpers — detect issuer family for multi-LMS UX (E03)."""
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 
 def detect_lms_name(issuer: str | None) -> str:
     """Map LTI issuer URL → short product name for UI copy."""
@@ -60,3 +62,37 @@ def default_lms_return_url(
         if cid.isdigit():
             return f"{base}/courses/{cid}"
     return default_lms_home(base, lms_name=name)
+
+
+def safe_lms_return_url(
+    candidate: str | None,
+    issuer: str | None,
+    *,
+    lms_name: str | None = None,
+) -> str:
+    """Allow http(s) return URLs only when host matches the LTI issuer host.
+
+    Blocks open redirects from a malicious/compromised ``launch_presentation.return_url``.
+    Falls back to a same-issuer home URL when the candidate is unsafe or missing.
+    """
+    fallback = default_lms_return_url(issuer, lms_name=lms_name)
+    raw = (candidate or "").strip()
+    if not raw:
+        return fallback
+    try:
+        got = urlparse(raw)
+        iss = urlparse((issuer or "").strip())
+    except Exception:  # noqa: BLE001
+        return fallback
+    if got.scheme not in {"http", "https"} or not got.netloc:
+        return fallback
+    if not iss.netloc:
+        return fallback
+    # Compare hosts case-insensitively; allow optional www. prefix either side.
+    def _host(netloc: str) -> str:
+        h = netloc.split("@")[-1].split(":")[0].lower()
+        return h[4:] if h.startswith("www.") else h
+
+    if _host(got.netloc) != _host(iss.netloc):
+        return fallback
+    return raw

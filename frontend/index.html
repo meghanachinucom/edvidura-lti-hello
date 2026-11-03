@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>EdVidura — Class 8 Mathematics · Andhra Pradesh</title>
     <meta name="description" content="EdVidura classroom for SCERT Andhra Pradesh Class 8 Mathematics — lessons, quizzes, handbooks, and Ask Vidura in English and Indian state languages." />
-    <meta name="theme-color" content="#071E2D" />
+    <meta name="theme-color" content="#F4F5F7" />
     <meta name="color-scheme" content="light dark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -62,18 +62,16 @@
 
     <link rel="stylesheet" href="/src/index.css" />
   </head>
-  <body class="bg-paper text-ink min-h-screen selection:bg-lagoon-soft selection:text-lagoon flex flex-col font-body-md text-body-md antialiased">
-    <!-- Header Mounted by JavaScript -->
-    <div id="header-root" class="sticky top-0 z-40 bg-white"></div>
-
-    <!-- Main Viewport Mounted by JavaScript -->
-    <div id="view-root" class="flex-1 w-full flex flex-col"></div>
-
-    <!-- Institutional Production Footer Mounted by JavaScript -->
-    <div id="footer-root"></div>
+  <body class="hub-app text-ink min-h-screen selection:bg-lagoon-soft selection:text-lagoon font-body-md text-body-md antialiased">
+    <aside id="sidebar-root" class="hub-sidebar-slot"></aside>
+    <div class="hub-main">
+      <div id="header-root"></div>
+      <div id="view-root" class="flex-1 w-full flex flex-col min-w-0"></div>
+      <div id="footer-root"></div>
+    </div>
 
     <!-- Notification Toast Root -->
-    <div id="toast-root" class="fixed top-20 right-6 z-50 pointer-events-none flex flex-col gap-2"></div>
+    <div id="toast-root" class="fixed top-20 inset-x-3 sm:inset-x-auto sm:right-6 z-50 pointer-events-none flex flex-col gap-2"></div>
 
     <!-- Pure Vanilla JS App Entry -->
     <script type="module" src="/src/main.ts"></script>

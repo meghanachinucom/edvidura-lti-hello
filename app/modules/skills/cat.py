@@ -323,3 +323,68 @@ def cat_overview(
         "proposals": [],
         "profile": competency_profile(last.get("answers"), tenant_id=tenant_id),
     }
+
+
+def placement_assessment_for_role(
+    tenant_id: UUID | str,
+    *,
+    role_code: str,
+    count: int = 12,
+) -> dict[str, Any]:
+    """Diff F-3: AI/CAT placement quiz for personnel without a competency profile.
+
+    Builds a short bank covering the role's required skills so a learner can
+    establish a baseline; untested skills already count as gaps until then.
+    """
+    from app.modules.skills.service import required_skills_for_role
+
+    code = (role_code or "").strip().lower()
+    if not code:
+        raise ValueError("role_code is required")
+    required = required_skills_for_role(tenant_id, code)
+    if not required:
+        raise ValueError(f"No required skills for role '{code}'")
+
+    lines = [
+        f"# Placement assessment · role {code}",
+        "",
+        "Assess baseline competency for difference training.",
+        "",
+    ]
+    for s in required:
+        label = str(s.get("label") or s.get("skill_code") or "")
+        desc = str(s.get("description") or "").strip()
+        lines.append(f"## {label}")
+        lines.append(desc or f"Demonstrate competence in {label}.")
+        lines.append("")
+    body = "\n".join(lines)
+    wanted = max(6, min(int(count or 12), 24))
+    bank = generate_cat_bank(
+        body,
+        count=wanted,
+        title=f"Placement · {code}",
+        difficulty="core",
+        complexity="apply",
+    )
+    questions = _tag_questions(list(bank.get("questions") or []), required)
+    # Ensure question keys exist for skill linking after submit
+    for i, q in enumerate(questions, start=1):
+        if not q.get("id"):
+            q["id"] = f"place_{code}_{i}"
+        q["review_status"] = "approved"
+        q["placement"] = True
+        q["role_code"] = code
+    bank["questions"] = questions
+    bank["competencies"] = [
+        {
+            "skill_code": s.get("skill_code"),
+            "label": s.get("label"),
+            "skill_id": s.get("id"),
+        }
+        for s in required
+    ]
+    bank["role_code"] = code
+    bank["placement"] = True
+    bank["skill_count"] = len(required)
+    bank["bank_size"] = len(questions)
+    return bank

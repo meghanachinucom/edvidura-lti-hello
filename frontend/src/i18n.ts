@@ -154,12 +154,12 @@ export function renderLanguageSelect(id: string, extraClass = ''): string {
       `<option value="${l.code}" ${l.code === current ? 'selected' : ''}>${l.native} · ${l.state}</option>`
   ).join('');
   return `
-    <label class="flex items-center gap-1.5 min-w-0 ${extraClass}" data-no-i18n title="Language">
+    <label class="items-center gap-1.5 min-w-0 ${extraClass || 'flex'}" data-no-i18n title="Language">
       <span class="material-symbols-outlined text-[16px] text-[#64748B] shrink-0">translate</span>
       <select
         id="${id}"
         data-no-i18n
-        class="max-w-[11rem] sm:max-w-[14rem] truncate bg-transparent border border-[#E2E8F0] rounded-lg px-2 py-1 text-[11px] sm:text-xs text-[#0F172A] outline-none cursor-pointer focus:border-[#FF4757]"
+        class="max-w-[11rem] sm:max-w-[14rem] truncate bg-transparent border border-[#E2E8F0] rounded-lg px-2 py-1 text-[11px] sm:text-xs text-[#0F172A] outline-none cursor-pointer focus:border-[#FE580D]"
         aria-label="Language"
       >
         ${options}

@@ -1,5 +1,11 @@
-"""C13 SME chatbot source registry."""
+"""C13 SME chatbot source registry + index + public query."""
 
+from app.modules.sme.index import (
+    index_manual,
+    list_index_chunks,
+    public_query,
+    search_index,
+)
 from app.modules.sme.service import (
     add_lesson_source,
     add_manual_source,
@@ -20,4 +26,8 @@ __all__ = [
     "resolve_source_chunks",
     "coach_chunks_for_tenant",
     "split_manual_sections",
+    "index_manual",
+    "list_index_chunks",
+    "search_index",
+    "public_query",
 ]

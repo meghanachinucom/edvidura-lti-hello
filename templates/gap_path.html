@@ -85,14 +85,36 @@
         <span class="material-symbols-outlined" style="font-size:48px;opacity:.4;display:block;margin-bottom:var(--sp-sm)">route</span>
         <p class="body-md">No open plan yet.</p>
         <p class="body-sm text-muted" style="max-width:420px;margin:0 auto">
+          {% if target_role %}
+          Pick a target role and take a short placement assessment to establish your competency profile for difference training.
+          {% else %}
           Miss a few items on the quiz (or ask Ask Vidura about a class topic).
           Your personal path appears here from chatbot, Moodle, and VR signals.
+          {% endif %}
         </p>
         <div style="display:flex;justify-content:center;gap:var(--sp-sm);margin-top:var(--sp-md);flex-wrap:wrap">
+          {% if target_role %}
+          <form method="post" action="/learn/gap/placement">
+            <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+            <input type="hidden" name="role_code" value="{{ target_role }}"/>
+            <button type="submit" class="btn btn-primary">Take placement assessment</button>
+          </form>
+          {% else %}
           <a class="btn btn-primary" href="/quiz?token={{ quiz_token }}">Take quiz</a>
+          {% endif %}
           <a class="btn btn-glass" href="/learn/coach?token={{ quiz_token }}">Ask Vidura</a>
           <a class="btn btn-glass" href="/lessons?token={{ quiz_token }}">Lessons</a>
         </div>
+      </div>
+      {% endif %}
+      {% if gap_path and gap_path.needs_placement and target_role %}
+      <div class="card" style="margin-top:var(--sp-lg);padding:var(--sp-md);border-left:3px solid var(--secondary)">
+        <p class="body-sm" style="margin:0 0 8px">No graded profile yet — untested role skills count as gaps. Establish a baseline:</p>
+        <form method="post" action="/learn/gap/placement">
+          <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+          <input type="hidden" name="role_code" value="{{ target_role }}"/>
+          <button type="submit" class="btn btn-primary" style="font-size:13px">Take placement assessment</button>
+        </form>
       </div>
       {% endif %}
     </section>

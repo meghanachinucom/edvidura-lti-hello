@@ -86,13 +86,16 @@ def onboard_page(
 ):
     settings = get_settings()
     base = settings.app_base_url
+    # Tenant/platform inventory is ops-only — never enumerate to anonymous visitors.
+    show_inventory = _ops_authorized(request, "")
     tenants: list = []
     platforms: list = []
-    try:
-        tenants = db.list_tenants()
-        platforms = db.list_all_platforms()
-    except Exception as exc:  # noqa: BLE001
-        err = err or f"Database unavailable: {exc}"
+    if show_inventory:
+        try:
+            tenants = db.list_tenants()
+            platforms = db.list_all_platforms()
+        except Exception as exc:  # noqa: BLE001
+            err = err or f"Database unavailable: {exc}"
 
     platform_rows = []
     any_launched = False

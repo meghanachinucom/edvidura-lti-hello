@@ -8,6 +8,7 @@ import {
 import { episodeTitle, packLabel } from '../pravachana-ui';
 import { getLocale } from '../i18n';
 import { speak, stopSpeak } from '../voice';
+import { hubPageHead } from '../components/hub';
 
 export function renderPravachanaPlayer(): string {
   const ep = state.livePravachanaDetail;
@@ -21,18 +22,19 @@ export function renderPravachanaPlayer(): string {
 
   return `
     <div class="flex flex-col w-full bg-[#FAFBFC] ${theatre ? 'min-h-screen' : ''}">
-      <section class="w-full bg-white border-b border-[#E2E8F0] px-4 sm:px-6 lg:px-8 py-3 print:hidden">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
-          <button id="prav-back" type="button" class="font-bold text-[#64748B] hover:text-[#0F172A] cursor-pointer flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px]">arrow_back</span>
-            Library
-          </button>
-          <div class="flex items-center gap-2 font-mono text-[#64748B]">
-            <span class="text-[#FF4757] font-bold">${packLabel(ep.pack)}</span>
-            <span>·</span>
-            <span>${escapeHtml(ep.series_title_te || ep.series_title_en || '')}</span>
-            ${ep.demo ? '<span class="px-2 py-0.5 rounded bg-[#FF4757] text-white font-bold">DEMO CLIP</span>' : ''}
-          </div>
+      <section class="hub-page pt-5 pb-3 print:hidden">
+        <div>
+          ${hubPageHead({
+            icon: 'play_circle',
+            kicker: packLabel(ep.pack),
+            title: escapeHtml(episodeTitle(ep)),
+            sub: escapeHtml(ep.series_title_te || ep.series_title_en || ''),
+            actions: `
+              <button id="prav-back" type="button" class="hub-cta-light" style="margin-top:0">
+                <span class="material-symbols-outlined text-[16px]">arrow_back</span> Library
+              </button>
+              ${ep.demo ? '<span class="hub-pill amber">Demo</span>' : ''}`,
+          })}
         </div>
       </section>
 
@@ -50,12 +52,12 @@ export function renderPravachanaPlayer(): string {
               ? ''
               : `
           <div class="flex flex-wrap items-center gap-2 mt-4 print:hidden">
-            <button id="prav-theatre" type="button" class="btn-navy-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">Theatre</button>
+            <button id="prav-theatre" type="button" class="hub-cta-light" style="margin-top:0">Theatre</button>
             <button id="prav-speak" type="button" class="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-[#E2E8F0] cursor-pointer">Speak meaning</button>
             <button id="prav-print" type="button" class="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-[#E2E8F0] cursor-pointer">Print meaning</button>
             <button id="prav-share" type="button" class="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-[#E2E8F0] cursor-pointer">Copy link</button>
             <a id="prav-download" class="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-[#E2E8F0] cursor-pointer" href="${escapeHtml(ep.stream_url)}" target="_blank" rel="noreferrer">Open file</a>
-            <button id="prav-ask" type="button" class="btn-primary-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">Ask Vidura</button>
+            <button id="prav-ask" type="button" class="hub-cta-dark">Ask Vidura</button>
             ${
               ep.prev
                 ? `<button id="prav-prev" type="button" class="px-4 py-2 rounded-xl text-xs font-bold text-[#64748B] cursor-pointer">Previous</button>`
@@ -70,7 +72,7 @@ export function renderPravachanaPlayer(): string {
           }
           ${
             theatre
-              ? `<div class="p-4 print:hidden"><button id="prav-theatre" type="button" class="btn-primary-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">Exit theatre</button></div>`
+              ? `<div class="p-4 print:hidden"><button id="prav-theatre" type="button" class="hub-cta-dark">Exit theatre</button></div>`
               : ''
           }
         </div>
@@ -80,7 +82,7 @@ export function renderPravachanaPlayer(): string {
         <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
           <article class="lg:col-span-7 bg-white rounded-3xl border border-[#E2E8F0] p-6 sm:p-8 shadow-xs">
             <h1 class="text-2xl sm:text-3xl font-bold font-headline text-[#0F172A]">${escapeHtml(episodeTitle(ep))}</h1>
-            <p class="mt-4 text-xl text-[#071E2D] font-headline leading-relaxed">${escapeHtml(ep.transcript_sa || '')}</p>
+            <p class="mt-4 text-xl text-[#111827] font-headline leading-relaxed">${escapeHtml(ep.transcript_sa || '')}</p>
             <p class="mt-4 text-base text-[#334155] leading-relaxed">${escapeHtml(meaning || '')}</p>
             ${
               getLocale().startsWith('en')
@@ -92,7 +94,7 @@ export function renderPravachanaPlayer(): string {
           <aside class="lg:col-span-5 flex flex-col gap-4">
             <div class="bg-white rounded-3xl border border-[#E2E8F0] p-5 shadow-xs print:hidden">
               <h2 class="text-sm font-bold text-[#0F172A] mb-3">చర్చ · Notes</h2>
-              <textarea id="prav-note" rows="3" class="w-full rounded-xl border border-[#E2E8F0] p-3 text-sm outline-none focus:border-[#FF4757]" placeholder="Share a reflection with the public audience"></textarea>
+              <textarea id="prav-note" rows="3" class="w-full rounded-xl border border-[#E2E8F0] p-3 text-sm outline-none focus:border-[#FE580D]" placeholder="Share a reflection with the public audience"></textarea>
               <button id="prav-note-send" type="button" class="mt-2 btn-primary-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">Post note</button>
               <div class="mt-4 space-y-3 max-h-72 overflow-y-auto">
                 ${
@@ -101,7 +103,7 @@ export function renderPravachanaPlayer(): string {
                         .map(
                           n => `
                   <div class="rounded-xl bg-[#F8FAFC] p-3">
-                    <div class="text-[11px] font-bold text-[#071E2D]">${escapeHtml(n.author_name || 'Citizen')}</div>
+                    <div class="text-[11px] font-bold text-[#111827]">${escapeHtml(n.author_name || 'Citizen')}</div>
                     <div class="text-sm text-[#334155] mt-1">${escapeHtml(n.body)}</div>
                   </div>`
                         )

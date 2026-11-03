@@ -44,6 +44,7 @@ MIGRATIONS = [
     "migration_lti_context_bindings.sql",
     "migration_skills_registry.sql",
     "migration_sme_sources.sql",
+    "migration_sme_index.sql",
     "migration_nrps_rosters.sql",
     "migration_learner_plans.sql",
     "migration_role_skills.sql",

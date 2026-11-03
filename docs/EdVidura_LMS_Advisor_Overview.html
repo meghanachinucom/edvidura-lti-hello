@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>EdVidura · simple overview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy: #071E2D;
+      --ink: #0F172A;
+      --muted: #475569;
+      --line: #E2E8F0;
+      --paper: #F7F8FA;
+      --coral: #FF4757;
+      --ok: #047857;
+      --ease: cubic-bezier(.22, 1, .36, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      background: #03080d;
+      color: var(--ink);
+      font-family: Outfit, system-ui, sans-serif;
+      overflow: hidden;
+    }
+    .stage {
+      position: fixed; inset: 0;
+      display: flex; align-items: stretch; justify-content: center;
+    }
+    .frame {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      max-width: 100%;
+      background: var(--paper);
+      position: relative;
+      overflow: hidden;
+    }
+    canvas#fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; mix-blend-mode: multiply; opacity: .35; }
+    .grain {
+      position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: .06;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    }
+    .progress { position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 9; background: rgba(7,30,45,.1); }
+    .progress > i {
+      display: block; height: 100%; width: 0;
+      background: linear-gradient(90deg, #FF8A94, var(--coral));
+      transition: width .55s var(--ease);
+    }
+    .slide {
+      position: absolute; inset: 0;
+      padding: max(32px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(76px, calc(env(safe-area-inset-bottom) + 64px)) max(18px, env(safe-area-inset-left));
+      display: flex; flex-direction: column; justify-content: flex-start;
+      opacity: 0; pointer-events: none;
+      transform: translate3d(36px,0,0);
+      transition: opacity .6s var(--ease), transform .6s var(--ease);
+      z-index: 2;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.7), transparent 30%),
+        linear-gradient(90deg, rgba(7,30,45,.03) 1px, transparent 1px),
+        linear-gradient(rgba(7,30,45,.03) 1px, transparent 1px);
+      background-size: auto, 40px 40px, 40px 40px;
+    }
+    .slide.on { opacity: 1; pointer-events: auto; transform: none; z-index: 4; }
+    .slide.was { z-index: 3; opacity: 0; transform: translate3d(-28px,0,0); }
+    .frame.is-back .slide:not(.on):not(.was) { transform: translate3d(-28px,0,0); }
+    .frame.is-back .slide.was { transform: translate3d(28px,0,0); }
+    .slide.deep {
+      background:
+        radial-gradient(90% 80% at 88% 8%, rgba(255,71,87,.22), transparent 42%),
+        radial-gradient(70% 60% at 8% 100%, rgba(56,189,248,.12), transparent 50%),
+        linear-gradient(155deg, #071E2D 0%, #0A2540 52%, #041018 100%);
+      color: #F8FAFC;
+    }
+    .kicker {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--coral); font-weight: 600; margin-bottom: 12px;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .kicker::before { content: ""; width: 0; height: 2px; border-radius: 99px; background: var(--coral); }
+    .slide.on .kicker::before { animation: bar .55s .05s var(--ease) forwards; }
+    @keyframes bar { to { width: 28px; } }
+    h1 { font-size: clamp(1.55rem, 6.4vw, 2.7rem); line-height: 1.12; letter-spacing: -.035em; font-weight: 800; max-width: 16ch; }
+    h2 { font-size: clamp(1.35rem, 5.4vw, 2.15rem); line-height: 1.18; letter-spacing: -.03em; font-weight: 800; max-width: 18ch; }
+    .lede { margin-top: 12px; font-size: clamp(15px, 3.4vw, 18px); line-height: 1.5; color: var(--muted); max-width: 46ch; }
+    .slide.deep .lede { color: #CBD5E1; }
+    .pop { color: var(--coral); }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-weight: 800; font-size: 18px; }
+    .brand span { color: var(--coral); }
+
+    .bullets {
+      list-style: none;
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 52rem;
+      min-width: 0;
+    }
+    .bullets li {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      align-items: start;
+      font-size: clamp(15px, 3.9vw, 20px);
+      line-height: 1.4;
+      font-weight: 500;
+      min-width: 0;
+    }
+    .bullets .dot {
+      width: 10px; height: 10px; margin-top: 8px; border-radius: 50%;
+      background: var(--coral);
+      box-shadow: 0 0 0 5px rgba(255,71,87,.12);
+    }
+    .slide.deep .bullets li { color: #E2E8F0; }
+    .bullets.two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 28px;
+    }
+    .bullets.two li { font-size: 17px; }
+    .pair {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 20px;
+      min-width: 0;
+    }
+    .box {
+      border-radius: 16px;
+      padding: 16px 16px 14px;
+      min-height: 0;
+      min-width: 0;
+    }
+    .box h3 {
+      font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+      margin-bottom: 14px; font-weight: 700;
+    }
+    .box.navy { background: linear-gradient(165deg, #0A2540, #071E2D); color: #fff; }
+    .box.navy h3 { color: #FF8A94; }
+    .box.soft { background: #FFF0F3; border: 1px solid #FFCCD5; }
+    .box.soft h3 { color: var(--coral); }
+    .box ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .box li { font-size: clamp(14px, 3.5vw, 17px); line-height: 1.35; font-weight: 550; padding-left: 18px; position: relative; }
+    .box li::before {
+      content: ""; position: absolute; left: 0; top: 9px; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--coral);
+    }
+    .box.navy li::before { background: #FF8A94; }
+
+    .foot {
+      position: absolute;
+      left: max(16px, env(safe-area-inset-left));
+      right: max(96px, calc(env(safe-area-inset-right) + 96px));
+      bottom: max(14px, env(safe-area-inset-bottom));
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: #94A3B8; font-family: "IBM Plex Mono", monospace; z-index: 5;
+      pointer-events: none;
+    }
+    .slide.deep .foot { color: #64748B; }
+    .nav {
+      position: absolute;
+      right: max(10px, env(safe-area-inset-right));
+      bottom: max(10px, env(safe-area-inset-bottom));
+      z-index: 10; display: flex; gap: 8px;
+    }
+    .nav button {
+      font: inherit; width: 44px; height: 44px; border-radius: 12px; cursor: pointer;
+      border: 1px solid var(--line); background: #fff; color: var(--ink);
+      touch-action: manipulation;
+    }
+    .nav button:hover { background: #FFF0F3; }
+    .nav button:disabled { opacity: .35; cursor: default; }
+    .reveal { opacity: 0; transform: translateY(16px); }
+    .slide.on .reveal {
+      animation: rise .65s var(--ease) both;
+      animation-delay: var(--d, 0ms);
+    }
+    .slide.on.instant {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .slide.on.instant .reveal {
+      opacity: 1;
+      transform: none;
+      animation: none;
+      animation-delay: 0s;
+    }
+    .slide.on.instant .kicker::before {
+      width: 28px;
+      animation: none;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: none; }
+    }
+    .status {
+      list-style: none;
+      margin-top: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 46rem;
+    }
+    .status li {
+      display: grid;
+      grid-template-columns: 7.5rem 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: clamp(14px, 3.4vw, 17px);
+      line-height: 1.4;
+      min-width: 0;
+    }
+    .status .tag {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 28px; padding: 4px 10px; border-radius: 99px;
+      font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      background: #ECFDF5; color: #047857; white-space: nowrap;
+    }
+    .status .tag.next { background: #FFF7ED; color: #C2410C; }
+    .status .tag.later { background: #F1F5F9; color: #475569; }
+    .status .tag.out { background: #FFF0F3; color: #BE123C; }
+    @media (max-width: 639px) {
+      .status li { grid-template-columns: 1fr; gap: 8px; }
+    }
+    .url {
+      margin-top: 18px; display: inline-flex; max-width: 100%;
+      padding: 10px 12px; border-radius: 12px;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+      font-family: "IBM Plex Mono", monospace; font-size: clamp(11px, 3vw, 13px); color: #FF8A94;
+      overflow-wrap: anywhere; word-break: break-all;
+    }
+    @media (min-width: 720px) {
+      .pair { grid-template-columns: 1fr 1fr; gap: 18px; }
+      .box { padding: 22px 22px 18px; }
+    }
+    @media (min-width: 900px) and (min-height: 600px) {
+      .stage { align-items: center; }
+      .frame {
+        width: min(100vw, calc(100vh * 16 / 9));
+        height: min(100vh, calc(100vw * 9 / 16));
+        max-height: 100dvh;
+        box-shadow: 0 40px 100px rgba(0,0,0,.55);
+      }
+      .slide {
+        padding: 48px 56px 64px;
+        justify-content: center;
+        overflow-x: hidden;
+        overflow-y: auto;
+        touch-action: pan-y;
+      }
+      .bullets { margin-top: 28px; gap: 14px; }
+      .nav button { width: 36px; height: 36px; }
+      .foot { left: 56px; right: 56px; bottom: 20px; }
+    }
+    @media (max-height: 500px) and (orientation: landscape) {
+      .slide { justify-content: flex-start; overflow-y: auto; padding-top: 20px; }
+      h1, h2 { max-width: 28ch; }
+      .brand { margin-bottom: 8px; }
+      .bullets { margin-top: 10px; gap: 8px; }
+      .pair { grid-template-columns: 1fr 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+      .slide { opacity: 0; transform: none; }
+      .slide.on { opacity: 1; }
+      .reveal { opacity: 1; transform: none; }
+      .kicker::before { width: 28px; }
+    }
+    @media print {
+      html, body { overflow: visible; height: auto; }
+      .stage { position: static; display: block; }
+      .frame { width: 13.333in; height: 7.5in; box-shadow: none; page-break-after: always; }
+      .slide { display: flex !important; position: relative; page-break-after: always; opacity: 1; transform: none; }
+      .reveal { opacity: 1; transform: none; animation: none !important; }
+      .nav, .progress, canvas, .grain { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="frame" id="frame">
+      <canvas id="fx"></canvas>
+      <div class="grain"></div>
+      <div class="progress"><i id="bar"></i></div>
+
+      <section class="slide deep on" data-i="1">
+        <div class="brand reveal" style="--d:20ms">
+          <svg width="36" height="36" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <rect width="40" height="40" rx="11" fill="#FF4757"/>
+            <path d="M20 7L34 13.5L20 20L6 13.5L20 7Z" fill="#071E2D" stroke="#fff" stroke-width="1.3"/>
+            <text x="20" y="26.5" font-family="Outfit,sans-serif" font-weight="900" font-size="8.5" fill="#fff" text-anchor="middle">EV</text>
+          </svg>
+          Ed<span>Vidura</span>
+        </div>
+        <div class="kicker reveal" style="--d:80ms">Simple overview</div>
+        <h1 class="reveal" style="--d:140ms">A classroom inside <span class="pop">Moodle</span> — not a second Moodle.</h1>
+        <ul class="bullets">
+          <li class="reveal" style="--d:280ms"><span class="dot"></span>Students open it from their Moodle course, like any other activity.</li>
+          <li class="reveal" style="--d:400ms"><span class="dot"></span>They get lessons, a quiz, and an AI tutor for that class.</li>
+          <li class="reveal" style="--d:520ms"><span class="dot"></span>The quiz mark goes back to Moodle. Moodle stays the gradebook.</li>
+        </ul>
+        <div class="foot"><span>EdVidura</span><span>01 / 10</span></div>
+      </section>
+
+      <section class="slide" data-i="2">
+        <div class="kicker reveal" style="--d:40ms">The core idea</div>
+        <h2 class="reveal" style="--d:120ms">Who does what</h2>
+        <div class="pair">
+          <div class="box navy reveal" style="--d:240ms">
+            <h3>Moodle keeps</h3>
+            <ul>
+              <li>Student login and class list</li>
+              <li>Who is the teacher</li>
+              <li>The official gradebook</li>
+              <li>The course itself</li>
+            </ul>
+          </div>
+          <div class="box soft reveal" style="--d:400ms">
+            <h3>EdVidura adds</h3>
+            <ul>
+              <li>The lesson path for the class</li>
+              <li>Practice and the checkpoint quiz</li>
+              <li>The AI tutor (Ask Vidura)</li>
+              <li>A record of what the student did</li>
+            </ul>
+          </div>
+        </div>
+        <div class="foot"><span>EdVidura</span><span>02 / 10</span></div>
+      </section>
+
+      <section class="slide" data-i="3">
+        <div class="kicker reveal" style="--d:40ms">For students</div>
+        <h2 class="reveal" style="--d:120ms">What a student does</h2>
+        <ul class="bullets">
+          <li class="reveal" style="--d:220ms"><span class="dot"></span>Log in to Moodle and open the EdVidura activity.</li>
+          <li class="reveal" style="--d:340ms"><span class="dot"></span>Follow the lessons for their class.</li>
+          <li class="reveal" style="--d:460ms"><span class="dot"></span>Take a short quiz to check understanding.</li>
+          <li class="reveal" style="--d:580ms"><span class="dot"></span>Ask Vidura for a hint if they are stuck — it will not write the exam for them.</li>
+          <li class="reveal" style="--d:700ms"><span class="dot"></span>See their progress. The quiz score is sent back to Moodle.</li>
+        </ul>
+        <div class="foot"><span>EdVidura</span><span>03 / 10</span></div>
+      </section>
+
+      <section class="slide" data-i="4">
+        <div class="kicker reveal" style="--d:40ms">For teachers</div>
+        <h2 class="reveal" style="--d:120ms">What a teacher does</h2>
+        <ul class="bullets">
+          <li class="reveal" style="--d:220ms"><span class="dot"></span>Open the same tool from Moodle as a teacher.</li>
+          <li class="reveal" style="--d:340ms"><span class="dot"></span>See who finished the quiz and who is struggling.</li>
+          <li class="reveal" style="--d:460ms"><span class="dot"></span>Use AI to draft quiz questions, then check them before they go live.</li>
+          <li class="reveal" style="--d:580ms"><span class="dot"></span>Get suggested next steps — they still decide what to do.</li>
+          <li class="reveal" style="--d:700ms"><span class="dot"></span>Enrol students in Moodle, not in EdVidura.</li>
+        </ul>
+        <div class="foot"><span>EdVidura</span><span>04 / 10</span></div>
+      </section>
+
+      <section class="slide" data-i="5">
+        <div class="kicker reveal" style="--d:40ms">Moodle connection</div>
+        <h2 class="reveal" style="--d:120ms">How it plugs into Moodle</h2>
+        <ul class="bullets">
+          <li class="reveal" style="--d:220ms"><span class="dot"></span>It is a standard course tool (LTI). Schools already know this pattern.</li>
+          <li class="reveal" style="--d:340ms"><span class="dot"></span>A student click in Moodle opens EdVidura in a new window.</li>
+          <li class="reveal" style="--d:460ms"><span class="dot"></span>We can see who is in the class so the right people get the right work.</li>
+          <li class="reveal" style="--d:580ms"><span class="dot"></span>When they finish a quiz, the score is sent back to Moodle’s gradebook.</li>
+          <li class="reveal" style="--d:700ms"><span class="dot"></span>Each school’s data is kept separate. Unknown schools cannot get in.</li>
+        </ul>
+        <div class="foot"><span>EdVidura</span><span>05 / 10</span></div>
+      </section>
+
+      <section class="slide" data-i="6">
+        <div class="kicker reveal" style="--d:40ms">AI tutor</div>
+        <h2 class="reveal" style="--d:120ms">Ask Vidura, in plain words</h2>
+        <ul class="bullets">
+          <li class="reveal" style="--d:220ms"><span class="dot"></span>A tutor for this class — not a general chatbot for the whole internet.</li>
+          <li class="reveal" style="--d:340ms"><span class="dot"></span>It answers from the teacher’s approved notes and books, and shows where the answer came from.</li>
+          <li class="reveal" style="--d:460ms"><span class="dot"></span>It hints and explains. It will not write the assignment or the answer key.</li>
+          <li class="reveal" style="--d:580ms"><span class="dot"></span>It can speak and listen in English and several Indian languages.</li>
+          <li class="reveal" style="--d:700ms"><span class="dot"></span>If no AI key is set, a simple local helper still works for demos.</li>
+        </ul>
+        <div class="foot"><span>EdVidura</span><span>06 / 10</span></div>
+      </section>
+
+      <section class="slide" data-i="7">
+        <div class="kicker reveal" style="--d:40ms">AI and grades</div>
+        <h2 class="reveal" style="--d:120ms">AI never writes the gradebook</h2>
+        <div class="pair">
+          <div class="box soft reveal" style="--d:240ms">
+            <h3>AI may</h3>
+            <ul>
+              <li>Draft quiz questions from a lesson or PDF</li>
+              <li>Help a teacher write a lesson</li>
+              <li>Suggest a mark on a written answer</li>
+              <li>Suggest what to teach next</li>
+            </ul>
+          </div>
+          <div class="box navy reveal" style="--d:400ms">
+            <h3>AI must not</h3>
+            <ul>
+              <li>Put a mark into Moodle by itself</li>
+              <li>Use random websites as the textbook</li>
+              <li>Do the student’s exam for them</li>
+              <li>Replace the teacher’s decision</li>
+            </ul>
+          </div>
+        </div>
+        <div class="foot"><span>EdVidura</span><span>07 / 10</span></div>
+      </section>
+
+      <section class="slide" data-i="8">
+        <div class="kicker reveal" style="--d:40ms">Ready today</div>
+        <h2 class="reveal" style="--d:120ms">What is live vs later</h2>
+        <ul class="status">
+          <li class="reveal" style="--d:200ms"><span class="tag">Live</span><span>Moodle launch, quiz, score back to Moodle, Ask Vidura, teacher tools. Each school’s data is kept apart.</span></li>
+          <li class="reveal" style="--d:300ms"><span class="tag next">Next</span><span>Canvas — same idea, not the daily demo yet.</span></li>
+          <li class="reveal" style="--d:400ms"><span class="tag later">Later</span><span>Other classroom systems if a client needs them.</span></li>
+          <li class="reveal" style="--d:500ms"><span class="tag out">Not ours</span><span>We do not replace Moodle, keep the student list, or own the official gradebook.</span></li>
+        </ul>
+        <div class="foot"><span>EdVidura</span><span>08 / 10</span></div>
+      </section>
+
+      <section class="slide" data-i="9">
+        <div class="kicker reveal" style="--d:40ms">Why we are talking</div>
+        <h2 class="reveal" style="--d:120ms">What we want advice on</h2>
+        <ul class="bullets">
+          <li class="reveal" style="--d:220ms"><span class="dot"></span>How US schools actually judge a Moodle / Canvas add-on.</li>
+          <li class="reveal" style="--d:340ms"><span class="dot"></span>Where grade send-back and class lists usually break in real districts.</li>
+          <li class="reveal" style="--d:460ms"><span class="dot"></span>What AI is allowed — and not allowed — next to a gradebook.</li>
+          <li class="reveal" style="--d:580ms"><span class="dot"></span>Whether “Moodle owns people and grades; we own the lesson path” matches how they implement systems.</li>
+        </ul>
+        <div class="foot"><span>EdVidura</span><span>09 / 10</span></div>
+      </section>
+
+      <section class="slide deep" data-i="10">
+        <div class="kicker reveal" style="--d:40ms">Next step</div>
+        <h1 class="reveal" style="--d:140ms">Best demo: open it <span class="pop">from Moodle</span>.</h1>
+        <ul class="bullets">
+          <li class="reveal" style="--d:280ms"><span class="dot"></span>Launch from a Moodle course (not the standalone website).</li>
+          <li class="reveal" style="--d:400ms"><span class="dot"></span>Walk a lesson → take the quiz → watch the mark in Moodle.</li>
+          <li class="reveal" style="--d:520ms"><span class="dot"></span>Ask Vidura one question, then look at the teacher view.</li>
+        </ul>
+        <div class="url reveal" style="--d:640ms">edvidura-app-production.up.railway.app/app/</div>
+        <div class="foot"><span>EdVidura</span><span>10 / 10</span></div>
+      </section>
+
+      <div class="nav">
+        <button type="button" id="prev" aria-label="Previous">‹</button>
+        <button type="button" id="next" aria-label="Next">›</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    const frame = document.getElementById("frame");
+    const bar = document.getElementById("bar");
+    let i = 0, lock = false, queued = null, unlockTimer = 0;
+    const prevBtn = document.getElementById("prev");
+    const nextBtn = document.getElementById("next");
+    function syncNav() {
+      prevBtn.disabled = i === 0;
+      nextBtn.disabled = i === slides.length - 1;
+      bar.style.width = ((i + 1) / slides.length * 100) + "%";
+    }
+    function show(n, dir = 1) {
+      const next = Math.max(0, Math.min(slides.length - 1, n));
+      if (next === i) return;
+      const instant = dir < 0;
+      if (lock && !instant) { queued = { next, dir }; return; }
+      if (lock) {
+        clearTimeout(unlockTimer);
+        slides.forEach((s) => s.classList.remove("was"));
+        lock = false;
+        queued = null;
+      }
+      frame.classList.toggle("is-back", instant);
+      const leaving = slides[i];
+      leaving.classList.add("was");
+      leaving.classList.remove("on", "instant");
+      i = next;
+      const incoming = slides[i];
+      incoming.classList.toggle("instant", instant);
+      incoming.classList.add("on");
+      incoming.scrollTop = 0;
+      syncNav();
+      const finish = () => {
+        leaving.classList.remove("was");
+        lock = false;
+        if (queued) {
+          const q = queued;
+          queued = null;
+          show(q.next, q.dir);
+        }
+      };
+      if (instant) {
+        finish();
+        return;
+      }
+      lock = true;
+      unlockTimer = setTimeout(finish, 400);
+    }
+    syncNav();
+    nextBtn.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (i < slides.length - 1) show(i + 1, 1);
+    });
+    prevBtn.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (i > 0) show(i - 1, -1);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (["ArrowRight", " ", "PageDown"].includes(e.key)) { e.preventDefault(); if (i < slides.length - 1) show(i + 1, 1); }
+      if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); if (i > 0) show(i - 1, -1); }
+      if (e.key === "Home") show(0, -1);
+      if (e.key === "End") show(slides.length - 1, 1);
+      if (e.key === "f" || e.key === "F") {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+    });
+    const coarse = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 900;
+    if (!coarse) {
+      frame.addEventListener("click", (e) => {
+        if (e.target.closest("button, .nav")) return;
+        const r = frame.getBoundingClientRect();
+        if (e.clientX > r.left + r.width * 0.55) { if (i < slides.length - 1) show(i + 1, 1); }
+        else if (i > 0) show(i - 1, -1);
+      });
+    }
+    let touchX = 0, touchY = 0;
+    frame.addEventListener("touchstart", (e) => {
+      const t = e.changedTouches[0];
+      touchX = t.clientX;
+      touchY = t.clientY;
+    }, { passive: true });
+    frame.addEventListener("touchend", (e) => {
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchX;
+      const dy = t.clientY - touchY;
+      if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+      if (dx < 0 && i < slides.length - 1) show(i + 1, 1);
+      else if (dx > 0 && i > 0) show(i - 1, -1);
+    }, { passive: true });
+    const canvas = document.getElementById("fx");
+    const ctx = canvas.getContext("2d");
+    let W, H, dots;
+    function resize() {
+      const r = frame.getBoundingClientRect();
+      W = canvas.width = r.width * devicePixelRatio;
+      H = canvas.height = r.height * devicePixelRatio;
+      dots = Array.from({ length: r.width < 700 ? 16 : 36 }, () => ({
+        x: Math.random() * W, y: Math.random() * H,
+        r: 8 + Math.random() * 26,
+        vx: (Math.random() - .5) * .22, vy: (Math.random() - .5) * .22,
+        c: Math.random() > .55 ? "255,71,87" : "7,30,45"
+      }));
+    }
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      dots.forEach((d) => {
+        d.x += d.vx; d.y += d.vy;
+        if (d.x < 0) d.x = W; if (d.x > W) d.x = 0;
+        if (d.y < 0) d.y = H; if (d.y > H) d.y = 0;
+        const g = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r * devicePixelRatio);
+        g.addColorStop(0, "rgba(" + d.c + ",.12)");
+        g.addColorStop(1, "rgba(" + d.c + ",0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r * devicePixelRatio, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    }
+    resize();
+    window.addEventListener("resize", resize);
+    draw();
+  </script>
+</body>
+</html>

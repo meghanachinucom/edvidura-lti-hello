@@ -1,10 +1,11 @@
 /**
  * View 10: Teacher Results / Class Gradebook & Moodle Sync
- * Styled with radiant coral (#FF4757), deep midnight navy (#071E2D),
+ * Styled with radiant coral (#FE580D), deep midnight navy (#111827),
  * student photography, colorful metric cards, and tactile gradebook matrix.
  */
-import { state, setScreen, showToast, notify, studentsList, StudentRow } from '../state';
+import { state, setScreen, setRole, showToast, notify, studentsList, StudentRow } from '../state';
 import { classLabel, displayName, escapeHtml } from '../boot';
+import { hubStat, hubStats } from '../components/hub';
 import { assignGroup, createGroup, gradeEssay } from '../api';
 
 function roster(): StudentRow[] {
@@ -44,179 +45,54 @@ export function renderTeacherResults(): string {
   const pendingCount = rows.filter(s => s.status === 'pending' || s.status === 'queued').length;
 
   return `
-    <div class="flex flex-col w-full bg-[#FAFBFC]">
-      
-      <!-- Teacher Sub-Navigation & Scope Ribbon -->
-      <section class="w-full bg-white border-b border-[#E2E8F0] px-4 sm:px-6 lg:px-8 py-3.5">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-          
-          <!-- Sub-Navigation Tabs -->
-          <nav aria-label="Teacher Workspace Tabs" class="flex items-center gap-6">
-            <button class="text-sm font-bold text-[#FF4757] border-b-2 border-[#FF4757] py-1 focus:outline-none cursor-pointer" type="button">
-              Class Gradebook
-            </button>
-            <button id="tab-preview-quiz" class="text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors py-1 focus:outline-none cursor-pointer" type="button">
-              Preview Assessment
-            </button>
-            <button id="tab-analytics" class="text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors py-1 focus:outline-none cursor-pointer" type="button">
-              Diagnostic Radar
-            </button>
-          </nav>
-
-          <!-- Scope Metadata & SIS Connection -->
-          <div class="flex flex-wrap items-center gap-3 text-[#64748B] font-mono tabular-nums">
-            <span class="text-[#0F172A] font-sans font-semibold">${classLabel()} (${rows.length} attempts)</span>
-            <span class="text-[#CBD5E1]">/</span>
-            <span class="text-[#10B981] font-bold flex items-center gap-1.5 font-sans">
-              <span class="w-2 h-2 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
-              <span>Moodle SIS Synchronized</span>
-            </span>
+    <div class="hub-page">
+      <div class="studio-grid">
+        <section class="hub-hero studio-main">
+          <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b955?auto=format&fit=crop&w=1600&q=80" alt="">
+          <div class="hub-hero-body">
+            <p class="hub-kicker">${escapeHtml(displayName())}</p>
+            <h1>Class results</h1>
+            <p class="hub-hero-sub">${escapeHtml(classLabel())} · sync to Moodle when ready.</p>
+            <div class="hub-hero-ctas">
+              <button id="sync-all-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">sync</span> Sync</button>
+              <button id="preview-student-btn" class="hub-cta-light" type="button">Student view</button>
+              <button id="tab-analytics" class="sr-only" type="button">Diagnostics</button>
+            </div>
           </div>
-        </div>
-      </section>
-
-      <!-- ========================================================
-           COLORFUL TEACHER HERO BANNER
-           ======================================================== -->
-      <section class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-        <div class="max-w-7xl mx-auto">
-          <div class="hero-navy-card relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6" style="background-color: #071E2D; background-image: linear-gradient(135deg, #071E2D 0%, #0A2540 50%, #0D2E4A 100%);">
-            
-            <div class="space-y-3 max-w-2xl">
-              <div class="flex items-center gap-2 text-xs font-mono">
-                <span class="px-2.5 py-0.5 rounded-full bg-[#FF4757] text-white font-bold text-[10px] uppercase tracking-wider">Instructor Portal</span>
-                <span class="text-gray-400">·</span>
-                <span class="text-[#38BDF8] font-bold">${displayName()}</span>
-                <span class="text-gray-400">·</span>
-                <span class="text-white font-bold">Period 1 STEM</span>
-              </div>
-              <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white font-headline leading-tight">
-                Class Results &amp; <span class="text-[#FF4757]">Moodle Gradebook Sync</span>
-              </h1>
-              <p class="text-xs sm:text-sm text-gray-200 leading-relaxed font-sans">
-                Review student submissions, inspect question-level accuracy, and trigger instantaneous automated grade synchronization back to Riverside High SIS records.
-              </p>
-            </div>
-
-            <!-- Action Cluster with 3D Buttons -->
-            <div class="flex flex-wrap items-center gap-3 shrink-0">
-              <button id="export-csv-btn" class="btn-secondary-3d px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-white/10 hover:bg-white/20 text-white border-white/20" type="button">
-                <span class="material-symbols-outlined text-[16px]">download</span>
-                <span>Export CSV</span>
-              </button>
-              <button id="sync-all-btn" class="btn-secondary-3d px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-white/10 hover:bg-white/20 text-white border-white/20" type="button">
-                <span class="material-symbols-outlined text-[16px]">sync</span>
-                <span>Sync All to Moodle</span>
-              </button>
-              <button id="preview-student-btn" class="btn-primary-3d px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md" type="button">
-                <span class="material-symbols-outlined text-[16px]">visibility</span>
-                <span>Preview Student View</span>
-              </button>
-            </div>
-
+        </section>
+        <section class="hub-cal studio-rail">
+          <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=70" alt="">
+          <div class="hub-cal-body">
+            <h2 class="text-base font-extrabold">Class mean</h2>
+            <p class="text-3xl font-extrabold mt-3 tabular-nums">${state.connected ? `${meanScore}%` : '83%'}</p>
+            <p class="text-xs text-white/70 mt-1">${state.connected ? `${reviewCount} need review` : '4 need review'}</p>
           </div>
-        </div>
-      </section>
-
-      <!-- ========================================================
-           COLORFUL STAT TILES (4 Metrics)
-           ======================================================== -->
-      <section class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          <div class="card-depth-interactive rounded-2xl p-5 bg-white border-l-4 border-l-[#FF4757] flex flex-col justify-between">
-            <div class="flex items-center justify-between text-xs text-[#64748B] font-bold uppercase tracking-wider font-mono">
-              <span>Mean Score</span>
-              <span>Class Avg</span>
-            </div>
-            <div class="py-2.5 flex items-baseline gap-2 font-mono tabular-nums">
-              <span class="text-3xl font-bold text-[#0F172A] font-headline">${state.connected ? `${meanScore}%` : '83.4%'}</span>
-              <span class="text-xs font-bold text-[#10B981] flex items-center">
-                <span class="material-symbols-outlined text-[14px]">arrow_upward</span>
-                <span>+4.2%</span>
-              </span>
-            </div>
-            <span class="text-xs text-[#64748B]">Target mastery: 75.0%</span>
-          </div>
-
-          <div class="card-depth-interactive rounded-2xl p-5 bg-white border-l-4 border-l-[#10B981] flex flex-col justify-between">
-            <div class="flex items-center justify-between text-xs text-[#64748B] font-bold uppercase tracking-wider font-mono">
-              <span>LTI 1.3 Sync</span>
-              <span>Automated</span>
-            </div>
-            <div class="py-2.5 flex items-baseline gap-2 font-mono tabular-nums">
-              <span class="text-3xl font-bold text-[#0F172A] font-headline">${state.connected ? `${syncedCount} / ${rows.length || 1}` : '18 / 24'}</span>
-              <span class="text-xs font-bold text-[#10B981]">${state.connected && rows.length ? Math.round((100 * syncedCount) / rows.length) : 75}% Synced</span>
-            </div>
-            <span class="text-xs text-[#64748B]">Last batch synced 12m ago</span>
-          </div>
-
-          <div class="card-depth-interactive rounded-2xl p-5 bg-white border-l-4 border-l-[#F59E0B] flex flex-col justify-between">
-            <div class="flex items-center justify-between text-xs text-[#64748B] font-bold uppercase tracking-wider font-mono">
-              <span>Intervention</span>
-              <span>Needs Review</span>
-            </div>
-            <div class="py-2.5 flex items-baseline gap-2 font-mono tabular-nums">
-              <span class="text-3xl font-bold text-[#D97706] font-headline">${state.connected ? `${reviewCount} Students` : '4 Students'}</span>
-              <span class="text-xs font-bold text-[#D97706] font-mono">Score &lt; 70%</span>
-            </div>
-            <span class="text-xs text-[#64748B]">Flagged for Socratic review</span>
-          </div>
-
-          <div class="card-depth-interactive rounded-2xl p-5 bg-white border-l-4 border-l-[#0284C7] flex flex-col justify-between">
-            <div class="flex items-center justify-between text-xs text-[#64748B] font-bold uppercase tracking-wider font-mono">
-              <span>Attempts Count</span>
-              <span>Persistence</span>
-            </div>
-            <div class="py-2.5 flex items-baseline gap-2 font-mono tabular-nums">
-              <span class="text-3xl font-bold text-[#0F172A] font-headline">2.1 Avg</span>
-              <span class="text-xs font-bold text-[#0284C7]">High Engagement</span>
-            </div>
-            <span class="text-xs text-[#64748B]">Max allowed: 5 attempts</span>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- ========================================================
-           STUDENT ROSTER MATRIX WITH PHOTOS
-           ======================================================== -->
-      <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 flex flex-col gap-6">
-        
-        <!-- Filter and Search Header -->
+        </section>
+      </div>
+      ${hubStats(
+        hubStat('sync', 'Synced', state.connected ? `${syncedCount} / ${rows.length || 1}` : '18 / 24'),
+        hubStat('flag', 'Review', state.connected ? String(reviewCount) : '4'),
+        hubStat('hourglass', 'Pending', state.connected ? String(pendingCount) : '2')
+      )}
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          
-          <div class="relative w-full sm:w-80">
-            <span class="material-symbols-outlined absolute left-3 top-2.5 text-[#94A3B8] text-[18px]">search</span>
-            <input
-              id="student-search-input"
-              type="text"
-              value="${state.teacherSearchQuery}"
-              placeholder="Search students by name or email..."
-              class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-[#CBD5E1] text-[#0F172A] text-xs outline-none focus:border-[#FF4757] placeholder:text-[#94A3B8] shadow-xs"
-            />
+          <label class="hub-search" style="min-width:14rem;max-width:20rem;box-shadow:none">
+            <span class="material-symbols-outlined">search</span>
+            <input id="student-search-input" type="search" value="${state.teacherSearchQuery}" placeholder="Search students…" autocomplete="off" />
+          </label>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="hub-seg" role="group">
+              <button class="filter-tab hub-seg-btn ${filter === 'all' ? 'on' : ''}" data-filter="all" type="button">All</button>
+              <button class="filter-tab hub-seg-btn ${filter === 'synced' ? 'on' : ''}" data-filter="synced" type="button">Synced</button>
+              <button class="filter-tab hub-seg-btn ${filter === 'needs-review' ? 'on' : ''}" data-filter="needs-review" type="button">Review</button>
+              <button class="filter-tab hub-seg-btn ${filter === 'pending' ? 'on' : ''}" data-filter="pending" type="button">Pending</button>
+            </div>
+            <button id="export-csv-btn" class="hub-cta-light" type="button" style="margin-top:0">CSV</button>
+            <button id="tab-preview-quiz" class="hub-cta-light" type="button" style="margin-top:0">Preview</button>
           </div>
-
-          <!-- Functional Segmented Filter Buttons -->
-          <div class="inline-flex items-center p-1 rounded-2xl bg-white border border-[#CBD5E1] shadow-xs self-start sm:self-auto overflow-x-auto max-w-full" role="group">
-            <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${filter === 'all' ? 'bg-[#FF4757] text-white shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}" data-filter="all">
-              All (${rows.length})
-            </button>
-            <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${filter === 'synced' ? 'bg-[#10B981] text-white shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}" data-filter="synced">
-              Synced (${syncedCount})
-            </button>
-            <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${filter === 'needs-review' ? 'bg-[#F59E0B] text-white shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}" data-filter="needs-review">
-              Needs Review (${reviewCount})
-            </button>
-            <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${filter === 'pending' ? 'bg-[#071E2D] text-white shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}" data-filter="pending">
-              Pending (${pendingCount})
-            </button>
-          </div>
-
         </div>
 
         <!-- Gradebook Table Container -->
-        <div class="card-depth-interactive rounded-3xl overflow-hidden bg-white border border-[#E2E8F0]">
+        <div class="hub-card overflow-hidden p-0">
           <div class="overflow-x-auto">
             <table class="w-full min-w-[700px] text-left text-xs border-collapse">
               <thead>
@@ -245,16 +121,16 @@ export function renderTeacherResults(): string {
                           const isReview = s.status === 'needs-review';
 
                           return `
-                        <tr class="hover:bg-[#FFF0F3]/30 transition-colors group">
+                        <tr class="hover:bg-[#FFF7ED]/30 transition-colors group">
                           <td class="py-3.5 px-6">
                             <div class="flex items-center gap-3">
                               ${
                                 s.avatarUrl
-                                  ? `<img src="${s.avatarUrl}" alt="${s.name}" class="w-10 h-10 rounded-2xl object-cover ring-2 ring-[#FF4757]/30 shadow-xs shrink-0" />`
-                                  : `<div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FFF0F3] to-[#FFCCD5] text-[#FF4757] font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">${s.initials}</div>`
+                                  ? `<img src="${s.avatarUrl}" alt="${s.name}" class="w-10 h-10 rounded-2xl object-cover ring-2 ring-[#FE580D]/30 shadow-xs shrink-0" />`
+                                  : `<div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FFF7ED] to-[#FED7AA] text-[#FE580D] font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">${s.initials}</div>`
                               }
                               <div class="flex flex-col">
-                                <span class="font-bold text-[#0F172A] text-sm group-hover:text-[#FF4757] transition-colors">${s.name}</span>
+                                <span class="font-bold text-[#0F172A] text-sm group-hover:text-[#FE580D] transition-colors">${s.name}</span>
                                 <span class="text-[#64748B] text-[11px] font-mono">${s.email}</span>
                               </div>
                             </div>
@@ -265,7 +141,7 @@ export function renderTeacherResults(): string {
                           <td class="py-3.5 px-4 font-mono tabular-nums">
                             ${
                               s.scorePercent !== null
-                                ? `<span class="font-bold text-sm ${isMastered ? 'text-[#10B981]' : isReview ? 'text-[#FF4757]' : 'text-[#0F172A]'}">${s.scorePercent}%</span>`
+                                ? `<span class="font-bold text-sm ${isMastered ? 'text-[#10B981]' : isReview ? 'text-[#FE580D]' : 'text-[#0F172A]'}">${s.scorePercent}%</span>`
                                 : '<span class="text-[#94A3B8]">—</span>'
                             }
                           </td>
@@ -290,7 +166,7 @@ export function renderTeacherResults(): string {
                             `
                                 : s.status === 'needs-review'
                                 ? `
-                              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#FFF0F3] text-[#FF4757] border border-[#FFCCD5]">
+                              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#FFF7ED] text-[#FE580D] border border-[#FED7AA]">
                                 <span class="material-symbols-outlined text-[13px]">warning</span>
                                 <span>Needs Review</span>
                               </span>
@@ -307,7 +183,7 @@ export function renderTeacherResults(): string {
                               <button class="grade-action-btn btn-secondary-3d px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer" data-id="${s.id}" data-action="view">
                                 Review
                               </button>
-                              <button class="grade-sync-btn px-2.5 py-1 rounded-lg text-xs font-bold text-[#FF4757] hover:bg-[#FFF0F3] border border-[#FFCCD5] cursor-pointer" data-id="${s.id}">
+                              <button class="grade-sync-btn px-2.5 py-1 rounded-lg text-xs font-bold text-[#FE580D] hover:bg-[#FFF7ED] border border-[#FED7AA] cursor-pointer" data-id="${s.id}">
                                 Push SIS
                               </button>
                             </div>
@@ -322,7 +198,7 @@ export function renderTeacherResults(): string {
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="card-depth-interactive rounded-3xl p-6 bg-white border border-[#E2E8F0] space-y-3">
+          <div class="hub-card space-y-3">
             <div class="flex items-center justify-between">
               <h3 class="text-base font-bold text-[#0F172A] font-headline">LTI groups</h3>
               <span class="text-[10px] font-mono font-bold ${state.gsAvailable ? 'text-[#10B981]' : 'text-[#64748B]'}">${state.gsAvailable ? 'Group Services on launch' : 'Local groups'}</span>
@@ -345,7 +221,7 @@ export function renderTeacherResults(): string {
               ? `<p class="text-[11px] font-mono text-[#64748B]">${state.liveGroupAssignments.map(a => `${escapeHtml(a.group_name)} → ${escapeHtml(a.title)}`).join(' · ')}</p>`
               : ''}
           </div>
-          <div class="card-depth-interactive rounded-3xl p-6 bg-white border border-[#E2E8F0] space-y-3">
+          <div class="hub-card space-y-3">
             <h3 class="text-base font-bold text-[#0F172A] font-headline">AI essay grade (vs instructor answer)</h3>
             <p class="text-xs text-[#64748B]">Compares the student text with your model answer and lesson RAG. Never sent to Moodle.</p>
             <textarea id="essay-prompt" class="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] text-xs" rows="2" placeholder="Question"></textarea>
@@ -355,11 +231,7 @@ export function renderTeacherResults(): string {
             <p id="essay-grade-out" class="text-xs text-[#0F172A] font-mono whitespace-pre-wrap"></p>
           </div>
         </div>
-
-      </main>
-
-    </div>
-  `;
+    </div>`;
 }
 
 export function bindTeacherResultsEvents(container: HTMLElement): void {
@@ -374,7 +246,7 @@ export function bindTeacherResultsEvents(container: HTMLElement): void {
 
   // Action Bar Buttons
   container.querySelector('#preview-student-btn')?.addEventListener('click', () => {
-    setScreen('student-home');
+    setRole('student');
   });
 
   container.querySelector('#sync-all-btn')?.addEventListener('click', () => {

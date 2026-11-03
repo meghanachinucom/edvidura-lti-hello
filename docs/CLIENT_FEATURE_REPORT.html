@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · Client feature report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #64748B;
+      --line: #E2E8F0;
+      --paper: #F8FAFC;
+      --card: #FFFFFF;
+      --coral: #FE580D;
+      --mint: #62BF8E;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Outfit, system-ui, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #FFF7ED 0%, var(--paper) 28%, #fff 100%);
+      line-height: 1.55;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+    .kicker {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--coral);
+      font-weight: 600;
+    }
+    h1 { font-size: clamp(1.85rem, 4vw, 2.6rem); line-height: 1.15; margin: 0.4rem 0 0.75rem; }
+    .lead { color: var(--muted); font-size: 1.05rem; max-width: 40rem; }
+    .meta {
+      display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem;
+      margin: 1.5rem 0 2.25rem; font-size: 0.9rem; color: var(--muted);
+    }
+    .meta strong { color: var(--ink); font-weight: 600; }
+    .live {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;
+      padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+    }
+    .live::before { content: ""; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--mint); }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 1.25rem;
+      padding: 1.35rem 1.4rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+    section h2 { font-size: 1.15rem; margin: 0 0 0.35rem; }
+    section p.sub { margin: 0 0 0.9rem; color: var(--muted); font-size: 0.95rem; }
+    ul { margin: 0; padding-left: 1.15rem; }
+    li { margin: 0.35rem 0; }
+    li strong { font-weight: 650; }
+    .grid { display: grid; gap: 1rem; }
+    @media (min-width: 720px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+    .note {
+      margin-top: 1.75rem;
+      padding: 1.1rem 1.25rem;
+      border-radius: 1rem;
+      background: #111827;
+      color: #E2E8F0;
+      font-size: 0.95rem;
+    }
+    .note a { color: #FDBA74; }
+    footer { margin-top: 2rem; color: var(--muted); font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="kicker">EdVidura · Client briefing</p>
+    <h1>What’s ready for classroom demos</h1>
+    <p class="lead">
+      A clear walkthrough of the learner and teacher experience after the latest CampusHub UI polish,
+      plus the learning features already wired behind it. Moodle remains the gradebook of record.
+    </p>
+    <div class="meta">
+      <span class="live">Production app</span>
+      <span><strong>App</strong> edvidura-app on Railway</span>
+      <span><strong>Branch</strong> feature/slice-a-quiz</span>
+      <span><strong>Date</strong> 3 Nov 2026</span>
+    </div>
+
+    <section>
+      <h2>1. Clearer screens for demos</h2>
+      <p class="sub">Screens were simplified so clients can understand them at a glance — same jobs, less clutter.</p>
+      <ul>
+        <li><strong>Student home</strong> — calm dashboard with one job per section and breathing room.</li>
+        <li><strong>My Progress</strong> — roadmap, skills, gaps, and goals with short copy and simple cards.</li>
+        <li><strong>Ask Vidura</strong> — handbook-backed hints; fewer toolbar buttons; clearer “no quiz answers” stance.</li>
+        <li><strong>Lessons &amp; manuals</strong> — one primary action; shorter heroes; offline handbooks easy to open.</li>
+        <li><strong>Quiz &amp; XR labs</strong> — focused checkpoint flow; simpler lab cards to launch.</li>
+        <li><strong>Teacher results</strong> — class mean, sync to Moodle, filters without a crowded hero.</li>
+        <li><strong>Teacher diagnostics</strong> — Stuck / Activity / xAPI / Gaps tabs with plain language and room to scan.</li>
+      </ul>
+    </section>
+
+    <div class="grid grid-2">
+      <section>
+        <h2>2. For learners</h2>
+        <p class="sub">What a student can do in the course tool launched from Moodle.</p>
+        <ul>
+          <li>Continue the next lesson or lab</li>
+          <li>Take Checkpoint quizzes with instant feedback</li>
+          <li>Ask Vidura for Socratic help from approved sources</li>
+          <li>Read class manuals / PeBL handbooks (incl. offline-friendly reader)</li>
+          <li>See progress, skill levels, and suggested next steps</li>
+          <li>Open spatial / WebXR practice labs where enabled</li>
+        </ul>
+      </section>
+      <section>
+        <h2>3. For teachers</h2>
+        <p class="sub">Section-scoped — not a district SIS replacement.</p>
+        <ul>
+          <li>Review class results and sync grades to Moodle (LTI AGS)</li>
+          <li>See where the class is stuck and assign short drills</li>
+          <li>Inspect activity heatmaps and xAPI statements</li>
+          <li>Map competencies / close skill gaps (Difference training)</li>
+          <li>Authoring helpers: DCT planner, SME sources, CAT mapping</li>
+        </ul>
+      </section>
+    </div>
+
+    <section>
+      <h2>4. Platform capabilities (behind the UI)</h2>
+      <p class="sub">Already in the product architecture for school / corporate / government tenants.</p>
+      <ul>
+        <li><strong>LTI 1.3 Advantage</strong> — launch from Moodle; Dynamic Registration onboarding; grade passback.</li>
+        <li><strong>Tenant isolation</strong> — each school or org is separated at the database (RLS).</li>
+        <li><strong>Adaptive / Difference paths</strong> — gap analysis and personalised next activities.</li>
+        <li><strong>SME / handbook index</strong> — approved manuals feed the study coach; public query + ETIMS webhook for content sync.</li>
+        <li><strong>Competency (CAT)</strong> — TO → skill mapping and evidence-linked proficiency levels.</li>
+        <li><strong>xAPI middleware</strong> — statements for labs, quizzes, and diagnostics.</li>
+        <li><strong>Multi-language UI</strong> — Indian language catalog for key handbook surfaces.</li>
+        <li><strong>Government packs</strong> — Pravachana video library path (segment-specific).</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>5. What stays in Moodle</h2>
+      <p class="sub">Important for client trust and procurement conversations.</p>
+      <ul>
+        <li>Official gradebook and enrolment remain in the LMS.</li>
+        <li>EdVidura is the practice, coaching, and diagnostics layer inside the course.</li>
+        <li>Scores and sync status are visible in teacher results before / after Moodle passback.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6. Suggested client walkthrough (10–12 min)</h2>
+      <ul>
+        <li><strong>1 min</strong> — Open student home; show calm layout and “continue lab”.</li>
+        <li><strong>2 min</strong> — Lessons → open a lab; then Checkpoint quiz (submit stays official in Moodle).</li>
+        <li><strong>2 min</strong> — Ask Vidura a slope/intercept question; point at handbook citations.</li>
+        <li><strong>2 min</strong> — Manuals → open handbook reader.</li>
+        <li><strong>2 min</strong> — My Progress → Roadmap / Skills / Gaps.</li>
+        <li><strong>3 min</strong> — Switch to teacher → Results (sync) → Diagnostics (Stuck + Gaps).</li>
+      </ul>
+    </section>
+
+    <div class="note">
+      Live app:
+      <a href="https://edvidura-app-production.up.railway.app" rel="noopener">https://edvidura-app-production.up.railway.app</a>
+      · Health: <a href="https://edvidura-app-production.up.railway.app/health" rel="noopener">/health</a>
+      · Open this file locally anytime: <code>docs/CLIENT_FEATURE_REPORT.html</code>
+    </div>
+
+    <footer>
+      Internal note: demo data appears when no LTI / tenant token is present; full live data needs Moodle launch or a secured client-launch URL for the tenant.
+    </footer>
+  </div>
+</body>
+</html>

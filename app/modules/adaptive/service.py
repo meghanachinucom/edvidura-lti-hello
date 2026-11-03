@@ -308,14 +308,19 @@ def build_difference_path(
     tenant_id: UUID | str,
     *,
     role_code: str,
-    attempt: dict[str, Any],
+    attempt: dict[str, Any] | None = None,
     quiz_token: str,
     first_lesson_id: str | None = None,
     first_manual_id: str | None = None,
     manual_version: int | None = None,
     max_skills: int = 5,
 ) -> dict[str, Any]:
-    """D23: required skills for target role minus demonstrated mastery."""
+    """D23: required skills for target role minus demonstrated mastery.
+
+    When attempt is missing, all required skills count as untested gaps
+    (placement / no-profile pathway).
+    """
+    attempt = attempt or {"answers": {}}
     gaps = skills_mod.skill_gaps_for_role(
         tenant_id,
         role_code=role_code,
@@ -333,7 +338,135 @@ def build_difference_path(
         path_mode="difference",
     )
     path["role_code"] = (role_code or "").strip().lower()
+    path["needs_placement"] = not bool((attempt or {}).get("id"))
     return path
+
+
+def generate_difference_curriculum(
+    tenant_id: UUID | str,
+    *,
+    role_code: str,
+    course_id: UUID | str | None = None,
+    course_title: str = "",
+    max_skills: int = 5,
+    quiz_token: str = "",
+    publish_lessons: bool = False,
+) -> dict[str, Any]:
+    """Differential curriculum generator (CrossCheck Diff F-5).
+
+    For each role skill gap that lacks a remediation lesson, draft a
+    micro-lesson via DCT, create it as draft (or published), and link it.
+    Returns a difference path preview teachers can review before learners use it.
+    """
+    from app.modules import content as content_mod
+    from app.modules.ai_assessment import generate_remediation_micro_lesson
+
+    code = (role_code or "").strip().lower()
+    if not code:
+        raise ValueError("role_code is required")
+
+    gaps = skills_mod.skill_gaps_for_role(
+        tenant_id, role_code=code, answers=None
+    )
+    if not gaps:
+        raise ValueError(f"No skill gaps for role '{code}' (check role skills)")
+
+    course = None
+    if course_id:
+        course = content_mod.get_course(tenant_id, course_id)
+    if not course:
+        course = content_mod.ensure_primary_course(tenant_id)
+    title_course = (course_title or "").strip() or str(
+        (course or {}).get("title") or ""
+    )
+
+    generated: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
+
+    for gap in gaps[: max(1, min(int(max_skills or 5), 12))]:
+        skill_id = str(gap.get("skill_id") or "").strip()
+        skill_code = str(gap.get("id") or "").strip()
+        label = str(gap.get("label") or skill_code)
+        existing_lesson = str(gap.get("lesson_id") or "").strip()
+        if existing_lesson:
+            skipped.append(
+                {
+                    "skill_code": skill_code,
+                    "label": label,
+                    "lesson_id": existing_lesson,
+                    "reason": "already_linked",
+                }
+            )
+            continue
+        if not skill_id:
+            errors.append(
+                {"skill_code": skill_code, "label": label, "error": "missing skill_id"}
+            )
+            continue
+        try:
+            draft = generate_remediation_micro_lesson(
+                skill_label=label,
+                skill_code=skill_code,
+                skill_description="",
+                course_title=title_course,
+                source_excerpt="",
+            )
+            lesson = content_mod.create_lesson(
+                tenant_id=tenant_id,
+                title=str(draft.get("title") or f"Review: {label}"),
+                body_md=str(draft.get("body_md") or ""),
+                lesson_type="article",
+                status="published" if publish_lessons else "draft",
+                course_id=(course or {}).get("id"),
+                insert_before_quiz=True,
+            )
+            skills_mod.set_skill_remediation(
+                tenant_id,
+                skill_id,
+                lesson_id=str(lesson.get("id") or ""),
+                prefer_path="lessons",
+                teleport_label=f"Review: {label}",
+                teleport_hint=str(draft.get("summary") or "")[:200],
+            )
+            generated.append(
+                {
+                    "skill_code": skill_code,
+                    "skill_id": skill_id,
+                    "label": label,
+                    "lesson_id": str(lesson.get("id") or ""),
+                    "title": str(lesson.get("title") or draft.get("title") or ""),
+                    "status": lesson.get("status") or "draft",
+                    "provider": draft.get("provider") or "local",
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            errors.append(
+                {
+                    "skill_code": skill_code,
+                    "label": label,
+                    "error": str(exc)[:200],
+                }
+            )
+
+    path = build_difference_path(
+        tenant_id,
+        role_code=code,
+        attempt={"answers": {}},
+        quiz_token=quiz_token or "",
+        max_skills=max_skills,
+    )
+    return {
+        "role_code": code,
+        "generated": generated,
+        "skipped": skipped,
+        "errors": errors,
+        "generated_count": len(generated),
+        "skipped_count": len(skipped),
+        "gap_count": len(gaps),
+        "path": path,
+        "publish_lessons": bool(publish_lessons),
+    }
 
 
 def recommend_next_lesson(
@@ -825,7 +958,9 @@ def resolve_learner_plan(
             return existing
 
     attempt = latest_graded_attempt_for_subject(tenant_id, subject)
-    if wanted_role and attempt:
+    if wanted_role:
+        # Diff F-3: no competency profile yet → treat all role skills as gaps
+        # and flag needs_placement so the learner can take a CAT/placement quiz.
         derived = build_difference_path(
             tenant_id,
             role_code=wanted_role,

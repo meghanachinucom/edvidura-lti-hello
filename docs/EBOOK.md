@@ -42,11 +42,18 @@ HMAC (`seal_reader_token` / `verify_reader_token`) — expires (default 72h). Us
 - `toc_from_body`
 - `reader_share_path` / `seal_reader_token` / `verify_reader_token`
 
-## A11y
+## Authoring (CrossCheck Interactive eBook R-1 / F-1)
+
+Teachers author handbook bodies as **Markdown** (`textarea` → `manual_versions.body_md`). Markdown is the accepted rich format for this product (WYSIWYG optional later). Published reader renders TOC/chapters via `body_md_to_html`.
+
+## A11y (CrossCheck Interactive eBook F-3)
+
+Accessibility tools attached to content (LMS Jinja reader + SPA `#manual-reader`):
 
 - Skip link → `#manual-body`
 - TOC `nav` with `aria-label`
 - Sticky chapter list; focus section scroll
+- Font scale, high-contrast / dyslexia mode, read-aloud TTS
 
 ## PeBL discussion (complete)
 

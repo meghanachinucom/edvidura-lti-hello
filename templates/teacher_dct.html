@@ -26,6 +26,35 @@
 
   <section class="frosted" style="padding:var(--sp-xl);margin-bottom:var(--sp-md)">
     <div class="section-head" style="margin-bottom:var(--sp-md)">
+      <h2 class="headline-md">Difference curriculum</h2>
+      <span class="chip chip-sky">Diff F-5 · DCT</span>
+    </div>
+    <p class="body-sm text-muted" style="margin:0 0 var(--sp-md);max-width:560px">
+      Pick a target role. EdVidura drafts remediation micro-lessons for each skill gap that still lacks a linked lesson, then builds a difference training path.
+    </p>
+    {% if roles %}
+    <form method="post" action="/teacher/dct/difference-generate" class="teach-form">
+      <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+      <label class="label-caps text-muted" for="diff-role">Target role</label>
+      <select id="diff-role" name="role_code" required style="width:100%;max-width:420px;margin:6px 0 14px;padding:10px 12px;border-radius:12px;border:1px solid rgba(3,32,25,.14);font:inherit">
+        <option value="">Choose role…</option>
+        {% for r in roles %}
+        <option value="{{ r.role_code }}">{{ r.label }} ({{ r.skill_codes|length }} skills)</option>
+        {% endfor %}
+      </select>
+      <label style="display:flex;align-items:center;gap:8px;margin:0 0 14px;font-size:13px">
+        <input type="checkbox" name="publish" value="1"/>
+        Publish lessons immediately (otherwise draft for review)
+      </label>
+      <button type="submit" class="btn btn-primary">Generate differential curriculum</button>
+    </form>
+    {% else %}
+    <p class="body-sm text-muted">Seed roles in the Skills registry first.</p>
+    {% endif %}
+  </section>
+
+  <section class="frosted" style="padding:var(--sp-xl);margin-bottom:var(--sp-md)">
+    <div class="section-head" style="margin-bottom:var(--sp-md)">
       <h2 class="headline-md">Publish a skill reel</h2>
       <span class="chip chip-sky">mp4 · webm · mov · max 40MB</span>
     </div>

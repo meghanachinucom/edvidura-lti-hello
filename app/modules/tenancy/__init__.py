@@ -26,6 +26,7 @@ from app.modules.tenancy.lms import (
     default_lms_home,
     default_lms_return_url,
     detect_lms_name,
+    safe_lms_return_url,
 )
 from app.modules.tenancy.resolve import ResolvedTenant, resolve_platform
 from app.modules.tenancy.tool_conf import build_tool_conf_from_db
@@ -57,4 +58,5 @@ __all__ = [
     "detect_lms_name",
     "default_lms_home",
     "default_lms_return_url",
+    "safe_lms_return_url",
 ]

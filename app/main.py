@@ -24,8 +24,10 @@ from app.api.app_client import AppApiError
 from app.api.app_client import router as app_client_router
 from app.api.app_client.envelope import fail as app_fail
 from app.api.events import router as events_api_router
+from app.api.etims_webhook import router as etims_webhook_router
 from app.api.institution import router as institution_router
 from app.api.skills import router as skills_api_router
+from app.api.sme_public import router as sme_public_router
 from app.api.student import router as student_router
 from app.api.tla import router as tla_api_router
 from app.api.xapi import router as xapi_api_router
@@ -75,9 +77,9 @@ app = FastAPI(
         "App API for web + mobile: /api/v1/app (see docs/MOBILE_API.md)."
     ),
     version="0.8.0",
-    docs_url=None if _boot.is_production else "/docs",
-    redoc_url=None if _boot.is_production else "/redoc",
-    openapi_url=None if _boot.is_production else "/openapi.json",
+    docs_url=None if _boot.is_production_like else "/docs",
+    redoc_url=None if _boot.is_production_like else "/redoc",
+    openapi_url=None if _boot.is_production_like else "/openapi.json",
 )
 
 
@@ -108,6 +110,8 @@ app.include_router(skills_api_router)
 app.include_router(tla_api_router)
 app.include_router(events_api_router)
 app.include_router(ai_api_router)
+app.include_router(sme_public_router)
+app.include_router(etims_webhook_router)
 app.include_router(quiz_router)
 
 _STATIC = Path(__file__).resolve().parent / "static"
@@ -172,7 +176,7 @@ if not _boot.is_production_like:
 
 @app.get("/health")
 def health(detail: int = 0):
-    """Public probe: lean JSON. Pass ``?detail=1`` for ops fields (dev/staging always)."""
+    """Public probe: lean JSON. Rich fields only outside production/staging."""
     platforms = 0
     db_ok = False
     db_error = ""
@@ -195,7 +199,8 @@ def health(detail: int = 0):
         "version": app.version,
         "db_ok": db_ok,
     }
-    show_detail = bool(detail) or not _boot.is_production_like
+    # Never honor ?detail=1 in production/staging — avoid env/integration leaks.
+    show_detail = not _boot.is_production_like
     if not show_detail:
         return lean
 
@@ -225,8 +230,11 @@ def health(detail: int = 0):
     return out
 
 
-@app.get("/", response_class=HTMLResponse)
-def home(request: Request):
+def _spa_ready() -> bool:
+    return (_SPA_DIST / "index.html").is_file()
+
+
+def _landing_page(request: Request) -> HTMLResponse:
     from fastapi.templating import Jinja2Templates
 
     settings = get_settings()
@@ -244,6 +252,27 @@ def home(request: Request):
             "metabase_url": settings.metabase_url or "",
         },
     )
+
+
+@app.get("/demo")
+def public_classroom_demo():
+    """Shareable prototype — same filled CampusHub screens as local Vite / AI Studio."""
+    if _spa_ready():
+        return RedirectResponse("/app/?demo=1", status_code=302)
+    origin = (_boot.frontend_origin or "http://127.0.0.1:3000").rstrip("/")
+    return RedirectResponse(f"{origin}/?demo=1", status_code=302)
+
+
+@app.get("/welcome", response_class=HTMLResponse)
+def product_welcome(request: Request):
+    return _landing_page(request)
+
+
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    if _spa_ready():
+        return RedirectResponse("/app/?demo=1", status_code=302)
+    return _landing_page(request)
 
 
 @app.get("/.well-known/jwks.json")
@@ -407,9 +436,6 @@ async def lti_launch(request: Request):
             fastapi_request, tool_conf, launch_data_storage=storage
         )
         launch_data = message_launch.get_launch_data()
-        import json
-        print(json.dumps(launch_data, indent=2))
-        
         iss = str(launch_data.get("iss") or "").rstrip("/")
         aud = launch_data.get("aud")
         if isinstance(aud, list):
@@ -510,17 +536,20 @@ async def lti_launch(request: Request):
             default_lms_return_url,
             detect_lms_name,
         )
+        from app.modules.tenancy.lms import safe_lms_return_url
 
         lms_name = detect_lms_name(iss)
-        moodle_return = str(launch_pres.get("return_url") or "").strip()
-        if not moodle_return:
+        raw_return = str(launch_pres.get("return_url") or "").strip()
+        if raw_return:
+            moodle_return = safe_lms_return_url(
+                raw_return, iss, lms_name=lms_name
+            )
+        else:
             moodle_return = default_lms_return_url(
                 iss,
                 context_id=lti_context_id,
                 lms_name=lms_name,
-            )
-        if not moodle_return:
-            moodle_return = "http://localhost:8085/my/"
+            ) or "http://localhost:8085/my/"
 
         # Phase 7: LMS context → EdVidura class + subject curriculum
         binding = None

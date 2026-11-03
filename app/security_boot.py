@@ -85,11 +85,11 @@ def assert_safe_for_environment(settings: Settings | None = None) -> None:
 
 
 def require_dev_tools(request: Request) -> None:
-    """Block /dev/* in production; require ops auth otherwise."""
+    """Block /dev/* in production and staging; require ops auth in local/dev."""
     from app.admin_auth import resolve_ops_principal
 
     settings = get_settings()
-    if settings.is_production:
+    if settings.is_production_like:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     key = request.headers.get("X-Admin-Key")
     auth = request.headers.get("Authorization")
@@ -98,3 +98,79 @@ def require_dev_tools(request: Request) -> None:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="X-Admin-Key or ops Bearer required for /dev tools",
         )
+
+
+def safe_relative_next(path: str | None, *, default: str = "/ops/dashboard") -> str:
+    """Allow only same-origin relative paths (block //evil open redirects)."""
+    nxt = (path or "").strip() or default
+    if not nxt.startswith("/"):
+        return default
+    if nxt.startswith("//") or nxt.startswith("/\\"):
+        return default
+    if "\\" in nxt or "://" in nxt:
+        return default
+    return nxt
+
+
+def path_is_under(child, parent) -> bool:
+    """True when resolved child is inside resolved parent (path-traversal safe)."""
+    from pathlib import Path
+
+    try:
+        child_p = Path(child).resolve()
+        parent_p = Path(parent).resolve()
+        return child_p.is_relative_to(parent_p)
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
+def assert_public_http_url(url: str, *, purpose: str = "outbound URL") -> str:
+    """Reject non-http(s) and clearly private/link-local hosts (SSRF guard).
+
+    Resolves DNS and blocks loopback, RFC1918, link-local, and metadata ranges.
+    Call before server-side GET/POST to caller-supplied URLs (e.g. LTI dynreg).
+    Local/dev allows localhost so Moodle-on-:8085 registration still works.
+    """
+    import ipaddress
+    import socket
+    from urllib.parse import urlparse
+
+    raw = (url or "").strip()
+    parsed = urlparse(raw)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        raise ValueError(f"Invalid {purpose}: only http(s) URLs with a host are allowed")
+    host = parsed.hostname
+    settings = get_settings()
+    allow_local = not settings.is_production_like
+    if host.lower() == "metadata.google.internal":
+        raise ValueError(f"Refusing metadata host for {purpose}")
+    if host.lower() in {"localhost", "127.0.0.1", "::1"} and allow_local:
+        return raw
+    if host.lower() in {"localhost", "127.0.0.1", "::1"}:
+        raise ValueError(f"Refusing private host for {purpose}")
+    try:
+        infos = socket.getaddrinfo(host, parsed.port or None, type=socket.SOCK_STREAM)
+    except socket.gaierror as exc:
+        raise ValueError(f"Could not resolve host for {purpose}") from exc
+    if not infos:
+        raise ValueError(f"Could not resolve host for {purpose}")
+    for info in infos:
+        ip_s = info[4][0]
+        try:
+            ip = ipaddress.ip_address(ip_s)
+        except ValueError:
+            continue
+        if ip_s in {"169.254.169.254", "fd00:ec2::254"}:
+            raise ValueError(f"Refusing metadata address for {purpose}")
+        if allow_local and (ip.is_loopback or ip.is_private):
+            continue
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            raise ValueError(f"Refusing private/reserved address for {purpose}")
+    return raw

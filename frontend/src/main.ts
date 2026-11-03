@@ -6,7 +6,9 @@ import { screenFromHash, setScreen, state, subscribe } from './state';
 import { applyI18n, initLocale } from './i18n';
 import { hydrateFromApi } from './boot';
 import { renderHeader, bindHeaderEvents } from './components/header';
+import { renderSidebar, bindSidebarEvents } from './components/sidebar';
 import { renderFooter, bindFooterEvents } from './components/footer';
+import { bindMotion } from './motion';
 
 import { renderStudentHome, bindStudentHomeEvents } from './views/studentHome';
 import { renderLessons, bindLessonsEvents } from './views/lessons';
@@ -28,13 +30,26 @@ import { renderPravachanaPlayer, bindPravachanaPlayerEvents } from './views/prav
 import { renderPravachanaDept, bindPravachanaDeptEvents } from './views/pravachanaDept';
 
 let started = false;
+let lastScreen: string | null = null;
+let enterTimer = 0;
+let motionBound = false;
 
 function renderApp(): void {
   const headerRoot = document.getElementById('header-root');
+  const sidebarRoot = document.getElementById('sidebar-root');
   const viewRoot = document.getElementById('view-root');
   const footerRoot = document.getElementById('footer-root');
 
   if (!viewRoot) return;
+
+  const screenChanged = lastScreen !== state.screen;
+  lastScreen = state.screen;
+  document.body.classList.add('hub-app');
+
+  if (sidebarRoot) {
+    sidebarRoot.innerHTML = renderSidebar();
+    bindSidebarEvents(sidebarRoot);
+  }
 
   if (headerRoot) {
     headerRoot.innerHTML = renderHeader();
@@ -125,6 +140,19 @@ function renderApp(): void {
   viewRoot.innerHTML = html;
   if (bindFn) {
     bindFn(viewRoot);
+  }
+
+  if (!motionBound) {
+    bindMotion(viewRoot);
+    motionBound = true;
+  }
+
+  if (screenChanged && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    viewRoot.classList.remove('lms-enter');
+    void viewRoot.offsetWidth;
+    viewRoot.classList.add('lms-enter');
+    window.clearTimeout(enterTimer);
+    enterTimer = window.setTimeout(() => viewRoot.classList.remove('lms-enter'), 1400);
   }
 
   if (footerRoot) {

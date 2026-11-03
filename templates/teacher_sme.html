@@ -69,6 +69,26 @@
 </section>
 
 <section class="panel">
+  <h2>Index handbook (SME R-2)</h2>
+  <p class="meta">Chunk a published manual for coach / public query (≈100 pages target).</p>
+  {% if manuals %}
+  <ul class="q-list">
+    {% for m in manuals %}
+    <li>
+      <strong>{{ m.title }}</strong>
+      <form method="post" action="/teacher/sme/index/{{ m.id }}" style="display:inline;margin-left:0.5rem">
+        <input type="hidden" name="quiz_token" value="{{ quiz_token }}"/>
+        <button type="submit" class="btn secondary">Index now</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="lede">No manuals yet.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
   <h2>Active sources</h2>
   {% if sources %}
   <ul class="q-list">

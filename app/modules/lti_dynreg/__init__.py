@@ -131,8 +131,14 @@ def _issuer_matches_config_url(issuer: str, config_url: str) -> bool:
 
 
 def fetch_platform_openid_config(openid_configuration_url: str) -> dict[str, Any]:
-    with httpx.Client(timeout=20.0, follow_redirects=True) as client:
-        resp = client.get(openid_configuration_url)
+    from app.security_boot import assert_public_http_url
+
+    url = assert_public_http_url(
+        openid_configuration_url, purpose="OpenID configuration URL"
+    )
+    # follow_redirects=False — redirects could otherwise bounce into private nets.
+    with httpx.Client(timeout=20.0, follow_redirects=False) as client:
+        resp = client.get(url)
     resp.raise_for_status()
     data = resp.json()
     if not isinstance(data, dict):
@@ -146,11 +152,16 @@ def post_client_registration(
     registration_token: str | None,
     payload: dict[str, Any],
 ) -> dict[str, Any]:
+    from app.security_boot import assert_public_http_url
+
+    endpoint = assert_public_http_url(
+        registration_endpoint, purpose="LTI registration endpoint"
+    )
     headers = {"Content-Type": "application/json"}
     if registration_token:
         headers["Authorization"] = f"Bearer {registration_token}"
-    with httpx.Client(timeout=30.0, follow_redirects=True) as client:
-        resp = client.post(registration_endpoint, headers=headers, json=payload)
+    with httpx.Client(timeout=30.0, follow_redirects=False) as client:
+        resp = client.post(endpoint, headers=headers, json=payload)
     if resp.status_code not in {200, 201}:
         raise RuntimeError(
             f"Registration failed HTTP {resp.status_code}: {resp.text[:400]}"

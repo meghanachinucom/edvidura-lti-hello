@@ -1441,7 +1441,7 @@ export const xrAppsList: XrApp[] = [
     rating: 4.9,
     reviewsCount: 38,
     icon: 'view_in_ar',
-    accentColor: '#FF4757',
+    accentColor: '#FE580D',
     heroImage: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=600&q=80',
     compatibility: {
       webxr: true,
@@ -1549,16 +1549,37 @@ export function notify(): void {
   listeners.forEach(fn => fn());
 }
 
+function isGovSession(): boolean {
+  const sess = state.liveSession as { segment?: string; is_government?: boolean } | null;
+  return sess?.segment === 'government' || Boolean(sess?.is_government);
+}
+
+function roleImpliedByScreen(screen: ScreenId): UserRole | null {
+  if (screen === 'teacher-results' || screen === 'teacher-diagnostics') return 'teacher';
+  if (screen === 'admin-overview') return 'admin';
+  if (screen === 'pravachana-dept') return 'teacher';
+  if (
+    screen === 'student-home' ||
+    screen === 'lessons' ||
+    screen === 'lesson-detail' ||
+    screen === 'quiz-results' ||
+    screen === 'prerequisite-gate' ||
+    screen === 'my-progress'
+  ) {
+    return 'student';
+  }
+  return null;
+}
+
 export function setRole(newRole: UserRole): void {
   state.role = newRole;
-  if (newRole === 'student') {
-    state.screen = 'student-home';
-  } else if (newRole === 'teacher') {
-    state.screen = 'teacher-results';
-  } else if (newRole === 'admin') {
-    state.screen = 'admin-overview';
+  if (isGovSession()) {
+    setScreen(newRole === 'student' ? 'pravachana-home' : 'pravachana-dept');
+    return;
   }
-  notify();
+  if (newRole === 'student') setScreen('student-home');
+  else if (newRole === 'teacher') setScreen('teacher-results');
+  else setScreen('admin-overview');
 }
 
 const SCREEN_HASH: Record<ScreenId, string> = {
@@ -1575,7 +1596,7 @@ const SCREEN_HASH: Record<ScreenId, string> = {
   'home-shell': 'home-shell',
   'teacher-results': 'teacher-results',
   'teacher-diagnostics': 'teacher-diagnostics',
-  'admin-overview': 'admin-overview',
+  'admin-overview': 'admin',
   'xr-store': 'xr-store',
   'pravachana-home': 'library',
   'pravachana-player': 'player',
@@ -1596,8 +1617,10 @@ const HASH_SCREEN: Record<string, ScreenId> = {
   'my-progress': 'my-progress',
   'home-shell': 'home-shell',
   'teacher-results': 'teacher-results',
+  teacher: 'teacher-results',
   'teacher-diagnostics': 'teacher-diagnostics',
   'admin-overview': 'admin-overview',
+  admin: 'admin-overview',
   'xr-store': 'xr-store',
   library: 'pravachana-home',
   player: 'pravachana-player',
@@ -1610,6 +1633,8 @@ export function screenFromHash(hash = window.location.hash): ScreenId | null {
 }
 
 export function setScreen(newScreen: ScreenId): void {
+  const implied = roleImpliedByScreen(newScreen);
+  if (implied) state.role = implied;
   state.screen = newScreen;
   const hash = SCREEN_HASH[newScreen] || newScreen;
   if (typeof window !== 'undefined' && window.history && window.location) {

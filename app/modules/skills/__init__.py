@@ -7,6 +7,7 @@ from app.modules.skills.cat import (
     generate_cat_bank,
     link_question_if_skill_code,
     map_source,
+    placement_assessment_for_role,
 )
 from app.modules.skills.framework import (
     approve_framework_import,
@@ -78,5 +79,6 @@ __all__ = [
     "cat_from_text",
     "cat_from_document",
     "cat_overview",
+    "placement_assessment_for_role",
     "link_question_if_skill_code",
 ]

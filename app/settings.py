@@ -46,6 +46,10 @@ class Settings:
     event_pipeline_enabled: bool = False
     event_webhook_url: str = ""
     event_webhook_secret: str = ""
+    # SME R-13 public query API (falls back to ADMIN_API_KEY when empty).
+    sme_public_api_key: str = ""
+    # DCT F-6 ETIMS inbound document refresh webhook HMAC secret.
+    etims_webhook_secret: str = ""
     # Keycloak ops identity (optional). When disabled, X-Admin-Key still works.
     keycloak_enabled: bool = False
     keycloak_url: str = ""
@@ -196,6 +200,8 @@ def get_settings() -> Settings:
         in {"1", "true", "yes", "on"},
         event_webhook_url=os.getenv("EVENT_WEBHOOK_URL", "").strip(),
         event_webhook_secret=os.getenv("EVENT_WEBHOOK_SECRET", "").strip(),
+        sme_public_api_key=os.getenv("SME_PUBLIC_API_KEY", "").strip(),
+        etims_webhook_secret=os.getenv("ETIMS_WEBHOOK_SECRET", "").strip(),
         keycloak_enabled=os.getenv("KEYCLOAK_ENABLED", "").strip().lower()
         in {"1", "true", "yes", "on"},
         keycloak_url=os.getenv("KEYCLOAK_URL", "http://localhost:8087").rstrip(

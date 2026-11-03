@@ -238,17 +238,25 @@ def _browser_moodle_url(url: str | None, *, base: str | None = None) -> str:
 
 
 def resolve_lms_return(session: dict[str, Any]) -> str:
+    from app.modules.tenancy.lms import safe_lms_return_url
+
     base = (
         str(session.get("lms_base_url") or session.get("moodle_base_url") or "").strip()
         or None
     )
+    issuer = str(session.get("iss") or base or "").strip() or None
     target = (
         session.get("lms_return_url")
         or session.get("moodle_return_url")
         or base
         or None
     )
-    return _browser_lms_url(target, base=base)
+    safe = safe_lms_return_url(
+        str(target or ""),
+        issuer,
+        lms_name=str(session.get("lms_name") or "") or None,
+    )
+    return _browser_lms_url(safe, base=base)
 
 
 def resolve_moodle_return(session: dict[str, Any]) -> str:
@@ -1345,6 +1353,7 @@ async def quiz_form(
     force: str | None = None,
     loop: str | None = None,
     personalized: str | None = None,
+    placement: str | None = None,
 ):
     """Serve the teacher question bank; AI personal quiz only when bank is empty
     or ``personalized=1`` is requested.
@@ -1366,6 +1375,9 @@ async def quiz_form(
         pass
     token_s = _ensure_token(session)
     caps = session.get("capabilities") or {}
+    # Placement assessments always run as practice (no AGS)
+    if placement == "1" and session.get("placement_bank"):
+        practice = "1"
     is_practice = practice == "1"
     if is_practice and not can(caps, "quiz_practice"):
         return RedirectResponse(
@@ -1419,6 +1431,61 @@ async def quiz_form(
     authored = tenant_authored_questions(
         session.get("tenant_id"), course_id=course_id
     )
+
+    # Diff F-3 placement bank (role baseline when no competency profile)
+    if (
+        not questions
+        and placement == "1"
+        and isinstance(session.get("placement_bank"), dict)
+    ):
+        from app.modules.quiz.personalized import questions_from_payload
+
+        bank = session.get("placement_bank") or {}
+        raw_qs = list(bank.get("questions") or [])
+        # Normalize CAT dicts → quiz payload shape
+        payload = []
+        for i, q in enumerate(raw_qs, start=1):
+            if not isinstance(q, dict):
+                continue
+            choices = q.get("choices") or q.get("options") or []
+            if isinstance(choices, dict):
+                choices = list(choices.values())
+            payload.append(
+                {
+                    "id": str(q.get("id") or f"place_{i}"),
+                    "prompt": str(q.get("prompt") or q.get("question") or ""),
+                    "choices": [str(c) for c in choices][:4]
+                    or ["A", "B", "C", "D"],
+                    "correct_index": int(
+                        q.get("correct_index")
+                        if q.get("correct_index") is not None
+                        else q.get("answer_index")
+                        if q.get("answer_index") is not None
+                        else 0
+                    ),
+                    "topic": str(
+                        q.get("skill_code") or q.get("topic") or ""
+                    ),
+                }
+            )
+        if payload:
+            questions = questions_from_payload(payload)
+            personal_meta = {
+                "source": "placement",
+                "role_code": str(
+                    bank.get("role_code") or session.get("placement_role") or ""
+                ),
+                "served_count": len(questions),
+                "placement": True,
+            }
+            session["personal_quiz_bank"] = {
+                "subject": str(session.get("subject") or ""),
+                "questions": payload,
+                "meta": personal_meta,
+            }
+            session["quiz_token"] = token_s
+            _persist_session(request, session)
+            use_personal = True
 
     if retry:
         # Remediation: prefer missed items from this student's last attempt bank.
@@ -4470,6 +4537,42 @@ async def learner_gap_set_role(request: Request, token: str | None = None):
     return RedirectResponse(url=q, status_code=303)
 
 
+@router.post("/learn/gap/placement", response_class=HTMLResponse)
+async def learner_gap_placement(request: Request, token: str | None = None):
+    """Diff F-3: start a placement assessment when the learner has no profile."""
+    from app.modules import skills as skills_mod
+
+    session = require_session(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or form.get("token") or token or _ensure_token(session))
+    role = str(form.get("role_code") or session.get("target_role") or "").strip().lower()
+    if not role:
+        return RedirectResponse(
+            url=f"/learn/gap?token={tok}&ok=Pick+a+target+role+first",
+            status_code=303,
+        )
+    session["target_role"] = role
+    try:
+        bank = skills_mod.placement_assessment_for_role(
+            session["tenant_id"], role_code=role, count=12
+        )
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/learn/gap?token={tok}&ok={str(exc).replace(' ', '+')[:100]}",
+            status_code=303,
+        )
+    session["placement_bank"] = bank
+    session["placement_role"] = role
+    # Practice mode so AGS is not triggered for baseline placement
+    tok = _persist_session(request, session)
+    return RedirectResponse(
+        url=f"/quiz?token={tok}&practice=1&placement=1",
+        status_code=303,
+    )
+
+
 @router.post("/learn/gap/step", response_class=HTMLResponse)
 async def learner_gap_step_done(request: Request, token: str | None = None):
     """Mark a PLE plan step done (explicit checkbox on gap page)."""
@@ -5813,12 +5916,18 @@ async def manual_epub_file(
     if not version or version.get("content_type") != "epub":
         return HTMLResponse("EPUB version not found", status_code=404)
 
+    from app.security_boot import path_is_under
+
     storage_dir = manuals_mod.get_epub_storage_dir(
         session["tenant_id"], manual_id, version["version"]
     ).resolve()
     target_file = (storage_dir / file_path).resolve()
 
-    if not str(target_file).startswith(str(storage_dir)) or not target_file.exists() or not target_file.is_file():
+    if (
+        not path_is_under(target_file, storage_dir)
+        or not target_file.exists()
+        or not target_file.is_file()
+    ):
         return HTMLResponse("Resource not found", status_code=404)
 
     ext = target_file.suffix.lower()
@@ -5897,10 +6006,16 @@ async def manual_standalone_epub_file(
     if not manual or not version or not version.get("is_published") or version.get("content_type") != "epub":
         return HTMLResponse("eBook not available", status_code=404)
 
+    from app.security_boot import path_is_under
+
     storage_dir = manuals_mod.get_epub_storage_dir(tid, manual_id, v).resolve()
     target_file = (storage_dir / file_path).resolve()
 
-    if not str(target_file).startswith(str(storage_dir)) or not target_file.exists() or not target_file.is_file():
+    if (
+        not path_is_under(target_file, storage_dir)
+        or not target_file.exists()
+        or not target_file.is_file()
+    ):
         return HTMLResponse("Resource not found", status_code=404)
 
     ext = target_file.suffix.lower()
@@ -6671,6 +6786,33 @@ async def teacher_sme_ensure_defaults(
     )
 
 
+@router.post("/teacher/sme/index/{manual_id}", response_class=HTMLResponse)
+async def teacher_sme_index_manual(
+    request: Request, manual_id: UUID, token: str | None = None
+):
+    """SME R-2: index a handbook into searchable chunks."""
+    from app.modules import sme as sme_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    try:
+        result = sme_mod.index_manual(session["tenant_id"], manual_id)
+        msg = (
+            f"Indexed+{result.get('chunk_count', 0)}+chunks"
+            f"+in+{result.get('elapsed_ms', 0)}ms"
+        )
+    except ValueError as exc:
+        msg = str(exc).replace(" ", "+")[:100]
+    except Exception as exc:  # noqa: BLE001 — table may be missing pre-migration
+        msg = ("Index+failed:+" + str(exc)[:80]).replace(" ", "+")
+    return RedirectResponse(
+        url=f"/teacher/sme?token={tok}&ok={msg}", status_code=303
+    )
+
+
 @router.get("/teacher/skills", response_class=HTMLResponse)
 async def teacher_skills(
     request: Request, token: str | None = None, ok: str | None = None
@@ -7021,18 +7163,24 @@ async def teacher_dct_planner(
     request: Request, token: str | None = None, ok: str | None = None
 ):
     from app.modules import adaptive as adaptive_mod
+    from app.modules import skills as skills_mod
 
     session = require_instructor(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
     pack = adaptive_mod.dct_planner_pack(session["tenant_id"])
+    roles = []
+    try:
+        roles = skills_mod.ensure_default_roles(session["tenant_id"])
+    except Exception:  # noqa: BLE001
+        roles = []
     return _shell(
         request,
         "teacher_dct.html",
         session,
         active_page="teacher_dct",
         page_title="Micro-learning planner",
-        page_subtitle="Upload skill reels · students swipe them in Micro-learning",
+        page_subtitle="Upload skill reels · difference curriculum · student Micro-learning",
         extra={
             "missing": pack.get("missing") or [],
             "covered": pack.get("covered") or [],
@@ -7040,6 +7188,7 @@ async def teacher_dct_planner(
             "covered_count": pack.get("covered_count") or 0,
             "ok_message": ok or "",
             "all_skills": (pack.get("missing") or []) + (pack.get("covered") or []),
+            "roles": roles,
         },
     )
 
@@ -7113,6 +7262,54 @@ async def teacher_dct_reel_upload(request: Request, token: str | None = None):
         )
     return RedirectResponse(
         url=f"/teacher/dct?token={tok}&ok=Reel+saved+—+students+see+it+in+Micro-learning",
+        status_code=303,
+    )
+
+
+@router.post("/teacher/dct/difference-generate", response_class=HTMLResponse)
+async def teacher_dct_difference_generate(request: Request, token: str | None = None):
+    """Diff F-5: generate differential curriculum for a target role's skill gaps."""
+    from app.modules import adaptive as adaptive_mod
+    from app.modules import skills as skills_mod
+
+    session = require_instructor(request, token=token)
+    if isinstance(session, HTMLResponse):
+        return session
+    form = await request.form()
+    tok = str(form.get("quiz_token") or token or _ensure_token(session))
+    role_code = str(form.get("role_code") or "").strip().lower()
+    publish = str(form.get("publish") or "").strip() in {"1", "true", "on", "yes"}
+    if not role_code:
+        return RedirectResponse(
+            url=f"/teacher/dct?token={tok}&ok=Pick+a+target+role",
+            status_code=303,
+        )
+    course = _bound_course(session) or content.ensure_primary_course(
+        session["tenant_id"]
+    )
+    try:
+        skills_mod.ensure_default_roles(session["tenant_id"])
+        result = adaptive_mod.generate_difference_curriculum(
+            session["tenant_id"],
+            role_code=role_code,
+            course_id=(course or {}).get("id"),
+            course_title=str((course or {}).get("title") or ""),
+            quiz_token=tok,
+            publish_lessons=publish,
+            max_skills=int(form.get("max_skills") or 5),
+        )
+    except ValueError as exc:
+        return RedirectResponse(
+            url=f"/teacher/dct?token={tok}&ok={str(exc).replace(' ', '+')[:100]}",
+            status_code=303,
+        )
+    n = int(result.get("generated_count") or 0)
+    skip = int(result.get("skipped_count") or 0)
+    msg = f"Difference+curriculum:+{n}+drafts"
+    if skip:
+        msg += f",+{skip}+already+linked"
+    return RedirectResponse(
+        url=f"/teacher/dct?token={tok}&ok={msg}",
         status_code=303,
     )
 

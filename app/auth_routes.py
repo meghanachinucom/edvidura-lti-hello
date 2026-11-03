@@ -16,13 +16,23 @@ from app.modules.identity import (
     principal_has_ops,
     verify_access_token,
 )
+from app.security_boot import safe_relative_next
 from app.settings import get_settings
 
 router = APIRouter(tags=["Auth"])
 
 
 def _public_base(request: Request) -> str:
-    """Host the browser is actually using (avoids localhost vs 127.0.0.1 cookie loss)."""
+    """Canonical public origin for OAuth redirects.
+
+    Production/staging always use APP_BASE_URL so client-controlled
+    X-Forwarded-* headers cannot rewrite the Keycloak redirect_uri.
+    Local/dev may still follow Host for localhost vs 127.0.0.1 cookies.
+    """
+    settings = get_settings()
+    configured = (settings.app_base_url or "").rstrip("/")
+    if settings.is_production_like and configured:
+        return configured
     proto = (
         request.headers.get("x-forwarded-proto") or request.url.scheme
     ).split(",")[0].strip()
@@ -31,7 +41,7 @@ def _public_base(request: Request) -> str:
     ).split(",")[0].strip()
     if host:
         return f"{proto}://{host}".rstrip("/")
-    return str(request.base_url).rstrip("/")
+    return configured or str(request.base_url).rstrip("/")
 
 
 @router.get("/auth/status")
@@ -62,7 +72,7 @@ def auth_login(request: Request, next: str = "/ops/dashboard"):
             status_code=303,
         )
     state = secrets.token_urlsafe(24)
-    nxt = next if next.startswith("/") else "/ops/dashboard"
+    nxt = safe_relative_next(next, default="/ops/dashboard")
     redirect_uri = f"{_public_base(request)}/auth/callback"
     # Server-side pending login — avoids oversized session cookies + host mismatch
     LAUNCH_CACHE.set(
@@ -97,9 +107,9 @@ def auth_callback(
         )
 
     redirect_uri = str(pending.get("redirect_uri") or f"{_public_base(request)}/auth/callback")
-    nxt = str(pending.get("next") or "/ops/dashboard")
-    if not nxt.startswith("/"):
-        nxt = "/ops/dashboard"
+    nxt = safe_relative_next(
+        str(pending.get("next") or "/ops/dashboard"), default="/ops/dashboard"
+    )
     err_dest = "/ops/login" if nxt.startswith("/ops") else "/onboard"
 
     try:
