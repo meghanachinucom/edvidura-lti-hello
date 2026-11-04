@@ -31,6 +31,12 @@ Take `app/modules/` + migrations into another project; provide `app.db` / `app.s
 | `app.modules.nrps` | LTI Advantage NRPS: Moodle roster cache (awareness only) | Class / membership awareness |
 | `app.modules.lti_groups` | LTI Advantage Group Services cache + local groups + group-based assignment access | LMS groups |
 | `app.modules.receipts` | HMAC-sealed grade receipts for attempt evidence | Audit / verify |
+| `app.modules.audit_pro` | Wave A AuditPro sealed attempt trail | Evidence thin |
+| `app.modules.iq_review` | Wave A item quality / IQ review | Assessment thin |
+| `app.modules.airgap` | Wave A air-gap pack checklist | Offline deploy |
+| `app.modules.xr` | Wave B XR stack (store / assets / labs / AR / VR) | Immersive thin |
+| `app.modules.workforce` | Wave C apprenticeship / continuity / sim-to-real | Workforce thin |
+| `app.modules.interactive_labs` | School textbook → lab pack → playground | Adaptive interactive |
 | `app.modules.tla` | Achieved CMM-2 / operating CMM-3; xi-lite XI (courses+lessons+manuals); CATAPULT; catalogue / profiles | Copy `shapes`/`xi_query`/`cmi5_requirements`/`vendor` into any mesh consumer |
 
 HTTP (not a domain module): `app.api.app_client` — `/api/v1/app` shared web+mobile JSON ([docs/MOBILE_API.md](../../docs/MOBILE_API.md)).

@@ -7,6 +7,7 @@ import { state, setScreen, showToast } from '../state';
 import { escapeHtml, openLiveManual } from '../boot';
 import { hubBar, studioCover } from '../components/hub';
 import { localizeText } from '../i18n';
+import { proposeLabPack, publishLabPack, saveLabPack, searchDocuments } from '../api';
 
 function L(input: string): string {
   return escapeHtml(localizeText(input));
@@ -159,18 +160,23 @@ export function renderManuals(): string {
         <section class="hub-cal studio-rail">
           <img src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=900&q=70" alt="">
           <div class="hub-cal-body">
-            <h2 class="text-base font-extrabold">${L('Works offline')}</h2>
-            <p class="text-sm text-white/75 mt-3">${L('Search, then open the reader.')}</p>
+            <h2 class="text-base font-extrabold">${L('e-Book reader')}</h2>
+            <p class="text-sm text-white/75 mt-3">${L('PeBL handbooks · teachers publish; you read here.')}</p>
           </div>
         </section>
       </div>`
           : ''
       }
       ${hubBar({
-        kicker: L('Handbook'),
+        kicker: L('e-Book'),
         title: L('Class manuals'),
-        meta: L('Approved for this course.'),
+        meta: L('Read published handbooks. Teachers can Make interactive from their own book.'),
         actions: `
+          ${
+            state.connected && (state.role === 'teacher' || state.role === 'admin')
+              ? `<button id="make-interactive-btn" class="hub-cta-dark" type="button" style="margin-top:0">${L('Make interactive')}</button>`
+              : ''
+          }
           <label class="hub-search" style="min-width:14rem;box-shadow:none"><span class="material-symbols-outlined">search</span><input id="manual-search-input" type="search" placeholder="${L('Search…')}" autocomplete="off" /></label>`,
       })}
       ${grid}
@@ -178,14 +184,80 @@ export function renderManuals(): string {
 }
 
 export function bindManualsEvents(container: HTMLElement): void {
-  // Search filter
+  // Local card filter + Wave A document search (SME index) when enabled
   const searchInput = container.querySelector('#manual-search-input') as HTMLInputElement;
+  let searchTimer: number | undefined;
+  const hitsHostId = 'doc-search-hits';
   searchInput?.addEventListener('input', () => {
-    const val = searchInput.value.toLowerCase();
+    const val = searchInput.value.toLowerCase().trim();
     container.querySelectorAll('.manual-card').forEach(card => {
       const text = card.textContent?.toLowerCase() || '';
-      (card as HTMLElement).style.display = text.includes(val) ? 'flex' : 'none';
+      (card as HTMLElement).style.display = !val || text.includes(val) ? '' : 'none';
     });
+    const caps = (state.liveSession?.capabilities || {}) as Record<string, boolean>;
+    if (!state.connected || !caps.document_search) return;
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => {
+      let host = container.querySelector(`#${hitsHostId}`) as HTMLElement | null;
+      if (!host) {
+        host = document.createElement('div');
+        host.id = hitsHostId;
+        host.className = 'hub-card flex flex-col gap-2 mt-3';
+        container.querySelector('.hub-page')?.appendChild(host);
+      }
+      if (val.length < 2) {
+        host.innerHTML = '';
+        host.hidden = true;
+        return;
+      }
+      host.hidden = false;
+      host.innerHTML = `<p class="text-xs text-slate-500">${L('Document Search')}…</p>`;
+      searchDocuments(val)
+        .then((res) => {
+          const hits = res.hits || [];
+          host!.innerHTML = hits.length
+            ? `<p class="hub-kicker-ink">${L('Document Search')} · Wave A</p>` +
+              hits
+                .map(
+                  (h) =>
+                    `<div><p class="text-sm font-bold text-[#111827]">${escapeHtml(h.title || h.slug || 'Hit')}</p><p class="text-xs text-slate-500 line-clamp-2">${escapeHtml((h.body || '').slice(0, 160))}</p></div>`
+                )
+                .join('')
+            : `<p class="text-sm text-slate-500">${L('No handbook hits yet — index manuals for this class.')}</p>`;
+        })
+        .catch(() => {
+          host!.innerHTML = `<p class="text-sm text-slate-500">${L('Document Search unavailable for this tenant.')}</p>`;
+        });
+    }, 280);
+  });
+
+  container.querySelector('#make-interactive-btn')?.addEventListener('click', () => {
+    const liveId = state.liveManuals[0]?.id;
+    if (!state.connected || !liveId) {
+      showToast(localizeText('Connect with a school handbook to make it interactive'), 'menu_book');
+      return;
+    }
+    showToast(localizeText('Drafting interactive lab from this school’s handbook…'), 'auto_awesome');
+    proposeLabPack({ manual_id: liveId })
+      .then((proposal) =>
+        saveLabPack({
+          pack: proposal,
+          manual_id: liveId,
+          chapter_slug: proposal.chapter_slug || 'overview',
+          status: 'draft',
+        }).then((row) =>
+          publishLabPack(row.id).then(() => {
+            showToast(
+              localizeText('Interactive lab published — open a lesson to try textbook | playground'),
+              'view_in_ar'
+            );
+            setScreen('lesson-detail');
+          })
+        )
+      )
+      .catch((err) => {
+        showToast(err?.message || localizeText('Could not make interactive'), 'error');
+      });
   });
 
   const openManual = (id: string | null) => {

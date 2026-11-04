@@ -12,6 +12,7 @@ import { bindMotion } from './motion';
 
 import { renderStudentHome, bindStudentHomeEvents } from './views/studentHome';
 import { renderLessons, bindLessonsEvents } from './views/lessons';
+import { disposeSpatialLab } from './components/spatialLessonLab';
 import { renderLessonDetail, bindLessonDetailEvents } from './views/lessonDetail';
 import { renderQuiz, bindQuizEvents } from './views/quiz';
 import { renderQuizResults, bindQuizResultsEvents } from './views/quizResults';
@@ -137,6 +138,8 @@ function renderApp(): void {
       bindFn = bindStudentHomeEvents;
   }
 
+  // Tear down WebGL lab before DOM wipe (lessons page remounts it in bind)
+  disposeSpatialLab();
   viewRoot.innerHTML = html;
   if (bindFn) {
     bindFn(viewRoot);

@@ -8,7 +8,7 @@
 import { state, setScreen, showToast, notify, xapiStatementsList, XApiStatement } from '../state';
 import { classLabel, displayCompetencies, displayName, escapeHtml } from '../boot';
 import { hubStat, hubStats } from '../components/hub';
-import { fetchJsonFile, getCatOverview, getFileMeta, ingestExternalGrade, mapCatDocument, reviewCatProposal, streamFile } from '../api';
+import { fetchJsonFile, getAuditPro, getCatOverview, getFileMeta, getIqReview, getSimToReal, ingestExternalGrade, mapCatDocument, reviewCatProposal, streamFile } from '../api';
 
 const HEAT_INTENSITY = [
   'bg-[#F1F5F9] border-[#E2E8F0]',
@@ -191,9 +191,9 @@ export function renderTeacherDiagnostics(): string {
         <section class="hub-hero studio-main">
           <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80" alt="">
           <div class="hub-hero-body">
-            <p class="hub-kicker">${escapeHtml(displayName())}</p>
+            <p class="hub-kicker">EvalPro analytics · ${escapeHtml(displayName())}</p>
             <h1>Where the class is stuck</h1>
-            <p class="hub-hero-sub">${escapeHtml(classLabel() || 'Class')} · this section only.</p>
+            <p class="hub-hero-sub">${escapeHtml(classLabel() || 'Class')} · activity, gaps, and xAPI for this section.</p>
             <div class="hub-hero-ctas">
               <button id="btn-assign-remediation" class="hub-cta-light" type="button">Assign drill</button>
               <button id="diag-to-results" class="sr-only" type="button">Gradebook</button>
@@ -215,6 +215,9 @@ export function renderTeacherDiagnostics(): string {
             <button class="diag-subtab-btn hub-seg-btn ${activeTab === 'heatmaps' ? 'on' : ''}" data-tab="heatmaps" type="button">Activity</button>
             <button class="diag-subtab-btn hub-seg-btn ${activeTab === 'xapi' ? 'on' : ''}" data-tab="xapi" type="button">xAPI</button>
             <button class="diag-subtab-btn hub-seg-btn ${activeTab === 'difference' ? 'on' : ''}" data-tab="difference" type="button">Gaps</button>
+            <button class="diag-subtab-btn hub-seg-btn ${activeTab === 'audit' ? 'on' : ''}" data-tab="audit" type="button">AuditPro</button>
+            <button class="diag-subtab-btn hub-seg-btn ${activeTab === 'iq' ? 'on' : ''}" data-tab="iq" type="button">IQ review</button>
+            <button class="diag-subtab-btn hub-seg-btn ${activeTab === 'simreal' ? 'on' : ''}" data-tab="simreal" type="button">Sim→Real</button>
           </div>
           ${
             showTime
@@ -244,10 +247,117 @@ function renderDiagnosticsContent(activeTab: string, timeFilter: string, verbFil
       return renderXApiMiddlewareTab(verbFilter, filteredStatements);
     case 'difference':
       return renderDifferenceTrainingTab();
+    case 'audit':
+      return renderAuditProTab();
+    case 'iq':
+      return renderIqReviewTab();
+    case 'simreal':
+      return renderSimToRealTab();
     case 'misconceptions':
     default:
       return renderMisconceptionsTab();
   }
+}
+
+function renderSimToRealTab(): string {
+  const live = state.liveSimToReal;
+  const pairs = live?.pairs?.length
+    ? live.pairs
+    : [
+        { skill: 'Seal replacement', sim_source: 'xr-vr-pump-maintainer', sim_score_pct: 88, real_score_pct: 74, gap_pct: 14, transfer: 'moderate' },
+        { skill: 'Cartesian slope reading', sim_source: 'xr-cartesian-3d', sim_score_pct: 91, real_score_pct: 86, gap_pct: 5, transfer: 'strong' },
+      ];
+  return `
+    <div class="flex flex-col gap-4">
+      <div>
+        <p class="hub-kicker-ink">Wave C · thin</p>
+        <h2 class="text-lg font-extrabold text-[#111827]">Sim-to-Real transfer</h2>
+        <p class="text-sm text-slate-500 mt-1">XR / sim scores vs observed EvalPro performance. Enable <code>sim_to_real_analytics</code>.</p>
+      </div>
+      ${hubStats(
+        hubStat('compare_arrows', 'Avg gap', `${live?.avg_gap_pct ?? pairs.reduce((s, p) => s + p.gap_pct, 0) / pairs.length}%`),
+        hubStat('science', 'Pairs', String(live?.pair_count ?? pairs.length))
+      )}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        ${pairs.map(p => `
+          <article class="hub-card flex flex-col gap-2">
+            <p class="hub-kicker-ink">${escapeHtml(p.transfer)} transfer</p>
+            <h3 class="text-sm font-extrabold text-[#111827]">${escapeHtml(p.skill)}</h3>
+            <p class="text-xs text-slate-500">${escapeHtml(p.sim_source)}</p>
+            <p class="text-xs tabular-nums text-slate-600">Sim ${p.sim_score_pct}% → Real ${p.real_score_pct}% · gap ${p.gap_pct}%</p>
+          </article>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderAuditProTab(): string {
+  const live = state.liveAuditPro;
+  const items = live?.items?.length
+    ? live.items
+    : [
+        { learner_name: 'Asha R.', percent: 83, grade_sent: true, seal_ok: true, seal_reason: 'Valid seal', created_at: 'demo' },
+        { learner_name: 'Rohan K.', percent: 67, grade_sent: false, seal_ok: true, seal_reason: 'Valid seal', created_at: 'demo' },
+      ];
+  return `
+    <div class="flex flex-col gap-4">
+      <div>
+        <p class="hub-kicker-ink">Wave A · thin</p>
+        <h2 class="text-lg font-extrabold text-[#111827]">AuditPro evidence trail</h2>
+        <p class="text-sm text-slate-500 mt-1">Sealed grade receipts · Moodle sync flags. Enable block <code>audit_pro</code> on the tenant.</p>
+      </div>
+      ${hubStats(
+        hubStat('verified', 'Sealed OK', String(live?.sealed_ok ?? items.filter(i => i.seal_ok).length)),
+        hubStat('sync', 'Synced', String(live?.synced_to_lms ?? items.filter(i => i.grade_sent).length)),
+        hubStat('list', 'Attempts', String(live?.total ?? items.length))
+      )}
+      <div class="hub-card overflow-hidden p-0">
+        <table class="w-full text-left text-xs">
+          <thead><tr class="bg-[#F8FAFC] text-[#64748B] uppercase tracking-wider font-bold font-mono">
+            <th class="py-3 px-4">Learner</th><th class="py-3 px-4">Score</th><th class="py-3 px-4">Seal</th><th class="py-3 px-4">LMS</th>
+          </tr></thead>
+          <tbody>
+            ${items.map(i => `
+              <tr class="border-t border-[#E2E8F0]">
+                <td class="py-3 px-4 font-bold">${escapeHtml(i.learner_name || '')}</td>
+                <td class="py-3 px-4 tabular-nums">${i.percent}%</td>
+                <td class="py-3 px-4">${i.seal_ok ? 'Valid' : escapeHtml(i.seal_reason || 'Fail')}</td>
+                <td class="py-3 px-4">${i.grade_sent ? 'Synced' : 'Pending'}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function renderIqReviewTab(): string {
+  const live = state.liveIqReview;
+  const questions = live?.questions?.length
+    ? live.questions
+    : [
+        { prompt: 'Convert Ax+By=C to slope-intercept', correct_pct: 33, attempts: 24, flag: 'too_hard', question_id: 'q1' },
+        { prompt: 'Identify y-intercept from graph', correct_pct: 92, attempts: 24, flag: 'too_easy', question_id: 'q2' },
+      ];
+  return `
+    <div class="flex flex-col gap-4">
+      <div>
+        <p class="hub-kicker-ink">Wave A · thin</p>
+        <h2 class="text-lg font-extrabold text-[#111827]">IQ review · item quality</h2>
+        <p class="text-sm text-slate-500 mt-1">Flags items that are too hard (&lt;30%) or too easy (&gt;90%). Enable block <code>iq_review_pattern</code>.</p>
+      </div>
+      ${hubStats(
+        hubStat('warning', 'Too hard', String(live?.too_hard ?? questions.filter(q => q.flag === 'too_hard').length)),
+        hubStat('check', 'Too easy', String(live?.too_easy ?? questions.filter(q => q.flag === 'too_easy').length)),
+        hubStat('quiz', 'Items', String(live?.question_count ?? questions.length))
+      )}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        ${questions.map(q => `
+          <article class="hub-card flex flex-col gap-2">
+            <p class="hub-kicker-ink">${escapeHtml(q.flag.replace('_', ' '))}</p>
+            <h3 class="text-sm font-extrabold text-[#111827]">${escapeHtml(q.prompt)}</h3>
+            <p class="text-xs text-slate-500 tabular-nums">${q.correct_pct}% correct · ${q.attempts} attempts</p>
+          </article>`).join('')}
+      </div>
+    </div>`;
 }
 
 // =========================================================================
@@ -751,6 +861,34 @@ function renderStatementInspectorModal(): string {
 }
 
 export function bindTeacherDiagnosticsEvents(container: HTMLElement): void {
+  if (state.connected) {
+    const caps = (state.liveSession?.capabilities || {}) as Record<string, boolean>;
+    if (caps.audit_pro && !state.liveAuditPro) {
+      getAuditPro()
+        .then((data) => {
+          state.liveAuditPro = data;
+          notify();
+        })
+        .catch(() => { /* cap denied or empty */ });
+    }
+    if (caps.iq_review && !state.liveIqReview) {
+      getIqReview()
+        .then((data) => {
+          state.liveIqReview = data;
+          notify();
+        })
+        .catch(() => { /* cap denied or empty */ });
+    }
+    if (caps.sim_to_real && !state.liveSimToReal) {
+      getSimToReal()
+        .then((data) => {
+          state.liveSimToReal = data;
+          notify();
+        })
+        .catch(() => {});
+    }
+  }
+
   // Navigation
   container.querySelector('#diag-to-results')?.addEventListener('click', () => {
     setScreen('teacher-results');

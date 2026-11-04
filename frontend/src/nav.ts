@@ -24,19 +24,22 @@ export function navItems(): NavItem[] {
   if (staff) {
     const items: NavItem[] = [];
     if (capOn('quiz_graded') || capOn('quiz_practice') || capOn('learner_progress')) {
-      items.push({ id: 'teacher-results', label: 'Gradebook' });
+      items.push({ id: 'teacher-results', label: 'EvalPro' });
     }
     if (capOn('learner_progress')) {
-      items.push({ id: 'teacher-diagnostics', label: 'Diagnostics' });
+      items.push({ id: 'teacher-diagnostics', label: 'Analytics' });
     }
     if (capOn('lessons')) items.push({ id: 'lessons', label: 'Lessons' });
     if (capOn('quiz_graded') || capOn('quiz_practice')) {
       items.push({ id: 'quiz', label: 'Quiz' });
     }
-    if (capOn('manuals')) items.push({ id: 'manuals', label: 'Manuals' });
+    if (capOn('manuals')) items.push({ id: 'manuals', label: 'e-Books' });
     if (capOn('ask_vidura')) items.push({ id: 'ask-vidura', label: 'Ask Vidura' });
     if (capOn('video_library')) {
       items.push({ id: 'pravachana-dept', label: 'Library' });
+    }
+    if (capOn('xr_store') || capOn('immersive_labs')) {
+      items.push({ id: 'xr-store', label: 'XR Labs' });
     }
     if (!items.length) items.push({ id: 'teacher-results', label: 'Gradebook' });
     return items;
@@ -46,15 +49,17 @@ export function navItems(): NavItem[] {
   if (capOn('quiz_graded') || capOn('quiz_practice')) {
     items.push({ id: 'quiz', label: 'Quiz' });
   }
-  if (capOn('manuals')) items.push({ id: 'manuals', label: 'Manuals' });
+  if (capOn('manuals')) items.push({ id: 'manuals', label: 'e-Books' });
   if (capOn('ask_vidura')) items.push({ id: 'ask-vidura', label: 'Ask Vidura' });
   if (capOn('learner_progress') || capOn('study_plan')) {
-    items.push({ id: 'my-progress', label: 'Progress' });
+    items.push({ id: 'my-progress', label: 'My plan' });
   }
   if (capOn('video_library')) {
     items.push({ id: 'pravachana-home', label: 'Library' });
   }
-  // XR Store stays park — never in nav until a live xr cap exists
+  if (capOn('xr_store') || capOn('immersive_labs')) {
+    items.push({ id: 'xr-store', label: 'XR Labs' });
+  }
   return items;
 }
 

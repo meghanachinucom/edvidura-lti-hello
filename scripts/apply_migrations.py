@@ -63,6 +63,7 @@ MIGRATIONS = [
     "migration_epub_versions.sql",
     "migration_pebl_phase2.sql",
     "migration_tenant_enabled_blocks.sql",
+    "migration_lab_packs.sql",
 ]
 
 # Postgres SQLSTATE values that mean "already applied" / safe to continue.

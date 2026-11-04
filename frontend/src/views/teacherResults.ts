@@ -50,9 +50,9 @@ export function renderTeacherResults(): string {
         <section class="hub-hero studio-main">
           <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b955?auto=format&fit=crop&w=1600&q=80" alt="">
           <div class="hub-hero-body">
-            <p class="hub-kicker">${escapeHtml(displayName())}</p>
+            <p class="hub-kicker">EvalPro · ${escapeHtml(displayName())}</p>
             <h1>Class results</h1>
-            <p class="hub-hero-sub">${escapeHtml(classLabel())} · sync to Moodle when ready.</p>
+            <p class="hub-hero-sub">${escapeHtml(classLabel())} · gradebook syncs to Moodle when ready.</p>
             <div class="hub-hero-ctas">
               <button id="sync-all-btn" class="hub-cta-light" type="button"><span class="material-symbols-outlined text-[16px]">sync</span> Sync</button>
               <button id="preview-student-btn" class="hub-cta-light" type="button">Student view</button>

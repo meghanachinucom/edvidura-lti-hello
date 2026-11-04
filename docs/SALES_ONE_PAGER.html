@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · What you can sell now</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root { --ink:#0f172a; --soft:#334155; --line:#e2e8f0; --ok:#0f766e; --wait:#92400e; --paper:#f8fafc; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Manrope, system-ui, sans-serif; color: var(--ink); background: var(--paper); line-height: 1.45; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    h1 { font-family: "Bricolage Grotesque", Georgia, serif; font-size: clamp(1.8rem, 4vw, 2.4rem); letter-spacing: -0.03em; margin: 0 0 0.35rem; }
+    .lede { color: var(--soft); margin: 0 0 1.5rem; max-width: 40rem; }
+    .kicker { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem; font-weight: 700; color: var(--ok); margin: 0 0 0.4rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 1.1rem 1.2rem; }
+    .card h2 { font-family: "Bricolage Grotesque", Georgia, serif; font-size: 1.15rem; margin: 0 0 0.75rem; }
+    .card.now { border-color: rgba(15,118,110,.35); box-shadow: 0 0 0 1px rgba(15,118,110,.08); }
+    ul { margin: 0; padding-left: 1.1rem; }
+    li { margin: 0.35rem 0; }
+    .tag { display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.15rem 0.45rem; border-radius: 4px; }
+    .tag.ok { background: #e7f5f2; color: var(--ok); }
+    .tag.wait { background: #fff7e8; color: var(--wait); }
+    .presets { margin-top: 1.25rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { text-align: left; padding: 0.55rem 0.4rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); }
+    .foot { margin-top: 1.5rem; font-size: 0.85rem; color: var(--soft); }
+    a { color: var(--ok); }
+    @media print {
+      body { background: #fff; }
+      .wrap { padding: 0; max-width: none; }
+      .card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="kicker">EdVidura sales · Lego blocks</p>
+    <h1>What you can sell now</h1>
+    <p class="lede">
+      Same platform for every client. Flip Live/Thin blocks per deal.
+      Moodle (or peer LMS) stays the gradebook of record. Configure at
+      <a href="/sales">/sales</a>.
+    </p>
+
+    <div class="grid">
+      <section class="card now">
+        <h2><span class="tag ok">Available now</span> Live + Thin</h2>
+        <ul>
+          <li><strong>LTI spine</strong> — launch, AGS grades home</li>
+          <li><strong>Assessment Tool</strong> — quiz + Moodle sync</li>
+          <li><strong>Ask Vidura</strong> — handbook-grounded coach</li>
+          <li><strong>e-Book / Manuals</strong> — PeBL reader (teachers publish)</li>
+          <li><strong>Lesson path</strong> — class lessons + continue lab</li>
+          <li><strong>PLE / Progress</strong> — roadmap, goals, study plan</li>
+          <li><strong>Skills Passport</strong> — competency levels + evidence</li>
+          <li><strong>Micro-Learning</strong> — short gap drills / DCT path</li>
+          <li><strong>EvalPro</strong> — gradebook + diagnostics analytics</li>
+          <li><strong>TLA / data / AI authoring</strong> — thin, sellable</li>
+        </ul>
+      </section>
+      <section class="card">
+        <h2><span class="tag wait">Building to March</span> All 38</h2>
+        <ul>
+          <li><strong>Deadline:</strong> all 38 blocks sellable by <strong>March 2027</strong></li>
+          <li><strong>Now:</strong> sell Live + Thin packs</li>
+          <li><strong>Dec:</strong> Wave A (AuditPro, IQ review, Skills depth…)</li>
+          <li><strong>Jan:</strong> XR / 3D / Immersive / AR / VR Thin</li>
+          <li><strong>Feb:</strong> Apprenticeship, quals, Grants, research MVPs</li>
+          <li><strong>Partner attach:</strong> LMS / Virtual Classroom still via Moodle etc.</li>
+        </ul>
+        <p style="margin:0.75rem 0 0;font-size:0.88rem;color:var(--soft)">Detail: <code>docs/INTERNAL_STATUS_TIMEFRAME.md</code></p>
+      </section>
+    </div>
+
+    <section class="card presets">
+      <h2>Ready SKUs (presets)</h2>
+      <table>
+        <thead>
+          <tr><th>SKU</th><th>Blocks</th><th>Buyer</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Classroom Starter</strong><br/><code>classroom_starter_4</code></td>
+            <td>Assessment + Ask Vidura + e-Book (+ spine)</td>
+            <td>First school deal</td>
+          </tr>
+          <tr>
+            <td><strong>School Standard</strong><br/><code>school_standard_5</code></td>
+            <td>Starter + PLE / Progress</td>
+            <td>Want personal plan</td>
+          </tr>
+          <tr>
+            <td><strong>School Pro</strong><br/><code>school_pro_6</code></td>
+            <td>Standard + EvalPro analytics</td>
+            <td>Teacher gradebook + stuck view</td>
+          </tr>
+          <tr>
+            <td><strong>Adaptive Pro</strong><br/><code>adaptive_pro_8</code></td>
+            <td>Pro + Skills + TLA + Micro-Learning</td>
+            <td>Gaps / competency path</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <p class="foot">
+      Rule: never demo Park as finished. Quote Wave B/C with timeline.
+      Configure tenant: Admin key → <a href="/sales">Sales desk</a> → Sell this pack.
+    </p>
+  </div>
+</body>
+</html>

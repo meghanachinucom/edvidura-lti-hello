@@ -113,6 +113,10 @@ def test_sales_page_renders():
         assert r.status_code == 200
         assert "Client packs" in r.text
         assert "Sell this pack" in r.text
+        r2 = c.get("/sales/one-pager")
+        assert r2.status_code == 200
+        assert "What you can sell now" in r2.text
+        assert "classroom_starter_4" in r2.text
 
 
 

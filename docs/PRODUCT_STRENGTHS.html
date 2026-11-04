@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EdVidura · Product strengths &amp; capabilities</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #64748B;
+      --line: #E2E8F0;
+      --paper: #F8FAFC;
+      --card: #FFFFFF;
+      --coral: #FE580D;
+      --mint: #62BF8E;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Outfit, system-ui, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #FFF7ED 0%, var(--paper) 28%, #fff 100%);
+      line-height: 1.55;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+    .kicker {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--coral);
+      font-weight: 600;
+    }
+    h1 { font-size: clamp(1.85rem, 4vw, 2.6rem); line-height: 1.15; margin: 0.4rem 0 0.75rem; }
+    .lead { color: var(--muted); font-size: 1.05rem; max-width: 42rem; }
+    .meta {
+      display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem;
+      margin: 1.5rem 0 2.25rem; font-size: 0.9rem; color: var(--muted);
+    }
+    .meta strong { color: var(--ink); font-weight: 600; }
+    .live {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;
+      padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+    }
+    .live::before { content: ""; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--mint); }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 1.25rem;
+      padding: 1.35rem 1.4rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+    section h2 { font-size: 1.15rem; margin: 0 0 0.35rem; }
+    section p.sub { margin: 0 0 0.9rem; color: var(--muted); font-size: 0.95rem; }
+    ul { margin: 0; padding-left: 1.15rem; }
+    li { margin: 0.4rem 0; }
+    li strong { font-weight: 650; }
+    .grid { display: grid; gap: 1rem; }
+    @media (min-width: 720px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+    .note {
+      margin-top: 1.75rem;
+      padding: 1.1rem 1.25rem;
+      border-radius: 1rem;
+      background: #111827;
+      color: #E2E8F0;
+      font-size: 0.95rem;
+    }
+    .note a { color: #FDBA74; }
+    footer { margin-top: 2rem; color: var(--muted); font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="kicker">EdVidura</p>
+    <h1>Strengths &amp; capabilities</h1>
+    <p class="lead">
+      EdVidura is an LTI learning layer that sits inside Moodle (or another LMS).
+      It adds practice, coaching, handbooks, and section diagnostics while the LMS stays the system of record for grades and enrolment.
+    </p>
+    <div class="meta">
+      <span class="live">Production</span>
+      <span><strong>App</strong> edvidura-app</span>
+      <span><strong>Updated</strong> Nov 2026</span>
+    </div>
+
+    <section>
+      <h2>Core strengths</h2>
+      <p class="sub">What makes the product solid for real classrooms and multi-tenant use.</p>
+      <ul>
+        <li><strong>LMS-native, not LMS-replacing</strong> — launches from Moodle via LTI 1.3 Advantage; official gradebook and roster stay in the LMS.</li>
+        <li><strong>Tenant isolation</strong> — each school or organisation is separated at the database with row-level security.</li>
+        <li><strong>Clear classroom UI</strong> — CampusHub layout with breathing room: one job per section, short copy, fewer competing actions.</li>
+        <li><strong>Handbook-grounded AI</strong> — Ask Vidura gives Socratic hints from approved manuals, not quiz answers.</li>
+        <li><strong>Evidence-linked skills</strong> — proficiency levels tied to quizzes, labs, and other assessment evidence.</li>
+        <li><strong>Section-scoped teaching tools</strong> — results, sync, and diagnostics for this class — not a district SIS.</li>
+      </ul>
+    </section>
+
+    <div class="grid grid-2">
+      <section>
+        <h2>Learner capabilities</h2>
+        <p class="sub">Inside the course tool after LTI launch.</p>
+        <ul>
+          <li>Course home with progress and next step</li>
+          <li>Lesson and lab continuum with prerequisites</li>
+          <li>Checkpoint quizzes with instant feedback</li>
+          <li>Ask Vidura study coach (cited sources)</li>
+          <li>Class manuals / PeBL handbook reader</li>
+          <li>My Progress: roadmap, skills, gaps, goals</li>
+          <li>Spatial / WebXR practice labs where enabled</li>
+          <li>Multi-language UI for key handbook surfaces</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Teacher capabilities</h2>
+        <p class="sub">Built for day-to-day section teaching.</p>
+        <ul>
+          <li>Class results and Moodle grade sync (AGS)</li>
+          <li>Diagnostics: stuck topics, activity, xAPI, gaps</li>
+          <li>Assign short remediation drills</li>
+          <li>Difference training vs skill targets</li>
+          <li>Competency mapping (CAT / TO → skills)</li>
+          <li>DCT lesson planner &amp; SME source registry</li>
+          <li>Preview student view from the gradebook</li>
+        </ul>
+      </section>
+    </div>
+
+    <section>
+      <h2>Platform capabilities</h2>
+      <p class="sub">Architecture that supports school, corporate, and government segments.</p>
+      <ul>
+        <li><strong>LTI Advantage</strong> — launch, Dynamic Registration onboarding, Assignment and Grade Services passback.</li>
+        <li><strong>Adaptive learning</strong> — gap / difference paths and personalised next activities.</li>
+        <li><strong>SME &amp; handbooks</strong> — approved manuals indexed for the coach; public query API and ETIMS webhook for content sync.</li>
+        <li><strong>xAPI middleware</strong> — statements from quizzes, labs, and learning events for analytics.</li>
+        <li><strong>Events &amp; receipts</strong> — outbox-style event envelope and sealed grade attempt evidence.</li>
+        <li><strong>Segment packs</strong> — e.g. government Pravachana video library alongside school STEM courses.</li>
+        <li><strong>Ops &amp; tenancy</strong> — onboarding UI, capability flags per tenant, security boot checks.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Experience polish (current UI)</h2>
+      <p class="sub">Screens designed to be easy to understand in demos and daily use.</p>
+      <ul>
+        <li><strong>Student home</strong> — calm dashboard, clear next action.</li>
+        <li><strong>Progress</strong> — roadmap, skills, gaps, and goals as simple cards.</li>
+        <li><strong>Ask Vidura</strong> — focused chat; sources and language in a light bar.</li>
+        <li><strong>Lessons &amp; manuals</strong> — one primary CTA; offline-friendly handbooks.</li>
+        <li><strong>Quiz &amp; XR</strong> — checkpoint focus; lean lab cards to launch.</li>
+        <li><strong>Teacher results &amp; diagnostics</strong> — short heroes, plain tabs, scannable tables.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Boundary with the LMS</h2>
+      <p class="sub">Keeps procurement and trust conversations clean.</p>
+      <ul>
+        <li>Enrolment and the official gradebook remain in Moodle (or Canvas).</li>
+        <li>EdVidura is the practice, coaching, handbook, and diagnostics layer.</li>
+        <li>Teachers see sync status before and after grade passback.</li>
+      </ul>
+    </section>
+
+    <div class="note">
+      Live app:
+      <a href="https://edvidura-app-production.up.railway.app" rel="noopener">https://edvidura-app-production.up.railway.app</a>
+      · Health: <a href="https://edvidura-app-production.up.railway.app/health" rel="noopener">/health</a>
+    </div>
+
+    <footer>
+      File: docs/PRODUCT_STRENGTHS.html · Full course data appears after LTI launch or a secured tenant session.
+    </footer>
+  </div>
+</body>
+</html>

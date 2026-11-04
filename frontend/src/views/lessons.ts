@@ -6,6 +6,7 @@
 import { state, setScreen, showToast, notify, authoringLessonsList } from '../state';
 import { escapeHtml, openLiveLesson } from '../boot';
 import { hubCalChip, studioCover } from '../components/hub';
+import { disposeSpatialLab, mountSpatialLab } from '../components/spatialLessonLab';
 
 const LESSON_SHOTS = [
   'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=800&q=70',
@@ -134,6 +135,19 @@ export function renderLessons(): string {
           <button id="open-authoring-planner-btn" class="hub-cta-light" type="button" style="margin-top:0">Planner</button>
         </div>
       </div>
+
+      <section class="spatial-lab-panel" id="student-spatial-lab-section" aria-label="Interactive 3D lesson lab">
+        <div class="flex flex-wrap items-end justify-between gap-2 mb-2">
+          <div>
+            <p class="hub-kicker-ink">Spatial lesson · Techartist-style</p>
+            <h2 class="text-lg font-extrabold text-[#111827]">Cartesian 3D lab</h2>
+            <p class="text-sm text-slate-500 mt-0.5">Predict → try → explain. Orbit the plane, tune slope, drop points.</p>
+          </div>
+          <button id="spatial-lab-focus-btn" class="hub-cta-dark" type="button" style="margin-top:0">Focus lab</button>
+        </div>
+        <div id="student-spatial-lab"></div>
+      </section>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5" id="lesson-table" role="feed">${rows}</div>
     </div>
     ${isAuthoringOpen ? renderAuthoringPlannerModal() : ''}
@@ -269,13 +283,26 @@ function renderAuthoringPlannerModal(): string {
 }
 
 export function bindLessonsEvents(container: HTMLElement): void {
-  // Hero CTA buttons
+  const labHost = container.querySelector('#student-spatial-lab') as HTMLElement | null;
+  if (labHost) {
+    mountSpatialLab({
+      host: labHost,
+      onExplain: (msg) => showToast(msg.slice(0, 120), 'insights'),
+    });
+  } else {
+    disposeSpatialLab();
+  }
+
+  // Hero CTA → scroll to embedded 3D lab on this page
   const openLab = () => {
-    setScreen('lesson-detail');
-    showToast('Launching Cartesian Sandbox Lesson 03', 'insights');
+    const section = container.querySelector('#student-spatial-lab-section');
+    section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showToast('Cartesian 3D lab ready — Predict, Try, Explain', 'view_in_ar');
   };
   container.querySelector('#hero-launch-active-lesson')?.addEventListener('click', openLab);
   container.querySelectorAll('.hero-launch-active-lesson').forEach(btn => btn.addEventListener('click', openLab));
+  container.querySelector('#spatial-lab-focus-btn')?.addEventListener('click', openLab);
+  container.querySelector('#hero-continue-chip')?.addEventListener('click', openLab);
 
   container.querySelector('#hero-jump-quiz')?.addEventListener('click', () => {
     setScreen('quiz');

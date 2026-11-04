@@ -14,10 +14,19 @@ from app.modules.tenancy.capabilities import CAP_KEYS
 
 
 def test_catalog_covers_sheet_size():
+    from app.modules.tenancy.blocks import list_build_queue
+
     assert len(BLOCKS) >= 38
     rows = list_blocks()
     assert len(rows) == len(BLOCKS)
-    assert all("state" in r and "shippable" in r for r in rows)
+    assert all("state" in r and "shippable" in r and "track" in r for r in rows)
+    queue = list_build_queue()
+    assert queue == []
+    assert any(r["id"] == "xr_store" and r["state"] == "thin" for r in rows)
+    assert any(r["id"] == "apprenticeship_manager" and r["state"] == "thin" for r in rows)
+    assert any(r["id"] == "sim_to_real_analytics" and r["state"] == "thin" for r in rows)
+    assert any(r["id"] == "virtual_classroom" and r["track"] == "partner" for r in rows)
+    assert any(r["id"] == "bits_math" and r["track"] == "content" for r in rows)
 
 
 def test_presets_resolve():
@@ -42,13 +51,23 @@ def test_merge_starter_enables_assessment_and_coach():
 def test_merge_park_recorded_not_shipped():
     result = merge_blocks(
         "school",
-        ["lti_integration", "assessment_tool", "xr_store"],
+        ["lti_integration", "assessment_tool", "atoms"],
     )
-    assert "xr_store" in result["enabled_blocks"]
-    assert any(u["id"] == "xr_store" for u in result["unavailable"])
+    assert "atoms" in result["enabled_blocks"]
+    assert any(u["id"] == "atoms" for u in result["unavailable"])
     assert result["capabilities"]["quiz_graded"] is True
-    # No XR cap exists / flipped
     assert all(k in CAP_KEYS for k in result["capabilities"])
+
+
+def test_merge_wave_b_enables_xr_caps():
+    result = merge_blocks("school", preset="wave_b_xr")
+    caps = result["capabilities"]
+    assert caps["xr_store"] is True
+    assert caps["immersive_labs"] is True
+    assert caps["asset_repo_3d"] is True
+    assert caps["ar_assistance"] is True
+    assert caps["vr_maintainer"] is True
+    assert result["unavailable"] == []
 
 
 def test_merge_deps_pull_spine():

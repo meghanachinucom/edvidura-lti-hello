@@ -555,6 +555,226 @@ export function getAttempts() {
   }>('/api/v1/app/attempts');
 }
 
+/** Wave A */
+export function getSkillsPassport() {
+  return api<{
+    product: string;
+    skill_count: number;
+    skills: Array<{
+      code?: string;
+      label?: string;
+      description?: string;
+      evidence_slots?: number;
+      remediation?: Record<string, unknown>;
+    }>;
+    levels: string[];
+    note?: string;
+  }>('/api/v1/app/skills-passport');
+}
+
+export function getAuditPro(limit = 40) {
+  return api<{
+    product: string;
+    total: number;
+    sealed_ok: number;
+    synced_to_lms: number;
+    items: Array<{
+      attempt_id: string;
+      learner_name: string;
+      percent: number;
+      grade_sent: boolean;
+      seal_ok: boolean;
+      seal_reason?: string;
+      created_at?: string;
+    }>;
+  }>(`/api/v1/app/audit-pro?limit=${limit}`);
+}
+
+export function getIqReview(limit = 80) {
+  return api<{
+    product: string;
+    attempts_scanned: number;
+    question_count: number;
+    too_hard: number;
+    too_easy: number;
+    questions: Array<{
+      question_id: string;
+      prompt: string;
+      attempts: number;
+      correct_pct: number;
+      flag: string;
+    }>;
+    note?: string;
+  }>(`/api/v1/app/iq-review?limit=${limit}`);
+}
+
+export function searchDocuments(q: string, limit = 8) {
+  const qs = new URLSearchParams({ q, limit: String(limit) });
+  return api<{
+    product: string;
+    query: string;
+    hits: Array<{
+      title?: string;
+      slug?: string;
+      page_no?: number;
+      body?: string;
+      manual_id?: string;
+      score?: number;
+    }>;
+  }>(`/api/v1/app/document-search?${qs}`);
+}
+
+/** Wave B XR */
+export type LiveXrApp = {
+  id: string;
+  name: string;
+  tagline: string;
+  category: string;
+  kind?: string;
+  version?: string;
+  size?: string;
+  rating?: number;
+  icon?: string;
+  hero_image?: string;
+  compatibility?: Record<string, boolean>;
+  description?: string;
+  launch_mode?: string;
+  featured?: boolean;
+  asset_ids?: string[];
+};
+
+export function getXrStore(category = '') {
+  const qs = category ? `?category=${encodeURIComponent(category)}` : '';
+  return api<{
+    product: string;
+    count: number;
+    categories: string[];
+    apps: LiveXrApp[];
+    note?: string;
+  }>(`/api/v1/app/xr/store${qs}`);
+}
+
+export function getXrAssets(tag = '') {
+  const qs = tag ? `?tag=${encodeURIComponent(tag)}` : '';
+  return api<{
+    product: string;
+    count: number;
+    assets: Array<{ id: string; name: string; format: string; tags: string[]; poly_count?: number }>;
+  }>(`/api/v1/app/xr/assets${qs}`);
+}
+
+export function getXrLabs() {
+  return api<{ product: string; count: number; labs: LiveXrApp[] }>('/api/v1/app/xr/labs');
+}
+
+/** Wave C workforce */
+export function getApprenticeship() {
+  return api<{
+    product: string;
+    count: number;
+    active: number;
+    placements: Array<{
+      id: string;
+      apprentice: string;
+      mentor: string;
+      role: string;
+      hours_logged: number;
+      hours_target: number;
+      status: string;
+      next_checkpoint?: string;
+    }>;
+  }>('/api/v1/app/workforce/apprenticeship');
+}
+
+export function getContinuity() {
+  return api<{
+    product: string;
+    count: number;
+    due_soon: number;
+    credentials: Array<{
+      id: string;
+      label: string;
+      status: string;
+      expires_at?: string;
+      days_to_expiry?: number;
+    }>;
+  }>('/api/v1/app/workforce/continuity');
+}
+
+export function getSimToReal() {
+  return api<{
+    product: string;
+    pair_count: number;
+    avg_gap_pct: number;
+    pairs: Array<{
+      skill: string;
+      sim_source: string;
+      sim_score_pct: number;
+      real_score_pct: number;
+      gap_pct: number;
+      transfer: string;
+      n_learners?: number;
+    }>;
+  }>('/api/v1/app/workforce/sim-to-real');
+}
+
+/** Adaptive interactive labs (school-owned textbook → pack) */
+export type LabPackProposal = {
+  title: string;
+  chapter_slug: string;
+  playground_type: string;
+  age_band: string;
+  callouts: Array<{ id: string; label: string; body?: string; action?: string; target?: string }>;
+  presets?: Array<{ label: string; m?: number; b?: number }>;
+  textbook_excerpt?: string;
+  note?: string;
+};
+
+export function proposeLabPack(body: {
+  manual_id?: string;
+  body_md?: string;
+  title?: string;
+  chapter_slug?: string;
+  age_band?: string;
+}) {
+  return api<LabPackProposal>('/api/v1/app/labs/propose', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function saveLabPack(body: {
+  pack: LabPackProposal;
+  manual_id?: string;
+  chapter_slug?: string;
+  status?: 'draft' | 'published';
+}) {
+  return api<{ id: string; status: string }>('/api/v1/app/labs/packs', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function publishLabPack(packId: string) {
+  return api<{ id: string; status: string }>(
+    `/api/v1/app/labs/packs/${encodeURIComponent(packId)}/publish`,
+    { method: 'POST', body: '{}' }
+  );
+}
+
+export function getLabPackByChapter(manualId: string, chapterSlug = 'overview') {
+  const qs = new URLSearchParams({
+    manual_id: manualId,
+    chapter_slug: chapterSlug,
+  });
+  return api<{
+    id: string;
+    status: string;
+    playground_type: string;
+    pack: LabPackProposal;
+  }>(`/api/v1/app/labs/packs/by-chapter?${qs}`);
+}
+
 export function getAssignments() {
   return api<{
     assignments: Array<{

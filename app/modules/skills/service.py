@@ -297,6 +297,40 @@ def competency_catalog(tenant_id: UUID | str) -> dict[str, dict[str, Any]]:
     return out
 
 
+def passport_summary(tenant_id: UUID | str) -> dict[str, Any]:
+    """Skills Passport thin view — catalog + remediation hooks (Wave A)."""
+    skills = ensure_default_skills(tenant_id)
+    entries: list[dict[str, Any]] = []
+    for s in skills:
+        keys = list(s.get("question_keys") or [])
+        entries.append(
+            {
+                "code": s.get("skill_code"),
+                "label": s.get("label"),
+                "description": s.get("description") or "",
+                "status": s.get("status") or "active",
+                "evidence_slots": len(keys),
+                "question_keys": keys,
+                "remediation": {
+                    "prefer_path": s.get("prefer_path") or "",
+                    "lesson_id": s.get("lesson_id"),
+                    "manual_id": s.get("manual_id"),
+                    "manual_focus": s.get("manual_focus") or "",
+                    "teleport_label": s.get("teleport_label") or "",
+                },
+            }
+        )
+    return {
+        "product": "Skills Passport",
+        "wave": "A",
+        "state": "thin",
+        "skill_count": len(entries),
+        "skills": entries,
+        "levels": ["novice", "developing", "proficient", "advanced"],
+        "note": "Evidence levels fill from quiz / xAPI; catalog is tenant competency registry.",
+    }
+
+
 def bind_default_manual(
     tenant_id: UUID | str, manual_id: UUID | str
 ) -> None:

@@ -14,6 +14,7 @@
     <a class="sx-logo" href="/sales">EdVidura Sales</a>
     <nav class="sx-top-links">
       <a href="/onboard">Onboard LMS</a>
+      <a href="/product/motion">Motion</a>
       <a href="/">Product</a>
       {% if ops_email %}
       <span>{{ ops_email }}</span>
@@ -31,6 +32,7 @@
       <p class="sx-lede">
         Pick a client, set their display name, choose Live/Thin blocks (or a preset), then sell.
         Park/Partner blocks can be noted on the deal but will not unlock product UI yet.
+        One-pager: <a href="/sales/one-pager">Available now vs roadmap</a>.
       </p>
     </header>
 
@@ -251,7 +253,9 @@
           '<label><span class="title"></span><span class="notes"></span></label>' +
           '<span class="sx-state ' + blk.state + '"></span>';
         row.querySelector('.title').textContent = blk.name;
-        row.querySelector('.notes').textContent = blk.notes || blk.id;
+        var trackBit = blk.track ? (' · ' + blk.track) : '';
+        var queueBit = (blk.queue != null) ? (' · Q' + blk.queue) : '';
+        row.querySelector('.notes').textContent = (blk.notes || blk.id) + trackBit + queueBit;
         row.querySelector('.sx-state').textContent = blk.state;
         var cb = row.querySelector('input');
         if (!shippable) {

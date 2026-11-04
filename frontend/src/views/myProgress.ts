@@ -5,13 +5,24 @@
  * - Module 7: Difference Training Application (competency gap analysis, training recommendations, progress tracking)
  * - Module 9: Personalised Learning Engine (recommendations, learning goals, progress, and suggested activities)
  */
+import { getApprenticeship, getContinuity } from '../api';
 import { state, setScreen, showToast, notify, learningGoalsList, suggestedActivitiesList } from '../state';
 import { classLabel, displayCompetencies, displayName, escapeHtml } from '../boot';
 import { hubStat, hubStats } from '../components/hub';
 
+function progressCaps(): Record<string, boolean> {
+  const raw = state.liveSession?.capabilities;
+  if (raw && typeof raw === 'object' && Object.keys(raw).length) {
+    return raw as Record<string, boolean>;
+  }
+  // Local SPA demo: show Wave C tabs
+  return { apprenticeship: true, qualification_continuity: true };
+}
+
 export function renderMyProgress(): string {
   const activeTab = state.progressActiveTab || 'roadmap';
   const progressPct = state.liveProgress?.percent ?? 38;
+  const caps = progressCaps();
 
   return `
     <div class="hub-page">
@@ -19,9 +30,9 @@ export function renderMyProgress(): string {
         <section class="hub-hero studio-main">
           <img src="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1600&q=80" alt="">
           <div class="hub-hero-body">
-            <p class="hub-kicker">${escapeHtml(displayName())}</p>
+            <p class="hub-kicker">PLE · ${escapeHtml(displayName())}</p>
             <h1>You're ${progressPct}% through Unit 2</h1>
-            <p class="hub-hero-sub">Keep going — scores sync to Moodle.</p>
+            <p class="hub-hero-sub">Personal plan · skills passport · micro-drills. Scores sync to Moodle.</p>
             <div class="hub-hero-ctas">
               <button id="refresh-sync-btn" class="hub-cta-light progress-sync" type="button">Continue</button>
             </div>
@@ -31,15 +42,17 @@ export function renderMyProgress(): string {
           <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=70" alt="">
           <div class="hub-cal-body">
             <h2 class="text-base font-extrabold">${escapeHtml(classLabel())}</h2>
-            <p class="text-sm text-white/75 mt-3">Roadmap, skills, and next steps for this course.</p>
+            <p class="text-sm text-white/75 mt-3">Roadmap, Skills Passport, gap drills, and study goals.</p>
           </div>
         </section>
       </div>
       <div class="hub-seg flex-wrap">
         <button class="progress-tab-btn hub-seg-btn ${activeTab === 'roadmap' ? 'on' : ''}" data-tab="roadmap" type="button"><span class="material-symbols-outlined text-[16px]">map</span> Roadmap</button>
-        <button class="progress-tab-btn hub-seg-btn ${activeTab === 'competencies' ? 'on' : ''}" data-tab="competencies" type="button"><span class="material-symbols-outlined text-[16px]">fact_check</span> Skills</button>
-        <button class="progress-tab-btn hub-seg-btn ${activeTab === 'difference' ? 'on' : ''}" data-tab="difference" type="button"><span class="material-symbols-outlined text-[16px]">troubleshoot</span> Gaps</button>
-        <button class="progress-tab-btn hub-seg-btn ${activeTab === 'goals' ? 'on' : ''}" data-tab="goals" type="button"><span class="material-symbols-outlined text-[16px]">psychology_alt</span> Goals</button>
+        <button class="progress-tab-btn hub-seg-btn ${activeTab === 'competencies' ? 'on' : ''}" data-tab="competencies" type="button"><span class="material-symbols-outlined text-[16px]">fact_check</span> Skills Passport</button>
+        <button class="progress-tab-btn hub-seg-btn ${activeTab === 'difference' ? 'on' : ''}" data-tab="difference" type="button"><span class="material-symbols-outlined text-[16px]">troubleshoot</span> Micro-drills</button>
+        <button class="progress-tab-btn hub-seg-btn ${activeTab === 'goals' ? 'on' : ''}" data-tab="goals" type="button"><span class="material-symbols-outlined text-[16px]">psychology_alt</span> Study plan</button>
+        ${caps.apprenticeship ? `<button class="progress-tab-btn hub-seg-btn ${activeTab === 'apprentice' ? 'on' : ''}" data-tab="apprentice" type="button"><span class="material-symbols-outlined text-[16px]">handshake</span> Apprentice</button>` : ''}
+        ${caps.qualification_continuity ? `<button class="progress-tab-btn hub-seg-btn ${activeTab === 'continuity' ? 'on' : ''}" data-tab="continuity" type="button"><span class="material-symbols-outlined text-[16px]">verified</span> Continuity</button>` : ''}
       </div>
       ${renderProgressActiveContent(activeTab)}
     </div>`;
@@ -53,10 +66,82 @@ function renderProgressActiveContent(tab: string): string {
       return renderDifferenceTrainingTab();
     case 'goals':
       return renderGoalsAndRecommendationsTab();
+    case 'apprentice':
+      return renderApprenticeTab();
+    case 'continuity':
+      return renderContinuityTab();
     case 'roadmap':
     default:
       return renderRoadmapTab();
   }
+}
+
+function renderApprenticeTab(): string {
+  const live = state.liveApprenticeship;
+  const rows = live?.placements?.length
+    ? live.placements
+    : [
+        { apprentice: displayName(), mentor: 'Faculty lead', role: 'Pathway apprentice', hours_logged: 8, hours_target: 40, status: 'active', next_checkpoint: 'First observed quiz' },
+      ];
+  return `
+    <div class="flex flex-col gap-4">
+      <div>
+        <p class="hub-kicker-ink">Wave C · thin</p>
+        <h2 class="text-lg font-extrabold text-[#111827]">Apprenticeship pathway</h2>
+        <p class="text-sm text-slate-500 mt-1">Mentor hours and checkpoints on top of Skills Passport.</p>
+      </div>
+      ${hubStats(
+        hubStat('handshake', 'Placements', String(live?.count ?? rows.length)),
+        hubStat('schedule', 'Active', String(live?.active ?? rows.filter(r => r.status === 'active').length))
+      )}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        ${rows.map(r => `
+          <article class="hub-card flex flex-col gap-2">
+            <p class="hub-kicker-ink">${escapeHtml(r.status)}</p>
+            <h3 class="text-sm font-extrabold text-[#111827]">${escapeHtml(r.role)}</h3>
+            <p class="text-xs text-slate-600">Mentor: ${escapeHtml(r.mentor)} · You: ${escapeHtml(r.apprentice)}</p>
+            <p class="text-xs tabular-nums text-slate-500">${r.hours_logged} / ${r.hours_target} hrs</p>
+            ${r.next_checkpoint ? `<p class="text-xs text-slate-600 mt-auto">Next: ${escapeHtml(r.next_checkpoint)}</p>` : ''}
+          </article>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderContinuityTab(): string {
+  const live = state.liveContinuity;
+  const rows = live?.credentials?.length
+    ? live.credentials
+    : [
+        { label: 'Lockout / Tagout', status: 'current', expires_at: '2027-06-12', days_to_expiry: 585 },
+        { label: 'Mechanical seal competency', status: 'due_soon', expires_at: '2026-11-01', days_to_expiry: 30 },
+      ];
+  return `
+    <div class="flex flex-col gap-4">
+      <div>
+        <p class="hub-kicker-ink">Wave C · thin</p>
+        <h2 class="text-lg font-extrabold text-[#111827]">Qualification continuity</h2>
+        <p class="text-sm text-slate-500 mt-1">Credential currency — renew before expiry.</p>
+      </div>
+      ${hubStats(
+        hubStat('verified', 'Credentials', String(live?.count ?? rows.length)),
+        hubStat('warning', 'Due soon', String(live?.due_soon ?? rows.filter(r => r.status === 'due_soon').length))
+      )}
+      <div class="hub-card overflow-hidden p-0">
+        <table class="w-full text-left text-xs">
+          <thead><tr class="bg-[#F8FAFC] text-[#64748B] uppercase tracking-wider font-bold font-mono">
+            <th class="py-3 px-4">Credential</th><th class="py-3 px-4">Status</th><th class="py-3 px-4">Expires</th>
+          </tr></thead>
+          <tbody>
+            ${rows.map(c => `
+              <tr class="border-t border-[#E2E8F0]">
+                <td class="py-3 px-4 font-bold">${escapeHtml(c.label)}</td>
+                <td class="py-3 px-4">${escapeHtml(c.status.replace('_', ' '))}</td>
+                <td class="py-3 px-4 tabular-nums">${escapeHtml(c.expires_at || '—')}${c.days_to_expiry != null ? ` · ${c.days_to_expiry}d` : ''}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 // =========================================================================
@@ -72,6 +157,15 @@ function renderRoadmapTab(): string {
       ${hubStat('menu_book', 'Lessons', `${progressDone} / ${progressTotal}`)}
       ${hubStat('grade', 'Last quiz', `${state.quizScore.correct} / ${state.quizScore.total || 6}`)}
     </section>
+
+    <article class="hub-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-1">
+      <div>
+        <p class="hub-kicker-ink">Micro-Learning</p>
+        <h2 class="text-base font-extrabold text-[#111827] mt-1">Next short path</h2>
+        <p class="text-sm text-slate-600 mt-1">Close one skill gap with a focused drill, then return to the unit roadmap.</p>
+      </div>
+      <button class="progress-tab-btn hub-cta-dark" data-tab="difference" type="button" style="margin-top:0">Open micro-drills</button>
+    </article>
 
     <div class="flex flex-col gap-5">
       <div class="flex items-center justify-between gap-3">
@@ -127,8 +221,8 @@ function renderCompetenciesTab(): string {
   return `
     <div class="flex items-center justify-between gap-3 flex-wrap">
       <div>
-        <h2 class="text-lg font-extrabold text-[#111827]">Your skills</h2>
-        <p class="text-sm text-slate-500 mt-1">Four levels · Novice to Advanced</p>
+        <h2 class="text-lg font-extrabold text-[#111827]">Skills Passport</h2>
+        <p class="text-sm text-slate-500 mt-1">Competency levels with evidence · Novice → Advanced</p>
       </div>
       <button id="export-competencies-btn" class="hub-cta-light" type="button" style="margin-top:0">Export</button>
     </div>
@@ -174,8 +268,8 @@ function renderDifferenceTrainingTab(): string {
   const gaps = comps.filter(c => c.gap > 0);
   return `
     <div>
-      <h2 class="text-lg font-extrabold text-[#111827]">Skills to close</h2>
-      <p class="text-sm text-slate-500 mt-1">Short drills for where you are behind target.</p>
+      <h2 class="text-lg font-extrabold text-[#111827]">Micro-Learning drills</h2>
+      <p class="text-sm text-slate-500 mt-1">Short gap practices — finish one, then return to your roadmap.</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -211,10 +305,10 @@ function renderGoalsAndRecommendationsTab(): string {
   return `
     <div class="hub-card flex flex-col gap-4">
       <div class="flex items-center justify-between gap-3 flex-wrap">
-        <h2 class="text-lg font-extrabold text-[#111827]">Study plan</h2>
+        <h2 class="text-lg font-extrabold text-[#111827]">PLE study plan</h2>
         <span class="text-xs text-slate-500">${plan?.active ? `${plan.done_count || 0}/${plan.step_count || 0} steps` : 'Waiting for gaps'}</span>
       </div>
-      <p class="text-sm text-slate-600">${escapeHtml(plan?.message || 'Take a quiz or ask Vidura — your plan appears when we see gaps.')}</p>
+      <p class="text-sm text-slate-600">${escapeHtml(plan?.message || 'Take a quiz or ask Vidura — your personal learning plan appears when we see gaps.')}</p>
       <div class="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
         <div class="h-full bg-[#FE580D] rounded-full" style="width: ${plan?.progress_pct || 0}%;"></div>
       </div>
@@ -272,6 +366,26 @@ function renderGoalsAndRecommendationsTab(): string {
 }
 
 export function bindMyProgressEvents(container: HTMLElement): void {
+  if (state.connected) {
+    const caps = progressCaps();
+    if (caps.apprenticeship && !state.liveApprenticeship) {
+      getApprenticeship()
+        .then((data) => {
+          state.liveApprenticeship = data;
+          notify();
+        })
+        .catch(() => {});
+    }
+    if (caps.qualification_continuity && !state.liveContinuity) {
+      getContinuity()
+        .then((data) => {
+          state.liveContinuity = data;
+          notify();
+        })
+        .catch(() => {});
+    }
+  }
+
   // Tabs
   container.querySelectorAll('.progress-tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {

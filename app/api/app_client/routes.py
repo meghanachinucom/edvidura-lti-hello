@@ -1567,6 +1567,438 @@ def app_progress(session: LearnerSession) -> Any:
     return ok(_load_progress(session))
 
 
+@router.get("/skills-passport")
+def app_skills_passport(session: LearnerSession) -> Any:
+    """Wave A — Skills Passport catalog + remediation hooks."""
+    from app.modules import skills as skills_mod
+
+    _require_cap(
+        session,
+        "skills_passport",
+        message="Skills Passport is not enabled for this tenant.",
+    )
+    return ok(json_safe(skills_mod.passport_summary(session["tenant_id"])))
+
+
+@router.get("/audit-pro")
+def app_audit_pro(
+    session: LearnerSession,
+    limit: int = Query(40, ge=1, le=100),
+) -> Any:
+    """Wave A — AuditPro sealed attempt trail (teachers)."""
+    from app.modules import audit_pro as audit_mod
+
+    if not _is_staff(session):
+        raise AppApiError("AuditPro is for teachers.", code="forbidden", status_code=403)
+    _require_cap(
+        session, "audit_pro", message="AuditPro is not enabled for this tenant."
+    )
+    return ok(
+        json_safe(
+            audit_mod.audit_trail(
+                session["tenant_id"],
+                limit=limit,
+                course_label=str(session.get("course_label") or "") or None,
+            )
+        )
+    )
+
+
+@router.get("/iq-review")
+def app_iq_review(
+    session: LearnerSession,
+    limit: int = Query(80, ge=1, le=200),
+) -> Any:
+    """Wave A — IQ review item quality flags (teachers)."""
+    from app.modules import iq_review as iq_mod
+
+    if not _is_staff(session):
+        raise AppApiError("IQ review is for teachers.", code="forbidden", status_code=403)
+    _require_cap(
+        session, "iq_review", message="IQ review is not enabled for this tenant."
+    )
+    return ok(json_safe(iq_mod.item_quality_report(session["tenant_id"], limit=limit)))
+
+
+@router.get("/document-search")
+def app_document_search(
+    session: LearnerSession,
+    q: str = Query("", min_length=0, max_length=200),
+    limit: int = Query(8, ge=1, le=20),
+) -> Any:
+    """Wave A — handbook / SME document search."""
+    from app.modules import sme as sme_mod
+
+    _require_cap(
+        session,
+        "document_search",
+        message="Document Search is not enabled for this tenant.",
+    )
+    query = (q or "").strip()
+    if len(query) < 2:
+        return ok({"query": query, "hits": [], "product": "Document Search", "wave": "A"})
+    hits = sme_mod.search_index(
+        session["tenant_id"],
+        query,
+        limit=limit,
+    )
+    return ok(
+        json_safe(
+            {
+                "product": "Document Search",
+                "wave": "A",
+                "state": "thin",
+                "query": query,
+                "hits": hits,
+            }
+        )
+    )
+
+
+@router.get("/airgap-pack")
+def app_airgap_pack(session: LearnerSession) -> Any:
+    """Wave A — air-gap pack readiness checklist (staff)."""
+    from app.modules import airgap as airgap_mod
+
+    if not _is_staff(session):
+        raise AppApiError(
+            "Air-gap pack status is for teachers/admins.",
+            code="forbidden",
+            status_code=403,
+        )
+    _require_cap(
+        session,
+        "airgap_pack",
+        message="Air-gap pack is not enabled for this tenant.",
+    )
+    return ok(json_safe(airgap_mod.pack_status()))
+
+
+@router.get("/xr/store")
+def app_xr_store(
+    session: LearnerSession,
+    category: str = Query("", max_length=64),
+) -> Any:
+    """Wave B — XR Store catalog."""
+    from app.modules import xr as xr_mod
+
+    _require_cap(session, "xr_store", message="XR Store is not enabled for this tenant.")
+    return ok(json_safe(xr_mod.store_catalog(category=category or None)))
+
+
+@router.get("/xr/assets")
+def app_xr_assets(
+    session: LearnerSession,
+    tag: str = Query("", max_length=64),
+) -> Any:
+    """Wave B — 3D asset repository."""
+    from app.modules import xr as xr_mod
+
+    _require_cap(
+        session,
+        "asset_repo_3d",
+        message="3D Asset Repository is not enabled for this tenant.",
+    )
+    return ok(json_safe(xr_mod.asset_repository(tag=tag or None)))
+
+
+@router.get("/xr/configurator")
+def app_xr_configurator(
+    session: LearnerSession,
+    asset_id: str = Query("", max_length=64),
+) -> Any:
+    """Wave B — 3D asset configurator presets."""
+    from app.modules import xr as xr_mod
+
+    _require_cap(
+        session,
+        "asset_configurator_3d",
+        message="3D Asset Configurator is not enabled for this tenant.",
+    )
+    return ok(json_safe(xr_mod.asset_configurator(asset_id or None)))
+
+
+@router.get("/xr/labs")
+def app_xr_labs(session: LearnerSession) -> Any:
+    """Wave B — Immersive Labs."""
+    from app.modules import xr as xr_mod
+
+    _require_cap(
+        session,
+        "immersive_labs",
+        message="Immersive Labs are not enabled for this tenant.",
+    )
+    return ok(json_safe(xr_mod.immersive_labs()))
+
+
+@router.get("/xr/ar")
+def app_xr_ar(session: LearnerSession) -> Any:
+    """Wave B — AR Assistance pack."""
+    from app.modules import xr as xr_mod
+
+    _require_cap(
+        session,
+        "ar_assistance",
+        message="AR Assistance is not enabled for this tenant.",
+    )
+    return ok(json_safe(xr_mod.ar_assistance_pack()))
+
+
+@router.get("/xr/vr-maintainer")
+def app_xr_vr_maintainer(session: LearnerSession) -> Any:
+    """Wave B — VR Maintainer Training scenarios."""
+    from app.modules import xr as xr_mod
+
+    _require_cap(
+        session,
+        "vr_maintainer",
+        message="VR Maintainer Training is not enabled for this tenant.",
+    )
+    return ok(json_safe(xr_mod.vr_maintainer_pack()))
+
+
+@router.get("/xr/overview")
+def app_xr_overview(session: LearnerSession) -> Any:
+    """Wave B — stack overview (any XR cap)."""
+    from app.modules import xr as xr_mod
+    from app.modules.tenancy import can
+
+    caps = _caps(session)
+    if not any(
+        can(caps, k)
+        for k in (
+            "xr_store",
+            "immersive_labs",
+            "asset_repo_3d",
+            "ar_assistance",
+            "vr_maintainer",
+        )
+    ):
+        raise AppApiError(
+            "No XR products enabled for this tenant.",
+            code="capability_denied",
+            status_code=403,
+        )
+    return ok(json_safe(xr_mod.wave_b_overview()))
+
+
+class LabProposeIn(BaseModel):
+    title: str = ""
+    body_md: str = ""
+    chapter_slug: str = ""
+    age_band: str = ""
+    manual_id: UUID | None = None
+
+
+class LabSaveIn(BaseModel):
+    pack: dict[str, Any]
+    manual_id: UUID | None = None
+    chapter_slug: str = "overview"
+    status: str = "draft"
+
+
+@router.post("/labs/propose")
+def app_labs_propose(payload: LabProposeIn, session: LearnerSession) -> Any:
+    """Draft a lab pack from school-owned textbook text (teacher)."""
+    from app.modules import interactive_labs as labs_mod
+    from app.modules import manuals as manuals_mod
+
+    if not _is_staff(session):
+        raise AppApiError(
+            "Only teachers can propose interactive labs.",
+            code="forbidden",
+            status_code=403,
+        )
+    title = str(payload.title or "").strip()
+    body_md = str(payload.body_md or "").strip()
+    chapter_slug = str(payload.chapter_slug or "").strip() or None
+    age_band = str(payload.age_band or "").strip() or None
+    manual_id = payload.manual_id
+    if manual_id and not body_md:
+        _require_manual_for_learner(session, UUID(str(manual_id)))
+        ver = manuals_mod.latest_published_version(session["tenant_id"], manual_id)
+        if ver and ver.get("body_md"):
+            body_md = str(ver.get("body_md") or "")
+        manual = manuals_mod.get_manual(session["tenant_id"], manual_id)
+        if manual and not title:
+            title = str(manual.get("title") or "")
+        if chapter_slug and body_md:
+            from app.modules.sme.service import split_manual_sections
+
+            for sec in split_manual_sections(body_md):
+                if sec.get("slug") == chapter_slug:
+                    body_md = str(sec.get("body") or body_md)
+                    title = title or str(sec.get("title") or title)
+                    break
+    if len(body_md) < 20:
+        raise AppApiError(
+            "Provide body_md or a manual_id with content (min 20 chars).",
+            code="validation",
+        )
+    proposal = labs_mod.propose_lab_pack(
+        title=title,
+        body_md=body_md,
+        chapter_slug=chapter_slug,
+        age_band=age_band,
+    )
+    return ok(json_safe(proposal))
+
+
+@router.post("/labs/packs")
+def app_labs_save(payload: LabSaveIn, session: LearnerSession) -> Any:
+    """Save / update a lab pack for this tenant (teacher)."""
+    from app.modules import interactive_labs as labs_mod
+
+    if not _is_staff(session):
+        raise AppApiError(
+            "Only teachers can save interactive labs.",
+            code="forbidden",
+            status_code=403,
+        )
+    pack = payload.pack
+    if not isinstance(pack, dict):
+        raise AppApiError("pack object required", code="validation")
+    manual_id = payload.manual_id
+    if manual_id:
+        _require_manual_for_learner(session, manual_id)
+    chapter_slug = str(
+        payload.chapter_slug or pack.get("chapter_slug") or "overview"
+    )
+    status = str(payload.status or "draft")
+    row = labs_mod.upsert_lab_pack(
+        session["tenant_id"],
+        manual_id=manual_id,
+        chapter_slug=chapter_slug,
+        pack=pack,
+        created_by=str(session.get("subject") or ""),
+        status=status,
+    )
+    return ok(json_safe(row))
+
+@router.post("/labs/packs/{pack_id}/publish")
+def app_labs_publish(pack_id: UUID, session: LearnerSession) -> Any:
+    from app.modules import interactive_labs as labs_mod
+
+    if not _is_staff(session):
+        raise AppApiError(
+            "Only teachers can publish interactive labs.",
+            code="forbidden",
+            status_code=403,
+        )
+    row = labs_mod.publish_lab_pack(session["tenant_id"], pack_id)
+    if not row:
+        raise AppApiError("Lab pack not found", code="not_found", status_code=404)
+    return ok(json_safe(row))
+
+
+@router.get("/labs/packs")
+def app_labs_list(
+    session: LearnerSession,
+    manual_id: UUID | None = None,
+    published_only: bool = Query(False),
+) -> Any:
+    from app.modules import interactive_labs as labs_mod
+
+    if not _is_staff(session):
+        published_only = True
+    if manual_id:
+        _require_manual_for_learner(session, manual_id)
+    rows = labs_mod.list_lab_packs(
+        session["tenant_id"],
+        manual_id=manual_id,
+        published_only=published_only,
+    )
+    return ok(json_safe({"packs": rows}))
+
+
+@router.get("/labs/packs/by-chapter")
+def app_labs_by_chapter(
+    session: LearnerSession,
+    manual_id: UUID = Query(...),
+    chapter_slug: str = Query("overview"),
+) -> Any:
+    """Learner/teacher: load pack for a school chapter (published for learners)."""
+    from app.modules import interactive_labs as labs_mod
+
+    _require_manual_for_learner(session, manual_id)
+    row = labs_mod.get_lab_pack(
+        session["tenant_id"],
+        manual_id=manual_id,
+        chapter_slug=chapter_slug,
+        published_only=not _is_staff(session),
+    )
+    if not row and _is_staff(session):
+        row = labs_mod.get_lab_pack(
+            session["tenant_id"],
+            manual_id=manual_id,
+            chapter_slug=chapter_slug,
+            published_only=False,
+        )
+    if not row:
+        raise AppApiError("No lab pack for this chapter", code="not_found", status_code=404)
+    return ok(json_safe(row))
+
+
+@router.get("/workforce/apprenticeship")
+def app_apprenticeship(session: LearnerSession) -> Any:
+    """Wave C — Apprenticeship Manager board."""
+    from app.modules import workforce as wf_mod
+
+    _require_cap(
+        session,
+        "apprenticeship",
+        message="Apprenticeship Manager is not enabled for this tenant.",
+    )
+    subject = None if _is_staff(session) else str(session.get("subject") or "")
+    return ok(
+        json_safe(
+            wf_mod.apprenticeship_board(
+                session["tenant_id"],
+                subject=subject,
+            )
+        )
+    )
+
+
+@router.get("/workforce/continuity")
+def app_continuity(session: LearnerSession) -> Any:
+    """Wave C — Qualification & Continuity Tracker."""
+    from app.modules import workforce as wf_mod
+
+    _require_cap(
+        session,
+        "qualification_continuity",
+        message="Qualification Continuity is not enabled for this tenant.",
+    )
+    return ok(
+        json_safe(
+            wf_mod.continuity_tracker(
+                session["tenant_id"],
+                subject=str(session.get("subject") or "") or None,
+            )
+        )
+    )
+
+
+@router.get("/workforce/sim-to-real")
+def app_sim_to_real(session: LearnerSession) -> Any:
+    """Wave C — Sim-to-Real Transfer Analytics (teachers)."""
+    from app.modules import workforce as wf_mod
+
+    if not _is_staff(session):
+        raise AppApiError(
+            "Sim-to-Real analytics is for teachers.",
+            code="forbidden",
+            status_code=403,
+        )
+    _require_cap(
+        session,
+        "sim_to_real",
+        message="Sim-to-Real analytics is not enabled for this tenant.",
+    )
+    return ok(json_safe(wf_mod.sim_to_real_report(session["tenant_id"])))
+
+
 @router.get("/analytics")
 def app_analytics(session: LearnerSession) -> Any:
     from app.modules import analytics as analytics_mod

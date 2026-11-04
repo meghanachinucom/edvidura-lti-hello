@@ -28,6 +28,12 @@ Import domain logic from `app.modules.*` — not from FastAPI route files.
 | `app.modules.nrps` | LTI Advantage NRPS: Moodle roster cache (awareness only) | Class / membership awareness |
 | `app.modules.lti_groups` | LTI Advantage Group Services + group-based assignment access (graded quiz gated to assigned groups) | LMS groups |
 | `app.modules.receipts` | HMAC-sealed grade receipts for attempt evidence | Audit / verify |
+| `app.modules.audit_pro` | Wave A AuditPro — sealed attempt trail for teachers | Evidence / compliance thin |
+| `app.modules.iq_review` | Wave A IQ review — item correct-rate flags | Assessment quality thin |
+| `app.modules.airgap` | Wave A air-gap pack readiness checklist | Offline / private AI deploy |
+| `app.modules.xr` | Wave B XR Store, 3D assets, labs, AR, VR maintainer | Spatial / immersive thin |
+| `app.modules.workforce` | Wave C apprenticeship, continuity, sim-to-real | Corporate / gov pathways thin |
+| `app.modules.interactive_labs` | Adaptive lab packs from *school* textbook text | Textbook \| playground |
 | `app.modules.tla` | Achieved CMM-2 / operating CMM-3; xi-lite XI (courses+lessons+manuals); CATAPULT; catalogue / profiles | Copy `shapes`/`xi_query`/`cmi5_requirements`/`vendor` into any mesh consumer |
 
 ### HTTP App API (web + mobile)
@@ -45,4 +51,4 @@ Infrastructure stays in `app.db` (Postgres + `SET LOCAL app.tenant_id`) and `app
 
 Legacy shims (`app.content`, `app.quiz_content`, `app.tenancy`, …) re-export these modules.
 
-See also: [BLOCKS.md](BLOCKS.md); [LEGO_BLOCKS_PLAN.md](LEGO_BLOCKS_PLAN.md); [SKILLS.md](SKILLS.md); [DIFFERENCE.md](DIFFERENCE.md); [SME.md](SME.md); [EBOOK.md](EBOOK.md); [PEBL_LITE.md](PEBL_LITE.md); [CONTENT_PACKS.md](CONTENT_PACKS.md); [AIRGAP_PACK.md](AIRGAP_PACK.md); [ADAPTIVE.md](ADAPTIVE.md) / [PLE.md](PLE.md) / [DCT.md](DCT.md); [XAPI.md](XAPI.md); [PEBL_XAPI_CHAT.md](PEBL_XAPI_CHAT.md); [ANALYTICS.md](ANALYTICS.md); [YET_LRS_METABASE.md](YET_LRS_METABASE.md); [JEV.md](JEV.md); [TLA.md](TLA.md); [TLA_REQUIREMENTS.md](TLA_REQUIREMENTS.md); [NRPS.md](NRPS.md); [RECEIPTS.md](RECEIPTS.md); [MULTI_LMS.md](MULTI_LMS.md) / [CANVAS.md](CANVAS.md); [AGS_CHECKLIST.md](AGS_CHECKLIST.md).
+See also: [BLOCKS.md](BLOCKS.md); [BLOCKS_QUEUE.md](BLOCKS_QUEUE.md); [LEGO_BLOCKS_PLAN.md](LEGO_BLOCKS_PLAN.md); [SKILLS.md](SKILLS.md); [DIFFERENCE.md](DIFFERENCE.md); [SME.md](SME.md); [EBOOK.md](EBOOK.md); [PEBL_LITE.md](PEBL_LITE.md); [CONTENT_PACKS.md](CONTENT_PACKS.md); [AIRGAP_PACK.md](AIRGAP_PACK.md); [ADAPTIVE.md](ADAPTIVE.md) / [PLE.md](PLE.md) / [DCT.md](DCT.md); [XAPI.md](XAPI.md); [PEBL_XAPI_CHAT.md](PEBL_XAPI_CHAT.md); [ANALYTICS.md](ANALYTICS.md); [YET_LRS_METABASE.md](YET_LRS_METABASE.md); [JEV.md](JEV.md); [TLA.md](TLA.md); [TLA_REQUIREMENTS.md](TLA_REQUIREMENTS.md); [NRPS.md](NRPS.md); [RECEIPTS.md](RECEIPTS.md); [MULTI_LMS.md](MULTI_LMS.md) / [CANVAS.md](CANVAS.md); [AGS_CHECKLIST.md](AGS_CHECKLIST.md).

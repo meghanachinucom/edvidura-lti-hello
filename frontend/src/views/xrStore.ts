@@ -1,3 +1,4 @@
+import { getXrStore } from '../api';
 import {
   state,
   setScreen,
@@ -6,12 +7,18 @@ import {
   XrApp
 } from '../state';
 
+function xrCatalog(): XrApp[] {
+  const live = state.liveXrApps;
+  if (live && live.length) return live;
+  return xrAppsList;
+}
+
 export function renderXrStore(): string {
+  const catalog = xrCatalog();
   const filteredApps =
     state.xrCategoryFilter === 'all'
-      ? xrAppsList
-      : xrAppsList.filter(app => app.category === state.xrCategoryFilter);
-
+      ? catalog
+      : catalog.filter(app => app.category === state.xrCategoryFilter);
   const cats = [
     { id: 'all', label: 'All apps', icon: 'apps' },
     { id: 'spatial-math', label: 'Spatial math', icon: 'view_in_ar' },
@@ -365,7 +372,61 @@ function renderSimulationLauncherModal(app: XrApp): string {
   `;
 }
 
+function mapLiveXrApp(raw: {
+  id: string;
+  name: string;
+  tagline: string;
+  category: string;
+  version?: string;
+  size?: string;
+  rating?: number;
+  icon?: string;
+  hero_image?: string;
+  compatibility?: Record<string, boolean>;
+  description?: string;
+  featured?: boolean;
+}): XrApp {
+  const compat = raw.compatibility || {};
+  return {
+    id: raw.id,
+    name: raw.name,
+    tagline: raw.tagline,
+    category: (raw.category as XrApp['category']) || 'simulations',
+    version: raw.version || 'v0.1',
+    size: raw.size || '—',
+    rating: raw.rating || 4.5,
+    reviewsCount: 0,
+    icon: raw.icon || 'view_in_ar',
+    accentColor: '#FE580D',
+    heroImage: raw.hero_image || '',
+    compatibility: {
+      webxr: Boolean(compat.webxr),
+      appleVisionPro: Boolean(compat.appleVisionPro),
+      metaQuest: Boolean(compat.metaQuest),
+      desktopWebgl: Boolean(compat.desktopWebgl),
+      mobileAr: Boolean(compat.mobileAr),
+    },
+    description: raw.description || raw.tagline,
+    curriculumStandards: [],
+    hardwareRequirements: 'WebXR / WebGL',
+    developer: 'EdVidura Spatial Labs',
+    featured: Boolean(raw.featured),
+  };
+}
+
 export function bindXrStoreEvents(container: HTMLElement): void {
+  if (state.connected && !state.liveXrApps) {
+    const caps = (state.liveSession?.capabilities || {}) as Record<string, boolean>;
+    if (caps.xr_store || caps.immersive_labs) {
+      getXrStore()
+        .then((pack) => {
+          state.liveXrApps = (pack.apps || []).map(mapLiveXrApp);
+          setScreen('xr-store');
+        })
+        .catch(() => { /* keep demo catalog */ });
+    }
+  }
+
   // Category filter buttons
   container.querySelectorAll('.xr-category-btn').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -381,7 +442,7 @@ export function bindXrStoreEvents(container: HTMLElement): void {
   container.querySelectorAll('.xr-inspect-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       const appId = (e.currentTarget as HTMLElement).getAttribute('data-app-id');
-      const app = xrAppsList.find(a => a.id === appId);
+      const app = xrCatalog().find(a => a.id === appId);
       if (app) {
         state.xrSelectedApp = app;
         setScreen('xr-store');
@@ -401,7 +462,7 @@ export function bindXrStoreEvents(container: HTMLElement): void {
 
   // Launch buttons
   const handleLaunch = (appId: string) => {
-    const app = xrAppsList.find(a => a.id === appId);
+    const app = xrCatalog().find(a => a.id === appId);
     if (app) {
       state.xrSelectedApp = null;
       state.xrActiveSimulation = app;

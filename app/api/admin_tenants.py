@@ -66,10 +66,14 @@ def _serialize_platform(row: dict) -> dict:
 
 @router.get("/blocks")
 def list_sellable_blocks() -> dict:
-    """Full Lego catalog + named presets (sales ↔ engineering)."""
-    from app.modules.tenancy import list_blocks, list_presets
+    """Full Lego catalog + named presets + Step 3 build queue."""
+    from app.modules.tenancy import list_blocks, list_build_queue, list_presets
 
-    return {"blocks": list_blocks(), "presets": list_presets()}
+    return {
+        "blocks": list_blocks(),
+        "presets": list_presets(),
+        "build_queue": list_build_queue(),
+    }
 
 
 @router.post("/tenants", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)

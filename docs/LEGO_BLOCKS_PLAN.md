@@ -4,7 +4,8 @@
 
 **Related:** [BLOCKS.md](BLOCKS.md) (catalog ops), [MODULES.md](MODULES.md), `app/modules/tenancy/blocks.py`, `app/modules/tenancy/capabilities.py`, [CONTENT_PACKS.md](CONTENT_PACKS.md).
 
-**Last updated:** 2026-11-03
+**Last updated:** 2026-11-04  
+**Hard deadline:** **March 2027 — all 38 blocks built and sellable** (Thin/Live or partner-attached). Parallel Waves A–C. See [INTERNAL_STATUS_TIMEFRAME.md](INTERNAL_STATUS_TIMEFRAME.md).
 
 ---
 
@@ -67,6 +68,8 @@ Catalog → merge_blocks(ids) → tenant.capabilities + enabled_blocks → SPA /
 
 **Outcome:** Revenue and proof of the Lego model while Park stays on the shelf as roadmap.
 
+**Status (2026-11-04):** done — SPA labels for PLE / Skills Passport / Micro-drills / EvalPro / e-Books; sales one-pager at `/sales/one-pager`; presets remain Starter→Adaptive on `/sales`.
+
 ### Step 3 — Rank the Park list (same week as Step 1)
 
 10. Split every Park/Partner name into:
@@ -77,14 +80,20 @@ Catalog → merge_blocks(ids) → tenant.capabilities + enabled_blocks → SPA /
 
 **Outcome:** A build queue, not an undifferentiated 18-month fog.
 
-### Step 4 — Un-park in waves (quarters)
+**Status (2026-11-04):** done — see [BLOCKS_QUEUE.md](BLOCKS_QUEUE.md); `track` / `queue` on catalog; `GET /admin/blocks` → `build_queue`.
 
-12. **Wave A:** Skills Passport deep, Eval/Audit thin→live, Document Search, Air-gap pack.
-13. **Wave B:** XR Store → Immersive Labs → 3D assets (only if deals need XR).
-14. **Wave C:** Apprenticeship, Qualification & Continuity Tracker, Sim-to-Real, GrantsPro — only with funded scope.
+### Step 4 — Un-park in waves (to March 2027)
+
+12. **Wave A:** Skills Passport deep, AuditPro, IQ review, Document Search, Air-gap pack.
+13. **Wave B:** XR Store → Immersive Labs → 3D assets.
+14. **Wave C:** Apprenticeship, Qualification & Continuity Tracker, Sim-to-Real, GrantsPro + research MVPs.
 15. After each wave: flip `park → thin → live`, update sales “available now.”
 
-**Out of band / partner:** Virtual Classroom, heavy XR hardware pipelines, Grants/Audit as full enterprise suites unless a deal funds them.
+**Wave A status (2026-11-04):** **Thin shipped** — modules + App API + SPA tabs; preset `wave_a_pack`.
+
+**Wave B status (2026-11-04):** **Thin shipped** — `app.modules.xr` + `/api/v1/app/xr/*` + XR Labs nav; preset `wave_b_xr`.
+
+**Wave C status (2026-11-04):** **Thin shipped** — `app.modules.workforce` + My plan / Diagnostics tabs; preset `wave_c_workforce`. In-house queue empty.
 
 ### Step 5 — Operating rhythm (ongoing)
 

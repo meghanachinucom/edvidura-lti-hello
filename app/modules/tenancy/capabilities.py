@@ -26,7 +26,30 @@ CAP_KEYS = (
     "ghost_coach_gate",
     "study_plan",
     "learner_progress",
+    # Wave A sellable gates
+    "skills_passport",
+    "audit_pro",
+    "iq_review",
+    "document_search",
+    "airgap_pack",
+    # Wave B XR
+    "xr_store",
+    "asset_repo_3d",
+    "asset_configurator_3d",
+    "immersive_labs",
+    "ar_assistance",
+    "vr_maintainer",
+    # Wave C workforce
+    "apprenticeship",
+    "qualification_continuity",
+    "sim_to_real",
 )
+
+_WAVE_C_OFF = {
+    "apprenticeship": False,
+    "qualification_continuity": False,
+    "sim_to_real": False,
+}
 
 _SCHOOL: dict[str, bool] = {
     "lessons": True,
@@ -39,6 +62,18 @@ _SCHOOL: dict[str, bool] = {
     "ghost_coach_gate": True,
     "study_plan": True,
     "learner_progress": True,
+    "skills_passport": True,
+    "audit_pro": False,
+    "iq_review": False,
+    "document_search": False,
+    "airgap_pack": False,
+    "xr_store": False,
+    "asset_repo_3d": False,
+    "asset_configurator_3d": False,
+    "immersive_labs": False,
+    "ar_assistance": False,
+    "vr_maintainer": False,
+    **_WAVE_C_OFF,
 }
 
 _CORPORATE: dict[str, bool] = {
@@ -52,6 +87,18 @@ _CORPORATE: dict[str, bool] = {
     "ghost_coach_gate": False,
     "study_plan": False,
     "learner_progress": True,
+    "skills_passport": False,
+    "audit_pro": False,
+    "iq_review": False,
+    "document_search": False,
+    "airgap_pack": False,
+    "xr_store": False,
+    "asset_repo_3d": False,
+    "asset_configurator_3d": False,
+    "immersive_labs": False,
+    "ar_assistance": False,
+    "vr_maintainer": False,
+    **_WAVE_C_OFF,
 }
 
 _GOVERNMENT: dict[str, bool] = {
@@ -65,6 +112,18 @@ _GOVERNMENT: dict[str, bool] = {
     "ghost_coach_gate": False,
     "study_plan": False,
     "learner_progress": True,
+    "skills_passport": False,
+    "audit_pro": False,
+    "iq_review": False,
+    "document_search": False,
+    "airgap_pack": False,
+    "xr_store": False,
+    "asset_repo_3d": False,
+    "asset_configurator_3d": False,
+    "immersive_labs": False,
+    "ar_assistance": False,
+    "vr_maintainer": False,
+    **_WAVE_C_OFF,
 }
 
 

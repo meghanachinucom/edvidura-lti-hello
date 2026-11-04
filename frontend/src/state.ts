@@ -307,7 +307,8 @@ export interface AppState {
   screenPickerOpen: boolean;
   activeDialog: string | null;
   // Module 1 & 4 State
-  diagnosticsTab: 'misconceptions' | 'heatmaps' | 'xapi' | 'difference';
+  diagnosticsTab: 'misconceptions' | 'heatmaps' | 'xapi' | 'difference' | 'audit' | 'iq' | 'simreal';
+
   diagnosticsTimeFilter: '24h' | '7d' | '30d' | 'semester';
   diagnosticsSeriesLearner: string;
   xapiVerbFilter: string;
@@ -316,7 +317,8 @@ export interface AppState {
   activeLmsPlatform: 'moodle' | 'canvas' | 'springwe';
   selectedLmsConnection: LmsConnection | null;
   // Module 5 & 7 & 9 Progress State
-  progressActiveTab: 'roadmap' | 'competencies' | 'difference' | 'goals';
+  progressActiveTab: 'roadmap' | 'competencies' | 'difference' | 'goals' | 'apprentice' | 'continuity';
+
   // Module 6 Authoring State
   authoringPlannerOpen: boolean;
   editingLesson: AuthoringLesson | null;
@@ -453,6 +455,68 @@ export interface AppState {
     }>;
   } | null;
   liveAnalytics: import('./api').LiveAnalytics | null;
+  liveXrApps: XrApp[] | null;
+  liveApprenticeship: {
+    count: number;
+    active: number;
+    placements: Array<{
+      apprentice: string;
+      mentor: string;
+      role: string;
+      hours_logged: number;
+      hours_target: number;
+      status: string;
+      next_checkpoint?: string;
+    }>;
+  } | null;
+  liveContinuity: {
+    count: number;
+    due_soon: number;
+    credentials: Array<{
+      label: string;
+      status: string;
+      expires_at?: string;
+      days_to_expiry?: number;
+    }>;
+  } | null;
+  liveSimToReal: {
+    pair_count: number;
+    avg_gap_pct: number;
+    pairs: Array<{
+      skill: string;
+      sim_source: string;
+      sim_score_pct: number;
+      real_score_pct: number;
+      gap_pct: number;
+      transfer: string;
+    }>;
+  } | null;
+  liveAuditPro: {
+    total: number;
+    sealed_ok: number;
+    synced_to_lms: number;
+    items: Array<{
+      learner_name: string;
+      percent: number;
+      grade_sent: boolean;
+      seal_ok: boolean;
+      seal_reason?: string;
+      created_at?: string;
+    }>;
+  } | null;
+  liveIqReview: {
+    attempts_scanned: number;
+    question_count: number;
+    too_hard: number;
+    too_easy: number;
+    questions: Array<{
+      question_id: string;
+      prompt: string;
+      attempts: number;
+      correct_pct: number;
+      flag: string;
+    }>;
+  } | null;
   livePlan: import('./api').LivePlan | null;
 }
 
@@ -906,6 +970,12 @@ export const state: AppState = {
   livePravachanaNotes: [],
   livePravachanaStats: null,
   liveAnalytics: null,
+  liveXrApps: null,
+  liveApprenticeship: null,
+  liveContinuity: null,
+  liveSimToReal: null,
+  liveAuditPro: null,
+  liveIqReview: null,
   livePlan: null,
 };
 
