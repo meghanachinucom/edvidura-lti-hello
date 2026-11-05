@@ -11,6 +11,7 @@ import { quizTitle } from "@/data/quiz";
 import { mockState } from "@/data/mockState";
 import { formatIST } from "@/lib/time";
 import { PercentageBar } from "@/components/shared/PercentageBar";
+import { LearnerFocusAnalytics } from "@/components/learner/LearnerFocusAnalytics";
 
 // LR-12 My analytics. Own evidence only — no comparisons or predictions.
 export const Route = createFileRoute("/_shell/learn/analytics")({
@@ -60,6 +61,7 @@ function Page() {
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
       <PageHeading titleKey="pages.learnAnalytics" />
       <p className="max-w-reading text-ink">{s("lead")}</p>
+      <LearnerFocusAnalytics />
 
       <section aria-label={s("summary")}>
         <dl className="grid grid-cols-2 gap-4 tablet:flex tablet:flex-wrap tablet:gap-10">

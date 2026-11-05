@@ -1,4 +1,35 @@
 {
+  "learnerFocus": {
+    "focusTime": "Focus time",
+    "studyRhythm": "Study rhythm",
+    "focusMap": "Focus map",
+    "performance": "Performance",
+    "thisWeek": "This week",
+    "lastWeek": "Last week",
+    "periodLabel": "Time period for {title}",
+    "versusLastWeek": "{change} min more than last week ({time})",
+    "focusChartLabel": "Focus time by day this week",
+    "minutes": "minutes",
+    "bestTwoDays": "Your two strongest study days are highlighted.",
+    "legend": "Focus level legend",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "focusDensity": "{level} focus on {day}",
+    "productive": "Productive",
+    "neutral": "Neutral",
+    "distracted": "Distracted",
+    "items": "items",
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
+  },
   "lessonList": {
     "upNext": "Up next",
     "done": "Done",

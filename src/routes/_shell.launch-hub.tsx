@@ -77,7 +77,7 @@ function QuickActions({ role }: { role: Role }) {
 }
 
 function LearnerHome() {
-  const next = lessons.find((l) => !l.markedDone && l.kind !== "quiz");
+  const next = lessons.find((l) => !l.markedDone);
   const results = myAttempts.filter((a) => a.kind === "graded").sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)).slice(0, 2);
   const pathway = targetRoles[0];
   const progress = learnerHub.ringPercent;
