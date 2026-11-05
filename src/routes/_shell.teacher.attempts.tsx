@@ -99,7 +99,7 @@ function Page() {
       return <span className="flex min-w-48 items-center gap-3"><span aria-hidden className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary-container text-sm font-bold text-ink">{initials(name)}</span><span className="min-w-0"><span className="block font-semibold text-ink">{name}</span><span className="block break-all font-mono text-xs text-ink-muted">{`${name.toLowerCase().replaceAll(" ", ".")}@example.edu`}</span></span></span>;
     } },
     { key: "attempts", header: s("colAttempts"), cell: (row) => row.attempts.length },
-    { key: "score", header: s("colScore"), cell: (row) => `${row.scorePercent}%` },
+    { key: "score", header: s("colScore"), cell: (row) => <span className="block min-w-24"><span className="font-semibold text-ink">{row.scorePercent}%</span><span className="mt-1 block h-2 overflow-hidden rounded-full bg-page-bg" role="progressbar" aria-label={`${s("colScore")}: ${personById(row.personId)?.name ?? ""}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={row.scorePercent}><span className="block h-full rounded-full bg-secondary" style={{ width: `${row.scorePercent}%` }} /></span></span> },
     { key: "points", header: s("colPoints"), cell: (row) => row.points },
     { key: "sync", header: s("colSync"), cell: (row) => <span className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${row.status === "synced" ? "bg-secondary-container text-ink" : "bg-tertiary-container text-ink"}`}>{row.status === "synced" ? s("synced") : s("queued")}</span> },
     { key: "actions", header: s("colActions"), cell: (row) => <span className="flex flex-wrap gap-2"><button type="button" className="btn-secondary" onClick={() => setReviewRow(row)}>{s("reviewAction")}</button><button type="button" disabled={queuedSis.has(row.personId)} className="btn-primary disabled:opacity-60" onClick={() => { setSisMessage(false); setConfirmRow(row); }}>{queuedSis.has(row.personId) ? s("sisQueuedAction") : s("sendSis")}</button></span> },
@@ -140,7 +140,7 @@ function Page() {
       <p className="max-w-reading text-ink-muted">{s("guidance")}</p>
 
       <section aria-label={s("summaryCards")} className="grid grid-cols-1 gap-3 tablet:grid-cols-3">
-        {summaryCards.map(({ label, count, icon: Icon, tone }) => <article key={label} className="flex items-center gap-4 rounded-surface border border-border bg-surface p-4"><Icon aria-hidden size={24} className={tone} /><div><p className="text-sm text-ink-muted">{label}</p><p className="font-heading text-2xl font-bold text-ink"><CountUp value={count} /></p></div></article>)}
+        {summaryCards.map(({ label, count, icon: Icon, tone }) => <article key={label} className="flex items-center gap-4 rounded-surface border border-border bg-surface p-4 shadow-sm transition-transform duration-150 hover:-translate-y-0.5"><span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary-container"><Icon aria-hidden size={24} className={tone} /></span><div><p className="text-sm text-ink-muted">{label}</p><p className="font-heading text-2xl font-extrabold text-ink"><CountUp value={count} /></p></div></article>)}
       </section>
 
       <section aria-label={s("classSummary")} className="flex flex-col gap-3 rounded-surface border border-border bg-surface p-4 tablet:flex-row tablet:items-center tablet:justify-between tablet:p-5">

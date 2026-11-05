@@ -7,6 +7,7 @@ import { PageHeading } from "@/components/shared/PageHeading";
 import { CountUp } from "@/components/shared/CountUp";
 import { AccessUnavailable } from "@/components/shared/AccessUnavailable";
 import { StatusBanner } from "@/components/shared/StatusBanner";
+import { PercentageBar } from "@/components/shared/PercentageBar";
 import { LoopStepper } from "@/components/shared/LoopStepper";
 import { myAttempts, type Attempt } from "@/data/attempts";
 import { attemptAnswers } from "@/data/attemptAnswers";
@@ -61,6 +62,7 @@ function Result({ attempt }: { attempt: Attempt }) {
         <p className="mt-1 text-ink-muted">{quizTitle(attempt.quizId)}</p>
         <p className="mt-4 font-heading text-[28px] font-extrabold leading-tight text-metric"><CountUp value={score} />{scoreTail}</p>
         <p className="mt-1 text-ink">{attempt.kind === "graded" ? s("graded") : s("practice")}</p>
+        <div className="mt-4 max-w-sm space-y-2"><div className="flex justify-between text-sm font-semibold text-ink"><span>{s("score")}</span><span>{Math.round(score / Math.max(rows.length, 1) * 100)}%</span></div><PercentageBar value={Math.round(score / Math.max(rows.length, 1) * 100)} /></div>
       </div>
 
       <StatusBanner variant={GB_VARIANT[gb]}>{s(`gb.${gb}`)}</StatusBanner>

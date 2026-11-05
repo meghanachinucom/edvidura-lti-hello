@@ -54,16 +54,14 @@ function Page() {
       <HeroBand><PageHeading text={institute.shortName} /></HeroBand>
       {loading ? <LoadingSkeleton count={4} /> : (
         <>
-          <section aria-label={s("figures")}>
-            <dl className="grid grid-cols-2 gap-4 tablet:flex tablet:flex-wrap tablet:gap-10">
-              {figures.map(([l, v]) => (
-                <div key={l} className="min-w-0">
-                  <dt className="text-sm text-ink-muted">{l}</dt>
-                  <dd><CountUp value={v} /></dd>
-                </div>
-              ))}
-            </dl>
-            {empty && <p className="mt-4 text-ink">{s("empty")}</p>}
+          <section aria-label={s("figures")} className="grid grid-cols-2 gap-3 desktop:grid-cols-5">
+            {figures.map(([l, v], index) => (
+              <article key={l} className={`rounded-surface border border-border border-t-4 ${["border-t-secondary", "border-t-accent", "border-t-success", "border-t-metric", "border-t-secondary"][index]} bg-surface p-4 shadow-sm transition-transform duration-150 hover:-translate-y-0.5`}>
+                <p className="text-sm text-ink-muted">{l}</p>
+                <p className="mt-2 font-heading text-2xl font-extrabold text-ink"><CountUp value={v} /></p>
+              </article>
+            ))}
+            {empty && <p className="col-span-full mt-1 text-ink">{s("empty")}</p>}
           </section>
           <ul className="grid gap-3 tablet:grid-cols-3">
             {big.map((b) => (
