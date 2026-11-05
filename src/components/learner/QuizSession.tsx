@@ -26,6 +26,7 @@ export function QuizSession() {
   const [bookmarked, setBookmarked] = useState<string[]>([]);
   const [confirm, setConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState(false);
   const [expired, setExpired] = useState(false);
   const groups = useRef<Record<string, HTMLFieldSetElement | null>>({});
@@ -55,7 +56,7 @@ export function QuizSession() {
         <div className="grid grid-cols-1 items-center gap-2 tablet:grid-cols-[minmax(0,1fr)_auto] tablet:gap-3">
           <div className="min-w-0"><PageHeading text={quiz.title} /></div>
           <div className="min-w-0 text-left tablet:shrink-0 tablet:text-right">
-            <p aria-live="polite" className="font-semibold text-ink">{s("answered", { n })}</p>
+            <p aria-live="polite" className="font-semibold text-ink">{s("answered", { n, total: questions.length })}</p>
             {firstOpen && (
               <a href={`#q-${firstOpen.id}`} className="inline-flex min-h-11 items-center text-sm text-ink underline"
                 onClick={(e) => { e.preventDefault(); const g = groups.current[firstOpen.id]; g?.scrollIntoView({ block: "center" }); g?.focus(); }}>
@@ -64,11 +65,14 @@ export function QuizSession() {
             )}
           </div>
         </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-border" role="progressbar" aria-label={s("answered", { n })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-border" role="progressbar" aria-label={s("answered", { n, total: questions.length })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
           <div className="h-full bg-secondary transition-[width] duration-150" style={{ width: `${progress}%` }} />
         </div>
       </div>
-      <p className="mt-4 max-w-reading text-ink"><QuizModeBadge kind={m.sessionType} /></p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-reading text-ink"><QuizModeBadge kind={m.sessionType} /></p>
+        <p className="rounded-surface border border-border bg-surface px-4 py-3 font-semibold text-ink">{s("passMark")}</p>
+      </div>
 
       {m.sessionScreen === "loading" ? <div className="mt-6 pb-40"><LoadingSkeleton count={3} /></div> : m.sessionScreen === "error" ? <div className="mt-6 pb-40"><ErrorAlert message={s("error")} /></div> : questions.length === 0 ? <div className="mt-6 pb-40"><EmptyState title={s("noQuestions")} help="" /></div> : <ol className="mt-6 space-y-6 pb-40">
         {questions.map((q, i) => (
@@ -76,8 +80,9 @@ export function QuizSession() {
             <fieldset id={`q-${q.id}`} ref={(el) => { groups.current[q.id] = el; }} tabIndex={-1} disabled={submitting}
               className="scroll-mt-32 rounded-surface border border-border bg-surface p-4">
               <div className="flex items-center justify-between gap-3">
-                <span className="inline-flex size-10 items-center justify-center rounded-full bg-secondary text-white font-bold">{i + 1}</span>
-                <p className="text-sm text-ink-muted">{s("questionOf", { n: i + 1 })}</p>
+                <span className="inline-flex size-10 items-center justify-center rounded-full bg-secondary text-white font-bold">{String(i + 1).padStart(2, "0")}</span>
+                <p className="flex-1 text-sm text-ink-muted">{s("questionOf", { n: i + 1, total: questions.length })}</p>
+                <span className="text-sm font-semibold text-ink">{s("oneMark")}</span>
                 <button type="button" aria-pressed={bookmarked.includes(q.id)} aria-label={s("bookmarkQuestion", { n: i + 1 })}
                   onClick={() => setBookmarked((items) => items.includes(q.id) ? items.filter((id) => id !== q.id) : [...items, q.id])}
                   className={`inline-flex size-11 items-center justify-center rounded-full border ${bookmarked.includes(q.id) ? "border-secondary bg-primary-fixed text-secondary" : "border-border-control"}`}>
@@ -94,7 +99,7 @@ export function QuizSession() {
                     <div key={o.key} className={`flex min-h-14 flex-wrap items-center gap-2 rounded-surface border-2 px-3 py-2 text-ink transition-colors duration-150 ${on ? "border-secondary bg-primary-fixed" : "border-border-control bg-surface"}`}>
                       <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3">
                         <input type="radio" name={q.id} value={o.key} checked={on} className="size-5 shrink-0 accent-secondary"
-                          onChange={() => setAnswers((a) => ({ ...a, [q.id]: o.key }))} />
+                          onChange={() => { setAnswers((a) => ({ ...a, [q.id]: o.key })); setSaved(false); }} />
                         <span className="font-semibold" aria-hidden>{o.key}.</span>
                         <span className={`min-w-0 flex-1 ${crossed ? "line-through opacity-60" : ""}`}>{o.text}</span>
                         {on && <Check aria-hidden size={20} className="shrink-0 text-secondary" />}
@@ -116,7 +121,11 @@ export function QuizSession() {
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-content space-y-2">
           {error && <ErrorAlert message={s("error")} />}
-          <button type="submit" disabled={submitting || m.sessionScreen !== "ready"} className="btn-primary w-full tablet:w-auto">{submitting ? s("submitting") : s("submit")}</button>
+          {saved && <p role="status" className="text-sm text-ink-muted">{s("saved")}</p>}
+          <div className="flex gap-3">
+            <button type="button" disabled={submitting || m.sessionScreen !== "ready"} onClick={() => setSaved(true)} className="btn-secondary flex-1">{s("save")}</button>
+            <button type="submit" disabled={submitting || m.sessionScreen !== "ready"} className="btn-primary flex-1">{submitting ? s("submitting") : s("submit")}</button>
+          </div>
           <SlowNetworkNote pending={submitting} />
         </div>
       </div>

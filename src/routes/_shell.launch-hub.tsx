@@ -19,7 +19,7 @@ import { adminHub, adminHubClasses, learnerHub, teacherHub, type HubClass } from
 import { mockState } from "@/data/mockState";
 import { formatIST } from "@/lib/time";
 import { LotoCheck } from "@/components/learner/LotoCheck";
-import { UpNextCard } from "@/components/shared/LessonList";
+import { LessonCard } from "@/components/shared/LessonList";
 
 export const Route = createFileRoute("/_shell/launch-hub")({
   head: () => ({
@@ -95,7 +95,7 @@ function LearnerHome() {
 
       <section aria-labelledby="hub-continue">
         <h2 id="hub-continue" className="font-heading text-[22px] text-ink">{s("continue")}</h2>
-        {next ? <div className="mt-3"><UpNextCard lesson={next} heading={false} /></div>
+        {next ? <div className="mt-3 max-w-xl"><LessonCard lesson={next} isUpNext /></div>
           : <div className="mt-3 rounded-surface bg-surface p-4 text-ink"><p>{s("endOfLessons")}</p><Link to="/active-quizzes" className="btn-primary mt-3">{s("endLink")}</Link></div>}
       </section>
 

@@ -1,4 +1,23 @@
 {
+  "lessonCard": {
+    "illustration": "Illustration for {title}",
+    "eyebrow": "LESSON {number} · {type}",
+    "duration": "6 min",
+    "completedMeta": "Completed",
+    "available": "Available",
+    "quizLocked": "Complete all earlier lessons to unlock the quiz.",
+    "status": {
+      "completed": "COMPLETED",
+      "now": "NOW",
+      "open": "OPEN",
+      "checkpoint": "CHECKPOINT"
+    },
+    "actions": {
+      "review": "Review",
+      "start": "Start",
+      "takeQuiz": "Take quiz"
+    }
+  },
   "learnerFocus": {
     "focusTime": "Focus time",
     "studyRhythm": "Study rhythm",
@@ -665,11 +684,15 @@
     "fullPlan": "Full plan"
   },
   "LR-05": {
-    "answered": "{n} / 5 answered",
+    "answered": "{n} / {total} answered",
     "firstUnanswered": "Go to first unanswered",
     "practice": "Practice — not sent to Moodle. Try without notes; this is how you learn.",
     "graded": "Graded quiz — your score goes to the Moodle gradebook when sync is working.",
-    "questionOf": "Question {n} of 5",
+    "questionOf": "Question {n} of {total}",
+    "oneMark": "1 mark",
+    "passMark": "Pass mark 70%",
+    "save": "Save",
+    "saved": "Answers saved for this session.",
     "bookmarkQuestion": "Bookmark question {n}",
     "strikeOut": "Strike out choice {key}",
     "submit": "Submit quiz",

@@ -5,7 +5,7 @@ import { PageHeading } from "@/components/shared/PageHeading";
 import { HeroBand } from "@/components/shared/HeroBand";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { LessonRows, UpNextCard } from "@/components/shared/LessonList";
+import { LessonGrid } from "@/components/shared/LessonList";
 import { lessons } from "@/data/lessons";
 import { mockState } from "@/data/mockState";
 
@@ -42,10 +42,7 @@ function Page() {
       {loading ? <LoadingSkeleton variant="table" count={5} /> : list.length === 0 ? (
         <EmptyState title={s("emptyTitle")} help={s("emptyHelp")} />
       ) : (
-        <>
-          {next && <UpNextCard lesson={next} />}
-          <LessonRows items={list} />
-        </>
+        <LessonGrid items={list} upNextId={next?.id} />
       )}
     </div>
   );
