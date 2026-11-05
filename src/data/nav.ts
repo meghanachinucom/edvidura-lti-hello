@@ -22,15 +22,12 @@ export const navGroups: Record<GroupId, NavGroup> = {
     { to: "/teacher/analytics", labelKey: "pages.tAnalytics" },
     { to: "/teacher/activity", labelKey: "pages.tActivity" },
     { to: "/teacher/manuals", labelKey: "pages.tManuals" },
-    { to: "/lti-integration", labelKey: "pages.ltiIntegration" },
     { to: "/teacher/ai", labelKey: "pages.tAi" },
     { to: "/teacher/coach/insights", labelKey: "pages.tCoachInsights" },
-    { to: "/teacher/coach/shortcuts", labelKey: "pages.tCoachShortcuts" },
     { to: "/teacher/skills", labelKey: "pages.tSkills" },
     { to: "/teacher/sme", labelKey: "pages.tSme" },
     { to: "/teacher/dct", labelKey: "pages.tDct" },
     { to: "/student-directory", labelKey: "pages.studentDirectory" },
-    { to: "/institutions", labelKey: "pages.institutions" },
   ] },
   institute: { id: "institute", labelKey: "nav.institute", items: [
     { to: "/school-admin", labelKey: "pages.sa" },
@@ -40,6 +37,8 @@ export const navGroups: Record<GroupId, NavGroup> = {
     { to: "/school-admin/analytics", labelKey: "pages.saAnalytics" },
     { to: "/school-admin/activity", labelKey: "pages.saActivity" },
     { to: "/institution-detail", labelKey: "pages.institutionDetail" },
+    { to: "/lti-integration", labelKey: "pages.ltiIntegration" },
+    { to: "/institutions", labelKey: "pages.institutions" },
   ] },
 };
 
@@ -67,17 +66,18 @@ export const roleNavItems: Record<Role, NavItem[]> = {
   instructor: [
     { to: "/teacher/attempts", labelKey: "roleNav.results" }, { to: "/teacher/content", labelKey: "roleNav.content" },
     { to: "/teacher/analytics", labelKey: "roleNav.analytics" }, { to: "/teacher/activity", labelKey: "roleNav.activity" },
-    { to: "/teacher/manuals", labelKey: "roleNav.ebooks" }, { to: "/lti-integration", labelKey: "roleNav.ltiConnection" },
+    { to: "/teacher/manuals", labelKey: "roleNav.ebooks" },
     { to: "/teacher/ai", labelKey: "roleNav.aiTools" }, { to: "/teacher/coach/insights", labelKey: "roleNav.coachInsights" },
-    { to: "/teacher/coach/shortcuts", labelKey: "roleNav.coachShortcuts" }, { to: "/teacher/skills", labelKey: "roleNav.skills" },
+    { to: "/teacher/skills", labelKey: "roleNav.skills" },
     { to: "/teacher/sme", labelKey: "roleNav.sources" }, { to: "/teacher/dct", labelKey: "roleNav.microPlanner" },
-    { to: "/student-directory", labelKey: "roleNav.studentDirectory" }, { to: "/institutions", labelKey: "roleNav.institutions" },
+    { to: "/student-directory", labelKey: "roleNav.studentDirectory" },
   ],
   trainingOfficer: [
     { to: "/school-admin", labelKey: "roleNav.home" }, { to: "/school-admin/teachers", labelKey: "roleNav.teachers" },
     { to: "/school-admin/classes", labelKey: "roleNav.classes" }, { to: "/school-admin/students", labelKey: "roleNav.students" },
     { to: "/school-admin/analytics", labelKey: "roleNav.analytics" }, { to: "/school-admin/activity", labelKey: "roleNav.activity" },
     { to: "/institution-detail", labelKey: "roleNav.institutionDetails" },
+    { to: "/lti-integration", labelKey: "roleNav.ltiConnection" }, { to: "/institutions", labelKey: "roleNav.institutions" },
   ],
 };
 
@@ -90,8 +90,9 @@ export const roleHome: Record<Role, string> = {
 export const accessPage = "/__prototype/access";
 
 export function allowedFor(role: Role, path: string): boolean {
-  if (path.startsWith("/school-admin") || path.startsWith("/institution-detail")) return role === "trainingOfficer";
-  if (path.startsWith("/teacher") || path.startsWith("/lti-integration") || path.startsWith("/student-directory") || path.startsWith("/institutions")) return role === "instructor";
+  if (path.startsWith("/school-admin") || path.startsWith("/institution-detail") || path.startsWith("/lti-integration") || path.startsWith("/institutions")) return role === "trainingOfficer";
+  if (path.startsWith("/teacher/coach/shortcuts")) return false;
+  if (path.startsWith("/teacher") || path.startsWith("/student-directory")) return role === "instructor";
   if (path.startsWith("/learn/") || path.startsWith("/lessons") || path.startsWith("/active-quizzes") || path.startsWith("/quiz/") || path.startsWith("/manuals") || path.startsWith("/read/manuals")) return role === "learner";
   return true;
 }

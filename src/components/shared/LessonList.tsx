@@ -2,6 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { t } from "@/i18n";
 import { lessons, type Lesson } from "@/data/lessons";
 
+const lessonImages: Record<string, string> = {
+  "1": "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1000&q=80",
+  "2": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80",
+  "3": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=1000&q=80",
+  "4": "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=1000&q=80",
+  "5": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1000&q=80",
+};
+
 export function LessonCode({ code }: { code: string }) {
   return <span className="inline-flex rounded border border-border px-1.5 py-0.5 align-middle font-mono text-xs leading-none text-ink-muted">{code}</span>;
 }
@@ -11,38 +19,7 @@ export function LessonName({ lesson, className = "" }: { lesson: Lesson; classNa
 }
 
 function LessonIllustration({ lesson }: { lesson: Lesson }) {
-  const shared = { stroke: "var(--secondary)", strokeWidth: 4, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
-  return (
-    <svg viewBox="0 0 320 180" role="img" aria-label={t("lessonCard.illustration", { title: lesson.title })} className="h-full w-full">
-      <rect width="320" height="180" fill="var(--surface-container-low)" />
-      {lesson.id === "1" && <>
-        <path d="M160 32 208 50v38c0 31-20 54-48 68-28-14-48-37-48-68V50z" fill="var(--secondary-container)" {...shared} />
-        <path d="m138 89 15 15 31-34" {...shared} />
-      </>}
-      {lesson.id === "2" && <>
-        <path d="M111 61a55 55 0 0 1 91 11" fill="none" {...shared} />
-        <path d="m191 56 12 16-19 4" fill="none" {...shared} />
-        <path d="M209 119a55 55 0 0 1-91-11" fill="none" {...shared} />
-        <path d="m129 124-12-16 19-4" fill="none" {...shared} />
-        <circle cx="160" cy="90" r="22" fill="var(--highlight)" {...shared} />
-        <path d="M160 73v34m-11-17h22" {...shared} />
-      </>}
-      {lesson.id === "3" && <>
-        <path d="M160 37v72m-42 0h84m-70 18h56m-42 18h28" fill="none" {...shared} />
-        <circle cx="160" cy="43" r="8" fill="var(--secondary)" />
-      </>}
-      {lesson.id === "4" && <>
-        <rect x="99" y="43" width="122" height="94" rx="12" fill="var(--surface)" {...shared} />
-        <circle cx="127" cy="90" r="8" fill="var(--secondary)" />
-        <circle cx="193" cy="90" r="8" fill="var(--secondary)" />
-        <path d="m135 86 44-27" fill="none" {...shared} />
-      </>}
-      {lesson.id === "5" && <>
-        <rect x="111" y="47" width="98" height="101" rx="10" fill="var(--surface)" {...shared} />
-        <path d="M143 47v-8h34v8m-45 28h56m-56 22h28m-28 22 11 11 23-25" fill="none" {...shared} />
-      </>}
-    </svg>
-  );
+  return <img src={lessonImages[lesson.id]} alt={lesson.title} className="h-full w-full object-cover" loading="lazy" />;
 }
 
 export function LessonCard({ lesson, isUpNext = false }: { lesson: Lesson; isUpNext?: boolean }) {
@@ -54,7 +31,7 @@ export function LessonCard({ lesson, isUpNext = false }: { lesson: Lesson; isUpN
   const actionClass = "btn-primary w-full";
   return (
     <article className="overflow-hidden rounded-surface border border-border bg-surface">
-      <div className="relative aspect-[16/9]">
+      <div className="relative aspect-[16/9] bg-page-bg">
         <LessonIllustration lesson={lesson} />
         <span className="absolute right-3 top-3 rounded-full bg-surface px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink shadow-sm">{t(`lessonCard.status.${status}`)}</span>
       </div>
