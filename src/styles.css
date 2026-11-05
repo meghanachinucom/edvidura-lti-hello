@@ -76,6 +76,8 @@
 }
 
 main { counter-reset: section; }
+.overflow-x-auto { scrollbar-width: none; -ms-overflow-style: none; }
+.overflow-x-auto::-webkit-scrollbar { display: none; }
 main section h2::before {
   counter-increment: section;
   content: counter(section, decimal-leading-zero) "  ";
