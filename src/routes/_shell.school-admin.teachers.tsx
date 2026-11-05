@@ -1,70 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { Mail, Search } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
-import { DataTable, type Column } from "@/components/shared/DataTable";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { instructorAccess } from "@/data/schoolAdmin";
 import { personById } from "@/data/people";
-import { mockState } from "@/data/mockState";
 
-// SA-02 Instructors. No passwords, role changes, deactivation, bulk import or SSO.
-export const Route = createFileRoute("/_shell/school-admin/teachers")({
-  head: () => ({
-    meta: [
-      { title: t("SA-02.title") + t("app.titleSuffix") },
-      { name: "description", content: t("SA-02.lead") },
-      { property: "og:title", content: t("SA-02.title") + t("app.titleSuffix") },
-      { property: "og:description", content: t("SA-02.lead") },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: Page,
-});
-
-const s = (k: string) => t(`SA-02.${k}`);
-type Row = (typeof instructorAccess)[number];
-const cols: Column<Row>[] = [
-  { key: "name", header: s("colName"), cell: (r) => personById(r.personId)?.name ?? "" },
-  { key: "code", header: s("colCode"), cell: (r) => r.code },
-  { key: "classes", header: s("colClasses"), cell: (r) => r.classes.join(", ") },
-  { key: "access", header: s("colAccess"), cell: (r) => s(r.access) },
-];
-
+export const Route = createFileRoute("/_shell/school-admin/teachers")({ component: Page });
+const faculty = instructorAccess.map((row, i) => ({ ...row, name: personById(row.personId)?.name ?? "Faculty member", email: ["suresh.iyer@edvidura.edu", "farhan.qureshi@edvidura.edu"][i], phone: ["+91 98765 43210", "+91 98765 43211"][i], subject: ["Mathematics", "STEM and Sciences"][i], curricula: row.classes.map((x) => x === "ELE-A" ? "Domestic Wiring" : "Electrical Safety"), learners: i ? 28 : 32 }));
+const filters = ["All", "Mathematics", "STEM and Sciences", "Computer Science"];
 function Page() {
-  const m = mockState.schoolAdmin;
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    if (m.instructors === "loading") return;
-    const x = setTimeout(() => setLoading(false), m.loadingMs);
-    return () => clearTimeout(x);
-  }, [m.instructors, m.loadingMs]);
-  const rows = m.instructors === "empty" ? [] : instructorAccess;
-  const steps = [1, 2, 3];
-
-  return (
-    <div className="mx-auto w-full max-w-content space-y-8 px-4 pb-24 pt-8 tablet:pb-8">
-      <PageHeading text={s("title")} />
-      <section aria-label={s("steps")}>
-        <ol className="flex flex-col gap-3 tablet:flex-row">
-          {steps.map((n) => (
-            <li key={n} className="flex-1 rounded-surface border border-border bg-surface p-4">
-              <p className="font-heading text-[18px] text-ink">{s(`s${n}t`)}</p>
-              <p className="mt-1 text-ink">{s(`s${n}`)}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-      <section aria-labelledby="bind">
-        <h2 id="bind" className="font-heading text-[22px] text-ink">{s("bind")}</h2>
-        <p className="mt-1 text-ink">{s("bindText")}</p>
-      </section>
-      {loading ? <LoadingSkeleton variant="table" count={3} /> : (
-        <DataTable caption={s("caption")} columns={cols} rows={rows} rowKey={(r) => r.personId}
-          empty={<EmptyState headingLevel={2} title={s("empty")} help="" />} />
-      )}
-    </div>
-  );
+ const [filter,setFilter]=useState("All"), [query,setQuery]=useState(""), [confirm,setConfirm]=useState(false);
+ const rows=faculty.filter(f=>(filter==="All"||f.subject===filter)&&`${f.name} ${f.email} ${f.subject}`.toLowerCase().includes(query.toLowerCase()));
+ return <div className="mx-auto w-full max-w-content space-y-6 px-4 pb-24 pt-8 tablet:pb-8"><PageHeading text="Faculty"/><div className="flex flex-wrap gap-3"><button className="btn-primary">Appoint faculty</button><button className="btn-secondary" onClick={()=>setConfirm(true)}>Sync SSO</button></div><div className="relative"><Search size={18} className="absolute left-3 top-3.5 text-ink-muted"/><input aria-label="Search faculty" placeholder="Search faculty" value={query} onChange={e=>setQuery(e.target.value)} className="min-h-11 w-full rounded-surface border-control bg-surface pl-10 pr-3 text-ink"/></div><div className="flex flex-wrap gap-2">{filters.map(x=><button key={x} onClick={()=>setFilter(x)} className={`rounded-full border px-4 py-2 text-sm ${filter===x?"border-coral bg-coral/10 text-ink":"border-border bg-surface text-ink"}`}>{x}</button>)}</div><div className="grid gap-4 tablet:grid-cols-2 desktop:grid-cols-3">{rows.map(f=><article key={f.personId} className="space-y-4 rounded-surface border border-border bg-surface p-5"><header className="flex items-start gap-3"><div className="grid size-12 shrink-0 place-items-center rounded-full bg-coral/10 font-heading text-coral">{f.name.split(" ").map(x=>x[0]).join("")}</div><div className="min-w-0 flex-1"><h2 className="font-heading text-lg text-ink">{f.name}</h2><p className="text-coral">{f.subject}</p></div><span className="rounded-full bg-success/10 px-2 py-1 text-xs text-ink">Google SSO linked</span></header><p className="break-all text-sm text-ink">{f.email}</p><p className="text-sm text-ink">{f.phone}</p><div className="flex flex-wrap gap-2">{f.curricula.map(c=><span key={c} className="rounded-full bg-surface-raised px-2.5 py-1 text-xs text-ink">{c}</span>)}</div><div className="flex items-center justify-between border-t border-border pt-3"><span className="text-sm text-ink">{f.learners} learners</span><div className="flex gap-2"><button className="btn-secondary">Sections</button><a className="btn-secondary" aria-label={`Email ${f.name}`} href={`mailto:${f.email}`}><Mail size={17}/></a></div></div></article>)}</div><ConfirmDialog open={confirm} title="Sync Google SSO?" body="This will refresh faculty SSO link statuses using the demo data." confirmLabel="Sync SSO" cancelLabel="Cancel" onConfirm={()=>setConfirm(false)} onCancel={()=>setConfirm(false)}/></div>;
 }
