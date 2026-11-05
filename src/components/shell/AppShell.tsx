@@ -25,13 +25,15 @@ export function AppShell() {
   if (isSessionExpired(pathname)) return <main id="main"><SessionExpired /></main>;
   const blocked = pathname === accessPage || screenState(pathname) === "unavailable";
   return (
-    <div className="flex min-h-screen flex-col bg-page-bg">
+    <div className="min-h-screen bg-page-bg">
       <a href="#main" className="skip-link">{t("app.skip")}</a>
       <TopNav />
-      <main id="main" className="flex-1">
-        {blocked ? <AccessUnavailable back={{ to: roleHome[role], label: t("SH-03.back") }} /> : <Outlet />}
-      </main>
-      <footer className="border-t border-border px-4 py-4 text-center text-sm text-ink-muted">{t("app.footer")}</footer>
+      <div className="min-h-screen pt-14 tablet:pt-0 tablet:pl-[72px] desktop:pl-60">
+        <main id="main" className="min-h-[calc(100vh-56px)]">
+          {blocked ? <AccessUnavailable back={{ to: roleHome[role], label: t("SH-03.back") }} /> : <Outlet />}
+        </main>
+        <footer className="border-t border-border px-4 py-4 text-center text-sm text-ink-muted">{t("app.footer")}</footer>
+      </div>
       {role === "learner" && !blocked && <AskViduraPanel />}
     </div>
   );

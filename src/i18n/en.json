@@ -145,6 +145,11 @@
     "primary": "Main",
     "signOut": "Sign out"
   },
+  "sidebar": {
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu",
+    "language": "Language"
+  },
   "commandBar": {
     "context": "Suryamala ITI · ELE-A",
     "quickNav": "Quick links",
