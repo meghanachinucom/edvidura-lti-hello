@@ -8,8 +8,10 @@ import {
 } from '../state';
 
 function xrCatalog(): XrApp[] {
-  const live = state.liveXrApps;
-  if (live && live.length) return live;
+  // Connected: API catalog only (empty OK). Offline SPA keeps local demo list.
+  if (state.connected) {
+    return state.liveXrApps || [];
+  }
   return xrAppsList;
 }
 
@@ -58,9 +60,11 @@ export function renderXrStore(): string {
           )
           .join('')}
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      ${filteredApps.length
+        ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         ${filteredApps.map(app => renderAppCard(app)).join('')}
-      </div>
+      </div>`
+        : `<div class="hub-card"><p class="text-sm text-slate-500">No XR experiences available for this tenant yet.</p></div>`}
     </div>
       ${state.xrSelectedApp ? renderAppDetailsModal(state.xrSelectedApp) : ''}
       ${state.xrActiveSimulation ? renderSimulationLauncherModal(state.xrActiveSimulation) : ''}
@@ -423,7 +427,10 @@ export function bindXrStoreEvents(container: HTMLElement): void {
           state.liveXrApps = (pack.apps || []).map(mapLiveXrApp);
           setScreen('xr-store');
         })
-        .catch(() => { /* keep demo catalog */ });
+        .catch(() => {
+          state.liveXrApps = [];
+          setScreen('xr-store');
+        });
     }
   }
 

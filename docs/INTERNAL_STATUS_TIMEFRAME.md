@@ -16,11 +16,10 @@ Same app for every client. We turn feature **blocks** on per deal (Lego model). 
 
 | Scope | Level | Notes |
 |-------|------:|-------|
-| **Overall product (today)** | **TRL 6** | Prototype in operational environment — live LTI + SPA + Railway production |
-| Core classroom (LTI, quiz, AGS, Ask Vidura, manuals) | **TRL 6–7** | Battle-tested path; harden toward 7 |
-| Waves A–C Thin (Audit, XR, workforce, …) | **TRL 5–6** | Demoable Thin; not full Live ops yet |
+| **Overall product (today)** | **TRL 6–7** | In-house ship set Live; production LTI + SPA |
+| Core classroom + Waves A–C | **TRL 6–7** | Catalog Live; XR runtimes / roster DB still deepen per deal |
 | Park / research / content packs | **TRL 2–4** | Concept → lab prototype |
-| **Target by March 2027** | **TRL 7** overall on sell set | Every block at least demo-ready **Thin or Live** |
+| **Target by March 2027** | **TRL 7** overall on sell set | No Park left on the customer sheet |
 
 ### TLA — Total Learning Architecture (CMM 1 → 4)
 
@@ -38,21 +37,15 @@ Live check: `GET /api/v1/tla/maturity` (admin key). Module: `app.modules.tla`. D
 
 | State | Count | Meaning |
 |-------|------:|---------|
-| **Live** | **6** | Production-strong |
-| **Thin** | **24** | Sellable / demoable |
-| **Shippable (Live+Thin)** | **30** | Ready to sell on `/sales` |
+| **Live** | **30** | In-house shippable set (Thin cleared) |
+| **Thin** | **0** | — |
+| **Shippable (Live)** | **30** | Ready to sell on `/sales` |
 | **Partner** | **1** | `virtual_classroom` (attach, not in-house build) |
-| **Park** | **7** | Not yet Thin (research / content / GrantsPro) |
-| In-house build queue | **0** | Waves A–C done |
+| **Park** | **7** | Content / research / GrantsPro |
+| In-house build queue | **0** | Waves A–C + earlier Thin → Live |
 
-### Live (6)
-`lms_core`, `lti_integration`, `assessment_tool`, `ple`, `analytics_dashboard`, `smp_chatbot`
-
-### Thin highlights (24) — includes Waves A–C
-- **Earlier thin:** TLA, micro-learning, data ingestion, competency, AI content, lesson builder, e-book, EvalPro, ChatPro, Knowledge Pro, …
-- **Wave A:** AuditPro, IQ review, Skills Passport, Document Search, air-gap pack  
-- **Wave B:** XR Store, 3D assets, configurator, Immersive Labs, AR, VR maintainer  
-- **Wave C:** Apprenticeship, Qualification continuity, Sim-to-Real  
+### Live (30)
+Spine + classroom + Wave A/B/C + earlier Thin (TLA, micro-learning, lessons, manuals, EvalPro, ChatPro, Knowledge Pro, XR catalog, workforce boards, …).
 
 ### Still Park (7)
 `train_the_trainer`, `bits_math`, `grants_pro`, `atoms`, `coda`, `a_pro`, `pwe`  
@@ -63,10 +56,11 @@ Live check: `GET /api/v1/tla/maturity` (admin key). Module: `app.modules.tla`. D
 ## What’s completed (platform)
 
 - Classroom product live: lessons, quiz, Ask Vidura, handbooks, progress, teacher EvalPro / diagnostics  
-- Lego packaging (Steps 1–3): 38-block catalog, presets (`wave_a_pack`, `wave_b_xr`, `wave_c_workforce`, …), sales desk  
-- Waves A–C Thin + SPA surfaces; motion page `/product/motion`  
-- Adaptive interactive labs MVP (school-owned textbook → lab pack → textbook \| playground)  
-- **BE harden (Nov):** lab pack allowlist + draft-only save; airgap/env leak cut; AuditPro seal strip; document-search excerpts; Wave A–C / labs / XR rate limits; security headers  
+- Lego packaging (Steps 1–3): 38-block catalog, presets, sales desk  
+- Waves A–C + SPA; motion page `/product/motion`  
+- Adaptive interactive labs MVP  
+- **BE harden (Nov):** lab packs, airgap, AuditPro, search, rate limits, security headers  
+- **Thin → Live (Nov):** Wave A verify + empty states; Wave B curated XR catalog (input sanitize, fail-closed SPA); Wave C empty boards (`examples=1` staff seed only); earlier Thin promoted  
 - Production: https://edvidura-app-production.up.railway.app  
 
 ---
@@ -75,15 +69,15 @@ Live check: `GET /api/v1/tla/maturity` (admin key). Module: `app.modules.tla`. D
 
 | When | Focus |
 |------|--------|
-| **Nov–Dec** | Harden Thin → Live per deal; research briefs (ATOMS/CODA/A-Pro/PWE); content pack templates |
+| **Nov–Dec** | Research briefs (ATOMS/CODA/A-Pro/PWE); content pack templates; deepen XR runtime / workforce DB per deal |
 | **Jan–Feb** | Partner packaging (Virtual Classroom attach); GrantsPro MVP; BITS MATH / Train-the-Trainer packs |
-| **March** | **Freeze · harden · all 38 sellable** — no Park left on the customer sheet |
+| **March** | **Freeze · all 38 sellable** — no Park left on the customer sheet |
 
 ---
 
 ## One-line for leadership
 
-EdVidura is **TRL 6** (target **TRL 7** by March), TLA **CMM-2 achieved / CMM-3 operating**. **30 of 38** blocks are Live or Thin and sellable now; in-house Waves A–C are done. Remaining **8** are partner/content/research — due sellable by **March 2027**.
+EdVidura is **TRL 6–7** (target **TRL 7** by March), TLA **CMM-2 achieved / CMM-3 operating**. **30 of 38** blocks are **Live** and sellable; Thin cleared on the in-house set. Remaining **8** are partner/content/research — due sellable by **March 2027**.
 
 ---
 

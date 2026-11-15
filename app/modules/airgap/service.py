@@ -65,7 +65,7 @@ def pack_status() -> dict[str, Any]:
     return {
         "product": "Private Air-Gapped AI Platform",
         "wave": "A",
-        "state": "thin",
+        "state": "live",
         "airgap_env": airgap,
         "ready": ready,
         "checks": checks,

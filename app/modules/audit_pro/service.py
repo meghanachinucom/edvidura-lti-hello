@@ -1,4 +1,4 @@
-"""AuditPro thin product — sealed attempt receipts + sync status."""
+"""AuditPro — sealed attempt receipts + sync status (Wave A Live)."""
 from __future__ import annotations
 
 from typing import Any
@@ -67,7 +67,7 @@ def audit_trail(
     return {
         "product": "AuditPro",
         "wave": "A",
-        "state": "thin",
+        "state": "live",
         "total": len(items),
         "sealed_ok": sealed_ok,
         "synced_to_lms": synced,

@@ -1661,12 +1661,28 @@ def app_document_search(
             {
                 "product": "Document Search",
                 "wave": "A",
-                "state": "thin",
+                "state": "live",
                 "query": query,
                 "hits": safe_hits,
             }
         )
     )
+
+
+@router.get("/audit-pro/attempts/{attempt_id}/verify")
+def app_audit_pro_verify(attempt_id: UUID, session: LearnerSession) -> Any:
+    """Wave A Live — re-seal and verify one attempt (teachers)."""
+    from app.modules import audit_pro as audit_mod
+
+    if not _is_staff(session):
+        raise AppApiError("AuditPro verify is for teachers.", code="forbidden", status_code=403)
+    _require_cap(
+        session, "audit_pro", message="AuditPro is not enabled for this tenant."
+    )
+    result = audit_mod.verify_attempt_receipt(session["tenant_id"], attempt_id)
+    if not result.get("ok") and result.get("reason") == "Attempt not found":
+        raise AppApiError("Attempt not found", code="not_found", status_code=404)
+    return ok(json_safe(result))
 
 
 @router.get("/airgap-pack")
@@ -1962,8 +1978,11 @@ def app_labs_by_chapter(
 
 
 @router.get("/workforce/apprenticeship")
-def app_apprenticeship(session: LearnerSession) -> Any:
-    """Wave C — Apprenticeship Manager board."""
+def app_apprenticeship(
+    session: LearnerSession,
+    examples: bool = Query(False),
+) -> Any:
+    """Wave C Live — Apprenticeship Manager board (empty by default)."""
     from app.modules import workforce as wf_mod
 
     _require_cap(
@@ -1971,20 +1990,26 @@ def app_apprenticeship(session: LearnerSession) -> Any:
         "apprenticeship",
         message="Apprenticeship Manager is not enabled for this tenant.",
     )
+    # Seed examples only for staff (sales / demo); never invent peers for learners.
+    use_examples = bool(examples) and _is_staff(session)
     subject = None if _is_staff(session) else str(session.get("subject") or "")
     return ok(
         json_safe(
             wf_mod.apprenticeship_board(
                 session["tenant_id"],
                 subject=subject,
+                examples=use_examples,
             )
         )
     )
 
 
 @router.get("/workforce/continuity")
-def app_continuity(session: LearnerSession) -> Any:
-    """Wave C — Qualification & Continuity Tracker."""
+def app_continuity(
+    session: LearnerSession,
+    examples: bool = Query(False),
+) -> Any:
+    """Wave C Live — Qualification & Continuity Tracker."""
     from app.modules import workforce as wf_mod
 
     _require_cap(
@@ -1992,19 +2017,24 @@ def app_continuity(session: LearnerSession) -> Any:
         "qualification_continuity",
         message="Qualification Continuity is not enabled for this tenant.",
     )
+    use_examples = bool(examples) and _is_staff(session)
     return ok(
         json_safe(
             wf_mod.continuity_tracker(
                 session["tenant_id"],
                 subject=str(session.get("subject") or "") or None,
+                examples=use_examples,
             )
         )
     )
 
 
 @router.get("/workforce/sim-to-real")
-def app_sim_to_real(session: LearnerSession) -> Any:
-    """Wave C — Sim-to-Real Transfer Analytics (teachers)."""
+def app_sim_to_real(
+    session: LearnerSession,
+    examples: bool = Query(False),
+) -> Any:
+    """Wave C Live — Sim-to-Real Transfer Analytics (teachers)."""
     from app.modules import workforce as wf_mod
 
     if not _is_staff(session):
@@ -2018,8 +2048,14 @@ def app_sim_to_real(session: LearnerSession) -> Any:
         "sim_to_real",
         message="Sim-to-Real analytics is not enabled for this tenant.",
     )
-    return ok(json_safe(wf_mod.sim_to_real_report(session["tenant_id"])))
-
+    return ok(
+        json_safe(
+            wf_mod.sim_to_real_report(
+                session["tenant_id"],
+                examples=bool(examples),
+            )
+        )
+    )
 
 @router.get("/analytics")
 def app_analytics(session: LearnerSession) -> Any:

@@ -1,4 +1,4 @@
-"""IQ review — thin item analysis from sealed quiz attempt answers."""
+"""IQ review — item analysis from quiz attempt answers (Wave A Live)."""
 from __future__ import annotations
 
 from collections import defaultdict
@@ -104,14 +104,14 @@ def item_quality_report(
     return {
         "product": "IQ review pattern",
         "wave": "A",
-        "state": "thin",
+        "state": "live",
         "attempts_scanned": scanned,
         "question_count": len(questions),
         "too_hard": sum(1 for q in questions if q["flag"] == "too_hard"),
         "too_easy": sum(1 for q in questions if q["flag"] == "too_easy"),
         "questions": questions[:50],
         "note": (
-            "Thin Wave A: rates from recent attempt answer payloads. "
-            "Enrich stems as the bank stores prompts on attempts."
+            "Rates from recent attempt answer payloads. "
+            "Stems enrich as the bank stores prompts on attempts."
         ),
     }

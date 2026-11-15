@@ -15,8 +15,11 @@ function progressCaps(): Record<string, boolean> {
   if (raw && typeof raw === 'object' && Object.keys(raw).length) {
     return raw as Record<string, boolean>;
   }
-  // Local SPA demo: show Wave C tabs
-  return { apprenticeship: true, qualification_continuity: true };
+  // Offline SPA preview only — connected sessions never invent Wave C caps.
+  if (!state.connected) {
+    return { apprenticeship: true, qualification_continuity: true };
+  }
+  return {};
 }
 
 export function renderMyProgress(): string {
@@ -78,15 +81,12 @@ function renderProgressActiveContent(tab: string): string {
 
 function renderApprenticeTab(): string {
   const live = state.liveApprenticeship;
-  const rows = live?.placements?.length
-    ? live.placements
-    : [
-        { apprentice: displayName(), mentor: 'Faculty lead', role: 'Pathway apprentice', hours_logged: 8, hours_target: 40, status: 'active', next_checkpoint: 'First observed quiz' },
-      ];
+  const rows = live?.placements || [];
+  const empty = !rows.length;
   return `
     <div class="flex flex-col gap-4">
       <div>
-        <p class="hub-kicker-ink">Wave C · thin</p>
+        <p class="hub-kicker-ink">Wave C · live</p>
         <h2 class="text-lg font-extrabold text-[#111827]">Apprenticeship pathway</h2>
         <p class="text-sm text-slate-500 mt-1">Mentor hours and checkpoints on top of Skills Passport.</p>
       </div>
@@ -94,7 +94,9 @@ function renderApprenticeTab(): string {
         hubStat('handshake', 'Placements', String(live?.count ?? rows.length)),
         hubStat('schedule', 'Active', String(live?.active ?? rows.filter(r => r.status === 'active').length))
       )}
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      ${empty
+        ? `<div class="hub-card"><p class="text-sm text-slate-500">No placements yet — request a mentor assignment when your school enables pathways.</p></div>`
+        : `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         ${rows.map(r => `
           <article class="hub-card flex flex-col gap-2">
             <p class="hub-kicker-ink">${escapeHtml(r.status)}</p>
@@ -103,30 +105,28 @@ function renderApprenticeTab(): string {
             <p class="text-xs tabular-nums text-slate-500">${r.hours_logged} / ${r.hours_target} hrs</p>
             ${r.next_checkpoint ? `<p class="text-xs text-slate-600 mt-auto">Next: ${escapeHtml(r.next_checkpoint)}</p>` : ''}
           </article>`).join('')}
-      </div>
+      </div>`}
     </div>`;
 }
 
 function renderContinuityTab(): string {
   const live = state.liveContinuity;
-  const rows = live?.credentials?.length
-    ? live.credentials
-    : [
-        { label: 'Lockout / Tagout', status: 'current', expires_at: '2027-06-12', days_to_expiry: 585 },
-        { label: 'Mechanical seal competency', status: 'due_soon', expires_at: '2026-11-01', days_to_expiry: 30 },
-      ];
+  const rows = live?.credentials || [];
+  const empty = !rows.length;
   return `
     <div class="flex flex-col gap-4">
       <div>
-        <p class="hub-kicker-ink">Wave C · thin</p>
+        <p class="hub-kicker-ink">Wave C · live</p>
         <h2 class="text-lg font-extrabold text-[#111827]">Qualification continuity</h2>
         <p class="text-sm text-slate-500 mt-1">Credential currency — renew before expiry.</p>
       </div>
       ${hubStats(
         hubStat('verified', 'Credentials', String(live?.count ?? rows.length)),
-        hubStat('warning', 'Due soon', String(live?.due_soon ?? rows.filter(r => r.status === 'due_soon').length))
+        hubStat('warning', 'Due soon', String(live?.due_soon ?? 0))
       )}
-      <div class="hub-card overflow-hidden p-0">
+      ${empty
+        ? `<div class="hub-card"><p class="text-sm text-slate-500">No credentials on file yet.</p></div>`
+        : `<div class="hub-card overflow-hidden p-0">
         <table class="w-full text-left text-xs">
           <thead><tr class="bg-[#F8FAFC] text-[#64748B] uppercase tracking-wider font-bold font-mono">
             <th class="py-3 px-4">Credential</th><th class="py-3 px-4">Status</th><th class="py-3 px-4">Expires</th>
@@ -140,7 +140,7 @@ function renderContinuityTab(): string {
               </tr>`).join('')}
           </tbody>
         </table>
-      </div>
+      </div>`}
     </div>`;
 }
 
@@ -221,6 +221,7 @@ function renderCompetenciesTab(): string {
   return `
     <div class="flex items-center justify-between gap-3 flex-wrap">
       <div>
+        <p class="hub-kicker-ink">Wave A · live</p>
         <h2 class="text-lg font-extrabold text-[#111827]">Skills Passport</h2>
         <p class="text-sm text-slate-500 mt-1">Competency levels with evidence · Novice → Advanced</p>
       </div>

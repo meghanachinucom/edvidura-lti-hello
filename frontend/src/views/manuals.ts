@@ -216,7 +216,7 @@ export function bindManualsEvents(container: HTMLElement): void {
         .then((res) => {
           const hits = res.hits || [];
           host!.innerHTML = hits.length
-            ? `<p class="hub-kicker-ink">${L('Document Search')} · Wave A</p>` +
+            ? `<p class="hub-kicker-ink">${L('Document Search')} · Wave A · live</p>` +
               hits
                 .map(
                   (h) =>

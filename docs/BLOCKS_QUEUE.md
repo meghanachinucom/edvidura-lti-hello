@@ -5,18 +5,18 @@ Sales desk: `/sales` · API: `GET /api/admin/blocks`.
 
 ## In-house queue
 
-**Empty.** Waves A–C are Thin. Remaining catalog items are partner / content / research.
+**Empty.** All in-house shippable blocks are **Live**. Remaining catalog = partner / content / research (Park).
 
-## Done Thin
+## Done Live
 
 ### Wave A
 
 | Id | Surface |
 |----|---------|
-| `audit_pro` | Diagnostics → AuditPro · `/api/v1/app/audit-pro` |
-| `iq_review_pattern` | Diagnostics → IQ review · `/api/v1/app/iq-review` |
-| `skills_passport` | My plan → Skills Passport · `/api/v1/app/skills-passport` |
-| `document_search` | Manuals search · `/api/v1/app/document-search` |
+| `audit_pro` | Diagnostics → AuditPro · trail + verify |
+| `iq_review_pattern` | Diagnostics → IQ review |
+| `skills_passport` | My plan → Skills Passport |
+| `document_search` | Manuals search |
 | `private_air_gapped_ai` | `/api/v1/app/airgap-pack` |
 
 Preset: `wave_a_pack`.
@@ -25,7 +25,7 @@ Preset: `wave_a_pack`.
 
 | Id | Surface |
 |----|---------|
-| `xr_store` | Nav **XR Labs** · `/api/v1/app/xr/store` |
+| `xr_store` | Nav **XR Labs** · curated catalog (runtimes per deal) |
 | `asset_repo_3d` | `/api/v1/app/xr/assets` |
 | `asset_configurator_3d` | `/api/v1/app/xr/configurator` |
 | `immersive_labs` | `/api/v1/app/xr/labs` |
@@ -38,20 +38,20 @@ Preset: `wave_b_xr`. Module: `app.modules.xr`.
 
 | Id | Surface |
 |----|---------|
-| `apprenticeship_manager` | My plan → **Apprentice** · `/api/v1/app/workforce/apprenticeship` |
-| `qualification_continuity_tracker` | My plan → **Continuity** · `/api/v1/app/workforce/continuity` |
-| `sim_to_real_analytics` | Diagnostics → **Sim→Real** · `/api/v1/app/workforce/sim-to-real` |
+| `apprenticeship_manager` | My plan → **Apprentice** (empty board; `examples=1` staff seed) |
+| `qualification_continuity_tracker` | My plan → **Continuity** |
+| `sim_to_real_analytics` | Diagnostics → **Sim→Real** |
 
 Preset: `wave_c_workforce`. Module: `app.modules.workforce`.
 
-## Still not Thin (other tracks)
+## Still not Live (other tracks)
 
 | Track | Examples |
 |-------|----------|
-| partner | `lms_core`, `virtual_classroom`, `grants_pro` |
+| partner | `virtual_classroom` (LMS Core is Live via Moodle attach) |
 | content | `bits_math`, `train_the_trainer` |
-| research | `atoms`, `coda`, `a_pro`, `pwe` |
+| research / park | `atoms`, `coda`, `a_pro`, `pwe`, `grants_pro` |
 
 ## March 2027 path
 
-Harden Thin → Live per deal; package partner/research when funded. All 38 sellable ≠ all Live — Thin + clear labels count.
+Package partner/content/research when funded. All 38 sellable ≠ every Park built in-house — Thin is cleared on the in-house ship set.
