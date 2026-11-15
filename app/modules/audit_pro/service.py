@@ -61,7 +61,7 @@ def audit_trail(
                 "created_at": str(row.get("created_at") or ""),
                 "seal_ok": bool(check.get("ok")),
                 "seal_reason": str(check.get("reason") or ""),
-                "seal": str(receipt.get("seal") or "")[:16] or None,
+                # Trail never returns seal material — use verify_attempt_receipt.
             }
         )
     return {
@@ -91,6 +91,7 @@ def verify_attempt_receipt(
         ags_available=True,
     )
     check = verify_seal(receipt)
+    seal = str(receipt.get("seal") or "")
     return {
         "ok": bool(check.get("ok")),
         "reason": check.get("reason"),
@@ -99,7 +100,8 @@ def verify_attempt_receipt(
             "attempt_id": receipt.get("attempt_id"),
             "percent": receipt.get("percent"),
             "grade_sent": receipt.get("grade_sent"),
-            "seal": receipt.get("seal"),
+            # Truncate seal fingerprint — full HMAC stays server-side for verify_seal.
+            "seal_fingerprint": (seal[:12] + "…") if seal else None,
             "alg": receipt.get("alg"),
         },
     }

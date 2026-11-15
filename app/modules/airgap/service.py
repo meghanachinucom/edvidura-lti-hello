@@ -4,15 +4,21 @@ from __future__ import annotations
 import os
 from typing import Any
 
+_LOCAL_PROVIDERS = frozenset({"", "none", "off", "local_http", "heuristic", "heuristics"})
+
 
 def pack_status() -> dict[str, Any]:
-    """Operational checklist for the air-gap install pack (docs/AIRGAP_PACK.md)."""
+    """Operational checklist for the air-gap install pack (docs/AIRGAP_PACK.md).
+
+    Never returns raw env values or key presence beyond boolean readiness flags.
+    """
     airgap = (os.getenv("AIRGAP") or "").strip() in {"1", "true", "yes", "on"}
     provider = (os.getenv("AI_PROVIDER") or "").strip().lower() or "none"
     openai = bool((os.getenv("OPENAI_API_KEY") or "").strip())
     anthropic = bool((os.getenv("ANTHROPIC_API_KEY") or "").strip())
     jev = (os.getenv("JEV_ENABLED") or "").strip() in {"1", "true", "yes", "on"}
     cloud_keys = openai or anthropic
+    provider_ok = provider in _LOCAL_PROVIDERS
     safe_airgap = (not airgap) or (not cloud_keys and not jev)
 
     checks = [
@@ -31,8 +37,12 @@ def pack_status() -> dict[str, Any]:
         {
             "id": "ai_local",
             "label": "AI provider suitable for air-gap",
-            "ok": provider in {"", "none", "off", "local_http", "heuristic", "heuristics"},
-            "detail": f"AI_PROVIDER={provider or 'unset'}",
+            "ok": provider_ok,
+            "detail": (
+                "Local / off provider configured"
+                if provider_ok
+                else "Switch AI provider to local_http or off for air-gap"
+            ),
         },
         {
             "id": "no_cloud_leak",
