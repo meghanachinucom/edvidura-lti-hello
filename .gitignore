@@ -45,6 +45,10 @@ docs/management-proof/videos/by-feature/*.silent.mp4
 frontend/node_modules/
 frontend/dist/
 
+# Standalone 3D lab demo
+demos/3d-lab-studio/node_modules/
+demos/3d-lab-studio/dist/
+
 # Local packaging / scratch
 edvidura-lti-hello-starter.zip
 _bind.py
