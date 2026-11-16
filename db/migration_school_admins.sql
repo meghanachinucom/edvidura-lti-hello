@@ -10,11 +10,16 @@ CREATE TABLE IF NOT EXISTS school_admins (
     name TEXT NOT NULL,
     email TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'active',
+    subject TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (tenant_id, admin_code)
 );
 
+ALTER TABLE school_admins ADD COLUMN IF NOT EXISTS subject TEXT;
+
 CREATE INDEX IF NOT EXISTS school_admins_tenant_idx ON school_admins (tenant_id);
+CREATE INDEX IF NOT EXISTS school_admins_tenant_subject_idx ON school_admins (tenant_id, subject);
+CREATE UNIQUE INDEX IF NOT EXISTS school_admins_tenant_subject_uniq ON school_admins (tenant_id, subject) WHERE subject IS NOT NULL;
 
 ALTER TABLE school_admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE school_admins FORCE ROW LEVEL SECURITY;

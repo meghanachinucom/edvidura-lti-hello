@@ -48,6 +48,7 @@ def resolve_ops_principal(
                 return principal
         except Exception:  # noqa: BLE001
             pass
+    # 1. Accept Keycloak ops_auth session
     sess = request.session.get("ops_auth")
     if isinstance(sess, dict) and (
         "ops" in (sess.get("roles") or []) or "admin" in (sess.get("roles") or [])
@@ -59,6 +60,17 @@ def resolve_ops_principal(
             tenant_id=sess.get("tenant_id"),
             raw={"auth": "session"},
         )
+    # 2. Accept Starlette session cookie from POST /api/v1/ops/login or /ops/login
+    ops_sess = request.session.get("edvidura_ops")
+    if isinstance(ops_sess, dict) and ops_sess.get("ok"):
+        return OpsPrincipal(
+            sub=str(ops_sess.get("email") or "owner@edvidura"),
+            email=str(ops_sess.get("email") or "owner@edvidura"),
+            roles=("ops", "admin"),
+            tenant_id=None,
+            raw={"auth": "edvidura_ops_session"},
+        )
+    # 3. Accept server-to-server X-Admin-Key header
     if admin_key_matches(x_admin_key):
         return OpsPrincipal(
             sub="admin-key",

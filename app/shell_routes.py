@@ -578,6 +578,14 @@ def _shell(
 def require_session(
     request: Request, *, token: str | None = None
 ) -> dict[str, Any] | HTMLResponse:
+    if not token:
+        auth = request.headers.get("authorization") or request.headers.get("x-edvidura-token")
+        if auth:
+            parts = auth.strip().split(None, 1)
+            if len(parts) == 2 and parts[0].lower() == "bearer":
+                token = parts[1].strip()
+            elif len(parts) == 1:
+                token = parts[0].strip()
     return require_quiz_session(request, token=token)
 
 
@@ -2297,6 +2305,9 @@ async def quiz_result_ags_json(
     attempt = db.get_quiz_attempt(session["tenant_id"], attempt_id)
     if not attempt:
         return JSONResponse({"ok": False, "error": "not_found"}, status_code=404)
+    is_owner = str(attempt.get("subject")) == str(session.get("subject"))
+    if not (is_owner or session.get("is_instructor")):
+        return JSONResponse({"ok": False, "error": "forbidden"}, status_code=403)
     practice = bool((attempt.get("answers") or {}).get("practice"))
     grade_sent = bool(attempt.get("grade_sent"))
     grade_error = (attempt.get("grade_error") or "").strip() or None

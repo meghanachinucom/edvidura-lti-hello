@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bgdef" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#006B7D"/>
+      <stop offset="100%" stop-color="#003844"/>
+    </linearGradient>
+    <linearGradient id="accentdef" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#26C6DA"/>
+      <stop offset="100%" stop-color="#00838F"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bgdef)"/>
+  <circle cx="400" cy="225" r="140" fill="#004D5A" opacity="0.5"/>
+  <path d="M400 280 C360 250 300 250 260 260 V170 C300 160 360 160 400 190 C440 160 500 160 540 170 V260 C500 250 440 250 400 280 Z" fill="#00242C" stroke="url(#accentdef)" stroke-width="4" stroke-linejoin="round"/>
+  <line x1="400" y1="190" x2="400" y2="280" stroke="url(#accentdef)" stroke-width="4"/>
+  <text x="400" y="390" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="#E0F7FA" text-anchor="middle" letter-spacing="2">EDVIDURA LESSON</text>
+</svg>

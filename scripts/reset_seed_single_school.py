@@ -11,6 +11,8 @@ import json
 import os
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
+import psycopg
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -165,17 +167,17 @@ DEFAULT_MOODLE_CLASS_CONTEXTS = {
     "120": 8,
     "121": 9,
     "122": 10,
-    # Moodle course ids for class01…class10
-    "6": 1,
-    "7": 2,
-    "8": 3,
-    "9": 4,
-    "10": 5,
-    "11": 6,
-    "12": 7,
-    "13": 8,
-    "14": 9,
-    "15": 10,
+    # Moodle course IDs (Class 1-10 mapped to courses 3-12)
+    "3": 1,
+    "4": 2,
+    "5": 3,
+    "6": 4,
+    "7": 5,
+    "8": 6,
+    "9": 7,
+    "10": 8,
+    "11": 9,
+    "12": 10,
     # shortnames
     "class01": 1,
     "class02": 2,
@@ -327,8 +329,8 @@ def curriculum_for_grade(grade: int) -> dict:
             [
                 ("ch1-welcome", "Welcome to Algebra I", 1, "article",
                  "## Algebra I\n\n"
-                 "A **variable** is a letter (like x or y) that stands for a number "
-                 "we do not know yet.\n\n"
+                 "A **variable** is a symbol (like x or y) that represents a quantity "
+                 "that can take different values or numbers.\n\n"
                  "An **expression** combines numbers, variables, and operations "
                  "(for example 2x + 3).\n\n"
                  "Solving for x means finding the number that makes an equation true.\n\n"
@@ -338,13 +340,13 @@ def curriculum_for_grade(grade: int) -> dict:
                 ("ch3-video", "Solving for x (video)", 3, "video",
                  "Short overview video.",
                  "https://www.youtube.com/embed/dQw4w9WgXcQ"),
-                ("ch4-quiz", "Algebra check quiz", 4, "quiz", "Show what you know.", ""),
+                ("ch4-quiz", "Riverside Algebra check", 4, "quiz", "Show what you know.", ""),
             ],
             [
-                ("q1", "What is x in 2x + 3 = 11?", ["3", "4", "5", "8"], 1),
-                ("q2", "A variable stands for…",
-                 ["A fixed number", "An unknown", "A formula", "A grade"], 1),
-                ("q3", "2x = 10 → x = ?", ["2", "5", "8", "12"], 1),
+                ("q1", "In algebra, a variable is best described as…",
+                 ["A constant number that never changes", "A symbol that represents a quantity that can vary", "An arithmetic operator like + or -", "The answer to an examination"], 1),
+                ("q2", "In 2x + 3 = 11, what is x?", ["3", "4", "5", "8"], 1),
+                ("q3", "Solve for x: 3x - 5 = 10", ["x = 3", "x = 5", "x = 15", "x = 25"], 1),
             ],
         ),
         9: (
@@ -422,7 +424,115 @@ def _exec_owner(sql: str, params: tuple | list | None = None):
             return conn.execute(sql, params or ())
 
 
+ALLOWED_LOCAL_HOSTS = {
+    "localhost",
+    "127.0.0.1",
+    "::1",
+    "docker",
+    "db",        # Docker internal service name
+    "postgres",  # Docker postgres service name
+}
+ALLOWED_DISPOSABLE_DATABASES = {
+    "edvidura",
+    "edvidura_dev",
+    "edvidura_test",
+}
+ALLOWED_LOCAL_PORTS = {5432, 5433}
+PROD_MARKERS = ("prod", "production", "live", "stage", "staging", "internal")
+
+
+def verify_disposable_database_guard(dsn: str, require_env_flag: bool = True) -> dict:
+    """Hardened fail-closed disposable database safety guard.
+
+    1. Parse DSN into separate host, port, database fields.
+    2. Check explicit allowlist for approved local hosts and exact disposable database names.
+    3. Explicitly allow local Docker database host aliases ('db', 'postgres', 'docker').
+    4. Require explicit disposable-database environment setting (DISPOSABLE_DATABASE=1 or ALLOW_DESTRUCTIVE_RESET=1).
+    5. Verify actual connected database identity using a read-only SQL query before allowing destructive statements.
+    6. Reject remote hosts (e.g. 'postgres.example.com') and prod/staging DBs regardless of 'postgres' substring.
+    7. Never include passwords, usernames, or complete DSNs in exceptions or logs.
+    """
+    disposable_env = (
+        os.getenv("DISPOSABLE_DATABASE", "")
+        or os.getenv("ALLOW_DESTRUCTIVE_RESET", "")
+        or os.getenv("EDVIDURA_DISPOSABLE_DB", "")
+    ).strip().lower()
+    if require_env_flag and disposable_env not in ("1", "true", "yes"):
+        raise RuntimeError(
+            "Safety guard: Refusing destructive reset: DISPOSABLE_DATABASE=1 or ALLOW_DESTRUCTIVE_RESET=1 "
+            "environment variable must be explicitly set to authorize destructive operations."
+        )
+
+    try:
+        parsed = urlparse(dsn)
+    except Exception as e:
+        raise RuntimeError("Safety guard: Refusing destructive reset: DSN could not be parsed.") from e
+
+    host = (parsed.hostname or "").strip().lower()
+    port = parsed.port
+    db_name = (parsed.path or "").lstrip("/").strip().lower()
+
+    # Reject remote hosts or FQDNs with dots unless loopback IP
+    if "." in host and host not in ("127.0.0.1",):
+        raise RuntimeError(
+            f"Safety guard: Refusing destructive reset: Host '{host}' is a remote or non-local host."
+        )
+
+    if host not in ALLOWED_LOCAL_HOSTS:
+        raise RuntimeError(
+            f"Safety guard: Refusing destructive reset: Host '{host}' is not in approved local allowlist."
+        )
+
+    if port is not None and port not in ALLOWED_LOCAL_PORTS:
+        raise RuntimeError(
+            f"Safety guard: Refusing destructive reset: Port {port} is not in approved local PostgreSQL ports allowlist."
+        )
+
+    if any(marker in db_name for marker in PROD_MARKERS):
+        raise RuntimeError(
+            f"Safety guard: Refusing destructive reset: Database '{db_name}' contains production/staging markers."
+        )
+
+    if db_name not in ALLOWED_DISPOSABLE_DATABASES:
+        raise RuntimeError(
+            f"Safety guard: Refusing destructive reset: Database '{db_name}' is not an approved disposable database name."
+        )
+
+    # Verify actual connected database identity via read-only SQL
+    try:
+        with psycopg.connect(dsn) as check_conn:
+            row = check_conn.execute(
+                "SELECT current_database() as current_db, inet_server_addr()::text as srv_addr, inet_server_port() as srv_port"
+            ).fetchone()
+            actual_db = str(row[0] if isinstance(row, tuple) else row.get("current_db") or "").strip().lower()
+            if actual_db != db_name:
+                raise RuntimeError(
+                    f"Safety guard: Connected database '{actual_db}' does not match expected DSN database '{db_name}'."
+                )
+            if actual_db not in ALLOWED_DISPOSABLE_DATABASES or any(m in actual_db for m in PROD_MARKERS):
+                raise RuntimeError(
+                    f"Safety guard: Connected database '{actual_db}' does not match approved disposable database allowlist."
+                )
+    except Exception as e:
+        if isinstance(e, RuntimeError) and "Safety guard" in str(e):
+            raise
+        raise RuntimeError(
+            f"Safety guard: Failed to verify connected database identity on host '{host}', port {port}."
+        ) from e
+
+    return {
+        "ok": True,
+        "host": host,
+        "port": port,
+        "database": db_name,
+        "verified_current_db": actual_db,
+    }
+
+
 def reset() -> None:
+    dsn = _owner_dsn()
+    guard = verify_disposable_database_guard(dsn)
+    print(f"Safety guard verified: host='{guard['host']}', port={guard['port']}, database='{guard['database']}'")
     print("Wiping all tenants / school / LTI / attempts data...")
     _super_exec(TRUNCATE_SQL)
     print("  done.")
@@ -479,13 +589,13 @@ def seed() -> None:
         TENANT_ID,
         """
         INSERT INTO school_admins (
-            tenant_id, institution_id, admin_code, name, email, status
+            tenant_id, institution_id, admin_code, name, email, status, subject
         )
-        VALUES (%s, %s, 'ADM-01', 'Alex Morgan', 'admin@riverside.test', 'active')
+        VALUES (%s, %s, 'ADM-01', 'Alex Morgan', 'admin@riverside.test', 'active', '5')
         """,
         (TENANT_ID, INST_ID),
     )
-    print("  School admin  ADM-01  Alex Morgan")
+    print("  School admin  ADM-01  Alex Morgan (subject: 5)")
 
     # --- Classes 1–10: one lead teacher + 5 students + one course each ---
     teacher_ids: dict[str, str] = {}
@@ -633,13 +743,14 @@ def seed() -> None:
             (course_id, TENANT_ID, slug, title, desc),
         )
         if quiz_id and questions:
+            q_title = "Riverside Algebra check" if quiz_id == QUIZ_MATH else f"{title} quiz"
             _exec_tenant(
                 TENANT_ID,
                 """
                 INSERT INTO quizzes (id, tenant_id, course_id, slug, title, description, status)
                 VALUES (%s, %s, %s, %s, %s, %s, 'published')
                 """,
-                (quiz_id, TENANT_ID, course_id, f"{slug}-quiz", f"{title} quiz", desc),
+                (quiz_id, TENANT_ID, course_id, f"{slug}-quiz", q_title, desc),
             )
             for i, (key, prompt, choices, correct) in enumerate(questions, start=1):
                 _exec_tenant(
@@ -735,7 +846,7 @@ def seed() -> None:
     print(f"  Grades       {attempt_n} quiz attempts across Classes 1–10")
     print(f"  Progress     {progress_n} lesson completions across Classes 1–10")
 
-    _seed_skills_and_handbook()
+    _seed_skills_and_handbook(class_ids=class_ids)
     _seed_isolation_peer()
 
     print()
@@ -873,7 +984,7 @@ def _seed_natural_activity(
     return attempt_n, progress_n
 
 
-def _seed_skills_and_handbook() -> None:
+def _seed_skills_and_handbook(class_ids: dict[str, str] | None = None) -> None:
     """C8 skills registry + versioned handbook for remediation loop."""
     from app.modules import manuals as manuals_mod
     from app.modules import skills as skills_mod
@@ -905,6 +1016,20 @@ Official scores live in the Moodle gradebook via AGS. Practice attempts skip gra
     mid = str(manual["id"])
     print(f"  Manual       Algebra handbook ({mid[:8]}…)")
 
+    # Associate Algebra I handbook with Riverside Class 8 (RHS-C08)
+    c8_id = class_ids.get("RHS-C08") if class_ids else None
+    if not c8_id:
+        with db.tenant_connection(TENANT_ID) as conn:
+            row = conn.execute(
+                "SELECT id FROM classes WHERE tenant_id = %s AND code = 'RHS-C08'",
+                (TENANT_ID,),
+            ).fetchone()
+            if row:
+                c8_id = str(row["id"])
+    if c8_id:
+        manuals_mod.link_manual_to_class(TENANT_ID, manual_id=mid, class_id=c8_id)
+        print(f"  Class Manual Algebra handbook linked to RHS-C08 ({c8_id[:8]}…)")
+
     # Extra handbooks so Manuals library looks stocked across grades
     extra_manuals = [
         (
@@ -928,6 +1053,12 @@ Official scores live in the Moodle gradebook via AGS. Practice attempts skip gra
             "## Triangles\n\nSum of angles is 180°.\n\n## Circles\n\nCircumference = 2πr. Area = πr².",
         ),
     ]
+    grade_map = {
+        "Class 1 · Letter sounds handbook": "RHS-C01",
+        "Class 5 · Earth & decimals handbook": "RHS-C05",
+        "Class 9 · Geometry handbook": "RHS-C09",
+        "Class 10 · Functions handbook": "RHS-C10",
+    }
     for title, desc, body in extra_manuals:
         m = manuals_mod.create_manual(
             tenant_id=TENANT_ID,
@@ -937,7 +1068,11 @@ Official scores live in the Moodle gradebook via AGS. Practice attempts skip gra
             subject="seed",
             publish=True,
         )
-        print(f"  Manual       {title} ({str(m['id'])[:8]}…)")
+        extra_mid = str(m["id"])
+        print(f"  Manual       {title} ({extra_mid[:8]}…)")
+        code = grade_map.get(title)
+        if code and class_ids and code in class_ids:
+            manuals_mod.link_manual_to_class(TENANT_ID, manual_id=extra_mid, class_id=class_ids[code])
 
     from app.modules import sme as sme_mod
 
@@ -961,7 +1096,7 @@ Official scores live in the Moodle gradebook via AGS. Practice attempts skip gra
             "skill_code": "solve_linear",
             "label": "Solve linear equations",
             "description": "Isolate the variable and check both sides.",
-            "question_keys": ("q1", "q3"),
+            "question_keys": ("q2", "q3"),
             "manual_focus": "solve-for-x",
             "prefer_path": "lessons",
             "lesson_id": lesson_id,
@@ -974,7 +1109,7 @@ Official scores live in the Moodle gradebook via AGS. Practice attempts skip gra
             "skill_code": "variables",
             "label": "Variables",
             "description": "What a variable stands for in an expression.",
-            "question_keys": ("q2",),
+            "question_keys": ("q1",),
             "manual_focus": "variables",
             "prefer_path": "manuals",
             "lesson_id": lesson_id,
@@ -1010,7 +1145,9 @@ Official scores live in the Moodle gradebook via AGS. Practice attempts skip gra
 
 
 def _seed_isolation_peer() -> None:
-    """Minimal Tenant B so RLS isolation proofs still pass after single-school seed."""
+    """Minimal Tenant B so RLS isolation proofs still pass when explicitly requested."""
+    if not os.getenv("SEED_ISOLATION_PEER"):
+        return
     _exec_owner(
         """
         INSERT INTO tenants (id, slug, name, status)

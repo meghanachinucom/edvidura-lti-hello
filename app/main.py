@@ -506,19 +506,22 @@ async def lti_launch(request: Request):
             print(f"Warning: could not update last_launch_at: {exc}", flush=True)
 
         is_instructor = "Instructor" in role_text or "Administrator" in role_text
-        # School admin = Moodle Administrator role. People profiles live in Moodle;
-        # EdVidura does not create teacher/student accounts.
-        is_school_admin = "Administrator" in role_text
-        if not is_school_admin:
+        # School admin = Intentional trusted server-side mapping of verified LTI staff identity,
+        # or explicit LTI Administrator role.
+        is_school_admin = False
+        sub_claim = str(launch_data.get("sub", "")).strip()
+        if is_instructor and sub_claim:
             try:
                 from app.modules.school import find_school_admin
 
                 admin_row = find_school_admin(
-                    tenant.tenant_id, email=email, name=str(name)
+                    tenant.tenant_id, subject=sub_claim
                 )
                 is_school_admin = bool(admin_row)
             except Exception:  # noqa: BLE001
                 pass
+        if not is_school_admin and "Administrator" in role_text:
+            is_school_admin = True
         is_deep_link = False
         try:
             is_deep_link = bool(message_launch.is_deep_link_launch())
@@ -692,10 +695,12 @@ async def lti_launch(request: Request):
             return RedirectResponse(
                 url=f"/lti/deep-link?token={quiz_token}", status_code=303
             )
+        from app.launch_cache import create_exchange_code
         from app.frontend_handoff import launch_destination
 
+        exchange_code = create_exchange_code(quiz_ctx, ttl_sec=60)
         return RedirectResponse(
-            url=launch_destination(quiz_token), status_code=303
+            url=launch_destination(quiz_token, code=exchange_code), status_code=303
         )
     except LtiException as exc:
         print(f"LTI launch failed: {exc}", flush=True)

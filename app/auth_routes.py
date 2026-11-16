@@ -7,7 +7,11 @@ from urllib.parse import quote
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from app.launch_cache import LAUNCH_CACHE
+from pydantic import BaseModel, Field
+
+from app.launch_cache import LAUNCH_CACHE, redeem_exchange_code
+from app.quiz_routes import SESSION_KEY as QUIZ_SESSION_KEY
+from app.api.app_client.envelope import public_session, ok, fail
 from app.modules.identity import (
     exchange_code,
     keycloak_auth_url,
@@ -170,3 +174,30 @@ def auth_me(request: Request):
         "roles": sess.get("roles"),
         "tenant_id": sess.get("tenant_id"),
     }
+
+
+class ExchangeRequest(BaseModel):
+    code: str = Field(..., min_length=16, max_length=128)
+
+
+@router.post("/api/v1/auth/exchange")
+def auth_exchange(payload: ExchangeRequest, request: Request):
+    """Single-use exchange of short-lived launch code for authenticated session."""
+    quiz_ctx = redeem_exchange_code(payload.code)
+    if not quiz_ctx or not isinstance(quiz_ctx, dict):
+        return fail("Invalid or expired exchange code", code="invalid_code", status_code=401)
+
+    # Establish session in cookie for web/iframe persistence
+    request.session[QUIZ_SESSION_KEY] = quiz_ctx
+
+    session_data = public_session(quiz_ctx)
+    return ok(session_data)
+
+
+@router.post("/api/v1/auth/logout")
+def auth_logout_api(request: Request):
+    """Clear LTI and ops session cookies."""
+    request.session.pop(QUIZ_SESSION_KEY, None)
+    request.session.pop("ops_auth", None)
+    request.session.pop("edvidura_ops", None)
+    return ok({"signed_out": True})

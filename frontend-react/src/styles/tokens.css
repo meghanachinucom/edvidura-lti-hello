@@ -1,0 +1,57 @@
+/* Design tokens — palette values from the EdVidura design system. */
+:root {
+  --page-bg: #fbf8f3;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --ink: #1b2a30;
+  --ink-muted: #5e6e75;
+  --border: #e2dcd2;
+  --border-control: #7a8a90;
+  --accent: #c2410c;
+  --accent-ink: #17313a;
+  --secondary: #0f6e6e;
+  --highlight: #f6e7b8;
+  --success: #2e7d4f;
+  --warning: #b42318;
+  --error: #b42318;
+  --focus-ring: #0f6e6e;
+  --primary: #0f6e6e;
+  --topbar: #17313a;
+  --button-main: #e8b04b;
+  --selected: #d5ecea;
+
+  --btn-primary-mid: #e8b04b;
+  --btn-primary-edge: #e8b04b;
+  --btn-primary-shadow: rgba(23, 49, 58, 0.12);
+  --btn-primary-inset: rgba(255, 255, 255, 0.2);
+  --btn-secondary-ink: #0f6e6e;
+  --btn-secondary-tint: #ffffff;
+  --btn-secondary-hover-a: #d5ecea;
+  --btn-secondary-hover-b: #d5ecea;
+  --btn-secondary-shadow: rgba(27, 42, 48, 0.06);
+
+  --tertiary: #c2410c;
+  --tertiary-container: #f6e7b8;
+  --tertiary-fixed: #f6e7b8;
+  --secondary-container: #d5ecea;
+  --secondary-fixed: #d5ecea;
+  --primary-container: #0f6e6e;
+  --primary-fixed: #d5ecea;
+  --inverse-surface: #17313a;
+  --inverse-on-surface: #ffffff;
+  --inverse-primary: #d5ecea;
+  --metric: #c2410c;
+  --gem-warning: #b42318;
+  --surface-container-low: #fbf8f3;
+  --surface-container: #ffffff;
+  --surface-container-high: #ffffff;
+  --outline-variant: #e2dcd2;
+  --on-surface-variant: #5e6e75;
+  --card-edge: rgba(27, 42, 48, 0.06);
+  --glow-emerald: rgba(15, 110, 110, 0.12);
+  --glow-sky: rgba(15, 110, 110, 0.12);
+  --glow-lime: rgba(232, 176, 75, 0.12);
+
+  --bp-mobile-max: 639px;
+  --bp-tablet-max: 1279px;
+}

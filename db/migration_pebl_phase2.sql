@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS ebook_reading_progress (
     UNIQUE (tenant_id, manual_id, version, subject)
 );
 
+
 -- 2. Bookmarks Table
 CREATE TABLE IF NOT EXISTS ebook_bookmarks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

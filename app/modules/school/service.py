@@ -28,23 +28,28 @@ def list_school_admins(tenant_id: UUID | str) -> list[dict[str, Any]]:
 def find_school_admin(
     tenant_id: UUID | str,
     *,
+    subject: str | None = None,
     email: str | None = None,
     name: str | None = None,
 ) -> dict[str, Any] | None:
-    """Match an LTI launch user to a seeded school_admins row."""
-    email_n = (email or "").strip().lower()
-    name_n = (name or "").strip().lower()
-    if not email_n and not name_n:
+    """Match an LTI launch user to an authorized school_admins row in the tenant by trusted subject."""
+    sub_n = (subject or "").strip()
+    if not sub_n:
         return None
-    for row in list_school_admins(tenant_id):
-        row_email = str(row.get("email") or "").strip().lower()
-        row_name = str(row.get("name") or "").strip().lower()
-        if email_n and row_email and email_n == row_email:
-            return row
-        if name_n and row_name and name_n == row_name:
-            return row
-        if name_n and "admin" in name_n and row_name and name_n in row_name:
-            return row
+
+    with db.tenant_connection(tenant_id) as conn:
+        row = conn.execute(
+            """
+            SELECT id, admin_code, name, email, status
+            FROM school_admins
+            WHERE subject = %s AND status = 'active'
+            LIMIT 1
+            """,
+            (sub_n,),
+        ).fetchone()
+        if row:
+            return dict(row)
+
     return None
 
 

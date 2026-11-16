@@ -5,7 +5,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.api.app_client.auth import LearnerSession
 from app.api.app_client.envelope import json_safe, ok, public_session
@@ -268,16 +268,41 @@ def app_manuals(session: LearnerSession) -> Any:
     else:
         # Learners without a class binding must not see the whole tenant.
         rows = []
-    items = [
-        {
-            "id": str(r.get("id") or ""),
-            "slug": str(r.get("slug") or ""),
-            "title": str(r.get("title") or ""),
-            "description": str(r.get("description") or ""),
-            "status": str(r.get("status") or ""),
-        }
-        for r in rows
-    ]
+
+    sub = str(session.get("subject") or "")
+    tid = session["tenant_id"]
+    items = []
+    for r in rows:
+        mid = str(r.get("id") or "")
+        ver = None
+        prog = None
+        try:
+            ver = manuals_mod.latest_published_version(tid, mid)
+            if ver and sub:
+                prog = manuals_mod.get_reading_progress(
+                    tenant_id=tid,
+                    manual_id=mid,
+                    version=int(ver.get("version") or 1),
+                    subject=sub,
+                )
+        except Exception:
+            pass
+
+        chap_idx = int(prog.get("chapter_index") or 0) if prog else None
+        pct = int(prog.get("progress_percent") or 0) if prog else 0
+        items.append(
+            {
+                "id": mid,
+                "slug": str(r.get("slug") or ""),
+                "title": str(r.get("title") or ""),
+                "description": str(r.get("description") or ""),
+                "status": str(r.get("status") or ""),
+                "current_page": (chap_idx + 1) if chap_idx is not None else None,
+                "progress_percent": pct,
+                "total_pages": int(ver.get("page_count") or 50) if ver else 50,
+                "version": int(ver.get("version") or 1) if ver else 1,
+            }
+        )
     return ok({"manuals": items}, meta={"count": len(items)})
 
 
@@ -290,6 +315,7 @@ def app_manual_read(
 ) -> Any:
     from app.modules import manuals as manuals_mod
     from app.modules import pebl as pebl_mod
+    from app.modules.sme.service import split_manual_sections
 
     tid = session["tenant_id"]
     _require_manual_for_learner(session, manual_id)
@@ -313,6 +339,45 @@ def app_manual_read(
         manual_id=manual_id,
         context_id=_ctx(session),
     )
+
+    sections = split_manual_sections(body_md)
+    chapters_payload = []
+    for idx, sec in enumerate(sections):
+        sec_body = str(sec.get("body") or "")
+        paras = [p.strip() for p in sec_body.split("\n\n") if p.strip()]
+        if not paras and sec_body.strip():
+            paras = [sec_body.strip()]
+        chapters_payload.append({
+            "id": f"ch-{manual_id}-{idx + 1}",
+            "index": idx,
+            "slug": str(sec.get("slug") or f"chapter-{idx + 1}"),
+            "title": str(sec.get("title") or f"Chapter {idx + 1}"),
+            "startPage": idx * 10 + 1,
+            "paragraphs": paras,
+            "body_html": manuals_mod.render_body(sec_body),
+        })
+
+    sub = str(session.get("subject") or "")
+    v_num = int(version.get("version") or 1)
+    saved_prog = None
+    bms = []
+    if sub:
+        try:
+            saved_prog = manuals_mod.get_reading_progress(
+                tenant_id=tid,
+                manual_id=manual_id,
+                version=v_num,
+                subject=sub,
+            )
+            bms = manuals_mod.list_bookmarks(
+                tenant_id=tid,
+                manual_id=manual_id,
+                version=v_num,
+                subject=sub,
+            )
+        except Exception:
+            pass
+
     return ok(
         {
             "manual": {
@@ -322,11 +387,14 @@ def app_manual_read(
                 "description": str(manual.get("description") or ""),
             },
             "version": {
-                "version": int(version.get("version") or 0),
+                "version": v_num,
                 "is_published": bool(version.get("is_published")),
                 "changelog": str(version.get("changelog") or ""),
             },
             "toc": toc,
+            "chapters": chapters_payload,
+            "reading_progress": saved_prog,
+            "bookmarks": bms,
             "body_html": body_html,
             "focus": (focus or "").strip() or None,
             "pebl_counts": counts,
@@ -338,6 +406,23 @@ class ManualPageTime(BaseModel):
     chapter_slug: str = Field(default="", max_length=120)
     page_label: str = Field(default="", max_length=120)
     seconds: int = Field(default=0, ge=0, le=24 * 60 * 60)
+    duration_ms: int | None = Field(default=None, ge=0, le=24 * 60 * 60 * 1000)
+    duration_seconds: float | None = Field(default=None, ge=0.0, le=24.0 * 60 * 60)
+    page_index: int | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def _normalize_payload(self) -> ManualPageTime:
+        # Strict precedence order: duration_ms > duration_seconds > seconds
+        if self.duration_ms is not None:
+            self.seconds = min(24 * 60 * 60, max(0, int(round(self.duration_ms / 1000.0))))
+        elif self.duration_seconds is not None:
+            self.seconds = min(24 * 60 * 60, max(0, int(round(self.duration_seconds))))
+        else:
+            self.seconds = min(24 * 60 * 60, max(0, int(self.seconds)))
+
+        if self.page_index is not None and not self.page_label:
+            self.page_label = f"Page {self.page_index + 1}"
+        return self
 
 
 @router.post("/manuals/{manual_id}/page-time")
@@ -370,6 +455,289 @@ def app_manual_page_time(
     except Exception as exc:  # noqa: BLE001
         raise AppApiError("Could not record page time", code="xapi_failed") from exc
     return ok({"recorded": True, "page": page, "seconds": int(payload.seconds or 0)})
+
+
+class ManualProgressIn(BaseModel):
+    version: int = Field(default=1, ge=1)
+    chapter_index: int = Field(default=0, ge=0)
+    progress_percent: int = Field(default=0, ge=0, le=100)
+    cfi: str | None = Field(default=None, max_length=1000)
+
+
+@router.post("/manuals/{manual_id}/progress")
+def app_manual_save_progress(
+    manual_id: UUID,
+    payload: ManualProgressIn,
+    session: LearnerSession,
+) -> Any:
+    from app.modules import manuals as manuals_mod
+    from app.modules import xapi as xapi_mod
+
+    _require_manual_for_learner(session, manual_id)
+    manual = manuals_mod.get_manual(session["tenant_id"], manual_id)
+    if not manual:
+        raise AppApiError("Manual not found", code="not_found", status_code=404)
+    sub = str(session.get("subject") or "")
+    try:
+        progress = manuals_mod.save_reading_progress(
+            tenant_id=session["tenant_id"],
+            manual_id=manual_id,
+            version=payload.version,
+            subject=sub,
+            chapter_index=payload.chapter_index,
+            cfi=payload.cfi,
+            progress_percent=payload.progress_percent,
+        )
+    except manuals_mod.DatabaseUnavailableError as exc:
+        raise AppApiError("Database service is currently unavailable", code="db_unavailable", status_code=503) from exc
+
+    try:
+        mtitle = str(manual.get("title") or "eBook")
+        xapi_mod.record_reading_progressed(
+            tenant_id=session["tenant_id"],
+            subject=sub,
+            learner_name=str(session.get("learner_name") or ""),
+            manual_id=manual_id,
+            manual_title=mtitle,
+            chapter_index=payload.chapter_index,
+            progress_percent=payload.progress_percent,
+            cfi=payload.cfi,
+            version=payload.version,
+            send_lrs=True,
+        )
+        if payload.progress_percent >= 100:
+            xapi_mod.record_reading_completed(
+                tenant_id=session["tenant_id"],
+                subject=sub,
+                learner_name=str(session.get("learner_name") or ""),
+                manual_id=manual_id,
+                manual_title=mtitle,
+                version=payload.version,
+                send_lrs=True,
+            )
+    except Exception:
+        pass
+
+    return ok({"progress": progress})
+
+
+@router.get("/manuals/{manual_id}/progress")
+def app_manual_get_progress(
+    manual_id: UUID,
+    session: LearnerSession,
+    v: int = Query(1, ge=1),
+) -> Any:
+    from app.modules import manuals as manuals_mod
+
+    _require_manual_for_learner(session, manual_id)
+    manual = manuals_mod.get_manual(session["tenant_id"], manual_id)
+    if not manual:
+        raise AppApiError("Manual not found", code="not_found", status_code=404)
+    sub = str(session.get("subject") or "")
+    try:
+        progress = manuals_mod.get_reading_progress(
+            tenant_id=session["tenant_id"],
+            manual_id=manual_id,
+            version=v,
+            subject=sub,
+        )
+        return ok({"progress": progress})
+    except manuals_mod.DatabaseUnavailableError as exc:
+        raise AppApiError("Database service is currently unavailable", code="db_unavailable", status_code=503) from exc
+
+
+class ManualBookmarkIn(BaseModel):
+    version: int = Field(default=1, ge=1)
+    chapter_index: int = Field(default=0, ge=0)
+    title: str = Field(default="", max_length=255)
+    cfi: str | None = Field(default=None, max_length=1000)
+
+
+@router.post("/manuals/{manual_id}/bookmarks")
+def app_manual_create_bookmark(
+    manual_id: UUID,
+    payload: ManualBookmarkIn,
+    session: LearnerSession,
+) -> Any:
+    from app.modules import manuals as manuals_mod
+    from app.modules import xapi as xapi_mod
+
+    _require_manual_for_learner(session, manual_id)
+    manual = manuals_mod.get_manual(session["tenant_id"], manual_id)
+    if not manual:
+        raise AppApiError("Manual not found", code="not_found", status_code=404)
+    sub = str(session.get("subject") or "")
+    title = (payload.title or f"Chapter {payload.chapter_index + 1} Bookmark").strip()
+    cfi = payload.cfi or manuals_mod.generate_epub_cfi(payload.chapter_index)
+    try:
+        bookmark = manuals_mod.create_bookmark(
+            tenant_id=session["tenant_id"],
+            manual_id=manual_id,
+            version=payload.version,
+            subject=sub,
+            chapter_index=payload.chapter_index,
+            cfi=cfi,
+            title=title,
+        )
+    except manuals_mod.DatabaseUnavailableError as exc:
+        raise AppApiError("Database service is currently unavailable", code="db_unavailable", status_code=503) from exc
+
+    try:
+        mtitle = str(manual.get("title") or "eBook")
+        xapi_mod.record_bookmark_created(
+            tenant_id=session["tenant_id"],
+            subject=sub,
+            learner_name=str(session.get("learner_name") or ""),
+            manual_id=manual_id,
+            manual_title=mtitle,
+            chapter_index=payload.chapter_index,
+            bookmark_title=title,
+            cfi=cfi,
+            version=payload.version,
+            send_lrs=True,
+        )
+    except Exception:
+        pass
+
+    return ok({"bookmark": bookmark}, status_code=201)
+
+
+@router.get("/manuals/{manual_id}/bookmarks")
+def app_manual_list_bookmarks(
+    manual_id: UUID,
+    session: LearnerSession,
+    v: int = Query(1, ge=1),
+) -> Any:
+    from app.modules import manuals as manuals_mod
+
+    _require_manual_for_learner(session, manual_id)
+    manual = manuals_mod.get_manual(session["tenant_id"], manual_id)
+    if not manual:
+        raise AppApiError("Manual not found", code="not_found", status_code=404)
+    sub = str(session.get("subject") or "")
+    try:
+        bookmarks = manuals_mod.list_bookmarks(
+            tenant_id=session["tenant_id"],
+            manual_id=manual_id,
+            version=v,
+            subject=sub,
+        )
+        return ok({"bookmarks": bookmarks})
+    except manuals_mod.DatabaseUnavailableError as exc:
+        raise AppApiError("Database service is currently unavailable", code="db_unavailable", status_code=503) from exc
+
+
+@router.delete("/manuals/{manual_id}/bookmarks/{bookmark_id}")
+@router.post("/manuals/{manual_id}/bookmarks/{bookmark_id}/delete")
+def app_manual_delete_bookmark(
+    manual_id: UUID,
+    bookmark_id: UUID,
+    session: LearnerSession,
+) -> Any:
+    from app.modules import manuals as manuals_mod
+
+    _require_manual_for_learner(session, manual_id)
+    sub = str(session.get("subject") or "")
+    try:
+        bm = manuals_mod.get_bookmark(tenant_id=session["tenant_id"], bookmark_id=bookmark_id)
+        if not bm or bm.get("subject") != sub or str(bm.get("manual_id")) != str(manual_id):
+            raise AppApiError("Bookmark not found", code="not_found", status_code=404)
+        ok_del = manuals_mod.delete_bookmark(
+            tenant_id=session["tenant_id"],
+            bookmark_id=bookmark_id,
+            subject=sub,
+        )
+        return ok({"deleted": bool(ok_del)})
+    except manuals_mod.DatabaseUnavailableError as exc:
+        raise AppApiError("Database service is currently unavailable", code="db_unavailable", status_code=503) from exc
+
+
+class ManualEventIn(BaseModel):
+    event_type: str = Field(..., max_length=64)
+    version: int = Field(default=1, ge=1)
+    chapter_index: int = Field(default=0, ge=0)
+    chapter_title: str = Field(default="", max_length=255)
+    duration_seconds: int = Field(default=0, ge=0)
+    cfi: str | None = Field(default=None, max_length=1000)
+
+
+@router.post("/manuals/{manual_id}/events")
+def app_manual_event(
+    manual_id: UUID,
+    payload: ManualEventIn,
+    session: LearnerSession,
+) -> Any:
+    from app.modules import manuals as manuals_mod
+    from app.modules import xapi as xapi_mod
+
+    _require_manual_for_learner(session, manual_id)
+    manual = manuals_mod.get_manual(session["tenant_id"], manual_id)
+    if not manual:
+        raise AppApiError("Manual not found", code="not_found", status_code=404)
+
+    sub = str(session.get("subject") or "")
+    lname = str(session.get("learner_name") or "")
+    mtitle = str(manual.get("title") or "eBook")
+    tid = session["tenant_id"]
+    ev_type = payload.event_type.strip().lower()
+
+    statement = None
+    try:
+        if ev_type == "ebook_initialized":
+            statement = xapi_mod.record_ebook_initialized(
+                tenant_id=tid,
+                subject=sub,
+                learner_name=lname,
+                manual_id=manual_id,
+                manual_title=mtitle,
+                version=payload.version,
+                send_lrs=True,
+            )
+        elif ev_type == "chapter_experienced":
+            statement = xapi_mod.record_chapter_experienced(
+                tenant_id=tid,
+                subject=sub,
+                learner_name=lname,
+                manual_id=manual_id,
+                manual_title=mtitle,
+                chapter_index=payload.chapter_index,
+                chapter_title=payload.chapter_title,
+                version=payload.version,
+                send_lrs=True,
+            )
+        elif ev_type in {"audio_started", "audio_completed"}:
+            statement = xapi_mod.record_resource_experienced(
+                tenant_id=tid,
+                subject=sub,
+                learner_name=lname,
+                resource_id=str(manual_id),
+                resource_title=f"{mtitle} · Audio ({payload.chapter_title or f'Chapter {payload.chapter_index + 1}'})"[:200],
+                resource_kind="audio",
+                duration_seconds=payload.duration_seconds,
+                page_label=ev_type,
+                chapter_slug=f"chapter-{payload.chapter_index + 1}",
+            )
+        elif ev_type == "session_resumed":
+            statement = xapi_mod.record_resource_experienced(
+                tenant_id=tid,
+                subject=sub,
+                learner_name=lname,
+                resource_id=str(manual_id),
+                resource_title=f"{mtitle} · Resumed"[:200],
+                resource_kind="manual",
+                duration_seconds=0,
+                page_label="session_resumed",
+                chapter_slug=f"chapter-{payload.chapter_index + 1}",
+            )
+        else:
+            raise AppApiError(f"Unsupported event type: {payload.event_type}", code="validation", status_code=400)
+    except Exception as exc:
+        if isinstance(exc, AppApiError):
+            raise
+        raise AppApiError("Could not record xAPI event", code="xapi_failed") from exc
+
+    sid = statement.get("id") if isinstance(statement, dict) else None
+    return ok({"recorded": True, "event_type": ev_type, "statement_id": str(sid) if sid else None})
 
 
 # —— PeBL discuss ——
@@ -2101,3 +2469,500 @@ def app_health() -> Any:
             "platforms": ["web", "mobile"],
         }
     )
+
+
+# —— Phase 3 Additive Endpoints for React UI Features ——
+
+
+class AIHintRequest(BaseModel):
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    correct_choice: str = Field("", max_length=500)
+    lesson_excerpts: list[str] | None = None
+
+
+@router.post("/ai/hint")
+def app_ai_hint(payload: AIHintRequest, session: LearnerSession) -> Any:
+    """Provides learner hint for a missed question based on lesson context."""
+    from app.modules import ai_tutor
+
+    res = ai_tutor.hint_for_missed_question(
+        prompt=payload.prompt,
+        correct_choice=payload.correct_choice,
+        lesson_excerpts=payload.lesson_excerpts,
+    )
+    return ok(json_safe(res))
+
+
+@router.get("/flashcards")
+def app_flashcards(session: LearnerSession, limit: int = Query(12, ge=1, le=50)) -> Any:
+    """Returns AI-generated flashcards for the active course / session."""
+    from app.modules import ai_tutor, content
+
+    res = ai_tutor.flashcards_for_session(
+        session=session,
+        list_lessons_fn=content.list_lessons,
+        get_bound_course_fn=content.get_bound_course,
+        max_cards=limit,
+    )
+    return ok(json_safe(res))
+
+
+class AIAuthorRequest(BaseModel):
+    prompt: str = Field(..., min_length=1, max_length=4000)
+    mode: str = Field("lesson", pattern="^(lesson|mcq|explanation|summary)$")
+    course_title: str = Field("", max_length=255)
+    source_chunks: list[dict[str, Any]] = Field(default_factory=list)
+
+
+@router.post("/ai/author")
+def app_ai_author(payload: AIAuthorRequest, session: LearnerSession) -> Any:
+    """Teacher AI authoring assistant for lesson content or questions."""
+    if not _is_staff(session):
+        raise AppApiError("Staff access required for authoring assistant", code="staff_required", status_code=403)
+
+    from app.modules.ai_authoring.service import author_assist
+
+    res = author_assist(
+        prompt=payload.prompt,
+        source_chunks=payload.source_chunks,
+        mode=payload.mode,
+        course_title=payload.course_title,
+    )
+    return ok(json_safe(res))
+
+
+class AIRemediationRequest(BaseModel):
+    skill_label: str = Field(..., min_length=1, max_length=255)
+    skill_code: str = Field("", max_length=100)
+    skill_description: str = Field("", max_length=1000)
+    course_title: str = Field("", max_length=255)
+    source_excerpt: str = Field("", max_length=4000)
+
+
+@router.post("/ai/remediation")
+def app_ai_remediation(payload: AIRemediationRequest, session: LearnerSession) -> Any:
+    """Generates remediation micro-lesson for a gap or weak skill."""
+    from app.modules.ai_assessment import service as ai_svc
+
+    res = ai_svc.generate_remediation_micro_lesson(
+        skill_label=payload.skill_label,
+        skill_code=payload.skill_code,
+        skill_description=payload.skill_description,
+        course_title=payload.course_title,
+        source_excerpt=payload.source_excerpt,
+    )
+    return ok(json_safe(res))
+
+
+class AISimplifyRequest(BaseModel):
+    body: str = Field(..., min_length=1, max_length=10000)
+    title: str = Field("", max_length=255)
+    level: str = Field("simpler", pattern="^(simpler|bulleted|bilingual)$")
+
+
+@router.post("/ai/simplify")
+def app_ai_simplify(payload: AISimplifyRequest, session: LearnerSession) -> Any:
+    """Simplifies technical text for student comprehension."""
+    from app.modules.ai_assessment import service as ai_svc
+
+    res = ai_svc.simplify_lesson_text(
+        payload.body,
+        title=payload.title,
+        level=payload.level,
+    )
+    return ok(json_safe(res))
+
+
+@router.get("/classes")
+def app_classes(session: LearnerSession) -> Any:
+    """Lists classes and their rosters within the active tenant."""
+    if not _is_staff(session):
+        raise AppApiError("Staff access required for class listing", code="staff_required", status_code=403)
+
+    from app.modules import school
+
+    tenant_id = session.get("tenant_id")
+    if not tenant_id:
+        return ok([])
+
+    res = school.list_classes_with_roster(tenant_id)
+    return ok(json_safe(res))
+
+
+# —— Teacher & Instructor Workflows (Phase 8) ——
+
+
+class TeacherLessonCreateIn(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    body_md: str = Field(default="", max_length=50000)
+    kind: str = Field(default="article", pattern="^(article|video|quiz)$")
+    video_url: str = Field(default="", max_length=1000)
+    status: str = Field(default="published", pattern="^(draft|published|archived)$")
+    course_id: UUID | None = None
+
+
+class TeacherLessonUpdateIn(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    body_md: str = Field(default="", max_length=50000)
+    kind: str | None = Field(default=None, pattern="^(article|video|quiz)$")
+    video_url: str = Field(default="", max_length=1000)
+    status: str | None = Field(default=None, pattern="^(draft|published|archived)$")
+
+
+class TeacherLessonStatusIn(BaseModel):
+    status: str = Field(..., pattern="^(draft|published|archived)$")
+
+
+class TeacherLessonReorderIn(BaseModel):
+    direction: str = Field(..., pattern="^(up|down)$")
+
+
+@router.post("/lessons")
+def app_teacher_lesson_create(
+    payload: TeacherLessonCreateIn,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import content
+
+    row = content.create_lesson(
+        tenant_id=session["tenant_id"],
+        title=payload.title.strip(),
+        body_md=payload.body_md,
+        lesson_type=payload.kind,
+        video_url=payload.video_url.strip(),
+        status=payload.status,
+        course_id=payload.course_id,
+    )
+    return ok({"lesson": json_safe(row)}, status_code=201)
+
+
+@router.put("/lessons/{lesson_id}")
+def app_teacher_lesson_update(
+    lesson_id: UUID,
+    payload: TeacherLessonUpdateIn,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import content
+
+    row = content.update_lesson(
+        tenant_id=session["tenant_id"],
+        lesson_id=lesson_id,
+        title=payload.title.strip(),
+        body_md=payload.body_md,
+        video_url=payload.video_url.strip(),
+        lesson_type=payload.kind,
+        status=payload.status,
+    )
+    if not row:
+        raise AppApiError("Lesson not found", code="not_found", status_code=404)
+    return ok({"lesson": json_safe(row)})
+
+
+@router.delete("/lessons/{lesson_id}")
+def app_teacher_lesson_delete(
+    lesson_id: UUID,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import content
+
+    deleted = content.delete_lesson(tenant_id=session["tenant_id"], lesson_id=lesson_id)
+    return ok({"deleted": bool(deleted)})
+
+
+@router.post("/lessons/{lesson_id}/status")
+def app_teacher_lesson_set_status(
+    lesson_id: UUID,
+    payload: TeacherLessonStatusIn,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import content
+
+    row = content.set_lesson_status(
+        tenant_id=session["tenant_id"],
+        lesson_id=lesson_id,
+        status=payload.status,
+    )
+    if not row:
+        raise AppApiError("Lesson not found", code="not_found", status_code=404)
+    return ok({"lesson": json_safe(row)})
+
+
+@router.post("/lessons/{lesson_id}/reorder")
+def app_teacher_lesson_reorder(
+    lesson_id: UUID,
+    payload: TeacherLessonReorderIn,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import content
+
+    content.reorder_lesson(
+        tenant_id=session["tenant_id"],
+        lesson_id=lesson_id,
+        direction=payload.direction,
+    )
+    return ok({"reordered": True})
+
+
+class TeacherQuestionCreateIn(BaseModel):
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    choices: list[str] = Field(default_factory=list)
+    correct_index: int = Field(default=0, ge=0)
+    qtype: str = Field(default="single", max_length=32)
+    topic: str = Field(default="", max_length=120)
+
+
+@router.post("/quiz/questions")
+def app_teacher_question_create(
+    payload: TeacherQuestionCreateIn,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import content
+
+    row = content.add_quiz_question(
+        tenant_id=session["tenant_id"],
+        prompt=payload.prompt.strip(),
+        choices=payload.choices,
+        correct_index=payload.correct_index,
+        qtype=payload.qtype,
+        topic=payload.topic.strip(),
+    )
+    return ok({"question": json_safe(row)}, status_code=201)
+
+
+@router.delete("/quiz/questions/{question_id}")
+def app_teacher_question_delete(
+    question_id: UUID,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import content
+
+    deleted = content.delete_quiz_question(tenant_id=session["tenant_id"], question_id=question_id)
+    return ok({"deleted": bool(deleted)})
+
+
+class TeacherManualClassesIn(BaseModel):
+    class_ids: list[str] = Field(default_factory=list)
+
+
+@router.get("/manuals/{manual_id}/classes")
+def app_teacher_manual_classes_get(
+    manual_id: UUID,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import manuals as manuals_mod
+
+    cids = manuals_mod.class_ids_for_manual(session["tenant_id"], manual_id)
+    return ok({"class_ids": cids})
+
+
+@router.post("/manuals/{manual_id}/classes")
+def app_teacher_manual_classes_set(
+    manual_id: UUID,
+    payload: TeacherManualClassesIn,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import manuals as manuals_mod
+
+    updated = manuals_mod.set_manual_classes(
+        session["tenant_id"],
+        manual_id=manual_id,
+        class_ids=payload.class_ids,
+    )
+    return ok({"class_ids": updated})
+
+
+class TeacherClassCreateIn(BaseModel):
+    class_code: str = Field(..., min_length=1, max_length=64)
+    class_name: str = Field(..., min_length=1, max_length=255)
+    subject: str = Field(default="", max_length=120)
+    term: str = Field(default="", max_length=64)
+
+
+@router.post("/classes")
+def app_teacher_class_create(
+    payload: TeacherClassCreateIn,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import school
+
+    row = school.create_class(
+        session["tenant_id"],
+        class_code=payload.class_code.strip(),
+        class_name=payload.class_name.strip(),
+        subject=payload.subject.strip(),
+        term=payload.term.strip(),
+    )
+    return ok({"class": json_safe(row)}, status_code=201)
+
+
+@router.get("/classes/{class_id}")
+def app_teacher_class_detail(
+    class_id: UUID,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import school
+
+    snap = school.class_workspace_snapshot(session["tenant_id"], class_id)
+    if not snap:
+        for c in school.list_classes_with_roster(session["tenant_id"]):
+            if str(c.get("id")) == str(class_id):
+                return ok({"class": json_safe(c)})
+        raise AppApiError("Class not found", code="not_found", status_code=404)
+    return ok({"class": json_safe(snap)})
+
+
+@router.get("/teacher/dashboard")
+def app_teacher_dashboard(session: LearnerSession) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import school
+    from app.modules import quiz as quiz_mod
+
+    tid = session["tenant_id"]
+    snap = school.school_snapshot(tid)
+    attempts = quiz_mod.list_attempts_for_tenant(tid, limit=20)
+    lessons = snap.get("chapters") or []
+    classes = snap.get("classes") or []
+
+    return ok(
+        {
+            "overview": {
+                "student_count": snap.get("student_count", 0),
+                "teacher_count": snap.get("teacher_count", 0),
+                "class_count": snap.get("class_count", 0),
+                "lesson_count": snap.get("chapter_count", 0),
+                "binding_count": snap.get("binding_count", 0),
+            },
+            "course": snap.get("course"),
+            "classes": json_safe(classes),
+            "lessons": [_lesson_card(l, set()) for l in lessons],
+            "recent_attempts": [_attempt_card(a) for a in attempts],
+        }
+    )
+
+
+# --- Phase 9: School Administration & Institution Management ---
+
+
+class TeacherCreateIn(BaseModel):
+    teacher_code: str = Field(..., min_length=1, max_length=64)
+    name: str = Field(..., min_length=1, max_length=120)
+    email: str = Field(..., min_length=3, max_length=160)
+
+
+@router.get("/school-admin/overview")
+def app_school_admin_overview(session: LearnerSession) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import school
+    from app import db
+
+    tid = session["tenant_id"]
+    snap = school.school_snapshot(tid)
+    tenant = db.get_tenant(tid) or {}
+
+    classes = snap.get("classes") or []
+    student_count = snap.get("student_count", 0)
+    teacher_count = snap.get("teacher_count", 0)
+    class_count = snap.get("class_count", 0)
+    binding_count = snap.get("binding_count", 0)
+
+    from app.modules import quiz as quiz_mod
+
+    attempts = quiz_mod.list_attempts_for_tenant(tid, limit=100)
+
+    figures = {
+        "learnersLaunched": student_count,
+        "quizAttempts": len(attempts),
+        "moodleUsers": student_count + teacher_count,
+        "moodleBindings": binding_count,
+        "classesLinks": class_count,
+    }
+
+    inst_name = tenant.get("name") or "EdVidura Institute"
+    inst_code = tenant.get("slug") or "INST-01"
+
+    return ok(
+        {
+            "institution": {
+                "id": str(tenant.get("id") or tid),
+                "name": inst_name,
+                "code": inst_code,
+                "status": tenant.get("status", "active"),
+                "segment": tenant.get("segment", "school"),
+            },
+            "snapshot": {
+                "student_count": student_count,
+                "teacher_count": teacher_count,
+                "class_count": class_count,
+                "chapter_count": snap.get("chapter_count", 0),
+                "binding_count": binding_count,
+                "admin_count": snap.get("admin_count", 1),
+            },
+            "figures": figures,
+            "classes": json_safe(classes),
+        }
+    )
+
+
+@router.get("/teachers")
+def app_teachers_list(session: LearnerSession) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import school
+
+    tid = session["tenant_id"]
+    teachers = school.list_teachers(tid)
+    return ok({"teachers": json_safe(teachers)})
+
+
+@router.post("/teachers")
+def app_teacher_create(
+    payload: TeacherCreateIn,
+    session: LearnerSession,
+) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import school
+
+    tid = session["tenant_id"]
+    row = school.create_teacher(
+        tid,
+        teacher_code=payload.teacher_code.strip(),
+        name=payload.name.strip(),
+        email=payload.email.strip(),
+    )
+    return ok({"teacher": json_safe(row)}, status_code=201)
+
+
+@router.get("/students")
+def app_students_list(session: LearnerSession) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    from app.modules import school
+
+    tid = session["tenant_id"]
+    students = school.list_school_students(tid)
+    return ok({"students": json_safe(students)})

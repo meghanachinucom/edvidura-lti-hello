@@ -1,0 +1,111 @@
+import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { PageHeading } from "@/components/shared/PageHeading";
+import { StatusGem } from "@/components/shared/StatusGem";
+
+export const Route = createFileRoute("/_shell/lti-integration")({ component: Page });
+const gateways = [
+  {
+    name: "Moodle · Riverside High",
+    client: "edvidura-riv-01",
+    deployment: "DEP-RIV-001",
+    endpoint: "https://moodle.riverside.edu/lti/launch",
+    latency: "84 ms",
+  },
+  {
+    name: "Moodle · Skills Institute",
+    client: "edvidura-siti-01",
+    deployment: "DEP-SITI-001",
+    endpoint: "https://lms.skillsinstitute.edu/lti/launch",
+    latency: "112 ms",
+  },
+];
+const circles = [
+  {
+    name: "Circuit Crafters",
+    members: 8,
+    focus: "Domestic wiring",
+    assignment: "Circuit safety review",
+  },
+  {
+    name: "Voltage Voyagers",
+    members: 6,
+    focus: "Electrical safety",
+    assignment: "Safe isolation practice",
+  },
+  {
+    name: "Current Collective",
+    members: 7,
+    focus: "Ohm’s law",
+    assignment: "Resistance problem set",
+  },
+];
+function Page() {
+  const [tested, setTested] = useState<string[]>([]);
+  return (
+    <div className="mx-auto w-full max-w-content space-y-6 px-4 pb-24 pt-8 tablet:pb-8">
+      <PageHeading text="LMS connections" />
+      <div className="grid gap-4 tablet:grid-cols-2">
+        {gateways.map((g) => (
+          <article
+            key={g.client}
+            className="space-y-4 rounded-surface border border-border bg-surface p-5"
+          >
+            <header className="flex items-center justify-between gap-2">
+              <h2 className="font-heading text-lg text-ink">{g.name}</h2>
+              <StatusGem tone="synced">Connected</StatusGem>
+            </header>
+            <span className="inline-flex rounded-full bg-surface-raised px-3 py-1 text-xs text-ink">
+              LTI 1.3
+            </span>
+            <dl className="grid gap-3 text-sm">
+              <div>
+                <dt className="text-ink-muted">Client ID</dt>
+                <dd className="break-all font-medium text-ink">{g.client}</dd>
+              </div>
+              <div>
+                <dt className="text-ink-muted">Deployment ID</dt>
+                <dd className="text-ink">{g.deployment}</dd>
+              </div>
+              <div>
+                <dt className="text-ink-muted">Endpoint</dt>
+                <dd className="break-all text-ink">{g.endpoint}</dd>
+              </div>
+              <div>
+                <dt className="text-ink-muted">Ping latency</dt>
+                <dd className="text-ink">{g.latency}</dd>
+              </div>
+            </dl>
+            <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+              <button className="btn-secondary" onClick={() => setTested([...tested, g.client])}>
+                {tested.includes(g.client) ? "Handshake successful" : "Test handshake"}
+              </button>
+              <button className="btn-primary">Launch</button>
+            </div>
+          </article>
+        ))}
+      </div>
+      <section
+        className="space-y-4 rounded-surface border border-border bg-surface p-5"
+        aria-labelledby="groups"
+      >
+        <header>
+          <h2 id="groups" className="font-heading text-xl text-ink">
+            Group services
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">Study circles · Synchronized with SIS</p>
+        </header>
+        <div className="grid gap-3 tablet:grid-cols-3">
+          {circles.map((c) => (
+            <article key={c.name} className="space-y-2 rounded-surface border border-border p-4">
+              <h3 className="font-heading text-ink">{c.name}</h3>
+              <p className="text-sm text-ink">{c.members} members</p>
+              <p className="text-sm text-ink-muted">Focus: {c.focus}</p>
+              <p className="text-sm text-ink-muted">Group assignment: {c.assignment}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}

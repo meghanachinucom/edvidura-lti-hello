@@ -129,9 +129,9 @@ DEMO = {
         "questions": [
             (
                 "rq1",
-                "Which school owns this Algebra course?",
-                ["Riverside High", "Lakeside Academy", "Any school", "Moodle HQ"],
-                0,
+                "In algebra, a variable is best described as…",
+                ["A constant number that never changes", "A symbol that represents a quantity that can vary", "An arithmetic operator like + or -", "The answer to an examination"],
+                1,
             ),
             (
                 "rq2",
@@ -141,9 +141,9 @@ DEMO = {
             ),
             (
                 "rq3",
-                "Can Lakeside teachers see Riverside quiz attempts?",
-                ["Yes, always", "Only on Fridays", "No — tenants are isolated", "Only if names match"],
-                2,
+                "Solve for x: 3x - 5 = 10",
+                ["x = 3", "x = 5", "x = 15", "x = 25"],
+                1,
             ),
         ],
     },
@@ -578,7 +578,11 @@ def _seed_school(key: str, school: dict) -> None:
 
 
 def main() -> None:
+    import os
     for key, school in DEMO.items():
+        if key == "lakeside" and not os.environ.get("SEED_LAKESIDE_DEMO"):
+            print(f"Skipping {key} (Riverside-only single demo tenant mode)")
+            continue
         _seed_school(key, school)
 
     # Isolation smoke check

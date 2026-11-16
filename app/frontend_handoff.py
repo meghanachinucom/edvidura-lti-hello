@@ -43,10 +43,12 @@ def spa_origin() -> str:
     return (get_settings().frontend_origin or "http://127.0.0.1:3000").rstrip("/")
 
 
-def launch_destination(token: str, *, shell: bool = False) -> str:
+def launch_destination(token: str, *, shell: bool = False, code: str | None = None) -> str:
     tok = (token or "").strip()
+    c = (code or "").strip()
+    param = f"code={c}" if c else f"token={tok}"
     if shell or not spa_enabled():
-        return f"/launch-hub?token={tok}"
+        return f"/launch-hub?{param}"
     from app.settings import get_settings
 
     settings = get_settings()
@@ -54,6 +56,6 @@ def launch_destination(token: str, *, shell: bool = False) -> str:
         extra = (os.getenv("FRONTEND_ORIGIN") or "").rstrip("/")
         base = (settings.app_base_url or "").rstrip("/")
         if extra and extra not in {base, f"{base}/app"}:
-            return f"{extra}/?token={tok}"
-        return f"/app/?token={tok}"
-    return f"{spa_origin()}/?token={tok}"
+            return f"{extra}/?{param}"
+        return f"/app/?{param}"
+    return f"{spa_origin()}/?{param}"

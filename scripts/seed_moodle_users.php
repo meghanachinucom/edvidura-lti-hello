@@ -32,13 +32,6 @@ $users = [
     ['lakshmi', 'Lakshmi', 'Reddy', 'lakshmi.reddy@zphs.vijayawada.edu.in', 'student'],
     ['venkat', 'Venkat', 'Naidu', 'venkat.naidu@zphs.vijayawada.edu.in', 'student'],
     ['sravani', 'Sravani', 'Devi', 'sravani.devi@zphs.vijayawada.edu.in', 'student'],
-    // Lakeside peer
-    ['lakeside_admin', 'Lakeside', 'Admin', 'admin@lakeside.test', 'schooladmin'],
-    ['lakeside_helen', 'Helen', 'Park', 'helen.park@lakeside.test', 'editingteacher'],
-    ['lakeside_omar', 'Omar', 'Haddad', 'omar.haddad@lakeside.test', 'editingteacher'],
-    ['lakeside_dana', 'Dana', 'Rivera', 'dana.rivera@lakeside.test', 'student'],
-    ['lakeside_evan', 'Evan', 'Kim', 'evan.kim@lakeside.test', 'student'],
-    ['lakeside_fay', 'Fay', 'Hassan', 'fay.hassan@lakeside.test', 'student'],
 ];
 
 foreach ($teachers as $grade => [$username, $firstname, $lastname]) {

@@ -25,12 +25,24 @@ class MemoryCache:
             return None
         return value
 
+    def pop(self, key: str) -> Any:
+        return self._pop(key)
+
     def set(self, key: str, value: Any, exp: int | None = None) -> None:
         if value is None:
             self._store.pop(key, None)
             return
         expires = (time.time() + exp) if exp else None
         self._store[key] = (value, expires)
+
+    def _pop(self, key: str) -> Any:
+        item = self._store.pop(key, None)
+        if item is None:
+            return None
+        value, expires = item
+        if expires is not None and time.time() > expires:
+            return None
+        return value
 
 
 def _pack(value: Any) -> dict[str, Any]:
@@ -138,6 +150,32 @@ class SharedCache:
             self._db_ok = False
             logger.warning("shared_cache set failed; memory-only: %s", exc)
 
+    def pop(self, key: str) -> Any:
+        local = self._local.pop(key)
+        if not self._db_ok:
+            return local
+        try:
+            from app import db
+
+            with db.connect() as conn:
+                with conn.transaction():
+                    row = conn.execute(
+                        """
+                        DELETE FROM shared_cache
+                        WHERE cache_key = %s
+                          AND (expires_at IS NULL OR expires_at > now())
+                        RETURNING payload
+                        """,
+                        (key,),
+                    ).fetchone()
+            if not row:
+                return local
+            return _unpack(row["payload"])
+        except Exception as exc:  # noqa: BLE001
+            self._db_ok = False
+            logger.warning("shared_cache atomic pop failed; using local memory: %s", exc)
+            return local
+
     def _delete_db(self, key: str) -> None:
         if not self._db_ok:
             return
@@ -190,3 +228,25 @@ def build_launch_cache() -> MemoryCache | SharedCache:
 
 # Process-wide so /lti/login and /lti/launch share state/nonce (and across workers via DB)
 LAUNCH_CACHE = build_launch_cache()
+
+
+def create_exchange_code(quiz_ctx: dict[str, Any], ttl_sec: int = 60) -> str:
+    """Generate a high-entropy, short-lived exchange code bound to launch context."""
+    import secrets
+    import hashlib
+
+    code = secrets.token_urlsafe(32)
+    # Store with prefix so exchange keys are partitioned
+    cache_key = f"auth_exc:{hashlib.sha256(code.encode()).hexdigest()}"
+    LAUNCH_CACHE.set(cache_key, quiz_ctx, exp=ttl_sec)
+    return code
+
+
+def redeem_exchange_code(code: str) -> dict[str, Any] | None:
+    """Atomically consume the exchange code. Returns quiz_ctx or None."""
+    import hashlib
+
+    if not code or not isinstance(code, str):
+        return None
+    cache_key = f"auth_exc:{hashlib.sha256(code.strip().encode()).hexdigest()}"
+    return LAUNCH_CACHE.pop(cache_key)
