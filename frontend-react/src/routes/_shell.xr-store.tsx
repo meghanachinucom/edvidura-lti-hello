@@ -150,6 +150,7 @@ export function XrStorePage() {
           </p>
           <div className="flex items-center gap-3 pt-2">
             <button
+              id="launch-3d-lab-btn"
               type="button"
               onClick={() => setSelectedLab(XR_LABS[0]!)}
               className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3 font-bold text-slate-950 hover:bg-amber-400 transition shadow-lg"
