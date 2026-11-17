@@ -496,6 +496,7 @@ export interface AppState {
     sealed_ok: number;
     synced_to_lms: number;
     items: Array<{
+      attempt_id?: string;
       learner_name: string;
       percent: number;
       grade_sent: boolean;

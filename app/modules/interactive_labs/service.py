@@ -9,10 +9,94 @@ from uuid import UUID
 from app import db
 from app.modules.sme.service import split_manual_sections
 
+MAX_BODY_MD_CHARS = 100_000
+MAX_PACK_JSON_CHARS = 48_000
+MAX_CALLOUTS = 24
+MAX_PRESETS = 12
+ALLOWED_PLAYGROUNDS = frozenset(
+    {
+        "cartesian",
+        "number_line",
+        "geometry",
+        "science_demo",
+        "match_tap",
+        "quiz_micro",
+    }
+)
+ALLOWED_AGE_BANDS = frozenset({"foundations", "core", "secondary"})
+ALLOWED_ACTIONS = frozenset({"focus", "set", "cite"})
+ALLOWED_TARGETS = frozenset({"line", "rise", "run", "b"})
+
 
 def _slug(text: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
     return (s or "item")[:64]
+
+
+def sanitize_lab_pack(raw: dict[str, Any] | None) -> dict[str, Any]:
+    """Allowlist + size-bound pack payload before persistence."""
+    src = raw if isinstance(raw, dict) else {}
+    playground = str(src.get("playground_type") or "cartesian").strip().lower()
+    if playground not in ALLOWED_PLAYGROUNDS:
+        playground = "cartesian"
+    band = str(src.get("age_band") or "secondary").strip().lower()
+    if band not in ALLOWED_AGE_BANDS:
+        band = "secondary"
+    callouts_in = src.get("callouts") if isinstance(src.get("callouts"), list) else []
+    callouts: list[dict[str, Any]] = []
+    for item in callouts_in[:MAX_CALLOUTS]:
+        if not isinstance(item, dict):
+            continue
+        action = str(item.get("action") or "focus").strip().lower()
+        if action not in ALLOWED_ACTIONS:
+            action = "focus"
+        target = str(item.get("target") or "line").strip().lower()
+        if target not in ALLOWED_TARGETS:
+            target = "line"
+        callouts.append(
+            {
+                "id": _slug(str(item.get("id") or item.get("label") or "idea"))[:64],
+                "label": str(item.get("label") or "Idea")[:120],
+                "body": str(item.get("body") or "")[:400],
+                "action": action,
+                "target": target,
+            }
+        )
+    presets_in = src.get("presets") if isinstance(src.get("presets"), list) else []
+    presets: list[dict[str, Any]] = []
+    for item in presets_in[:MAX_PRESETS]:
+        if not isinstance(item, dict):
+            continue
+        try:
+            m = float(item.get("m"))
+            b = float(item.get("b"))
+        except (TypeError, ValueError):
+            continue
+        if abs(m) > 20 or abs(b) > 20:
+            continue
+        presets.append(
+            {
+                "label": str(item.get("label") or f"m={m}")[:40],
+                "m": round(m, 4),
+                "b": round(b, 4),
+            }
+        )
+    out = {
+        "title": str(src.get("title") or "Interactive chapter")[:200],
+        "chapter_slug": _slug(str(src.get("chapter_slug") or "overview"))[:80],
+        "playground_type": playground,
+        "age_band": band,
+        "callouts": callouts,
+        "presets": presets,
+        "textbook_excerpt": str(src.get("textbook_excerpt") or "")[:1200],
+        "note": str(src.get("note") or "")[:300],
+    }
+    encoded = json.dumps(out, separators=(",", ":"))
+    if len(encoded) > MAX_PACK_JSON_CHARS:
+        out["callouts"] = out["callouts"][:8]
+        out["textbook_excerpt"] = out["textbook_excerpt"][:400]
+        out["note"] = "Pack truncated for size limits."
+    return out
 
 
 def propose_lab_pack(
@@ -27,6 +111,8 @@ def propose_lab_pack(
     Does not assume Class 1–10 content — only inspects the uploaded/pasted body.
     """
     text = (body_md or "").strip()
+    if len(text) > MAX_BODY_MD_CHARS:
+        text = text[:MAX_BODY_MD_CHARS]
     low = text.lower()
     sections = split_manual_sections(text)
     slug = (chapter_slug or "").strip() or (
@@ -125,21 +211,24 @@ def propose_lab_pack(
             {"label": "Flat", "m": 0, "b": 2},
         ]
 
-    return {
-        "product": "Adaptive interactive lab",
-        "state": "draft_proposal",
-        "title": chapter_title,
-        "chapter_slug": slug,
-        "playground_type": playground,
-        "age_band": band,
-        "callouts": callouts,
-        "presets": presets,
-        "textbook_excerpt": text[:1200],
-        "note": (
-            "Draft from this school's text only — teacher reviews before publish. "
-            "No global Class 1–10 corpus required."
-        ),
-    }
+    clean = sanitize_lab_pack(
+        {
+            "title": chapter_title[:200],
+            "chapter_slug": slug,
+            "playground_type": playground,
+            "age_band": band,
+            "callouts": callouts,
+            "presets": presets,
+            "textbook_excerpt": text[:1200],
+            "note": (
+                "Draft from this school's text only — teacher reviews before publish. "
+                "No global Class 1–10 corpus required."
+            ),
+        }
+    )
+    clean["product"] = "Adaptive interactive lab"
+    clean["state"] = "draft_proposal"
+    return clean
 
 
 def upsert_lab_pack(
@@ -151,15 +240,18 @@ def upsert_lab_pack(
     created_by: str = "",
     status: str = "draft",
 ) -> dict[str, Any]:
-    """Save teacher-approved (or draft) pack for a tenant chapter."""
-    slug = (chapter_slug or "overview").strip() or "overview"
-    st = status if status in {"draft", "published", "archived"} else "draft"
-    title = str(pack.get("title") or slug)
-    playground = str(pack.get("playground_type") or "cartesian")
-    band = str(pack.get("age_band") or "secondary")
-    if band not in {"foundations", "core", "secondary"}:
-        band = "secondary"
-    body = json.dumps(pack)
+    """Save teacher-approved (or draft) pack for a tenant chapter.
+
+    Publish must go through ``publish_lab_pack`` — save never accepts published.
+    """
+    clean = sanitize_lab_pack(pack)
+    slug = _slug(chapter_slug or clean.get("chapter_slug") or "overview")
+    # Security: only draft/archived via upsert; publish is a separate action.
+    st = "archived" if status == "archived" else "draft"
+    title = str(clean.get("title") or slug)[:200]
+    playground = str(clean.get("playground_type") or "cartesian")
+    band = str(clean.get("age_band") or "secondary")
+    body = json.dumps(clean, separators=(",", ":"))
     mid = str(manual_id) if manual_id else None
 
     with db.tenant_connection(tenant_id) as conn:
@@ -316,7 +408,8 @@ def _row(row: Any) -> dict[str, Any]:
     pack = d.get("pack")
     if isinstance(pack, str):
         try:
-            d["pack"] = json.loads(pack)
+            pack = json.loads(pack)
         except Exception:  # noqa: BLE001
-            d["pack"] = {}
+            pack = {}
+    d["pack"] = sanitize_lab_pack(pack if isinstance(pack, dict) else {})
     return d

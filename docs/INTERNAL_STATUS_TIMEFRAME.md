@@ -1,7 +1,7 @@
 # EdVidura — Internal status & timeframe
 
 **Audience:** Internal team (sales, product, leadership)  
-**Updated:** 4 Nov 2026  
+**Updated:** 16 Nov 2026  
 **Hard deadline:** **March 2027**  
 **Target:** **All 38 product blocks built and sellable by March**  
 **HTML share copy:** [INTERNAL_STATUS_TIMEFRAME.html](INTERNAL_STATUS_TIMEFRAME.html)
@@ -10,82 +10,74 @@ Same app for every client. We turn feature **blocks** on per deal (Lego model). 
 
 ---
 
-## Maturity levels (simple)
+## Maturity levels
 
-### TRL — how ready is the product?
-**Scale: 1 → 9** (idea → fully battle-tested operations)
+### TRL — Technology Readiness Level (1 → 9)
 
-| | |
-|--|--|
-| **Today (overall)** | **TRL 6** — live LTI + SPA + production |
-| Core classroom (LTI, quiz, grades home) | **TRL 6–7** |
-| **Target by March** | Overall **TRL 7** on the sell set; every block at least **demo-ready Thin or Live** (no Park left on the sales sheet) |
+| Scope | Level | Notes |
+|-------|------:|-------|
+| **Overall product (today)** | **TRL 6–7** | In-house ship set Live; production LTI + SPA |
+| Core classroom + Waves A–C | **TRL 6–7** | Catalog Live; XR runtimes / roster DB still deepen per deal |
+| Park / research / content packs | **TRL 2–4** | Concept → lab prototype |
+| **Target by March 2027** | **TRL 7** overall on sell set | No Park left on the customer sheet |
 
-### TLA — how aligned with learning architecture?
-**Scale: CMM 1 → 4** (basic data → full enterprise mesh)
+### TLA — Total Learning Architecture (CMM 1 → 4)
 
-| | |
-|--|--|
-| **Achieved** | **CMM-2** |
-| **Operating** | **CMM-3** |
-| **Target by March** | Hold **CMM-3 operating**; deepen competency / evidence with the 38-block finish (CMM-4 federation still optional, not blocking March) |
+| Metric | Today | March target |
+|--------|-------|----------------|
+| **Achieved CMM** | **CMM-2** | Hold + deepen |
+| **Operating CMM** | **CMM-3** | Hold **CMM-3**; competency / evidence deeper with 38-block finish |
+| CMM-4 (federation) | Optional | Not blocking March |
 
----
-
-## What’s completed
-
-- Classroom product live: lessons, quiz, Ask Vidura, handbooks, progress, teacher gradebook / diagnostics  
-- Lego packaging (Steps 1–3): full **38-block catalog**, presets, sales desk, Park ranking metadata  
-- Production on Railway; sales one-pager exists  
+Live check: `GET /api/v1/tla/maturity` (admin key). Module: `app.modules.tla`. Docs: [TLA.md](TLA.md).
 
 ---
 
-## What’s on track
+## Block completion (catalog = 38)
 
-- **March 2027 = all 38 blocks built** (each at least Thin/Live and selectable on `/sales`)  
-- Parallel waves — not “Wave A only”  
-- One codebase; tenant merge still turns packs on/off per client  
-- Sell Live/Thin continuously while the rest are un-parked  
+| State | Count | Meaning |
+|-------|------:|---------|
+| **Live** | **30** | In-house shippable set (Thin cleared) |
+| **Thin** | **0** | — |
+| **Shippable (Live)** | **30** | Ready to sell on `/sales` |
+| **Partner** | **1** | `virtual_classroom` (attach, not in-house build) |
+| **Park** | **7** | Content / research / GrantsPro |
+| In-house build queue | **0** | Waves A–C + earlier Thin → Live |
+
+### Live (30)
+Spine + classroom + Wave A/B/C + earlier Thin (TLA, micro-learning, lessons, manuals, EvalPro, ChatPro, Knowledge Pro, XR catalog, workforce boards, …).
+
+### Still Park (7)
+`train_the_trainer`, `bits_math`, `grants_pro`, `atoms`, `coda`, `a_pro`, `pwe`  
+(+ partner attach: `virtual_classroom`)
 
 ---
 
-## What’s next (to March — all 38)
+## What’s completed (platform)
+
+- Classroom product live: lessons, quiz, Ask Vidura, handbooks, progress, teacher EvalPro / diagnostics  
+- Lego packaging (Steps 1–3): 38-block catalog, presets, sales desk  
+- Waves A–C + SPA; motion page `/product/motion`  
+- Adaptive interactive labs MVP  
+- **BE harden (Nov):** lab packs, airgap, AuditPro, search, rate limits, security headers  
+- **Thin → Live (Nov):** Wave A verify + empty states; Wave B curated XR catalog (input sanitize, fail-closed SPA); Wave C empty boards (`examples=1` staff seed only); earlier Thin promoted  
+- Production: https://edvidura-app-production.up.railway.app  
+
+---
+
+## What’s next (to March — remaining 8)
 
 | When | Focus |
 |------|--------|
-| **Nov** | **Waves A–C Thin shipped** (Audit→workforce); in-house queue empty; research/partner remain |
-| **Dec** | Harden Thin → Live per deal; research briefs (ATOMS/CODA/A-Pro/PWE); partner packaging |
-| **Jan** | XR / Immersive / AR / VR maintainer Thin; start apprenticeship + quals + sim-to-real |
-| **Feb** | Enterprise blocks + GrantsPro MVP; partner integrations wired where needed (Virtual Classroom attach) |
-| **March** | **Freeze · harden · all 38 sellable** — no Park left on the customer sheet |
-
-### Build meaning by March
-
-Every sheet name must be **selectable and demoable** as Live or Thin:
-
-- Already Live/Thin → harden  
-- In-house Park (queue 1–11) → build to Thin/Live  
-- Research (ATOMS, CODA, A-Pro, PWE) → define + ship MVP Thin  
-- Content (BITS MATH, Train-the-Trainer) → ship as content packs + UI  
-- Partner (LMS Core, Virtual Classroom) → **integrated / launch-ready attach** (counts as “built” for sellability)  
-
----
-
-## How long — March mandate
-
-| Scope | By when | Call |
-|-------|---------|------|
-| Sell current Live + Thin packs | **Now** | Ready |
-| Wave A | **Dec 2026** | Required |
-| Wave B (XR / 3D / Immersive / AR / VR) | **Jan 2027** | Required |
-| Wave C + Grants + research MVPs | **Feb 2027** | Required |
-| **All 38 blocks sellable** | **March 2027** | **Hard deadline** |
+| **Nov–Dec** | Research briefs (ATOMS/CODA/A-Pro/PWE); content pack templates; deepen XR runtime / workforce DB per deal |
+| **Jan–Feb** | Partner packaging (Virtual Classroom attach); GrantsPro MVP; BITS MATH / Train-the-Trainer packs |
+| **March** | **Freeze · all 38 sellable** — no Park left on the customer sheet |
 
 ---
 
 ## One-line for leadership
 
-EdVidura is **TRL 6** today (target **TRL 7** by March), TLA **CMM-2 / CMM-3**. Lego sales work now. **All 38 blocks must be built to sellable Thin/Live (or partner-attached) by March 2027** — Nov–Mar is a full parallel un-park, not a Wave-A-only plan.
+EdVidura is **TRL 6–7** (target **TRL 7** by March), TLA **CMM-2 achieved / CMM-3 operating**. **30 of 38** blocks are **Live** and sellable; Thin cleared on the in-house set. Remaining **8** are partner/content/research — due sellable by **March 2027**.
 
 ---
 

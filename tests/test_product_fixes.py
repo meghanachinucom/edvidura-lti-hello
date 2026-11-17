@@ -12,6 +12,8 @@ def test_rate_limits_cover_coach_and_quiz():
     assert "/quiz" in prefixes
     assert "/api/v1/app/coach" in prefixes
     assert "/api/v1/app/quiz" in prefixes
+    assert "/api/v1/app/labs/" in prefixes
+    assert "/api/v1/app/xr/" in prefixes
 
 
 def test_ghost_hard_gate_default_on():

@@ -298,7 +298,7 @@ def competency_catalog(tenant_id: UUID | str) -> dict[str, dict[str, Any]]:
 
 
 def passport_summary(tenant_id: UUID | str) -> dict[str, Any]:
-    """Skills Passport thin view — catalog + remediation hooks (Wave A)."""
+    """Skills Passport — catalog + remediation hooks (Wave A Live)."""
     skills = ensure_default_skills(tenant_id)
     entries: list[dict[str, Any]] = []
     for s in skills:
@@ -323,7 +323,7 @@ def passport_summary(tenant_id: UUID | str) -> dict[str, Any]:
     return {
         "product": "Skills Passport",
         "wave": "A",
-        "state": "thin",
+        "state": "live",
         "skill_count": len(entries),
         "skills": entries,
         "levels": ["novice", "developing", "proficient", "advanced"],

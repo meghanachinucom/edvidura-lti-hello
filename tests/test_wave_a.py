@@ -1,4 +1,4 @@
-"""Wave A — AuditPro, IQ review, Skills Passport, air-gap pack."""
+"""Wave A — AuditPro, IQ review, Skills Passport, air-gap pack (Live)."""
 from __future__ import annotations
 
 from app.modules.airgap import pack_status
@@ -6,7 +6,7 @@ from app.modules.iq_review import item_quality_report
 from app.modules.tenancy.blocks import BLOCKS, merge_blocks
 
 
-def test_wave_a_blocks_are_thin():
+def test_wave_a_blocks_are_live():
     for bid in (
         "audit_pro",
         "iq_review_pattern",
@@ -14,7 +14,7 @@ def test_wave_a_blocks_are_thin():
         "document_search",
         "private_air_gapped_ai",
     ):
-        assert BLOCKS[bid]["state"] == "thin", bid
+        assert BLOCKS[bid]["state"] == "live", bid
 
 
 def test_wave_a_pack_preset_enables_caps():
@@ -32,12 +32,13 @@ def test_airgap_pack_status_shape():
     status = pack_status()
     assert status["product"].startswith("Private Air")
     assert status["wave"] == "A"
+    assert status["state"] == "live"
     assert isinstance(status["checks"], list)
     assert len(status["checks"]) >= 4
 
 
 def test_iq_review_empty_tenant_safe(monkeypatch):
-    """Without DB rows, report still returns thin product envelope."""
+    """Without DB rows, report still returns live product envelope."""
 
     class _FakeConn:
         def execute(self, *_a, **_k):
@@ -62,4 +63,5 @@ def test_iq_review_empty_tenant_safe(monkeypatch):
     )
     report = item_quality_report("00000000-0000-0000-0000-000000000001")
     assert report["product"] == "IQ review pattern"
+    assert report["state"] == "live"
     assert report["questions"] == []

@@ -1,4 +1,4 @@
-"""Wave B — XR Store / assets / labs / AR / VR maintainer."""
+"""Wave B — XR Store / assets / labs / AR / VR maintainer (Live catalog)."""
 from __future__ import annotations
 
 from app.modules.tenancy.blocks import BLOCKS, merge_blocks
@@ -13,7 +13,7 @@ from app.modules.xr import (
 )
 
 
-def test_wave_b_blocks_are_thin():
+def test_wave_b_blocks_are_live():
     for bid in (
         "xr_store",
         "asset_repo_3d",
@@ -22,7 +22,7 @@ def test_wave_b_blocks_are_thin():
         "ar_assistance",
         "vr_maintainer_training",
     ):
-        assert BLOCKS[bid]["state"] == "thin", bid
+        assert BLOCKS[bid]["state"] == "live", bid
 
 
 def test_wave_b_preset():
@@ -34,6 +34,7 @@ def test_wave_b_preset():
 def test_store_catalog_and_overview():
     pack = store_catalog()
     assert pack["wave"] == "B"
+    assert pack["state"] == "live"
     assert pack["count"] >= 4
     assert any(a["id"] == "xr-cartesian-3d" for a in pack["apps"])
     labs = immersive_labs()
@@ -48,4 +49,10 @@ def test_store_catalog_and_overview():
     vr = vr_maintainer_pack()
     assert vr["count"] >= 1
     overview = wave_b_overview()
+    assert overview["state"] == "live"
     assert len(overview["products"]) == 6
+
+
+def test_store_catalog_rejects_junk_category():
+    pack = store_catalog(category="../etc;drop")
+    assert pack["count"] == len(store_catalog()["apps"])

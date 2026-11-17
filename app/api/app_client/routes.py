@@ -2010,17 +2010,47 @@ def app_document_search(
         query,
         limit=limit,
     )
+    safe_hits = [
+        {
+            "id": h.get("id"),
+            "manual_id": h.get("manual_id"),
+            "version": h.get("version"),
+            "page_no": h.get("page_no"),
+            "slug": h.get("slug"),
+            "title": h.get("title"),
+            "score": h.get("score"),
+            "excerpt": str(h.get("excerpt") or "")[:280],
+        }
+        for h in hits
+        if isinstance(h, dict)
+    ]
     return ok(
         json_safe(
             {
                 "product": "Document Search",
                 "wave": "A",
-                "state": "thin",
+                "state": "live",
                 "query": query,
-                "hits": hits,
+                "hits": safe_hits,
             }
         )
     )
+
+
+@router.get("/audit-pro/attempts/{attempt_id}/verify")
+def app_audit_pro_verify(attempt_id: UUID, session: LearnerSession) -> Any:
+    """Wave A Live — re-seal and verify one attempt (teachers)."""
+    from app.modules import audit_pro as audit_mod
+
+    if not _is_staff(session):
+        raise AppApiError("AuditPro verify is for teachers.", code="forbidden", status_code=403)
+    _require_cap(
+        session, "audit_pro", message="AuditPro is not enabled for this tenant."
+    )
+    result = audit_mod.verify_attempt_receipt(session["tenant_id"], attempt_id)
+    if not result.get("ok") and result.get("reason") == "Attempt not found":
+        raise AppApiError("Attempt not found", code="not_found", status_code=404)
+    return ok(json_safe(result))
 
 
 @router.get("/airgap-pack")
@@ -2151,18 +2181,19 @@ def app_xr_overview(session: LearnerSession) -> Any:
 
 
 class LabProposeIn(BaseModel):
-    title: str = ""
-    body_md: str = ""
-    chapter_slug: str = ""
-    age_band: str = ""
+    title: str = Field(default="", max_length=200)
+    body_md: str = Field(default="", max_length=100_000)
+    chapter_slug: str = Field(default="", max_length=80)
+    age_band: str = Field(default="", max_length=32)
     manual_id: UUID | None = None
 
 
 class LabSaveIn(BaseModel):
     pack: dict[str, Any]
     manual_id: UUID | None = None
-    chapter_slug: str = "overview"
-    status: str = "draft"
+    chapter_slug: str = Field(default="overview", max_length=80)
+    # Publish is a separate endpoint — save accepts draft|archived only.
+    status: str = Field(default="draft", max_length=16)
 
 
 @router.post("/labs/propose")
@@ -2203,6 +2234,8 @@ def app_labs_propose(payload: LabProposeIn, session: LearnerSession) -> Any:
             "Provide body_md or a manual_id with content (min 20 chars).",
             code="validation",
         )
+    if len(body_md) > labs_mod.MAX_BODY_MD_CHARS:
+        body_md = body_md[: labs_mod.MAX_BODY_MD_CHARS]
     proposal = labs_mod.propose_lab_pack(
         title=title,
         body_md=body_md,
@@ -2226,12 +2259,17 @@ def app_labs_save(payload: LabSaveIn, session: LearnerSession) -> Any:
     pack = payload.pack
     if not isinstance(pack, dict):
         raise AppApiError("pack object required", code="validation")
+    if payload.status and payload.status not in {"draft", "archived"}:
+        raise AppApiError(
+            "Save accepts draft or archived only; use /publish to publish.",
+            code="validation",
+        )
     manual_id = payload.manual_id
     if manual_id:
         _require_manual_for_learner(session, manual_id)
     chapter_slug = str(
         payload.chapter_slug or pack.get("chapter_slug") or "overview"
-    )
+    )[:80]
     status = str(payload.status or "draft")
     row = labs_mod.upsert_lab_pack(
         session["tenant_id"],
@@ -2308,8 +2346,11 @@ def app_labs_by_chapter(
 
 
 @router.get("/workforce/apprenticeship")
-def app_apprenticeship(session: LearnerSession) -> Any:
-    """Wave C — Apprenticeship Manager board."""
+def app_apprenticeship(
+    session: LearnerSession,
+    examples: bool = Query(False),
+) -> Any:
+    """Wave C Live — Apprenticeship Manager board (empty by default)."""
     from app.modules import workforce as wf_mod
 
     _require_cap(
@@ -2317,20 +2358,26 @@ def app_apprenticeship(session: LearnerSession) -> Any:
         "apprenticeship",
         message="Apprenticeship Manager is not enabled for this tenant.",
     )
+    # Seed examples only for staff (sales / demo); never invent peers for learners.
+    use_examples = bool(examples) and _is_staff(session)
     subject = None if _is_staff(session) else str(session.get("subject") or "")
     return ok(
         json_safe(
             wf_mod.apprenticeship_board(
                 session["tenant_id"],
                 subject=subject,
+                examples=use_examples,
             )
         )
     )
 
 
 @router.get("/workforce/continuity")
-def app_continuity(session: LearnerSession) -> Any:
-    """Wave C — Qualification & Continuity Tracker."""
+def app_continuity(
+    session: LearnerSession,
+    examples: bool = Query(False),
+) -> Any:
+    """Wave C Live — Qualification & Continuity Tracker."""
     from app.modules import workforce as wf_mod
 
     _require_cap(
@@ -2338,19 +2385,24 @@ def app_continuity(session: LearnerSession) -> Any:
         "qualification_continuity",
         message="Qualification Continuity is not enabled for this tenant.",
     )
+    use_examples = bool(examples) and _is_staff(session)
     return ok(
         json_safe(
             wf_mod.continuity_tracker(
                 session["tenant_id"],
                 subject=str(session.get("subject") or "") or None,
+                examples=use_examples,
             )
         )
     )
 
 
 @router.get("/workforce/sim-to-real")
-def app_sim_to_real(session: LearnerSession) -> Any:
-    """Wave C — Sim-to-Real Transfer Analytics (teachers)."""
+def app_sim_to_real(
+    session: LearnerSession,
+    examples: bool = Query(False),
+) -> Any:
+    """Wave C Live — Sim-to-Real Transfer Analytics (teachers)."""
     from app.modules import workforce as wf_mod
 
     if not _is_staff(session):
@@ -2364,8 +2416,14 @@ def app_sim_to_real(session: LearnerSession) -> Any:
         "sim_to_real",
         message="Sim-to-Real analytics is not enabled for this tenant.",
     )
-    return ok(json_safe(wf_mod.sim_to_real_report(session["tenant_id"])))
-
+    return ok(
+        json_safe(
+            wf_mod.sim_to_real_report(
+                session["tenant_id"],
+                examples=bool(examples),
+            )
+        )
+    )
 
 @router.get("/analytics")
 def app_analytics(session: LearnerSession) -> Any:

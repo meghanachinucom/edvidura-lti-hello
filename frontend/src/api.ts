@@ -575,6 +575,7 @@ export function getSkillsPassport() {
 export function getAuditPro(limit = 40) {
   return api<{
     product: string;
+    state?: string;
     total: number;
     sealed_ok: number;
     synced_to_lms: number;
@@ -588,6 +589,21 @@ export function getAuditPro(limit = 40) {
       created_at?: string;
     }>;
   }>(`/api/v1/app/audit-pro?limit=${limit}`);
+}
+
+export function verifyAuditProAttempt(attemptId: string) {
+  return api<{
+    ok: boolean;
+    reason?: string;
+    product?: string;
+    receipt?: {
+      attempt_id?: string;
+      percent?: number;
+      grade_sent?: boolean;
+      seal_fingerprint?: string;
+      alg?: string;
+    };
+  }>(`/api/v1/app/audit-pro/attempts/${encodeURIComponent(attemptId)}/verify`);
 }
 
 export function getIqReview(limit = 80) {
@@ -617,7 +633,7 @@ export function searchDocuments(q: string, limit = 8) {
       title?: string;
       slug?: string;
       page_no?: number;
-      body?: string;
+      excerpt?: string;
       manual_id?: string;
       score?: number;
     }>;

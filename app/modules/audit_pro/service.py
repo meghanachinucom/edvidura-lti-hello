@@ -1,4 +1,4 @@
-"""AuditPro thin product — sealed attempt receipts + sync status."""
+"""AuditPro — sealed attempt receipts + sync status (Wave A Live)."""
 from __future__ import annotations
 
 from typing import Any
@@ -61,13 +61,13 @@ def audit_trail(
                 "created_at": str(row.get("created_at") or ""),
                 "seal_ok": bool(check.get("ok")),
                 "seal_reason": str(check.get("reason") or ""),
-                "seal": str(receipt.get("seal") or "")[:16] or None,
+                # Trail never returns seal material — use verify_attempt_receipt.
             }
         )
     return {
         "product": "AuditPro",
         "wave": "A",
-        "state": "thin",
+        "state": "live",
         "total": len(items),
         "sealed_ok": sealed_ok,
         "synced_to_lms": synced,
@@ -91,6 +91,7 @@ def verify_attempt_receipt(
         ags_available=True,
     )
     check = verify_seal(receipt)
+    seal = str(receipt.get("seal") or "")
     return {
         "ok": bool(check.get("ok")),
         "reason": check.get("reason"),
@@ -99,7 +100,8 @@ def verify_attempt_receipt(
             "attempt_id": receipt.get("attempt_id"),
             "percent": receipt.get("percent"),
             "grade_sent": receipt.get("grade_sent"),
-            "seal": receipt.get("seal"),
+            # Truncate seal fingerprint — full HMAC stays server-side for verify_seal.
+            "seal_fingerprint": (seal[:12] + "…") if seal else None,
             "alg": receipt.get("alg"),
         },
     }

@@ -89,11 +89,11 @@ Catalog → merge_blocks(ids) → tenant.capabilities + enabled_blocks → SPA /
 14. **Wave C:** Apprenticeship, Qualification & Continuity Tracker, Sim-to-Real, GrantsPro + research MVPs.
 15. After each wave: flip `park → thin → live`, update sales “available now.”
 
-**Wave A status (2026-11-04):** **Thin shipped** — modules + App API + SPA tabs; preset `wave_a_pack`.
+**Wave A status (2026-11-16):** **Live** — sealed trail + verify, IQ rates, passport, document search, air-gap checklist; preset `wave_a_pack`.
 
-**Wave B status (2026-11-04):** **Thin shipped** — `app.modules.xr` + `/api/v1/app/xr/*` + XR Labs nav; preset `wave_b_xr`.
+**Wave B status (2026-11-16):** **Live** — curated XR catalog + sanitize + fail-closed SPA; headset runtimes still per deal; preset `wave_b_xr`.
 
-**Wave C status (2026-11-04):** **Thin shipped** — `app.modules.workforce` + My plan / Diagnostics tabs; preset `wave_c_workforce`. In-house queue empty.
+**Wave C status (2026-11-16):** **Live** — empty workforce boards (staff `examples=1` seed); roster/xAPI joins deepen later; preset `wave_c_workforce`. In-house Thin cleared.
 
 ### Step 5 — Operating rhythm (ongoing)
 

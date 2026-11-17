@@ -55,6 +55,7 @@ from app.settings import get_settings
 from app.security_boot import assert_safe_for_environment, require_dev_tools
 from app.monitoring import init_monitoring
 from app.rate_limit import RateLimitMiddleware
+from app.security_headers import SecurityHeadersMiddleware
 from app.tenant_context import TenantContext, use_tenant_context
 from app.tenancy import (
     TENANT_A_ID,
@@ -148,6 +149,7 @@ app.add_middleware(
     RateLimitMiddleware,
     enabled=_boot.rate_limit_enabled,
 )
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(StructuredLoggingMiddleware)
 app.add_middleware(
     SessionMiddleware,

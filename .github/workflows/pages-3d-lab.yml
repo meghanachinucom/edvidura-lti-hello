@@ -1,0 +1,47 @@
+name: Deploy 3D lab studio (GitHub Pages)
+
+on:
+  push:
+    branches: [main, master, feature/slice-a-quiz]
+    paths:
+      - 'demos/3d-lab-studio/**'
+      - '.github/workflows/pages-3d-lab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-3d-lab
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: demos/3d-lab-studio
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: demos/3d-lab-studio/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build for GitHub Pages
+        env:
+          VITE_BASE: /edvidura-lti-hello/3d-lab-studio/
+        run: npx tsc --noEmit && npx vite build
+
+      - name: Deploy to gh-pages /3d-lab-studio
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: demos/3d-lab-studio/dist
+          destination_dir: 3d-lab-studio
+          force_orphan: true

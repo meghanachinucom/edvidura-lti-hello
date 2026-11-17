@@ -22,9 +22,9 @@ def test_catalog_covers_sheet_size():
     assert all("state" in r and "shippable" in r and "track" in r for r in rows)
     queue = list_build_queue()
     assert queue == []
-    assert any(r["id"] == "xr_store" and r["state"] == "thin" for r in rows)
-    assert any(r["id"] == "apprenticeship_manager" and r["state"] == "thin" for r in rows)
-    assert any(r["id"] == "sim_to_real_analytics" and r["state"] == "thin" for r in rows)
+    assert any(r["id"] == "xr_store" and r["state"] == "live" for r in rows)
+    assert any(r["id"] == "apprenticeship_manager" and r["state"] == "live" for r in rows)
+    assert any(r["id"] == "sim_to_real_analytics" and r["state"] == "live" for r in rows)
     assert any(r["id"] == "virtual_classroom" and r["track"] == "partner" for r in rows)
     assert any(r["id"] == "bits_math" and r["track"] == "content" for r in rows)
 

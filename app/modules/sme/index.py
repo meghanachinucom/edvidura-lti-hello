@@ -187,11 +187,23 @@ def search_index(
         hits = sum(1 for t in tokens if t in blob)
         if hits <= 0:
             continue
-        item["id"] = str(item["id"])
-        item["manual_id"] = str(item["manual_id"])
-        item["score"] = hits
-        item["excerpt"] = str(item.get("body") or "")[:500]
-        scored.append((hits, item))
+        body = str(item.get("body") or "")
+        scored.append(
+            (
+                hits,
+                {
+                    "id": str(item["id"]),
+                    "manual_id": str(item["manual_id"]),
+                    "version": item.get("version"),
+                    "page_no": item.get("page_no"),
+                    "slug": item.get("slug"),
+                    "title": item.get("title"),
+                    "score": hits,
+                    "excerpt": body[:280],
+                    # Never return full chunk body to API clients.
+                },
+            )
+        )
     scored.sort(key=lambda x: (-x[0], x[1].get("page_no") or 0))
     return [s[1] for s in scored[:lim]]
 

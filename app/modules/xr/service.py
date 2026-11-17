@@ -1,29 +1,58 @@
-"""Wave B XR facades — catalog + thin product packs (no FastAPI)."""
+"""Wave B XR facades — curated catalog Live (platform catalog; runtimes per deal)."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.modules.xr.catalog import ASSETS_3D, CONFIG_PRESETS, STORE_APPS
 
+_CATEGORY_RE = re.compile(r"^[a-z0-9-]{0,64}$")
+_TAG_RE = re.compile(r"^[a-z0-9_-]{0,64}$")
+_ASSET_ID_RE = re.compile(r"^[a-z0-9-]{0,64}$")
+
+
+def _clean_category(category: str | None) -> str:
+    cat = (category or "").strip().lower()[:64]
+    if cat and not _CATEGORY_RE.match(cat):
+        return ""
+    return cat
+
+
+def _clean_tag(tag: str | None) -> str:
+    needle = (tag or "").strip().lower()[:64]
+    if needle and not _TAG_RE.match(needle):
+        return ""
+    return needle
+
+
+def _clean_asset_id(asset_id: str | None) -> str:
+    aid = (asset_id or "").strip()[:64]
+    if aid and not _ASSET_ID_RE.match(aid):
+        return ""
+    return aid
+
 
 def store_catalog(*, category: str | None = None) -> dict[str, Any]:
-    cat = (category or "").strip().lower()
+    cat = _clean_category(category)
     apps = list(STORE_APPS)
     if cat and cat not in {"", "all"}:
         apps = [a for a in apps if str(a.get("category") or "") == cat]
     return {
         "product": "XR Store",
         "wave": "B",
-        "state": "thin",
+        "state": "live",
         "count": len(apps),
         "categories": sorted({str(a["category"]) for a in STORE_APPS}),
         "apps": apps,
-        "note": "Thin Wave B: curated catalog + WebGL/WebXR launch stubs. Runtime binaries ship per deal.",
+        "note": (
+            "Live curated catalog + WebGL/WebXR launch stubs. "
+            "Headset runtime binaries still ship per deal."
+        ),
     }
 
 
 def asset_repository(*, tag: str | None = None) -> dict[str, Any]:
-    needle = (tag or "").strip().lower()
+    needle = _clean_tag(tag)
     assets = list(ASSETS_3D)
     if needle:
         assets = [
@@ -35,7 +64,7 @@ def asset_repository(*, tag: str | None = None) -> dict[str, Any]:
     return {
         "product": "3D Asset Repository",
         "wave": "B",
-        "state": "thin",
+        "state": "live",
         "count": len(assets),
         "assets": assets,
         "formats": ["glTF"],
@@ -44,16 +73,16 @@ def asset_repository(*, tag: str | None = None) -> dict[str, Any]:
 
 
 def asset_configurator(asset_id: str | None = None) -> dict[str, Any]:
-    aid = (asset_id or "").strip()
+    aid = _clean_asset_id(asset_id)
     asset = next((a for a in ASSETS_3D if a["id"] == aid), None) if aid else None
     return {
         "product": "3D Asset Configurator",
         "wave": "B",
-        "state": "thin",
+        "state": "live",
         "asset": asset,
         "presets": list(CONFIG_PRESETS),
         "knobs": ("scale", "lighting", "collision", "lod"),
-        "note": "Thin: preset packs only — full LOD editor is Live-track.",
+        "note": "Live preset packs; full LOD editor remains a future deepen.",
     }
 
 
@@ -62,7 +91,7 @@ def immersive_labs() -> dict[str, Any]:
     return {
         "product": "Immersive Labs",
         "wave": "B",
-        "state": "thin",
+        "state": "live",
         "count": len(labs),
         "labs": labs,
         "depends_on": "xr_store",
@@ -71,15 +100,19 @@ def immersive_labs() -> dict[str, Any]:
 
 
 def ar_assistance_pack() -> dict[str, Any]:
-    apps = [a for a in STORE_APPS if a.get("kind") == "ar" or a.get("compatibility", {}).get("mobileAr")]
+    apps = [
+        a
+        for a in STORE_APPS
+        if a.get("kind") == "ar" or a.get("compatibility", {}).get("mobileAr")
+    ]
     return {
         "product": "AR Assistance",
         "wave": "B",
-        "state": "thin",
+        "state": "live",
         "count": len(apps),
         "apps": apps,
         "modes": ("tabletop", "marker", "world"),
-        "note": "Thin: AR-capable catalog entries + field assist checklist.",
+        "note": "AR-capable catalog entries + field assist checklist.",
         "checklist": [
             "ARKit / ARCore device approved",
             "Anchor desk / equipment in room",
@@ -93,7 +126,7 @@ def vr_maintainer_pack() -> dict[str, Any]:
     return {
         "product": "VR Maintainer Training",
         "wave": "B",
-        "state": "thin",
+        "state": "live",
         "count": len(apps),
         "scenarios": apps,
         "procedure_steps": [
@@ -109,7 +142,7 @@ def vr_maintainer_pack() -> dict[str, Any]:
 def wave_b_overview() -> dict[str, Any]:
     return {
         "wave": "B",
-        "state": "thin",
+        "state": "live",
         "products": [
             store_catalog()["product"],
             asset_repository()["product"],
