@@ -10,6 +10,9 @@ from pathlib import Path
 
 
 def spa_dist_index() -> Path:
+    react_dist = Path(__file__).resolve().parents[1] / "frontend-react" / "dist" / "index.html"
+    if react_dist.is_file():
+        return react_dist
     return Path(__file__).resolve().parents[1] / "frontend" / "dist" / "index.html"
 
 

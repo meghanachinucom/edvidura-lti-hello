@@ -42,6 +42,7 @@ def token_learner():
         "tenant_id": TENANT_ID,
         "subject": LEARNER_SUB,
         "is_instructor": False,
+        "class_id": "class-1",
     })
 
 
@@ -132,6 +133,7 @@ def epub_test_assets(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(manuals_mod, "get_version", mock_get_version)
     monkeypatch.setattr(manuals_mod, "list_versions", mock_list_versions)
     monkeypatch.setattr(manuals_mod, "latest_published_version", mock_latest_version)
+    monkeypatch.setattr(manuals_mod, "manual_visible_to_class", lambda *a, **kw: True)
     monkeypatch.setattr(manuals_mod, "get_reading_progress", lambda **kw: None)
     monkeypatch.setattr(manuals_mod, "list_bookmarks", lambda **kw: [])
     monkeypatch.setattr(manuals_mod, "list_annotations", lambda **kw: [])

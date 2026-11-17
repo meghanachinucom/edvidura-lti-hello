@@ -64,12 +64,19 @@ def test_build_gap_path_ordered_steps():
         },
     ]
 
+    import app.modules.skills as skills_mod
+    import app.modules.skills.service as skills_service
+
     orig = adaptive_mod.service.skills_mod.ensure_default_skills
+    orig_srv = skills_service.ensure_default_skills
+    orig_mod = skills_mod.ensure_default_skills
 
     def _fake_skills(_tid):
         return skill_pack
 
     adaptive_mod.service.skills_mod.ensure_default_skills = _fake_skills
+    skills_service.ensure_default_skills = _fake_skills
+    skills_mod.ensure_default_skills = _fake_skills
     try:
         path = build_gap_path(
             "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
@@ -81,6 +88,8 @@ def test_build_gap_path_ordered_steps():
         )
     finally:
         adaptive_mod.service.skills_mod.ensure_default_skills = orig
+        skills_service.ensure_default_skills = orig_srv
+        skills_mod.ensure_default_skills = orig_mod
 
     assert path["active"] is True
     kinds = [s["kind"] for s in path["steps"]]
@@ -107,8 +116,16 @@ def test_recommend_next_lesson_adaptive_vs_linear():
             "teleport_label": "Review isolation",
         }
     ]
+    import app.modules.skills as skills_mod
+    import app.modules.skills.service as skills_service
+
     orig = adaptive_mod.service.skills_mod.ensure_default_skills
+    orig_srv = skills_service.ensure_default_skills
+    orig_mod = skills_mod.ensure_default_skills
+
     adaptive_mod.service.skills_mod.ensure_default_skills = lambda _t: skill_pack
+    skills_service.ensure_default_skills = lambda _t: skill_pack
+    skills_mod.ensure_default_skills = lambda _t: skill_pack
     try:
         rec = recommend_next_lesson(
             "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
@@ -125,6 +142,8 @@ def test_recommend_next_lesson_adaptive_vs_linear():
         )
     finally:
         adaptive_mod.service.skills_mod.ensure_default_skills = orig
+        skills_service.ensure_default_skills = orig_srv
+        skills_mod.ensure_default_skills = orig_mod
 
     assert rec["mode"] == "adaptive"
     assert rec["lesson_id"] == "llllllll-llll-llll-llll-llllllllllll"

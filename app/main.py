@@ -120,9 +120,13 @@ app.include_router(quiz_router)
 _STATIC = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 
-_SPA_DIST = Path(__file__).resolve().parents[1] / "frontend" / "dist"
+_REACT_SPA_DIST = Path(__file__).resolve().parents[1] / "frontend-react" / "dist"
+_LEGACY_SPA_DIST = Path(__file__).resolve().parents[1] / "frontend" / "dist"
+_SPA_DIST = _REACT_SPA_DIST if (_REACT_SPA_DIST / "index.html").is_file() else _LEGACY_SPA_DIST
 if (_SPA_DIST / "index.html").is_file():
     app.mount("/app", StaticFiles(directory=str(_SPA_DIST), html=True), name="spa")
+    if (_SPA_DIST / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=str(_SPA_DIST / "assets")), name="spa_assets")
 
 
 @app.get("/requirements-board")
@@ -272,10 +276,18 @@ def product_welcome(request: Request):
     return _landing_page(request)
 
 
+@app.get("/favicon.ico")
+def favicon():
+    fav = _SPA_DIST / "favicon.ico"
+    if fav.is_file():
+        return FileResponse(fav)
+    return Response(status_code=204)
+
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     if _spa_ready():
-        return RedirectResponse("/app/?demo=1", status_code=302)
+        return FileResponse(_SPA_DIST / "index.html", media_type="text/html; charset=utf-8")
     return _landing_page(request)
 
 

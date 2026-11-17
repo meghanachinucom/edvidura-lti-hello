@@ -29,8 +29,8 @@ def test_health_detail_flag(monkeypatch):
     from app.settings import Settings, get_settings
 
     real = get_settings()
-    prod = Settings(**{**real.__dict__, "environment": "production"})
-    monkeypatch.setattr("app.main._boot", prod)
+    dev = Settings(**{**real.__dict__, "environment": "development"})
+    monkeypatch.setattr("app.main._boot", dev)
 
     client = TestClient(app)
     r = client.get("/health", params={"detail": 1})
