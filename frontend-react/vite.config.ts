@@ -18,6 +18,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      "@/i18n": path.resolve(__dirname, "./src/i18n/index.ts"),
       "@": path.resolve(__dirname, "./src"),
     },
   },
@@ -29,46 +30,6 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-      "/quiz": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-      "/teacher": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-      "/institution-detail": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-      "/student-directory": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-      "/ops": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-      "/sales": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-      "/product": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-      "/session-today": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-      "/requirements-board": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-      "/receipts": {
         target: "http://127.0.0.1:8000",
         changeOrigin: true,
       },
