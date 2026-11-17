@@ -47,6 +47,7 @@ from app.auth_routes import router as auth_router
 from app.ops_routes import router as ops_router
 from app.deep_link_routes import router as deep_link_router
 from app.lti_register_routes import router as lti_register_router
+from app.moodle_routes import router as moodle_router
 from app.quiz_routes import SESSION_KEY as QUIZ_SESSION_KEY
 from app.quiz_routes import router as quiz_router
 from app.quiz_routes import store_quiz_context
@@ -125,6 +126,7 @@ app.include_router(ai_api_router)
 app.include_router(sme_public_router)
 app.include_router(etims_webhook_router)
 app.include_router(quiz_router)
+app.include_router(moodle_router)
 
 _STATIC = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
@@ -287,10 +289,30 @@ def product_welcome(request: Request):
 
 @app.get("/favicon.ico")
 def favicon():
-    fav = _SPA_DIST / "favicon.ico"
-    if fav.is_file():
-        return FileResponse(fav)
+    for candidate in (_SPA_DIST / "favicon.ico", _STATIC / "favicon.ico"):
+        if candidate.is_file():
+            return FileResponse(candidate, media_type="image/x-icon")
     return Response(status_code=204)
+
+
+@app.get("/favicon.svg")
+def favicon_svg():
+    for candidate in (_SPA_DIST / "favicon.svg", _STATIC / "favicon.svg"):
+        if candidate.is_file():
+            return FileResponse(candidate, media_type="image/svg+xml")
+    return Response(status_code=204)
+
+
+@app.get("/api/v1/blocks/catalog")
+def get_blocks_catalog():
+    """Live Lego catalog + Wave A/B/C blocks + dynamic capabilities for auto-rendering."""
+    from app.modules.tenancy import list_blocks, list_presets, list_build_queue
+    return {
+        "ok": True,
+        "blocks": list_blocks(),
+        "presets": list_presets(),
+        "build_queue": list_build_queue(),
+    }
 
 
 @app.get("/", response_class=HTMLResponse)

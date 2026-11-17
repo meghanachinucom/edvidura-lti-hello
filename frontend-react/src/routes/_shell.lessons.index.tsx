@@ -7,6 +7,7 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
 import { LessonGrid } from "@/components/shared/LessonList";
+import { DynamicBlockCatalog } from "@/components/shared/DynamicBlockCatalog";
 import { lessons as fallbackLessons, type Lesson } from "@/data/lessons";
 import { myAttempts, type Attempt } from "@/data/attempts";
 import { PercentageBar } from "@/components/shared/PercentageBar";
@@ -159,7 +160,10 @@ function Page() {
       ) : list.length === 0 ? (
         <EmptyState title={s("emptyTitle")} help={s("emptyHelp")} />
       ) : (
-        <LessonGrid items={list} upNextId={next?.id} />
+        <>
+          <LessonGrid items={list} upNextId={next?.id} />
+          <DynamicBlockCatalog role="learner" compact title="Class 8 Modular Labs & Learning Blocks" />
+        </>
       )}
     </div>
   );

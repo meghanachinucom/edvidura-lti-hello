@@ -130,7 +130,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
                       className: exchData.class_name,
                       isInstructor,
                       isSchoolAdmin,
-                      lmsReturnUrl: exchData.lms_return_url || "http://localhost:8085",
+                      lmsReturnUrl: exchData.lms_return_url || "/moodle/course/view.php?id=10",
                     };
                   }
                 } else {
@@ -224,7 +224,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
                 className: data.class_name,
                 isInstructor,
                 isSchoolAdmin,
-                lmsReturnUrl: data.lms_return_url || "http://localhost:8085",
+                lmsReturnUrl: data.lms_return_url || "/moodle/course/view.php?id=10",
               };
               try {
                 if (sessData.lmsReturnUrl) {

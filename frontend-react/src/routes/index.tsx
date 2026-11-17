@@ -49,7 +49,7 @@ function Landing() {
   const returnUrl =
     (typeof window !== "undefined"
       ? sessionStorage.getItem("edvidura_return_url")
-      : null) || "https://miss-houses-lecture-specifics.trycloudflare.com/course/view.php?id=10";
+      : null) || "/moodle/course/view.php?id=10";
 
   return (
     <div className="flex min-h-screen flex-col bg-page-bg">

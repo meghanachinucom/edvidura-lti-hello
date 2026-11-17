@@ -204,10 +204,9 @@ def demo_launch(request: Request, persona: str = "learner"):
     from app.launch_cache import create_exchange_code
 
     p = persona.strip().lower()
-    moodle_url = os.getenv(
-        "MOODLE_PUBLIC_URL",
-        "https://tennessee-manufacturers-poly-bunny.trycloudflare.com",
-    )
+    moodle_url = os.getenv("MOODLE_PUBLIC_URL", "").rstrip("/")
+    if not moodle_url or "trycloudflare" in moodle_url:
+        moodle_url = "/moodle"
 
     real_class_id = "5bfeab61-bc18-4b6a-a829-d5bee1b39238"
     real_course_id = "cccccccc-cccc-cccc-cccc-cccccccccccc"
@@ -247,7 +246,7 @@ def demo_launch(request: Request, persona: str = "learner"):
             "class_code": "RHS-C08",
             "course": real_course_title,
             "edvidura_course_id": real_course_id,
-            "lms_return_url": f"{moodle_url}/course/view.php?id=10",
+            "lms_return_url": f"{moodle_url}/course/view.php?id=10&persona=learner",
         }
         dest = "/lessons"
     elif p in ("instructor", "teacher", "priya"):
@@ -265,7 +264,7 @@ def demo_launch(request: Request, persona: str = "learner"):
             "class_code": "RHS-C08",
             "course": real_course_title,
             "edvidura_course_id": real_course_id,
-            "lms_return_url": f"{moodle_url}/course/view.php?id=10",
+            "lms_return_url": f"{moodle_url}/course/view.php?id=10&persona=instructor",
         }
         dest = "/teacher/attempts"
     elif p in ("admin", "school_admin", "school-admin", "alex"):
@@ -283,7 +282,7 @@ def demo_launch(request: Request, persona: str = "learner"):
             "class_code": "RHS-C08",
             "course": real_course_title,
             "edvidura_course_id": real_course_id,
-            "lms_return_url": f"{moodle_url}/course/view.php?id=10",
+            "lms_return_url": f"{moodle_url}/course/view.php?id=10&persona=admin",
         }
         dest = "/school-admin"
     else:

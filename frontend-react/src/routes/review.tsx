@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GraduationCap, BookOpen, Users, ShieldCheck, ExternalLink, ArrowRight } from "lucide-react";
+import { DynamicBlockCatalog } from "@/components/shared/DynamicBlockCatalog";
 import { t } from "@/i18n";
 
 export const Route = createFileRoute("/review")({
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/review")({
 });
 
 function ReviewGateway() {
-  const moodleUrl = "https://miss-houses-lecture-specifics.trycloudflare.com";
+  const moodleUrl = "/moodle";
 
   return (
     <div className="flex min-h-screen flex-col bg-page-bg">
@@ -151,6 +152,8 @@ function ReviewGateway() {
               </span>
             </div>
           </div>
+
+          <DynamicBlockCatalog role="all" />
         </div>
       </main>
 

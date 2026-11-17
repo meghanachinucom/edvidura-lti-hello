@@ -158,10 +158,10 @@ export function TopNav() {
           <a
             className="group relative flex min-h-11 items-center rounded-control px-2 text-sm text-ink hover:bg-page-bg tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
             title={t("nav.backToMoodle")}
-            href={session?.lmsReturnUrl || "http://localhost:8085"}
+            href={session?.lmsReturnUrl || "/moodle/course/view.php?id=10"}
             onClick={(e) => {
               e.preventDefault();
-              const dest = session?.lmsReturnUrl || "http://localhost:8085";
+              const dest = session?.lmsReturnUrl || "/moodle/course/view.php?id=10";
               window.location.href = dest;
             }}
           >

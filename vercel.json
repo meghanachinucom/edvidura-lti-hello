@@ -2,6 +2,14 @@
   "outputDirectory": "frontend-react/dist",
   "rewrites": [
     {
+      "source": "/moodle/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/moodle",
+      "destination": "/api/index.py"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/index.py"
     },
