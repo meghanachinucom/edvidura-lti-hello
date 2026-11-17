@@ -49,6 +49,11 @@ frontend/dist/
 demos/3d-lab-studio/node_modules/
 demos/3d-lab-studio/dist/
 
+# Binaries and local tools
+bin/
+scratch/profile*
+scratch/*.json
+
 # Local packaging / scratch
 edvidura-lti-hello-starter.zip
 _bind.py
