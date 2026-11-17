@@ -1,0 +1,11 @@
+{
+  "name": "edvidura-lti-hello-starter",
+  "version": "0.8.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend-react run dev",
+    "build": "npm --prefix frontend-react run build",
+    "test": "npm --prefix frontend-react test",
+    "vitest": "npm --prefix frontend-react run test"
+  }
+}

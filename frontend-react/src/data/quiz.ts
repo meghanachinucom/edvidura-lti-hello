@@ -50,7 +50,6 @@ export const checkpointQuiz: Quiz = {
 
 /** Quiz names used only in attempt history. */
 export const historyQuizzes = [
-  { id: "aa11aa11-aa11-aa11-aa11-aa11aa11aa11", title: "Riverside Algebra check" },
   { id: "qz-checkpoint", title: "Riverside Algebra check" },
   { id: "qz-warmup", title: "Safety warm-up" },
   { id: "qz-earthing", title: "Earthing basics quiz" },
