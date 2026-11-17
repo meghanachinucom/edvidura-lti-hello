@@ -13,7 +13,6 @@ export interface VideoChapter {
 export interface VideoLectureItem {
   id: string;
   title: string;
-  titleTe?: string;
   description: string;
   durationSec: number;
   coverUrl: string;
@@ -25,7 +24,6 @@ export const SAMPLE_LECTURES: VideoLectureItem[] = [
   {
     id: "lec-slope",
     title: "Slope as Rate of Change & Delta Intuition",
-    titleTe: "సరళ సమీకరణాల ప్రాథమిక అంశాలు మరియు వాలు భావన",
     description: "Visual intuition into slope Δy/Δx, Cartesian grid translations, and slope-intercept form y = mx + b.",
     durationSec: 840,
     coverUrl: "/images/masterclass/slope-masterclass.svg",
@@ -40,7 +38,6 @@ export const SAMPLE_LECTURES: VideoLectureItem[] = [
   {
     id: "lec-vedic",
     title: "Vedic Mathematical Speed Heuristics",
-    titleTe: "వేగవంతమైన గణన కోసం వేద గణిత సూత్రాలు",
     description: "Algorithmic methods for mental factorization, quadratic roots, and linear transformations.",
     durationSec: 960,
     coverUrl: "/images/masterclass/vedic-masterclass.svg",
@@ -110,9 +107,6 @@ export function LessonVideoMasterclass({
             <Sparkles size={14} /> Video Masterclass & Synchronous Notes
           </div>
           <h3 className="font-heading text-lg font-bold text-ink mt-0.5">{lecture.title}</h3>
-          {lecture.titleTe && (
-            <p className="text-xs font-serif text-amber-700 dark:text-amber-400 mt-0.5">{lecture.titleTe}</p>
-          )}
         </div>
       </div>
 

@@ -29,12 +29,6 @@ COACH_VOICE_LANGUAGES: tuple[dict[str, str], ...] = (
         "script": "Devanagari",
     },
     {
-        "code": "te-IN",
-        "name": "Telugu",
-        "native": "తెలుగు",
-        "script": "Telugu",
-    },
-    {
         "code": "ta-IN",
         "name": "Tamil",
         "native": "தமிழ்",

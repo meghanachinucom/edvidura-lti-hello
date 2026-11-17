@@ -4,7 +4,6 @@ export const askViduraLanguages = [
   "English (India)",
   "English (US)",
   "Hindi",
-  "Telugu",
   "Tamil",
   "Kannada",
   "Malayalam",
