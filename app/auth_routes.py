@@ -195,7 +195,7 @@ def auth_exchange(payload: ExchangeRequest, request: Request):
 
 
 @router.get("/api/v1/auth/demo-launch")
-def demo_launch(request: Request, persona: str = "learner"):
+def demo_launch(request: Request, persona: str = "learner", next: str = ""):
     """Bootstrap genuine Riverside Class 8 (RHS-C08) session for remote senior review."""
     import os
     from fastapi.responses import PlainTextResponse
@@ -248,7 +248,7 @@ def demo_launch(request: Request, persona: str = "learner"):
             "edvidura_course_id": real_course_id,
             "lms_return_url": f"{moodle_url}/course/view.php?id=10&persona=learner",
         }
-        dest = "/lessons"
+        dest = "/home"
     elif p in ("instructor", "teacher", "priya"):
         quiz_ctx = {
             "tenant_id": TENANT_A_ID,
@@ -298,6 +298,9 @@ def demo_launch(request: Request, persona: str = "learner"):
     quiz_token = store_quiz_context(quiz_ctx)
     quiz_ctx["quiz_token"] = quiz_token
     request.session[QUIZ_SESSION_KEY] = quiz_ctx
+
+    if next and str(next).startswith("/"):
+        dest = str(next)
 
     exchange_code = create_exchange_code(quiz_ctx, ttl_sec=300)
     return RedirectResponse(

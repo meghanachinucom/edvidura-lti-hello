@@ -9,6 +9,7 @@ import { ErrorAlert } from "@/components/shared/ErrorAlert";
 import { SlowNetworkNote } from "@/components/shared/SlowNetworkNote";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { CircuitWorkbench } from "@/components/learner/CircuitWorkbench";
+import { LessonVideoMasterclass } from "@/components/shared/LessonVideoMasterclass";
 import { lessonById, lessons, type Lesson } from "@/data/lessons";
 import { mockState } from "@/data/mockState";
 import { api } from "@/lib/api";
@@ -162,10 +163,13 @@ function Player({
       </div>
       <p className="mt-1 text-ink-muted">{t(`shared.lessonKind.${lesson.kind}`)}</p>
 
-      {lesson.kind === "video" && (
-        <div className="mt-6 flex aspect-video max-w-reading flex-col items-center justify-center gap-2 rounded-surface bg-border text-ink">
-          <PlayCircle aria-hidden size={48} />
-          <span>{s("video")}</span>
+      {lesson.kind === "video" ? (
+        <div className="mt-6 max-w-reading">
+          <LessonVideoMasterclass />
+        </div>
+      ) : (
+        <div className="mt-6 max-w-reading">
+          <LessonVideoMasterclass />
         </div>
       )}
 

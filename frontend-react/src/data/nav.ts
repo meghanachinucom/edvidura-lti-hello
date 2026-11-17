@@ -16,7 +16,9 @@ export const navGroups: Record<GroupId, NavGroup> = {
     id: "learn",
     labelKey: "nav.learn",
     items: [
+      { to: "/home", labelKey: "roleNav.dashboard" },
       { to: "/lessons", labelKey: "pages.lessons" },
+      { to: "/xr-store", labelKey: "pages.xrLabs" },
       { to: "/active-quizzes", labelKey: "pages.activeQuizzes" },
       { to: "/learn/gap", labelKey: "pages.gap" },
       { to: "/learn/coach", labelKey: "pages.coach" },
@@ -34,6 +36,7 @@ export const navGroups: Record<GroupId, NavGroup> = {
       { to: "/teacher/attempts", labelKey: "pages.tAttempts" },
       { to: "/teacher/content", labelKey: "pages.tContent" },
       { to: "/teacher/analytics", labelKey: "pages.tAnalytics" },
+      { to: "/xr-store", labelKey: "pages.xrLabs" },
       { to: "/teacher/activity", labelKey: "pages.tActivity" },
       { to: "/teacher/manuals", labelKey: "pages.tManuals" },
       { to: "/teacher/ai", labelKey: "pages.tAi" },
@@ -68,7 +71,9 @@ export const groupsForRole: Record<Role, GroupId[]> = {
 };
 
 export const learnerTabs = [
+  { to: "/home", labelKey: "shared.learnerTabs.dashboard", icon: "LayoutDashboard" },
   { to: "/lessons", labelKey: "shared.learnerTabs.lessons", icon: "BookOpen" },
+  { to: "/xr-store", labelKey: "shared.learnerTabs.xrLabs", icon: "Box" },
   { to: "/active-quizzes", labelKey: "shared.learnerTabs.quizzes", icon: "ClipboardList" },
   { to: "/learn/gap", labelKey: "shared.learnerTabs.plan", icon: "Map" },
   { to: "/learn/coach", labelKey: "shared.learnerTabs.coach", icon: "MessageCircle" },
@@ -76,7 +81,9 @@ export const learnerTabs = [
 
 export const roleNavItems: Record<Role, NavItem[]> = {
   learner: [
+    { to: "/home", labelKey: "roleNav.dashboard" },
     { to: "/lessons", labelKey: "roleNav.lessons" },
+    { to: "/xr-store", labelKey: "roleNav.xrLabs" },
     { to: "/active-quizzes", labelKey: "roleNav.quizzes" },
     { to: "/learn/gap", labelKey: "roleNav.plan" },
     { to: "/learn/coach", labelKey: "roleNav.askVidura" },
@@ -90,6 +97,7 @@ export const roleNavItems: Record<Role, NavItem[]> = {
     { to: "/teacher/attempts", labelKey: "roleNav.results" },
     { to: "/teacher/content", labelKey: "roleNav.content" },
     { to: "/teacher/analytics", labelKey: "roleNav.analytics" },
+    { to: "/xr-store", labelKey: "roleNav.xrLabs" },
     { to: "/teacher/activity", labelKey: "roleNav.activity" },
     { to: "/teacher/manuals", labelKey: "roleNav.ebooks" },
     { to: "/teacher/ai", labelKey: "roleNav.aiTools" },
@@ -113,7 +121,7 @@ export const roleNavItems: Record<Role, NavItem[]> = {
 };
 
 export const roleHome: Record<Role, string> = {
-  learner: "/lessons",
+  learner: "/home",
   instructor: "/teacher/attempts",
   trainingOfficer: "/school-admin",
 };

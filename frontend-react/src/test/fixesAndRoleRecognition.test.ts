@@ -76,7 +76,8 @@ describe("EdVidura Priority Fixes & Role Recognition Suite", () => {
           : "learner";
 
       expect(mappedRole).toBe("learner");
-      expect(roleHome[mappedRole]).toBe("/lessons");
+      expect(roleHome[mappedRole]).toBe("/home");
+      expect(allowedFor(mappedRole, "/home")).toBe(true);
       expect(allowedFor(mappedRole, "/lessons")).toBe(true);
     });
   });
@@ -383,7 +384,7 @@ describe("EdVidura Priority Fixes & Role Recognition Suite", () => {
       expect(allowedFor(activeSession.role, "/teacher/attempts")).toBe(false);
       expect(allowedFor(activeSession.role, "/teacher/content")).toBe(false);
       expect(allowedFor(activeSession.role, "/lessons")).toBe(true);
-      expect(roleHome[activeSession.role as keyof typeof roleHome]).toBe("/lessons");
+      expect(roleHome[activeSession.role as keyof typeof roleHome]).toBe("/home");
     });
   });
 });

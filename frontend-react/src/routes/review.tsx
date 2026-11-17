@@ -129,6 +129,97 @@ function ReviewGateway() {
             </div>
           </div>
 
+          {/* Direct 1-Click Launchers for New & Enhanced EdVidura Screens */}
+          <div className="rounded-2xl border border-secondary/30 bg-surface p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
+                  Featured Portals · Adapted & Enhanced
+                </span>
+                <h3 className="text-base font-bold text-ink mt-0.5">
+                  1-Click Direct Localhost Links (Authenticated Launches)
+                </h3>
+              </div>
+              <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600">
+                Session Auto-Established
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+              {/* Screen 1 */}
+              <a
+                href="/api/v1/auth/demo-launch?persona=learner&next=/home"
+                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
+              >
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 1 · Primary Dashboard</span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Learner Course Dashboard</h4>
+                  <p className="text-[11px] text-ink-muted leading-tight">
+                    Inspirational hero, study rhythm bar chart, syllabus ring, and Up Next lesson launcher.
+                  </p>
+                </div>
+                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
+                  <span>Open /home</span>
+                  <ArrowRight size={12} />
+                </div>
+              </a>
+
+              {/* Screen 2 */}
+              <a
+                href="/api/v1/auth/demo-launch?persona=learner&next=/lessons"
+                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
+              >
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 2 · Integrated Video</span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Lessons & Video Masterclasses</h4>
+                  <p className="text-[11px] text-ink-muted leading-tight">
+                    Modular lessons list with embedded video masterclass, chapter jumping, and timestamped notes.
+                  </p>
+                </div>
+                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
+                  <span>Open /lessons</span>
+                  <ArrowRight size={12} />
+                </div>
+              </a>
+
+              {/* Screen 3 */}
+              <a
+                href="/api/v1/auth/demo-launch?persona=learner&next=/xr-store"
+                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
+              >
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 3 · Dedicated Tab</span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">3D Spatial Math Labs</h4>
+                  <p className="text-[11px] text-ink-muted leading-tight">
+                    Interactive Cartesian coordinate simulator (slope & intercept sliders, dynamic y = mx + b).
+                  </p>
+                </div>
+                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
+                  <span>Open /xr-store</span>
+                  <ArrowRight size={12} />
+                </div>
+              </a>
+
+              {/* Screen 4 */}
+              <a
+                href="/api/v1/auth/demo-launch?persona=learner&next=/learn/analytics"
+                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
+              >
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 4 · Credentials</span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Skills Passport & Log</h4>
+                  <p className="text-[11px] text-ink-muted leading-tight">
+                    NSQF Level 5 competency endorsements, APTRANSCO dual-training apprenticeship hours log.
+                  </p>
+                </div>
+                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
+                  <span>Open /learn/analytics</span>
+                  <ArrowRight size={12} />
+                </div>
+              </a>
+            </div>
+          </div>
+
           <div className="rounded-control border border-border bg-surface p-6 space-y-3">
             <h3 className="text-sm font-bold text-ink flex items-center gap-2">
               <Users size={16} className="text-secondary" />

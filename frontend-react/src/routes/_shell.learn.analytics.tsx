@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Award, CheckCircle2, ShieldCheck, RefreshCw } from "lucide-react";
+import {
+  Award,
+  CheckCircle2,
+  ShieldCheck,
+  RefreshCw,
+  Briefcase,
+  Target,
+  ArrowRight,
+  Sparkles,
+  Compass,
+} from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { PillTabs, type PillTab } from "@/components/shared/PillTabs";
@@ -51,7 +61,7 @@ const columns: Column<Attempt>[] = [
 ];
 
 function Page() {
-  const [activeTab, setActiveTab] = useState<"attempts" | "passport">("attempts");
+  const [activeTab, setActiveTab] = useState<"attempts" | "passport" | "apprentice" | "goals">("attempts");
   const m = mockState.analytics;
   const rows =
     m.attempts === "empty"
@@ -100,7 +110,9 @@ function Page() {
 
   const tabItems: PillTab[] = [
     { id: "attempts", label: "My Attempts & Focus", onSelect: () => setActiveTab("attempts") },
-    { id: "passport", label: "My Skills Passport", onSelect: () => setActiveTab("passport") },
+    { id: "passport", label: "Skills Passport & Badges", onSelect: () => setActiveTab("passport") },
+    { id: "apprentice", label: "Apprenticeship Log", onSelect: () => setActiveTab("apprentice") },
+    { id: "goals", label: "Study Plan & Goals", onSelect: () => setActiveTab("goals") },
   ];
 
   return (
@@ -274,6 +286,115 @@ function Page() {
                 <div>
                   <h4 className="font-semibold text-ink">Earthing & Fault Current Protection</h4>
                   <p className="text-xs text-ink-muted mt-0.5">Substation Guide • Verified</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "apprentice" && (
+        <div className="space-y-6">
+          <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Briefcase size={22} className="text-amber-600" />
+              <h2 className="font-heading text-xl font-bold text-ink">
+                Workforce Apprenticeship & Dual Training Log
+              </h2>
+            </div>
+            <p className="mt-1 text-sm text-ink-muted">
+              SCERT / NCVT dual-education vocational placement tracking verified through employer mentor sign-offs.
+            </p>
+
+            <div className="mt-6 grid gap-4 tablet:grid-cols-3">
+              <div className="rounded-surface border border-border p-4 bg-surface">
+                <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                  Logged Practicum Hours
+                </span>
+                <p className="mt-2 text-2xl font-bold text-ink">142 / 200 hrs</p>
+                <p className="text-xs text-ink-muted mt-1">71% requirement fulfilled</p>
+              </div>
+              <div className="rounded-surface border border-border p-4 bg-surface">
+                <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                  Host Industry Partner
+                </span>
+                <p className="mt-2 text-lg font-bold text-ink truncate">APTRANSCO 220kV Substation</p>
+                <p className="text-xs text-ink-muted mt-1">Mentor: Er. R. Sreenivasulu</p>
+              </div>
+              <div className="rounded-surface border border-border p-4 bg-surface">
+                <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                  Logbook Verification
+                </span>
+                <p className="mt-2 text-2xl font-bold text-success">Verified & Signed</p>
+                <p className="text-xs text-ink-muted mt-1">Updated 2 days ago</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
+            <h3 className="font-heading text-lg font-bold text-ink">
+              Recent On-the-Job Apprenticeship Modules
+            </h3>
+            <div className="mt-4 space-y-3">
+              {[
+                { title: "Transformer Oil Breakdown Voltage Testing (BDV)", hours: "16 hrs", status: "Signed Off", date: "14 Nov 2026" },
+                { title: "Switchyard Single-Line Diagram (SLD) Tracing", hours: "24 hrs", status: "Signed Off", date: "08 Nov 2026" },
+                { title: "Battery Bank Float Voltage & Specific Gravity Monitoring", hours: "12 hrs", status: "In Progress", date: "Active" },
+              ].map((m, idx) => (
+                <div key={idx} className="flex items-center justify-between p-4 rounded-surface border border-border bg-page-bg">
+                  <div>
+                    <h4 className="text-xs font-bold text-ink">{m.title}</h4>
+                    <span className="text-[11px] text-ink-muted">{m.hours} · Logged {m.date}</span>
+                  </div>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${m.status === "Signed Off" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>
+                    {m.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "goals" && (
+        <div className="space-y-6">
+          <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Target size={22} className="text-secondary" />
+              <h2 className="font-heading text-xl font-bold text-ink">
+                Personalised Learning Engine (PLE) & Study Goals
+              </h2>
+            </div>
+            <p className="mt-1 text-sm text-ink-muted">
+              Adaptive pacing goals based on your recent quiz attempts, handbook reading progress, and skill deficits.
+            </p>
+
+            <div className="mt-6 grid gap-4 tablet:grid-cols-2">
+              <div className="rounded-surface border border-border p-5 bg-surface space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">Goal 1 · Weekly Target</span>
+                  <span className="text-xs font-bold text-ink">80% Done</span>
+                </div>
+                <h4 className="font-bold text-ink text-sm">Master Linear Equations & Slope-Intercept Form</h4>
+                <p className="text-xs text-ink-muted">Complete Lesson 4 reading and score at least 4/5 on the Checkpoint 2 quiz.</p>
+                <div className="pt-2">
+                  <Link to="/lessons/lesson-4" className="inline-flex items-center gap-1.5 text-xs font-bold text-secondary hover:underline">
+                    Continue Lesson 4 <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+
+              <div className="rounded-surface border border-border p-5 bg-surface space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Goal 2 · Spatial Lab</span>
+                  <span className="text-xs font-bold text-ink">Unlocked</span>
+                </div>
+                <h4 className="font-bold text-ink text-sm">Explore 3D Cartesian Coordinate Walk</h4>
+                <p className="text-xs text-ink-muted">Experiment with positive and negative slopes in the WebXR 3D laboratory.</p>
+                <div className="pt-2">
+                  <Link to="/xr-store" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:underline">
+                    Open Spatial Lab <ArrowRight size={14} />
+                  </Link>
                 </div>
               </div>
             </div>

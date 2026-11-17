@@ -15,10 +15,10 @@ export default defineConfig({
     tailwindcss(),
   ],
   resolve: {
-    alias: {
-      "@/i18n": path.resolve(__dirname, "./src/i18n/index.ts"),
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: [
+      { find: "@/i18n", replacement: path.resolve(__dirname, "./src/i18n/index.ts") },
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+    ],
   },
   build: {
     outDir: "dist",

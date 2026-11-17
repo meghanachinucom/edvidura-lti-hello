@@ -16,12 +16,14 @@ import { Route as OpsRouteImport } from "./routes/ops"
 import { Route as ReviewRouteImport } from "./routes/review"
 import { Route as Char91__prototypeChar93ComponentsRouteImport } from "./routes/[__prototype].components"
 import { Route as ShellActiveQuizzesRouteImport } from "./routes/_shell.active-quizzes"
+import { Route as ShellHomeRouteImport } from "./routes/_shell.home"
 import { Route as ShellInstitutionDetailRouteImport } from "./routes/_shell.institution-detail"
 import { Route as ShellInstitutionsRouteImport } from "./routes/_shell.institutions"
 import { Route as ShellLaunchHubRouteImport } from "./routes/_shell.launch-hub"
 import { Route as ShellLtiIntegrationRouteImport } from "./routes/_shell.lti-integration"
 import { Route as ShellOnboardRouteImport } from "./routes/_shell.onboard"
 import { Route as ShellStudentDirectoryRouteImport } from "./routes/_shell.student-directory"
+import { Route as ShellXrStoreRouteImport } from "./routes/_shell.xr-store"
 import { Route as LtiDeepLinkRouteImport } from "./routes/lti.deep-link"
 import { Route as OpsDashboardRouteImport } from "./routes/ops.dashboard"
 import { Route as OpsLoginRouteImport } from "./routes/ops.login"
@@ -100,6 +102,11 @@ const ShellActiveQuizzesRoute = ShellActiveQuizzesRouteImport.update({
   path: "/active-quizzes",
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellHomeRoute = ShellHomeRouteImport.update({
+  id: "/home",
+  path: "/home",
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellInstitutionDetailRoute = ShellInstitutionDetailRouteImport.update({
   id: "/institution-detail",
   path: "/institution-detail",
@@ -128,6 +135,11 @@ const ShellOnboardRoute = ShellOnboardRouteImport.update({
 const ShellStudentDirectoryRoute = ShellStudentDirectoryRouteImport.update({
   id: "/student-directory",
   path: "/student-directory",
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellXrStoreRoute = ShellXrStoreRouteImport.update({
+  id: "/xr-store",
+  path: "/xr-store",
   getParentRoute: () => ShellRoute,
 } as any)
 const LtiDeepLinkRoute = LtiDeepLinkRouteImport.update({
@@ -359,12 +371,14 @@ export interface FileRoutesByFullPath {
   "/review": typeof ReviewRoute
   "/__prototype/components": typeof Char91__prototypeChar93ComponentsRoute
   "/active-quizzes": typeof ShellActiveQuizzesRoute
+  "/home": typeof ShellHomeRoute
   "/institution-detail": typeof ShellInstitutionDetailRoute
   "/institutions": typeof ShellInstitutionsRoute
   "/launch-hub": typeof ShellLaunchHubRoute
   "/lti-integration": typeof ShellLtiIntegrationRoute
   "/onboard": typeof ShellOnboardRoute
   "/student-directory": typeof ShellStudentDirectoryRoute
+  "/xr-store": typeof ShellXrStoreRoute
   "/lti/deep-link": typeof LtiDeepLinkRoute
   "/ops/dashboard": typeof OpsDashboardRoute
   "/ops/login": typeof OpsLoginRoute
@@ -415,12 +429,14 @@ export interface FileRoutesByTo {
   "/review": typeof ReviewRoute
   "/__prototype/components": typeof Char91__prototypeChar93ComponentsRoute
   "/active-quizzes": typeof ShellActiveQuizzesRoute
+  "/home": typeof ShellHomeRoute
   "/institution-detail": typeof ShellInstitutionDetailRoute
   "/institutions": typeof ShellInstitutionsRoute
   "/launch-hub": typeof ShellLaunchHubRoute
   "/lti-integration": typeof ShellLtiIntegrationRoute
   "/onboard": typeof ShellOnboardRoute
   "/student-directory": typeof ShellStudentDirectoryRoute
+  "/xr-store": typeof ShellXrStoreRoute
   "/lti/deep-link": typeof LtiDeepLinkRoute
   "/ops/dashboard": typeof OpsDashboardRoute
   "/ops/login": typeof OpsLoginRoute
@@ -473,12 +489,14 @@ export interface FileRoutesById {
   "/review": typeof ReviewRoute
   "/__prototype/components": typeof Char91__prototypeChar93ComponentsRoute
   "/_shell/active-quizzes": typeof ShellActiveQuizzesRoute
+  "/_shell/home": typeof ShellHomeRoute
   "/_shell/institution-detail": typeof ShellInstitutionDetailRoute
   "/_shell/institutions": typeof ShellInstitutionsRoute
   "/_shell/launch-hub": typeof ShellLaunchHubRoute
   "/_shell/lti-integration": typeof ShellLtiIntegrationRoute
   "/_shell/onboard": typeof ShellOnboardRoute
   "/_shell/student-directory": typeof ShellStudentDirectoryRoute
+  "/_shell/xr-store": typeof ShellXrStoreRoute
   "/lti/deep-link": typeof LtiDeepLinkRoute
   "/ops/dashboard": typeof OpsDashboardRoute
   "/ops/login": typeof OpsLoginRoute
@@ -531,12 +549,14 @@ export interface FileRouteTypes {
     | "/review"
     | "/__prototype/components"
     | "/active-quizzes"
+    | "/home"
     | "/institution-detail"
     | "/institutions"
     | "/launch-hub"
     | "/lti-integration"
     | "/onboard"
     | "/student-directory"
+    | "/xr-store"
     | "/lti/deep-link"
     | "/ops/dashboard"
     | "/ops/login"
@@ -587,12 +607,14 @@ export interface FileRouteTypes {
     | "/review"
     | "/__prototype/components"
     | "/active-quizzes"
+    | "/home"
     | "/institution-detail"
     | "/institutions"
     | "/launch-hub"
     | "/lti-integration"
     | "/onboard"
     | "/student-directory"
+    | "/xr-store"
     | "/lti/deep-link"
     | "/ops/dashboard"
     | "/ops/login"
@@ -644,12 +666,14 @@ export interface FileRouteTypes {
     | "/review"
     | "/__prototype/components"
     | "/_shell/active-quizzes"
+    | "/_shell/home"
     | "/_shell/institution-detail"
     | "/_shell/institutions"
     | "/_shell/launch-hub"
     | "/_shell/lti-integration"
     | "/_shell/onboard"
     | "/_shell/student-directory"
+    | "/_shell/xr-store"
     | "/lti/deep-link"
     | "/ops/dashboard"
     | "/ops/login"
@@ -755,6 +779,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ShellActiveQuizzesRouteImport
       parentRoute: typeof ShellRoute
     }
+    "/_shell/home": {
+      id: "/_shell/home"
+      path: "/home"
+      fullPath: "/home"
+      preLoaderRoute: typeof ShellHomeRouteImport
+      parentRoute: typeof ShellRoute
+    }
     "/_shell/institution-detail": {
       id: "/_shell/institution-detail"
       path: "/institution-detail"
@@ -795,6 +826,13 @@ declare module "@tanstack/react-router" {
       path: "/student-directory"
       fullPath: "/student-directory"
       preLoaderRoute: typeof ShellStudentDirectoryRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    "/_shell/xr-store": {
+      id: "/_shell/xr-store"
+      path: "/xr-store"
+      fullPath: "/xr-store"
+      preLoaderRoute: typeof ShellXrStoreRouteImport
       parentRoute: typeof ShellRoute
     }
     "/lti/deep-link": {
@@ -1096,12 +1134,14 @@ declare module "@tanstack/react-router" {
 
 interface ShellRouteChildren {
   ShellActiveQuizzesRoute: typeof ShellActiveQuizzesRoute
+  ShellHomeRoute: typeof ShellHomeRoute
   ShellInstitutionDetailRoute: typeof ShellInstitutionDetailRoute
   ShellInstitutionsRoute: typeof ShellInstitutionsRoute
   ShellLaunchHubRoute: typeof ShellLaunchHubRoute
   ShellLtiIntegrationRoute: typeof ShellLtiIntegrationRoute
   ShellOnboardRoute: typeof ShellOnboardRoute
   ShellStudentDirectoryRoute: typeof ShellStudentDirectoryRoute
+  ShellXrStoreRoute: typeof ShellXrStoreRoute
   ShellChar91__prototypeChar93AccessRoute: typeof ShellChar91__prototypeChar93AccessRoute
   ShellLearnActivityRoute: typeof ShellLearnActivityRoute
   ShellLearnAnalyticsRoute: typeof ShellLearnAnalyticsRoute
@@ -1145,12 +1185,14 @@ interface ShellRouteChildren {
 
 const ShellRouteChildren: ShellRouteChildren = {
   ShellActiveQuizzesRoute: ShellActiveQuizzesRoute,
+  ShellHomeRoute: ShellHomeRoute,
   ShellInstitutionDetailRoute: ShellInstitutionDetailRoute,
   ShellInstitutionsRoute: ShellInstitutionsRoute,
   ShellLaunchHubRoute: ShellLaunchHubRoute,
   ShellLtiIntegrationRoute: ShellLtiIntegrationRoute,
   ShellOnboardRoute: ShellOnboardRoute,
   ShellStudentDirectoryRoute: ShellStudentDirectoryRoute,
+  ShellXrStoreRoute: ShellXrStoreRoute,
   ShellChar91__prototypeChar93AccessRoute:
     ShellChar91__prototypeChar93AccessRoute,
   ShellLearnActivityRoute: ShellLearnActivityRoute,

@@ -1,4 +1,4 @@
-﻿{
+{
   "lessonCard": {
     "illustration": "Illustration for {title}",
     "eyebrow": "LESSON {number} · {type}",
@@ -133,6 +133,9 @@
   },
   "pages": {
     "home": "EdVidura",
+    "campusHome": "Course Home",
+    "pravachana": "Video Library",
+    "xrLabs": "3D Spatial Labs",
     "launchHub": "Launch hub",
     "receiptsVerify": "Verify learning evidence",
     "ltiDeepLink": "Add content to Moodle",
@@ -213,7 +216,9 @@
     "ebooks": "eBooks"
   },
   "roleNav": {
+    "dashboard": "Dashboard",
     "lessons": "Lessons",
+    "xrLabs": "3D Spatial Labs",
     "quizzes": "Quizzes",
     "plan": "My Plan",
     "askVidura": "Ask Vidura",
@@ -327,7 +332,9 @@
     },
     "scoreOf": "{n} of 5",
     "learnerTabs": {
+      "dashboard": "Dashboard",
       "lessons": "Lessons",
+      "xrLabs": "3D Spatial Labs",
       "quizzes": "Quizzes",
       "plan": "My plan",
       "coach": "Coach"
