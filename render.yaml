@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: edvidura-deployment
+    runtime: python
+    buildCommand: "pip install -r requirements.txt && cd frontend-react && npm install && npm run build"
+    startCommand: "python scripts/auto_bootstrap.py && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: ENVIRONMENT
+        value: demo
+      - key: RUN_MIGRATIONS
+        value: "1"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: edvidura-db
+          property: connectionString
+
+databases:
+  - name: edvidura-db
+    databaseName: edvidura
+    user: edvidura_app

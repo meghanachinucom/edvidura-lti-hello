@@ -206,8 +206,31 @@ def demo_launch(request: Request, persona: str = "learner"):
     p = persona.strip().lower()
     moodle_url = os.getenv(
         "MOODLE_PUBLIC_URL",
-        "https://miss-houses-lecture-specifics.trycloudflare.com",
+        "https://tennessee-manufacturers-poly-bunny.trycloudflare.com",
     )
+
+    real_class_id = "5bfeab61-bc18-4b6a-a829-d5bee1b39238"
+    real_course_id = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    real_course_title = "Class 8 · Algebra I"
+    try:
+        from app import db
+        with db.tenant_connection(TENANT_A_ID) as conn:
+            c_row = conn.execute(
+                "SELECT id, class_code, class_name, course_id FROM classes WHERE class_code = %s",
+                ("RHS-C08",),
+            ).fetchone()
+            if c_row:
+                real_class_id = str(c_row["id"])
+                if c_row.get("course_id"):
+                    real_course_id = str(c_row["course_id"])
+                    crs = conn.execute(
+                        "SELECT title FROM courses WHERE id = %s",
+                        (c_row["course_id"],),
+                    ).fetchone()
+                    if crs and crs.get("title"):
+                        real_course_title = str(crs["title"])
+    except Exception:
+        pass
 
     if p in ("learner", "student", "alice"):
         quiz_ctx = {
@@ -220,9 +243,10 @@ def demo_launch(request: Request, persona: str = "learner"):
             "roles": ["http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"],
             "is_instructor": False,
             "is_school_admin": False,
-            "class_id": "RHS-C08",
-            "course": "Class 8 · Algebra I",
-            "edvidura_course_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            "class_id": real_class_id,
+            "class_code": "RHS-C08",
+            "course": real_course_title,
+            "edvidura_course_id": real_course_id,
             "lms_return_url": f"{moodle_url}/course/view.php?id=10",
         }
         dest = "/lessons"
@@ -237,9 +261,10 @@ def demo_launch(request: Request, persona: str = "learner"):
             "roles": ["http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"],
             "is_instructor": True,
             "is_school_admin": False,
-            "class_id": "RHS-C08",
-            "course": "Class 8 · Algebra I",
-            "edvidura_course_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            "class_id": real_class_id,
+            "class_code": "RHS-C08",
+            "course": real_course_title,
+            "edvidura_course_id": real_course_id,
             "lms_return_url": f"{moodle_url}/course/view.php?id=10",
         }
         dest = "/teacher/attempts"
@@ -254,9 +279,10 @@ def demo_launch(request: Request, persona: str = "learner"):
             "roles": ["http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator"],
             "is_instructor": False,
             "is_school_admin": True,
-            "class_id": "RHS-C08",
-            "course": "Class 8 · Algebra I",
-            "edvidura_course_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            "class_id": real_class_id,
+            "class_code": "RHS-C08",
+            "course": real_course_title,
+            "edvidura_course_id": real_course_id,
             "lms_return_url": f"{moodle_url}/course/view.php?id=10",
         }
         dest = "/school-admin"

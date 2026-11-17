@@ -85,6 +85,15 @@ app = FastAPI(
 )
 
 
+@app.on_event("startup")
+def _bootstrap_db():
+    try:
+        from app.auto_bootstrap import ensure_cloud_database_bootstrapped
+        ensure_cloud_database_bootstrapped()
+    except Exception:
+        pass
+
+
 @app.exception_handler(AppApiError)
 async def _app_api_error_handler(_request: Request, exc: AppApiError):
     return app_fail(

@@ -1,18 +1,17 @@
-# EdVidura — Railway / container image (API + built SPA)
+# EdVidura — Container image (FastAPI backend + built React SPA)
 FROM node:22-bookworm-slim AS frontend
 WORKDIR /fe
-COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
-RUN npm ci --legacy-peer-deps
-COPY frontend/ ./
-ENV VITE_BASE=/app/
+COPY frontend-react/package.json frontend-react/package-lock.json* ./
+RUN npm install
+COPY frontend-react/ ./
 RUN npm run build
 
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    ENVIRONMENT=production
+    ENVIRONMENT=demo
 
 WORKDIR /app
 
@@ -27,9 +26,8 @@ COPY app ./app
 COPY db ./db
 COPY scripts ./scripts
 COPY templates ./templates
-COPY docs/RAILWAY.md ./docs/RAILWAY.md
-COPY docs/SAAS_ROADMAP.md ./docs/SAAS_ROADMAP.md
-COPY --from=frontend /fe/dist ./frontend/dist
+COPY api ./api
+COPY --from=frontend /fe/dist ./frontend-react/dist
 
 RUN mkdir -p keys app/static/uploads \
     && printf '' > keys/.gitkeep \

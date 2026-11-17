@@ -77,3 +77,5 @@ scratch/chrome_profile_*/
 
 # Local verification tools and sensitive local artifacts
 scratch/
+.vercel
+.env*

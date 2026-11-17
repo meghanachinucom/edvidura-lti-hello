@@ -130,10 +130,12 @@ def _safe_float(raw: str | None, default: float = 0.0) -> float:
 
 
 def get_settings() -> Settings:
-    database_url = os.getenv(
-        "DATABASE_URL",
-        "postgresql://edvidura_app:edvidura_app@127.0.0.1:5433/edvidura",
-    ).strip()
+    db_url = os.getenv("DATABASE_URL", "").strip()
+    cloud_url = os.getenv("POSTGRES_URL_NON_POOLING") or os.getenv("POSTGRES_URL")
+    if (not db_url or "127.0.0.1" in db_url or "localhost" in db_url) and cloud_url:
+        database_url = cloud_url.strip()
+    else:
+        database_url = db_url or "postgresql://edvidura_app:edvidura_app@127.0.0.1:5433/edvidura"
     if database_url.startswith("postgres://"):
         database_url = "postgresql://" + database_url[len("postgres://") :]
 
@@ -153,10 +155,17 @@ def get_settings() -> Settings:
     except ValueError:
         traces = 0.0
 
+    app_base_url = os.getenv("APP_BASE_URL")
+    if not app_base_url:
+        vercel_url = os.getenv("VERCEL_PROJECT_PRODUCTION_URL") or os.getenv("VERCEL_URL")
+        if vercel_url:
+            app_base_url = f"https://{vercel_url}"
+        else:
+            app_base_url = "http://localhost:8000"
+    app_base_url = app_base_url.rstrip("/")
+
     return Settings(
-        app_base_url=os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip(
-            "/"
-        ),
+        app_base_url=app_base_url,
         session_secret=os.getenv("SESSION_SECRET", "dev-only-change-me"),
         private_key_path=ROOT
         / os.getenv("LTI_PRIVATE_KEY_PATH", "keys/private.key"),

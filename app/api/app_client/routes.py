@@ -324,8 +324,8 @@ def app_manual_read(
     if not manual:
         raise AppApiError("Manual not found", code="not_found", status_code=404)
 
-    if v is not None:
-        version = manuals_mod.get_version(tid, manual_id, v)
+    if isinstance(v, int):
+        version = manuals_mod.get_version(tid, manual_id=manual_id, version=v)
     else:
         version = manuals_mod.latest_published_version(tid, manual_id)
     if not version:
@@ -396,7 +396,7 @@ def app_manual_read(
             "reading_progress": saved_prog,
             "bookmarks": bms,
             "body_html": body_html,
-            "focus": (focus or "").strip() or None,
+            "focus": focus.strip() if isinstance(focus, str) and focus.strip() else None,
             "pebl_counts": counts,
         }
     )

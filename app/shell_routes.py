@@ -2431,11 +2431,26 @@ async def teacher_attempts_csv(
 
 @router.get("/lti-integration", response_class=HTMLResponse)
 async def lti_integration(request: Request, token: str | None = None):
+    spa_index = Path(__file__).resolve().parent.parent / "frontend-react" / "dist" / "index.html"
+    if spa_index.is_file() and not request.query_params.get("raw") and not token:
+        return FileResponse(spa_index, media_type="text/html; charset=utf-8")
     from app.modules import lti_groups as groups_mod
 
-    session = require_instructor(request, token=token)
+    session = require_session(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
+    if not (session.get("is_instructor") or session.get("is_school_admin")):
+        return _shell(
+            request,
+            "access.html",
+            session,
+            active_page="",
+            page_title="Faculty & Admin only",
+            extra={
+                "heading": "Faculty & Admin only",
+                "message": "This screen opens when the Moodle launch includes an Instructor or Administrator role.",
+            },
+        )
     settings = get_settings()
     groups = []
     assignments = []
@@ -2623,6 +2638,9 @@ async def student_directory(
 
 @router.get("/institution-detail", response_class=HTMLResponse)
 async def institution_detail(request: Request, token: str | None = None):
+    spa_index = Path(__file__).resolve().parent.parent / "frontend-react" / "dist" / "index.html"
+    if spa_index.is_file() and not request.query_params.get("raw") and not token:
+        return FileResponse(spa_index, media_type="text/html; charset=utf-8")
     session = require_school_admin(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
@@ -2955,6 +2973,9 @@ async def learn_micro_viewed(request: Request, token: str | None = None):
 async def school_admin_teachers(
     request: Request, token: str | None = None, ok: str | None = None
 ):
+    spa_index = Path(__file__).resolve().parent.parent / "frontend-react" / "dist" / "index.html"
+    if spa_index.is_file() and not request.query_params.get("raw") and not token:
+        return FileResponse(spa_index, media_type="text/html; charset=utf-8")
     session = require_school_admin(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
@@ -2978,6 +2999,9 @@ async def school_admin_teachers(
 async def school_admin_classes(
     request: Request, token: str | None = None, ok: str | None = None
 ):
+    spa_index = Path(__file__).resolve().parent.parent / "frontend-react" / "dist" / "index.html"
+    if spa_index.is_file() and not request.query_params.get("raw") and not token:
+        return FileResponse(spa_index, media_type="text/html; charset=utf-8")
     session = require_school_admin(request, token=token)
     if isinstance(session, HTMLResponse):
         return session
@@ -3097,6 +3121,9 @@ async def school_admin_bind_moodle(
 
 @router.get("/school-admin/students", response_class=HTMLResponse)
 async def school_admin_students(request: Request, token: str | None = None):
+    spa_index = Path(__file__).resolve().parent.parent / "frontend-react" / "dist" / "index.html"
+    if spa_index.is_file() and not request.query_params.get("raw") and not token:
+        return FileResponse(spa_index, media_type="text/html; charset=utf-8")
     session = require_school_admin(request, token=token)
     if isinstance(session, HTMLResponse):
         return session

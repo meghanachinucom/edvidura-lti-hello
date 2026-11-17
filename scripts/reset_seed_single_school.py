@@ -413,15 +413,58 @@ def _super_exec(sql: str) -> None:
         conn.commit()
 
 
+_SHARED_CONN = None
+
+
+def _get_shared_conn():
+    global _SHARED_CONN
+    try:
+        if _SHARED_CONN is None or _SHARED_CONN.closed:
+            _SHARED_CONN = db.connect()
+            _SHARED_CONN.autocommit = True
+        else:
+            _SHARED_CONN.execute("SELECT 1")
+    except Exception:
+        try:
+            if _SHARED_CONN:
+                _SHARED_CONN.close()
+        except Exception:
+            pass
+        _SHARED_CONN = db.connect()
+        _SHARED_CONN.autocommit = True
+    return _SHARED_CONN
+
+
 def _exec_tenant(tenant_id: str, sql: str, params: tuple | list | None = None):
-    with db.tenant_connection(tenant_id) as conn:
-        return conn.execute(sql, params or ())
+    for attempt in range(3):
+        try:
+            conn = _get_shared_conn()
+            conn.execute("SELECT set_config('app.tenant_id', %s, false)", (str(tenant_id),))
+            return conn.execute(sql, params or ())
+        except Exception as exc:
+            if "closed the connection" in str(exc) or "terminat" in str(exc):
+                global _SHARED_CONN
+                _SHARED_CONN = None
+                if attempt == 2:
+                    raise
+            else:
+                raise
 
 
 def _exec_owner(sql: str, params: tuple | list | None = None):
-    with db.connect() as conn:
-        with conn.transaction():
+    for attempt in range(3):
+        try:
+            conn = _get_shared_conn()
+            conn.execute("SELECT set_config('app.tenant_id', '', false)")
             return conn.execute(sql, params or ())
+        except Exception as exc:
+            if "closed the connection" in str(exc) or "terminat" in str(exc):
+                global _SHARED_CONN
+                _SHARED_CONN = None
+                if attempt == 2:
+                    raise
+            else:
+                raise
 
 
 ALLOWED_LOCAL_HOSTS = {
@@ -552,6 +595,7 @@ def seed() -> None:
         """
         INSERT INTO tenants (id, slug, name, status)
         VALUES (%s, 'riverside', 'Riverside High', 'active')
+        ON CONFLICT (id) DO UPDATE SET slug = EXCLUDED.slug, name = EXCLUDED.name, status = EXCLUDED.status
         """,
         (TENANT_ID,),
     )
@@ -563,6 +607,9 @@ def seed() -> None:
             issuer, client_id, deployment_ids, status
         )
         VALUES (%s, %s, 'riverside', 'Riverside High School', %s, %s, %s, 'active')
+        ON CONFLICT (id) DO UPDATE SET institution_code = EXCLUDED.institution_code,
+            institution_name = EXCLUDED.institution_name, issuer = EXCLUDED.issuer,
+            client_id = EXCLUDED.client_id, deployment_ids = EXCLUDED.deployment_ids, status = EXCLUDED.status
         """,
         (INST_ID, TENANT_ID, issuer, client_id, deployments),
     )
@@ -592,6 +639,7 @@ def seed() -> None:
             tenant_id, institution_id, admin_code, name, email, status, subject
         )
         VALUES (%s, %s, 'ADM-01', 'Alex Morgan', 'admin@riverside.test', 'active', '5')
+        ON CONFLICT (tenant_id, admin_code) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, status = EXCLUDED.status, subject = EXCLUDED.subject
         """,
         (TENANT_ID, INST_ID),
     )
@@ -607,6 +655,7 @@ def seed() -> None:
             """
             INSERT INTO teachers (tenant_id, teacher_code, name, email, status)
             VALUES (%s, %s, %s, %s, 'active')
+            ON CONFLICT (tenant_id, teacher_code) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, status = EXCLUDED.status
             RETURNING id
             """,
             (TENANT_ID, code, tname, email),
@@ -616,35 +665,46 @@ def seed() -> None:
 
     student_ids: dict[str, str] = {}
     student_names: dict[str, str] = {}
-    # Classic Class 8 demo users (Moodle riverside_alice / bob / carol)
-    classic_emails = {
-        (8, 1): ("Alice Nguyen", "alice.nguyen@riverside.test"),
-        (8, 2): ("Bob Okonkwo", "bob.okonkwo@riverside.test"),
-        (8, 3): ("Carol Patel", "carol.patel@riverside.test"),
-    }
-    idx = 0
-    for grade in range(1, 11):
-        for n in range(1, STUDENTS_PER_CLASS + 1):
-            code = f"STU-C{grade:02d}-{n:02d}"
-            if (grade, n) in classic_emails:
-                name, email = classic_emails[(grade, n)]
-            else:
-                first = STUDENT_FIRST[idx % len(STUDENT_FIRST)]
-                last = STUDENT_LAST[idx % len(STUDENT_LAST)]
-                idx += 1
-                name = f"{first} {last}"
-                email = f"c{grade:02d}.s{n:02d}@riverside.test"
-            row = _exec_owner(
-                """
-                INSERT INTO students (institution_id, student_code, name, email, status)
-                VALUES (%s, %s, %s, %s, 'active')
-                RETURNING id
-                """,
-                (INST_ID, code, name, email),
-            ).fetchone()
-            student_ids[code] = str(row["id"])
-            student_names[code] = name
-        print(f"  Students     Class {grade}: {STUDENTS_PER_CLASS} enrolled")
+    existing_students = _exec_owner(
+        "SELECT id, student_code, name FROM students WHERE institution_id = %s",
+        (INST_ID,),
+    ).fetchall()
+    if len(existing_students) >= 220:
+        for r in existing_students:
+            student_ids[r["student_code"]] = str(r["id"])
+            student_names[r["student_code"]] = r["name"]
+        print("  Students     220 students loaded from existing records.")
+    else:
+        # Classic Class 8 demo users (Moodle riverside_alice / bob / carol)
+        classic_emails = {
+            (8, 1): ("Alice Nguyen", "alice.nguyen@riverside.test"),
+            (8, 2): ("Bob Okonkwo", "bob.okonkwo@riverside.test"),
+            (8, 3): ("Carol Patel", "carol.patel@riverside.test"),
+        }
+        idx = 0
+        for grade in range(1, 11):
+            for n in range(1, STUDENTS_PER_CLASS + 1):
+                code = f"STU-C{grade:02d}-{n:02d}"
+                if (grade, n) in classic_emails:
+                    name, email = classic_emails[(grade, n)]
+                else:
+                    first = STUDENT_FIRST[idx % len(STUDENT_FIRST)]
+                    last = STUDENT_LAST[idx % len(STUDENT_LAST)]
+                    idx += 1
+                    name = f"{first} {last}"
+                    email = f"c{grade:02d}.s{n:02d}@riverside.test"
+                row = _exec_owner(
+                    """
+                    INSERT INTO students (institution_id, student_code, name, email, status)
+                    VALUES (%s, %s, %s, %s, 'active')
+                    ON CONFLICT (institution_id, student_code) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email
+                    RETURNING id
+                    """,
+                    (INST_ID, code, name, email),
+                ).fetchone()
+                student_ids[code] = str(row["id"])
+                student_names[code] = name
+            print(f"  Students     Class {grade}: {STUDENTS_PER_CLASS} enrolled")
 
     classes: list[dict] = []
     class_ids: dict[str, str] = {}
@@ -671,49 +731,62 @@ def seed() -> None:
             }
         )
 
-    for cls in classes:
-        row = _exec_tenant(
-            TENANT_ID,
-            """
-            INSERT INTO classes (
-                tenant_id, institution_id, class_code, class_name, subject, term,
-                status
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, 'active')
-            RETURNING id
-            """,
-            (
+    existing_classes = _exec_tenant(
+        TENANT_ID,
+        "SELECT id, class_code FROM classes WHERE tenant_id = %s",
+        (TENANT_ID,),
+    ).fetchall()
+    if len(existing_classes) >= 10:
+        for r in existing_classes:
+            class_ids[r["class_code"]] = str(r["id"])
+        print("  Classes      10 classes loaded from existing records.")
+    else:
+        for cls in classes:
+            row = _exec_tenant(
                 TENANT_ID,
-                INST_ID,
-                cls["code"],
-                cls["name"],
-                cls["subject"],
-                cls["term"],
-            ),
-        ).fetchone()
-        cid = str(row["id"])
-        class_ids[cls["code"]] = cid
-        _exec_tenant(
-            TENANT_ID,
-            """
-            INSERT INTO class_teachers (tenant_id, class_id, teacher_id, role)
-            VALUES (%s, %s, %s, 'lead')
-            """,
-            (TENANT_ID, cid, teacher_ids[cls["lead"]]),
-        )
-        for scode in cls["roster"]:
+                """
+                INSERT INTO classes (
+                    tenant_id, institution_id, class_code, class_name, subject, term,
+                    status
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, 'active')
+                ON CONFLICT (tenant_id, class_code) DO UPDATE SET class_name = EXCLUDED.class_name, subject = EXCLUDED.subject
+                RETURNING id
+                """,
+                (
+                    TENANT_ID,
+                    INST_ID,
+                    cls["code"],
+                    cls["name"],
+                    cls["subject"],
+                    cls["term"],
+                ),
+            ).fetchone()
+            cid = str(row["id"])
+            class_ids[cls["code"]] = cid
             _exec_tenant(
                 TENANT_ID,
                 """
-                INSERT INTO class_enrollments (tenant_id, class_id, student_id)
-                VALUES (%s, %s, %s)
+                INSERT INTO class_teachers (tenant_id, class_id, teacher_id, role)
+                VALUES (%s, %s, %s, 'lead')
+                ON CONFLICT (tenant_id, class_id, teacher_id) DO NOTHING
                 """,
-                (TENANT_ID, cid, student_ids[scode]),
+                (TENANT_ID, cid, teacher_ids[cls["lead"]]),
             )
-        print(
-            f"  Class        {cls['code']}  {cls['name']} · {cls['subject']}  "
-            f"({len(cls['roster'])} students, lead {cls['lead']})"
-        )
+            if cls["roster"]:
+                values_sql = ", ".join(["(%s, %s, %s)"] * len(cls["roster"]))
+                params = []
+                for scode in cls["roster"]:
+                    params.extend([TENANT_ID, cid, student_ids[scode]])
+                _exec_tenant(
+                    TENANT_ID,
+                    f"INSERT INTO class_enrollments (tenant_id, class_id, student_id) VALUES {values_sql} ON CONFLICT DO NOTHING",
+                    params,
+                )
+            print(
+                f"  Class        {cls['code']}  {cls['name']} · {cls['subject']}  "
+                f"({len(cls['roster'])} students, lead {cls['lead']})"
+            )
 
     # Courses / subjects content — unique curriculum per Class 1–10
     courses = []
@@ -739,6 +812,7 @@ def seed() -> None:
             """
             INSERT INTO courses (id, tenant_id, slug, title, description, status)
             VALUES (%s, %s, %s, %s, %s, 'published')
+            ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description
             """,
             (course_id, TENANT_ID, slug, title, desc),
         )
@@ -749,6 +823,7 @@ def seed() -> None:
                 """
                 INSERT INTO quizzes (id, tenant_id, course_id, slug, title, description, status)
                 VALUES (%s, %s, %s, %s, %s, %s, 'published')
+                ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description
                 """,
                 (quiz_id, TENANT_ID, course_id, f"{slug}-quiz", q_title, desc),
             )
@@ -760,6 +835,7 @@ def seed() -> None:
                         tenant_id, quiz_id, question_key, prompt, choices, correct_index, position
                     )
                     VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s)
+                    ON CONFLICT (quiz_id, question_key) DO NOTHING
                     """,
                     (TENANT_ID, quiz_id, key, prompt, json.dumps(choices), correct, i),
                 )
@@ -773,6 +849,7 @@ def seed() -> None:
                     lesson_type, body_md, video_url, quiz_id
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (course_id, slug) DO NOTHING
                 """,
                 (TENANT_ID, course_id, lslug, ltitle, pos, ltype, body, video or "", qid),
             )

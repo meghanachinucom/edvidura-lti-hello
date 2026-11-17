@@ -22,37 +22,124 @@ interface BackendClass {
 
 const defaultClasses = [
   {
-    name: "Electrician, Batch A",
-    code: "ELE-A",
-    room: "Workshop 1",
-    teacher: "Suresh Iyer",
-    time: "09:00–10:30",
-    enrolled: 28,
-    capacity: 30,
-    period: "Period 1",
+    name: "Class 1",
+    code: "RHS-C01",
+    room: "Grade Room 1",
+    teacher: "Priya Sharma (TCH-01)",
+    time: "08:30–09:30",
+    enrolled: 22,
+    capacity: 25,
+    period: "2026–27",
     synced: true,
+    students: [],
   },
   {
-    name: "Electrician, Batch B",
-    code: "ELE-B",
-    room: "Workshop 2",
-    teacher: "Farhan Qureshi",
+    name: "Class 2",
+    code: "RHS-C02",
+    room: "Grade Room 2",
+    teacher: "James Cole (TCH-02)",
+    time: "09:30–10:30",
+    enrolled: 22,
+    capacity: 25,
+    period: "2026–27",
+    synced: true,
+    students: [],
+  },
+  {
+    name: "Class 3",
+    code: "RHS-C03",
+    room: "Grade Room 3",
+    teacher: "Ana Ruiz (TCH-03)",
+    time: "10:30–11:30",
+    enrolled: 22,
+    capacity: 25,
+    period: "2026–27",
+    synced: true,
+    students: [],
+  },
+  {
+    name: "Class 4",
+    code: "RHS-C04",
+    room: "Grade Room 4",
+    teacher: "Marcus Vance (TCH-04)",
+    time: "11:30–12:30",
+    enrolled: 22,
+    capacity: 25,
+    period: "2026–27",
+    synced: true,
+    students: [],
+  },
+  {
+    name: "Class 5",
+    code: "RHS-C05",
+    room: "Grade Room 5",
+    teacher: "Sarah Chen (TCH-05)",
+    time: "12:30–13:30",
+    enrolled: 22,
+    capacity: 25,
+    period: "2026–27",
+    synced: true,
+    students: [],
+  },
+  {
+    name: "Class 6",
+    code: "RHS-C06",
+    room: "Grade Room 6",
+    teacher: "David Kim (TCH-06)",
+    time: "13:30–14:30",
+    enrolled: 22,
+    capacity: 25,
+    period: "2026–27",
+    synced: true,
+    students: [],
+  },
+  {
+    name: "Class 7",
+    code: "RHS-C07",
+    room: "Grade Room 7",
+    teacher: "Rachel Green (TCH-07)",
+    time: "08:30–09:30",
+    enrolled: 22,
+    capacity: 25,
+    period: "2026–27",
+    synced: true,
+    students: [],
+  },
+  {
+    name: "Class 8 · Algebra I",
+    code: "RHS-C08",
+    room: "Math Lab 8 · Room 204",
+    teacher: "Priya Sharma (TCH-08)",
+    time: "09:30–11:00",
+    enrolled: 22,
+    capacity: 25,
+    period: "2026–27",
+    synced: true,
+    students: [],
+  },
+  {
+    name: "Class 9",
+    code: "RHS-C09",
+    room: "Grade Room 9",
+    teacher: "Michael Scott (TCH-09)",
     time: "11:00–12:30",
-    enrolled: 24,
-    capacity: 30,
-    period: "Period 2",
+    enrolled: 22,
+    capacity: 25,
+    period: "2026–27",
     synced: true,
+    students: [],
   },
   {
-    name: "STEM Foundations",
-    code: "STEM-01",
-    room: "Lab 3",
-    teacher: "Suresh Iyer",
+    name: "Class 10",
+    code: "RHS-C10",
+    room: "Grade Room 10",
+    teacher: "Donna Paulsen (TCH-10)",
     time: "13:00–14:30",
     enrolled: 22,
-    capacity: 28,
-    period: "Period 3",
+    capacity: 25,
+    period: "2026–27",
     synced: true,
+    students: [],
   },
 ];
 
@@ -117,19 +204,26 @@ function Page() {
   };
 
   const displayClasses = remoteClasses.length > 0
-    ? remoteClasses.map((c: any) => ({
-        id: c.id,
-        name: c.class_name || c.name || "Vocational Section",
-        code: c.class_code || c.code || "SEC-01",
-        room: c.room || "Workshop Lab",
-        teacher: c.teacher_name || "Assigned Faculty",
-        time: c.schedule || "09:00–11:00",
-        enrolled: Array.isArray(c.students) ? c.students.length : (c.enrolled ?? 25),
-        capacity: c.capacity ?? 30,
-        period: c.term || "Semester 1",
-        synced: true,
-        students: c.students || [],
-      }))
+    ? remoteClasses.map((c: any) => {
+        const leadTeacher = c.teachers?.[0]?.name
+          ? `${c.teachers[0].name} (${c.teachers[0].teacher_code || "Lead"})`
+          : c.teacher_name || "Assigned Faculty";
+        const isTarget = c.class_code === "RHS-C08" || c.code === "RHS-C08";
+        return {
+          id: c.id,
+          name: c.class_name || c.name || "Class Section",
+          code: c.class_code || c.code || "SEC-01",
+          room: c.room || (isTarget ? "Math Lab 8 · Room 204" : `Grade Room ${c.class_code?.replace("RHS-C", "") || "1"}`),
+          teacher: leadTeacher,
+          time: c.schedule || (isTarget ? "09:30–11:00" : "08:30–10:00"),
+          enrolled: Array.isArray(c.students) ? c.students.length : (c.enrolled ?? 22),
+          capacity: c.capacity ?? 25,
+          period: c.term || "2026–27",
+          synced: true,
+          students: c.students || [],
+          isTarget,
+        };
+      })
     : defaultClasses;
 
   const totalCapacity = displayClasses.reduce((sum, c) => sum + (c.capacity || 30), 0);
@@ -267,18 +361,26 @@ function Page() {
       </div>
 
       <div className="grid gap-4 tablet:grid-cols-2 desktop:grid-cols-3">
-        {displayClasses.map((c) => (
+        {displayClasses.map((c: any) => (
           <article
             key={c.code}
-            className="space-y-4 rounded-surface border border-border bg-surface p-5 shadow-sm"
+            className={`space-y-4 rounded-surface border bg-surface p-5 shadow-sm transition-all ${
+              c.code === "RHS-C08" ? "border-primary ring-2 ring-primary/20" : "border-border"
+            }`}
           >
             <div className="flex items-center justify-between gap-2">
               <span className="rounded-full bg-surface-raised px-3 py-1 text-xs font-semibold text-ink">
                 {c.period}
               </span>
-              <span className="rounded-full bg-success/10 px-3 py-1 text-xs text-success font-semibold">
-                Synced
-              </span>
+              {c.code === "RHS-C08" ? (
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary font-bold">
+                  LTI 1.3 Bound · Course 10
+                </span>
+              ) : (
+                <span className="rounded-full bg-success/10 px-3 py-1 text-xs text-success font-semibold">
+                  Synced
+                </span>
+              )}
             </div>
             <div>
               <h2 className="font-heading text-lg font-bold text-ink">{c.name}</h2>

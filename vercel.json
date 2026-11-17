@@ -1,0 +1,41 @@
+{
+  "outputDirectory": "frontend-react/dist",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/lti/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/health",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/ops/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/onboard/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/receipts/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/review",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/read/content/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
