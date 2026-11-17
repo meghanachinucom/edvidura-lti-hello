@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
+  <defs>
+    <linearGradient id="cncBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="50%" stop-color="#27272a"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </linearGradient>
+    <linearGradient id="cutterPath" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="50%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="laserGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="675" fill="url(#cncBg)"/>
+
+  <!-- Machine Bed Grid -->
+  <g stroke="#3f3f46" stroke-width="1.5">
+    <path d="M 600 240 L 1080 480 L 600 630 L 120 480 Z" fill="#18181b" stroke="#71717a" stroke-width="2"/>
+    <!-- T-Slots in machine bed -->
+    <line x1="280" y1="440" x2="760" y2="600" stroke="#52525b" stroke-width="4"/>
+    <line x1="380" y1="410" x2="860" y2="570" stroke="#52525b" stroke-width="4"/>
+    <line x1="480" y1="380" x2="960" y2="540" stroke="#52525b" stroke-width="4"/>
+  </g>
+
+  <!-- 3D Aluminium Raw Stock Block -->
+  <g transform="translate(420, 320)">
+    <!-- Top Face -->
+    <path d="M 60 70 L 260 170 L 360 120 L 160 20 Z" fill="#94a3b8" stroke="#cbd5e1" stroke-width="2"/>
+    <!-- Front Face -->
+    <path d="M 60 70 L 260 170 L 260 250 L 60 150 Z" fill="#64748b" stroke="#cbd5e1" stroke-width="2"/>
+    <!-- Right Face -->
+    <path d="M 260 170 L 360 120 L 360 200 L 260 250 Z" fill="#475569" stroke="#cbd5e1" stroke-width="2"/>
+  </g>
+
+  <!-- Glowing 3D Toolpath Helix & Cutter Trajectory (G-Code G01/G02) -->
+  <g filter="url(#laserGlow)">
+    <path d="M 520 280 C 580 340, 680 320, 720 380 S 620 460, 560 420" 
+          fill="none" stroke="url(#cutterPath)" stroke-width="5" stroke-linecap="round"/>
+    
+    <!-- Rapid Move G00 (Dashed Orange) -->
+    <line x1="460" y1="180" x2="520" y2="280" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="6 6"/>
+  </g>
+
+  <!-- 3D Milling Spindle & Endmill (Overhead) -->
+  <g transform="translate(680, 140)">
+    <!-- Spindle Body Cylinder -->
+    <rect x="20" y="20" width="80" height="120" rx="12" fill="#3f3f46" stroke="#a1a1aa" stroke-width="2"/>
+    <!-- Spindle Collet -->
+    <polygon points="35,140 85,140 75,170 45,170" fill="#71717a" stroke="#d4d4d8" stroke-width="1.5"/>
+    <!-- Carbide Endmill Flutes -->
+    <rect x="55" y="170" width="10" height="50" fill="#38bdf8" filter="url(#laserGlow)"/>
+    <line x1="55" y1="180" x2="65" y2="185" stroke="#ffffff" stroke-width="2"/>
+    <line x1="55" y1="195" x2="65" y2="200" stroke="#ffffff" stroke-width="2"/>
+    <!-- Contact Spark / Chip glow -->
+    <circle cx="60" cy="220" r="10" fill="#f59e0b" fill-opacity="0.8" filter="url(#laserGlow)"/>
+  </g>
+
+  <!-- Floating HUD: G-Code Modal & Spindle Speed -->
+  <g transform="translate(80, 70)">
+    <rect width="380" height="130" rx="16" fill="#18181b" fill-opacity="0.9" stroke="#f59e0b" stroke-width="2"/>
+    <text x="24" y="34" font-family="system-ui, sans-serif" font-size="12" fill="#f59e0b" font-weight="bold">
+      CNC 3-AXIS G-CODE SPATIAL TRAJECTORY
+    </text>
+    <text x="24" y="65" font-family="'Courier New', monospace" font-size="18" fill="#4ade80" font-weight="bold">
+      G01 X42.500 Y18.250 Z-2.000 F650
+    </text>
+    <text x="24" y="92" font-family="'Courier New', monospace" font-size="18" fill="#38bdf8" font-weight="bold">
+      G02 X68.000 Y35.000 R12.500
+    </text>
+    <text x="24" y="118" font-family="system-ui, sans-serif" font-size="12" fill="#a1a1aa">
+      Spindle: 12,000 RPM · Feed: 650 mm/min · Cutter: 4-Flute Carbide
+    </text>
+  </g>
+</svg>

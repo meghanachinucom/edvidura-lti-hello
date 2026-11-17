@@ -2,12 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Play,
   Pause,
-  Clock,
-  FileText,
   Sparkles,
-  ChevronRight,
-  X,
-  BookOpen,
 } from "lucide-react";
 
 export interface VideoChapter {
@@ -33,7 +28,7 @@ export const SAMPLE_LECTURES: VideoLectureItem[] = [
     titleTe: "సరళ సమీకరణాల ప్రాథమిక అంశాలు మరియు వాలు భావన",
     description: "Visual intuition into slope Δy/Δx, Cartesian grid translations, and slope-intercept form y = mx + b.",
     durationSec: 840,
-    coverUrl: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=1200&q=80",
+    coverUrl: "/images/masterclass/slope-masterclass.svg",
     speaker: "Dr. K. S. Ramanujan · Department of Mathematics",
     chapters: [
       { timeSec: 0, label: "Introduction: What is Slope?" },
@@ -48,7 +43,7 @@ export const SAMPLE_LECTURES: VideoLectureItem[] = [
     titleTe: "వేగవంతమైన గణన కోసం వేద గణిత సూత్రాలు",
     description: "Algorithmic methods for mental factorization, quadratic roots, and linear transformations.",
     durationSec: 960,
-    coverUrl: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&w=1200&q=80",
+    coverUrl: "/images/masterclass/vedic-masterclass.svg",
     speaker: "Vidwan S. Somayaji · AP State Education Council",
     chapters: [
       { timeSec: 0, label: "Sutra: Ekadhikena Purvena" },
@@ -70,7 +65,6 @@ export function LessonVideoMasterclass({
   const [currentTime, setCurrentTime] = useState(0);
   const [notes, setNotes] = useState<{ id: string; time: number; text: string }[]>([]);
   const [newNote, setNewNote] = useState("");
-  const [notesOpen, setNotesOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -120,28 +114,16 @@ export function LessonVideoMasterclass({
             <p className="text-xs font-serif text-amber-700 dark:text-amber-400 mt-0.5">{lecture.titleTe}</p>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => setNotesOpen(!notesOpen)}
-          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-            notesOpen
-              ? "bg-amber-500 text-slate-950 shadow-sm"
-              : "bg-page-bg border border-border text-ink hover:border-amber-500"
-          }`}
-        >
-          <FileText size={14} />
-          <span>{notesOpen ? "Hide Notes" : `Lecture Notes (${notes.length})`}</span>
-        </button>
       </div>
 
-      <div className="px-5 grid gap-5 desktop:grid-cols-3">
-        {/* Left: Video Player */}
-        <div className={`space-y-3 ${notesOpen ? "desktop:col-span-2" : "desktop:col-span-3"}`}>
+      <div className="px-5 pb-5 grid gap-5 desktop:grid-cols-3">
+        {/* Left: Video Player, Chapter Markers & Description */}
+        <div className="space-y-3 desktop:col-span-2">
           <div className="relative aspect-video w-full rounded-2xl bg-slate-950 overflow-hidden shadow-md group">
             <img
               src={lecture.coverUrl}
               alt={lecture.title}
-              className="w-full h-full object-cover filter brightness-75"
+              className="w-full h-full object-cover filter brightness-90"
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <button
@@ -187,56 +169,53 @@ export function LessonVideoMasterclass({
               </button>
             ))}
           </div>
+
+          {/* Video Description */}
+          <p className="text-xs text-ink-muted leading-relaxed pt-1">{lecture.description}</p>
         </div>
 
-        {/* Right: Notes Drawer (if open) */}
-        {notesOpen && (
-          <div className="rounded-2xl border border-border bg-page-bg p-4 flex flex-col justify-between space-y-4">
-            <div>
-              <div className="flex items-center justify-between pb-2 border-b border-border">
-                <span className="text-xs font-bold text-ink">Synchronous Notes</span>
-                <span className="text-[10px] font-mono text-amber-600 font-bold">
-                  Pinned at {formatClock(currentTime)}
-                </span>
-              </div>
-              <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
-                {notes.length === 0 ? (
-                  <p className="text-xs text-ink-muted text-center py-4">No notes pinned yet.</p>
-                ) : (
-                  notes.map((n) => (
-                    <div key={n.id} className="p-2 rounded-xl bg-surface border border-border text-xs space-y-0.5">
-                      <span className="text-[10px] font-mono text-amber-600 font-bold">
-                        {formatClock(n.time)}
-                      </span>
-                      <p className="text-ink">{n.text}</p>
-                    </div>
-                  ))
-                )}
-              </div>
+        {/* Right: Permanent Synchronous Notes Column */}
+        <div className="desktop:col-span-1 rounded-2xl border border-border bg-page-bg p-4 flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-2 border-b border-border">
+              <span className="text-xs font-bold text-ink">Synchronous Notes</span>
+              <span className="text-[10px] font-mono text-amber-600 font-bold">
+                Pinned at {formatClock(currentTime)}
+              </span>
             </div>
-
-            <form onSubmit={handleAddNote} className="space-y-2 pt-2 border-t border-border">
-              <input
-                type="text"
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder={`Pin takeaway at ${formatClock(currentTime)}...`}
-                className="w-full p-2 rounded-xl border border-border bg-surface text-xs text-ink outline-none focus:border-amber-500"
-              />
-              <button
-                type="submit"
-                disabled={!newNote.trim()}
-                className="w-full py-1.5 rounded-xl bg-amber-500 text-xs font-bold text-slate-950 hover:bg-amber-400 disabled:opacity-50 transition"
-              >
-                Save Note
-              </button>
-            </form>
+            <div className="mt-3 space-y-2 max-h-56 overflow-y-auto">
+              {notes.length === 0 ? (
+                <p className="text-xs text-ink-muted text-center py-6">No notes pinned yet.</p>
+              ) : (
+                notes.map((n) => (
+                  <div key={n.id} className="p-2 rounded-xl bg-surface border border-border text-xs space-y-0.5">
+                    <span className="text-[10px] font-mono text-amber-600 font-bold">
+                      {formatClock(n.time)}
+                    </span>
+                    <p className="text-ink">{n.text}</p>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        )}
-      </div>
 
-      <div className="p-5 pt-0">
-        <p className="text-xs text-ink-muted leading-relaxed">{lecture.description}</p>
+          <form onSubmit={handleAddNote} className="space-y-2 pt-2 border-t border-border">
+            <input
+              type="text"
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder={`Pin takeaway at ${formatClock(currentTime)}...`}
+              className="w-full p-2 rounded-xl border border-border bg-surface text-xs text-ink outline-none focus:border-amber-500"
+            />
+            <button
+              type="submit"
+              disabled={!newNote.trim()}
+              className="w-full py-2 rounded-xl bg-amber-400 text-xs font-bold text-slate-950 hover:bg-amber-500 disabled:opacity-50 transition shadow-sm"
+            >
+              Save Note
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
