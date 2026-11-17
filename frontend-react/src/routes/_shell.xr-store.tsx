@@ -161,6 +161,146 @@ export function XrStorePage() {
         </div>
       </div>
 
+      {/* Live Interactive Cartesian Coordinate Lab Workbench */}
+      <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600">
+              <Sparkles size={14} /> Interactive Spatial Workbench · Real-Time Simulation
+            </div>
+            <h3 className="font-heading text-xl font-bold text-ink mt-0.5">
+              Live Cartesian Coordinate Plane: y = mx + b
+            </h3>
+            <p className="text-xs text-ink-muted">
+              Drag the sliders below to see how varying slope and intercept shifts the coordinate vector in real time.
+            </p>
+          </div>
+          <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600">
+            Interactive Simulation Active
+          </span>
+        </div>
+
+        <div className="grid gap-6 tablet:grid-cols-2">
+          {/* SVG Cartesian Coordinate Canvas */}
+          <div className="relative aspect-square w-full rounded-2xl bg-slate-950 p-4 flex flex-col items-center justify-center border border-slate-800 shadow-inner overflow-hidden">
+            <svg viewBox="-100 -100 200 200" className="w-full h-full">
+              {/* Grid lines */}
+              {[-80, -60, -40, -20, 20, 40, 60, 80].map((v) => (
+                <g key={v} opacity={0.15}>
+                  <line x1={v} y1="-100" x2={v} y2="100" stroke="#94a3b8" strokeWidth="0.5" />
+                  <line x1="-100" y1={v} x2="100" y2={v} stroke="#94a3b8" strokeWidth="0.5" />
+                </g>
+              ))}
+              {/* Axes */}
+              <line x1="-100" y1="0" x2="100" y2="0" stroke="#94a3b8" strokeWidth="1.5" />
+              <line x1="0" y1="-100" x2="0" y2="100" stroke="#94a3b8" strokeWidth="1.5" />
+
+              {/* Equation Line y = mx + b (scaled: 1 unit = 8 px) */}
+              {(() => {
+                const scale = 8;
+                const x1 = -12;
+                const y1 = slope * x1 + intercept;
+                const x2 = 12;
+                const y2 = slope * x2 + intercept;
+                return (
+                  <line
+                    x1={x1 * scale}
+                    y1={-y1 * scale}
+                    x2={x2 * scale}
+                    y2={-y2 * scale}
+                    stroke="#f59e0b"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                );
+              })()}
+
+              {/* Intercept Point (0, b) */}
+              <circle cx={0} cy={-intercept * 8} r="5" fill="#38bdf8" />
+              {/* Evaluated Point (evalX, evalY) */}
+              <circle cx={evalX * 8} cy={-evalY * 8} r="5" fill="#10b981" />
+            </svg>
+
+            {/* Legend overlay */}
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-mono text-slate-300 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-xs">
+              <span className="text-amber-400 font-bold">
+                Line: y = {slope}x {intercept >= 0 ? `+ ${intercept}` : `- ${Math.abs(intercept)}`}
+              </span>
+              <span className="text-emerald-400 font-bold">
+                Point: ({evalX}, {evalY})
+              </span>
+            </div>
+          </div>
+
+          {/* Controls & Math Analysis */}
+          <div className="space-y-5">
+            <div className="p-4 rounded-2xl bg-page-bg border border-border space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+                  Slope (m): <span className="text-amber-600 font-mono text-sm">{slope}</span>
+                </span>
+                <span className="text-xs font-mono text-ink-muted">θ = {angleDeg}°</span>
+              </div>
+              <input
+                type="range"
+                min="-4"
+                max="4"
+                step="0.25"
+                value={slope}
+                onChange={(e) => setSlope(parseFloat(e.target.value))}
+                className="w-full accent-amber-500 cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-ink-muted font-mono">
+                <span>-4.0 (steep neg)</span>
+                <span>0.0 (horizontal)</span>
+                <span>+4.0 (steep pos)</span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-page-bg border border-border space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+                  Y-Intercept (b): <span className="text-sky-600 font-mono text-sm">{intercept}</span>
+                </span>
+                <span className="text-xs font-mono text-ink-muted">(0, {intercept})</span>
+              </div>
+              <input
+                type="range"
+                min="-8"
+                max="8"
+                step="0.5"
+                value={intercept}
+                onChange={(e) => setIntercept(parseFloat(e.target.value))}
+                className="w-full accent-sky-500 cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-ink-muted font-mono">
+                <span>-8.0</span>
+                <span>0.0</span>
+                <span>+8.0</span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-page-bg border border-border space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+                  Evaluate at X = <span className="text-emerald-600 font-mono text-sm">{evalX}</span>
+                </span>
+                <span className="text-xs font-mono text-emerald-600 font-bold">Y = {evalY}</span>
+              </div>
+              <input
+                type="range"
+                min="-8"
+                max="8"
+                step="0.5"
+                value={evalX}
+                onChange={(e) => setEvalX(parseFloat(e.target.value))}
+                className="w-full accent-emerald-500 cursor-pointer"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Category Pills */}
       <div className="flex flex-wrap items-center gap-2">
         {[
