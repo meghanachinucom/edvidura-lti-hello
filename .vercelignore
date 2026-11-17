@@ -17,3 +17,4 @@ demos
 .github
 .env
 .env.local
+package.json
