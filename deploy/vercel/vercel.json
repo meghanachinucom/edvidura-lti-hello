@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "edvidura",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "https://were-older-display-clusters.trycloudflare.com/$1"
+    }
+  ]
+}

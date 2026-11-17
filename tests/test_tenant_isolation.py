@@ -42,15 +42,71 @@ def _db_reachable() -> bool:
         return False
 
 
+def _ensure_tenant_b():
+    owner_url = os.getenv("DATABASE_OWNER_URL", "postgresql://edvidura:edvidura@127.0.0.1:5433/edvidura")
+    course_b = "ffffffff-ffff-ffff-ffff-ffffffffffff"
+    try:
+        import psycopg
+        with psycopg.connect(owner_url) as conn:
+            conn.execute("""
+                INSERT INTO tenants (id, slug, name, status)
+                VALUES (%s::uuid, 'lakeside-peer', 'Lakeside Peer (isolation)', 'active')
+                ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, status = 'active'
+            """, (TENANT_B_ID,))
+            conn.execute("SELECT set_config('app.tenant_id', %s, false)", (TENANT_B_ID,))
+            conn.execute("""
+                INSERT INTO courses (id, tenant_id, slug, title, description, status)
+                VALUES (%s::uuid, %s::uuid, 'lakeside-peer', 'Lakeside Peer Course',
+                        'Isolation proof only — not for Moodle demo.', 'published')
+                ON CONFLICT (id) DO UPDATE SET status = 'published', title = EXCLUDED.title
+            """, (course_b, TENANT_B_ID))
+            exists = conn.execute("SELECT 1 FROM lessons WHERE course_id = %s::uuid LIMIT 1", (course_b,)).fetchone()
+            if not exists:
+                conn.execute("""
+                    INSERT INTO lessons (
+                        tenant_id, course_id, slug, title, position,
+                        lesson_type, body_md, status
+                    )
+                    VALUES (
+                        %s::uuid, %s::uuid, 'peer-welcome', 'Peer welcome', 1,
+                        'article',
+                        'Tenant B only. Riverside must never see this body.',
+                        'published'
+                    )
+                """, (TENANT_B_ID, course_b))
+            conn.commit()
+    except Exception:
+        pass
+
+
+def _cleanup_tenant_b():
+    owner_url = os.getenv("DATABASE_OWNER_URL", "postgresql://edvidura:edvidura@127.0.0.1:5433/edvidura")
+    try:
+        import psycopg
+        with psycopg.connect(owner_url) as conn:
+            conn.execute("DELETE FROM launch_events WHERE tenant_id = %s::uuid", (TENANT_B_ID,))
+            conn.execute("DELETE FROM quiz_attempts WHERE tenant_id = %s::uuid", (TENANT_B_ID,))
+            conn.execute("DELETE FROM lti_launch_snapshots WHERE tenant_id = %s::uuid", (TENANT_B_ID,))
+            conn.execute("DELETE FROM lesson_progress WHERE tenant_id = %s::uuid", (TENANT_B_ID,))
+            conn.execute("DELETE FROM lessons WHERE tenant_id = %s::uuid", (TENANT_B_ID,))
+            conn.execute("DELETE FROM courses WHERE tenant_id = %s::uuid", (TENANT_B_ID,))
+            conn.execute("DELETE FROM tenants WHERE id = %s::uuid", (TENANT_B_ID,))
+            conn.commit()
+    except Exception:
+        pass
+
+
 @pytest.fixture(scope="module", autouse=True)
 def _postgres_available():
-    if _db_reachable():
-        return
-    if _db_required():
-        pytest.fail(
-            "Postgres not reachable as edvidura_app — isolation CI cannot pass"
-        )
-    pytest.skip("Postgres not reachable as edvidura_app (start db/ docker compose)")
+    if not _db_reachable():
+        if _db_required():
+            pytest.fail(
+                "Postgres not reachable as edvidura_app — isolation CI cannot pass"
+            )
+        pytest.skip("Postgres not reachable as edvidura_app (start db/ docker compose)")
+    _ensure_tenant_b()
+    yield
+    _cleanup_tenant_b()
 
 
 def test_launch_events_rls_blocks_cross_tenant_reads():

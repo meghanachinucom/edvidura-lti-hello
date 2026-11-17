@@ -753,3 +753,11 @@ def list_launches(tenant_slug: str, request: Request):
             for r in rows
         ],
     }
+
+
+@app.get("/{full_path:path}", response_class=HTMLResponse)
+async def spa_fallback(request: Request, full_path: str):
+    """Serve React SPA index.html for client-side TanStack routes on direct browser refresh."""
+    if _spa_ready() and not full_path.startswith(("api/", "lti/", "static/", "assets/", "quiz/")):
+        return FileResponse(_SPA_DIST / "index.html", media_type="text/html; charset=utf-8")
+    return JSONResponse({"detail": "Not Found"}, status_code=404)

@@ -7,7 +7,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from app import db
@@ -5038,6 +5038,10 @@ async def teacher_coach_shortcuts_post(
 
 @router.get("/manuals", response_class=HTMLResponse)
 async def manuals_list(request: Request, token: str | None = None):
+    from pathlib import Path
+    spa_index = Path(__file__).resolve().parent.parent / "frontend-react" / "dist" / "index.html"
+    if spa_index.is_file() and not request.query_params.get("raw") and not token:
+        return FileResponse(spa_index, media_type="text/html; charset=utf-8")
     from app.modules import manuals as manuals_mod
 
     session = require_session(request, token=token)
@@ -5772,13 +5776,18 @@ async def manual_discussions_post(request: Request, manual_id: UUID, token: str 
 async def manual_standalone_read(
     request: Request,
     manual_id: UUID,
-    tid: UUID,
-    sig: str,
+    tid: UUID | None = None,
+    sig: str | None = None,
     v: int | None = None,
     focus: str | None = None,
     chapter: int | None = None,
 ):
     """PeBL standalone reader — HMAC-signed, no LTI session required."""
+    from pathlib import Path
+    if tid is None or not sig:
+        spa_index = Path(__file__).resolve().parent.parent / "frontend-react" / "dist" / "index.html"
+        if spa_index.is_file():
+            return FileResponse(spa_index, media_type="text/html; charset=utf-8")
     from app.modules import manuals as manuals_mod
 
     version_n = int(v or 0)

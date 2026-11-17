@@ -49,7 +49,7 @@ function Landing() {
   const returnUrl =
     (typeof window !== "undefined"
       ? sessionStorage.getItem("edvidura_return_url")
-      : null) || "http://localhost:8085/course/view.php?id=10";
+      : null) || "https://miss-houses-lecture-specifics.trycloudflare.com/course/view.php?id=10";
 
   return (
     <div className="flex min-h-screen flex-col bg-page-bg">
@@ -105,6 +105,15 @@ function Landing() {
             <span>Return to Moodle LMS</span>
             <ExternalLink size={16} aria-hidden />
           </a>
+
+          <div className="mt-4 pt-4 border-t border-border">
+            <a
+              href="/review"
+              className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+            >
+              <span>Senior Management Review Gateway &rarr;</span>
+            </a>
+          </div>
         </div>
       </main>
       <footer className="border-t border-border bg-surface px-4 py-4 text-center text-xs text-ink-muted">

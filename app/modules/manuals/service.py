@@ -54,6 +54,21 @@ def list_manuals(
         return [dict(r) for r in rows]
 
 
+def _resolve_class_uuid(tenant_id: UUID | str, class_id: UUID | str | None) -> str | None:
+    cid = str(class_id or "").strip()
+    if not cid:
+        return None
+    try:
+        return str(UUID(cid))
+    except ValueError:
+        pass
+    with db.tenant_connection(tenant_id) as conn:
+        row = conn.execute("SELECT id FROM classes WHERE class_code = %s", (cid,)).fetchone()
+        if row:
+            return str(row["id"])
+    return None
+
+
 def list_manuals_for_class(
     tenant_id: UUID | str,
     class_id: UUID | str | None,
@@ -61,7 +76,7 @@ def list_manuals_for_class(
     include_unpublished: bool = False,
 ) -> list[dict[str, Any]]:
     """Published (or all) manuals linked to one class. Empty class_id → []."""
-    cid = str(class_id or "").strip()
+    cid = _resolve_class_uuid(tenant_id, class_id)
     if not cid:
         return []
     with db.tenant_connection(tenant_id) as conn:
@@ -116,7 +131,7 @@ def manual_visible_to_class(
     manual_id: UUID | str,
     class_id: UUID | str | None,
 ) -> bool:
-    cid = str(class_id or "").strip()
+    cid = _resolve_class_uuid(tenant_id, class_id)
     if not cid:
         return False
     with db.tenant_connection(tenant_id) as conn:

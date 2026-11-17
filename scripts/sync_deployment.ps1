@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     EdVidura Automated Continuous Sync & Verification Hook
 .DESCRIPTION

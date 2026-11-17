@@ -194,6 +194,93 @@ def auth_exchange(payload: ExchangeRequest, request: Request):
     return ok(session_data)
 
 
+@router.get("/api/v1/auth/demo-launch")
+def demo_launch(request: Request, persona: str = "learner"):
+    """Bootstrap genuine Riverside Class 8 (RHS-C08) session for remote senior review."""
+    import os
+    from fastapi.responses import PlainTextResponse
+    from app.modules.tenancy import TENANT_A_ID, attach_to_session
+    from app.quiz_routes import store_quiz_context
+    from app.launch_cache import create_exchange_code
+
+    p = persona.strip().lower()
+    moodle_url = os.getenv(
+        "MOODLE_PUBLIC_URL",
+        "https://miss-houses-lecture-specifics.trycloudflare.com",
+    )
+
+    if p in ("learner", "student", "alice"):
+        quiz_ctx = {
+            "tenant_id": TENANT_A_ID,
+            "tenant_slug": "riverside",
+            "tenant_name": "Riverside High",
+            "subject": "6",
+            "learner_name": "Alice Nguyen",
+            "email": "c01.s01@riverside.test",
+            "roles": ["http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"],
+            "is_instructor": False,
+            "is_school_admin": False,
+            "class_id": "RHS-C08",
+            "course": "Class 8 · Algebra I",
+            "edvidura_course_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            "lms_return_url": f"{moodle_url}/course/view.php?id=10",
+        }
+        dest = "/lessons"
+    elif p in ("instructor", "teacher", "priya"):
+        quiz_ctx = {
+            "tenant_id": TENANT_A_ID,
+            "tenant_slug": "riverside",
+            "tenant_name": "Riverside High",
+            "subject": "3",
+            "learner_name": "Priya Sharma",
+            "email": "c8.teacher@riverside.test",
+            "roles": ["http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"],
+            "is_instructor": True,
+            "is_school_admin": False,
+            "class_id": "RHS-C08",
+            "course": "Class 8 · Algebra I",
+            "edvidura_course_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            "lms_return_url": f"{moodle_url}/course/view.php?id=10",
+        }
+        dest = "/teacher/attempts"
+    elif p in ("admin", "school_admin", "school-admin", "alex"):
+        quiz_ctx = {
+            "tenant_id": TENANT_A_ID,
+            "tenant_slug": "riverside",
+            "tenant_name": "Riverside High",
+            "subject": "5",
+            "learner_name": "Alex Morgan",
+            "email": "admin@riverside.test",
+            "roles": ["http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator"],
+            "is_instructor": False,
+            "is_school_admin": True,
+            "class_id": "RHS-C08",
+            "course": "Class 8 · Algebra I",
+            "edvidura_course_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            "lms_return_url": f"{moodle_url}/course/view.php?id=10",
+        }
+        dest = "/school-admin"
+    else:
+        return PlainTextResponse("Invalid persona. Choose from: learner, instructor, admin", status_code=400)
+
+    try:
+        attach_to_session(quiz_ctx)
+    except Exception:
+        quiz_ctx.setdefault("segment", "school")
+        quiz_ctx.setdefault("capabilities", {})
+        quiz_ctx.setdefault("is_corporate", False)
+
+    quiz_token = store_quiz_context(quiz_ctx)
+    quiz_ctx["quiz_token"] = quiz_token
+    request.session[QUIZ_SESSION_KEY] = quiz_ctx
+
+    exchange_code = create_exchange_code(quiz_ctx, ttl_sec=300)
+    return RedirectResponse(
+        url=f"{dest}?token={quiz_token}&code={exchange_code}",
+        status_code=302,
+    )
+
+
 @router.post("/api/v1/auth/logout")
 def auth_logout_api(request: Request):
     """Clear LTI and ops session cookies."""

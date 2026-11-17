@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from "./routes/index"
 import { Route as ShellRouteImport } from "./routes/_shell"
 import { Route as LoginRouteImport } from "./routes/login"
 import { Route as OpsRouteImport } from "./routes/ops"
+import { Route as ReviewRouteImport } from "./routes/review"
 import { Route as Char91__prototypeChar93ComponentsRouteImport } from "./routes/[__prototype].components"
 import { Route as ShellActiveQuizzesRouteImport } from "./routes/_shell.active-quizzes"
 import { Route as ShellInstitutionDetailRouteImport } from "./routes/_shell.institution-detail"
@@ -81,6 +82,11 @@ const LoginRoute = LoginRouteImport.update({
 const OpsRoute = OpsRouteImport.update({
   id: "/ops",
   path: "/ops",
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: "/review",
+  path: "/review",
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91__prototypeChar93ComponentsRoute =
@@ -350,6 +356,7 @@ export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
   "/login": typeof LoginRoute
   "/ops": typeof OpsRouteWithChildren
+  "/review": typeof ReviewRoute
   "/__prototype/components": typeof Char91__prototypeChar93ComponentsRoute
   "/active-quizzes": typeof ShellActiveQuizzesRoute
   "/institution-detail": typeof ShellInstitutionDetailRoute
@@ -405,6 +412,7 @@ export interface FileRoutesByTo {
   "/": typeof IndexRoute
   "/login": typeof LoginRoute
   "/ops": typeof OpsRouteWithChildren
+  "/review": typeof ReviewRoute
   "/__prototype/components": typeof Char91__prototypeChar93ComponentsRoute
   "/active-quizzes": typeof ShellActiveQuizzesRoute
   "/institution-detail": typeof ShellInstitutionDetailRoute
@@ -462,6 +470,7 @@ export interface FileRoutesById {
   "/_shell": typeof ShellRouteWithChildren
   "/login": typeof LoginRoute
   "/ops": typeof OpsRouteWithChildren
+  "/review": typeof ReviewRoute
   "/__prototype/components": typeof Char91__prototypeChar93ComponentsRoute
   "/_shell/active-quizzes": typeof ShellActiveQuizzesRoute
   "/_shell/institution-detail": typeof ShellInstitutionDetailRoute
@@ -519,6 +528,7 @@ export interface FileRouteTypes {
     | "/"
     | "/login"
     | "/ops"
+    | "/review"
     | "/__prototype/components"
     | "/active-quizzes"
     | "/institution-detail"
@@ -574,6 +584,7 @@ export interface FileRouteTypes {
     | "/"
     | "/login"
     | "/ops"
+    | "/review"
     | "/__prototype/components"
     | "/active-quizzes"
     | "/institution-detail"
@@ -630,6 +641,7 @@ export interface FileRouteTypes {
     | "/_shell"
     | "/login"
     | "/ops"
+    | "/review"
     | "/__prototype/components"
     | "/_shell/active-quizzes"
     | "/_shell/institution-detail"
@@ -687,6 +699,7 @@ export interface RootRouteChildren {
   ShellRoute: typeof ShellRouteWithChildren
   LoginRoute: typeof LoginRoute
   OpsRoute: typeof OpsRouteWithChildren
+  ReviewRoute: typeof ReviewRoute
   Char91__prototypeChar93ComponentsRoute: typeof Char91__prototypeChar93ComponentsRoute
   LtiDeepLinkRoute: typeof LtiDeepLinkRoute
 }
@@ -719,6 +732,13 @@ declare module "@tanstack/react-router" {
       path: "/ops"
       fullPath: "/ops"
       preLoaderRoute: typeof OpsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    "/review": {
+      id: "/review"
+      path: "/review"
+      fullPath: "/review"
+      preLoaderRoute: typeof ReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/__prototype/components": {
@@ -1192,6 +1212,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShellRoute: ShellRouteWithChildren,
   LoginRoute: LoginRoute,
   OpsRoute: OpsRouteWithChildren,
+  ReviewRoute: ReviewRoute,
   Char91__prototypeChar93ComponentsRoute:
     Char91__prototypeChar93ComponentsRoute,
   LtiDeepLinkRoute: LtiDeepLinkRoute,
