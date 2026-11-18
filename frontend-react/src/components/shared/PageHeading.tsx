@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { t } from "@/i18n";
+import { t, useLocale } from "@/i18n";
 import { useRole } from "@/components/shell/RoleContext";
 
 /** The page's single h1. Sets document.title and receives focus on route change. */
@@ -12,8 +12,8 @@ export function PageHeading({
   text?: string;
   context?: string;
 }) {
-  const { locale } = useRole();
-  const label = text ?? t(titleKey ?? "");
+  const { locale } = useLocale();
+  const label = titleKey ? t(titleKey) : (text ? t(text) : "");
   const ref = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     document.title = label + t("app.titleSuffix");

@@ -7,7 +7,7 @@ import { PillTabs, type PillTab } from "@/components/shared/PillTabs";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBanner } from "@/components/shared/StatusBanner";
-import { VoiceInputButton } from "@/components/shared/VoiceControls";
+import { VoiceInputButton, VoiceStudioBar } from "@/components/shared/VoiceControls";
 import { smeSources, smeDefaults, type SourceDoc } from "@/data/smeSources";
 import { ebooks } from "@/data/ebooks";
 import { ebookChapters } from "@/data/ebookContent";
@@ -193,6 +193,8 @@ function Page() {
         <PageHeading text={s("title")} />
         <PillTabs items={tabItems} active={activeTab} label="SME Navigation" />
       </div>
+
+      <VoiceStudioBar className="w-full" onTranscript={(t) => setSearchQuery(t)} />
 
       {activeTab === "sources" && (
         <>

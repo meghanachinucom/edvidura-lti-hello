@@ -19,6 +19,7 @@ import { CoachStarterChips } from "@/components/shared/CoachStarterChips";
 import {
   VoiceInputButton,
   VoiceListenButton,
+  VoiceStudioBar,
 } from "@/components/shared/VoiceControls";
 import { coachExchanges, type CoachExchange } from "@/data/coach";
 import { mockState } from "@/data/mockState";
@@ -187,6 +188,11 @@ function Page() {
           </div>
         </div>
 
+        {/* FreeFlow AI Voice & Multilingual Studio Bar */}
+        <VoiceStudioBar
+          onTranscript={(text) => setText((prev) => (prev ? `${prev} ${text}` : text))}
+        />
+
         {/* Jane Street Socratic Tutor Mode Selector */}
         <div className="rounded-surface border border-border bg-surface p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
@@ -232,36 +238,75 @@ function Page() {
             </button>
           </div>
 
-          {/* Socratic Mastery Level Tracker (0 to 5) */}
-          <div className="mt-4 pt-3 border-t border-border">
-            <div className="flex items-center justify-between text-xs font-semibold text-ink mb-2">
-              <span className="flex items-center gap-1.5">
+          {/* 6-Stage Jane Street Socratic Mastery Ladder */}
+          <div className="mt-4 pt-3 border-t border-border space-y-3">
+            <div className="flex items-center justify-between text-xs font-semibold text-ink">
+              <span className="flex items-center gap-1.5 font-bold">
                 <Award className="size-4 text-amber-500" />
-                Socratic Mastery Tracker (Levels 0–5)
+                Jane Street Socratic Mastery Ladder (Levels 0–5)
               </span>
-              <span className="text-ink-muted text-[11px]">Class 8 RHS-C08</span>
+              <span className="text-secondary font-mono text-[11px] font-bold">Class 8 RHS-C08</span>
             </div>
-            <div className="space-y-2">
+
+            {/* 6-Stage Progression Milestones */}
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 text-[10px] text-center font-mono font-semibold">
+              {[
+                { lvl: 0, name: "0: Diagnostic" },
+                { lvl: 1, name: "1: Intuition" },
+                { lvl: 2, name: "2: Guided" },
+                { lvl: 3, name: "3: Edge Cases" },
+                { lvl: 4, name: "4: Spaced" },
+                { lvl: 5, name: "5: Mastery" },
+              ].map((st) => (
+                <div
+                  key={st.lvl}
+                  className="rounded bg-muted/60 p-1 border border-border/50 text-ink-muted text-[9px] truncate"
+                >
+                  {st.name}
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2.5 pt-1">
               {[
                 { id: "variables", label: "Variables & Expressions", level: skills["variables"] || 2 },
                 { id: "solve-linear", label: "Solving Linear Equations", level: skills["solve-linear"] || 2 },
                 { id: "word-problems", label: "Linear Word Problems", level: skills["word-problems"] || 1 },
+                { id: "force-motion", label: "Force, Work & Motion", level: skills["force-motion"] || 3 },
               ].map((sk) => (
                 <div key={sk.id} className="text-xs">
                   <div className="flex justify-between text-ink-muted text-[11px] mb-1">
                     <span className="font-medium text-ink">{sk.label}</span>
-                    <span className="font-mono">
+                    <span className="font-mono font-bold text-secondary">
                       Level {sk.level} / 5
                     </span>
                   </div>
                   <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-brand transition-all duration-300"
+                      className="h-full bg-secondary transition-all duration-300"
                       style={{ width: `${(sk.level / 5) * 100}%` }}
                     />
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Quick Socratic Prompt Launchers */}
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60">
+              <button
+                type="button"
+                onClick={() => send(undefined, "Let's run a Socratic diagnostic check on my linear equations proficiency.")}
+                className="btn-secondary text-[11px] font-semibold py-1.5 px-2 text-center"
+              >
+                Run Socratic Diagnostic
+              </button>
+              <button
+                type="button"
+                onClick={() => send(undefined, "Can you give me one small Socratic hint to help me figure out the next step on my own?")}
+                className="btn-secondary text-[11px] font-semibold py-1.5 px-2 text-center"
+              >
+                Request Socratic Hint
+              </button>
             </div>
           </div>
         </div>

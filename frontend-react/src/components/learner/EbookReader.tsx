@@ -5,11 +5,15 @@ import {
   BookmarkCheck,
   ChevronLeft,
   ChevronRight,
+  Download,
+  Eye,
   Highlighter,
   List,
   NotebookPen,
+  Sun,
   Volume2,
 } from "lucide-react";
+import { PaperMorphStoryboard } from "@/components/learner/PaperMorphStoryboard";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
@@ -105,6 +109,7 @@ export function EbookReader({
   const [notesOpen, setNotesOpen] = useState(false);
   const [fontSize, setFontSize] = useState(18);
   const [darkMode, setDarkMode] = useState(false);
+  const [readerTheme, setReaderTheme] = useState<"standard" | "sepia" | "contrast">("standard");
   const [wideReading, setWideReading] = useState(false);
   const [toDelete, setToDelete] = useState<Mark | null>(null);
   const [hint, setHint] = useState(false);
@@ -488,35 +493,114 @@ export function EbookReader({
             {t(`pass3.reader.${speaking ? "stop" : "listen"}`)}
           </Button>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          <label className="flex items-center gap-2">
-            {s("fontSize")}
-            <input
-              type="range"
-              min={16}
-              max={24}
-              step={2}
-              value={fontSize}
-              onChange={(e) => setFontSize(Number(e.target.value))}
-              aria-label={s("fontSize")}
-            />
-          </label>
-          <button
-            type="button"
-            aria-pressed={darkMode}
-            onClick={() => setDarkMode((value) => !value)}
-            className="btn-secondary"
-          >
-            {s(darkMode ? "lightMode" : "darkMode")}
-          </button>
-          <button
-            type="button"
-            aria-pressed={wideReading}
-            onClick={() => setWideReading((value) => !value)}
-            className="btn-secondary"
-          >
-            {s(wideReading ? "narrowWidth" : "wideWidth")}
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1 border-t border-border/60">
+          {/* Zoom Presets */}
+          <div className="flex items-center gap-1.5" role="group" aria-label="Font zoom controls">
+            <span className="font-semibold text-ink-muted flex items-center gap-1 mr-1">
+              <Eye size={13} /> Zoom:
+            </span>
+            <button
+              type="button"
+              onClick={() => setFontSize(14)}
+              className={`rounded px-2 py-0.5 font-semibold ${fontSize === 14 ? "bg-secondary text-white" : "bg-muted text-ink"}`}
+            >
+              A-
+            </button>
+            <button
+              type="button"
+              onClick={() => setFontSize(18)}
+              className={`rounded px-2 py-0.5 font-semibold ${fontSize === 18 ? "bg-secondary text-white" : "bg-muted text-ink"}`}
+            >
+              100%
+            </button>
+            <button
+              type="button"
+              onClick={() => setFontSize(22)}
+              className={`rounded px-2 py-0.5 font-semibold ${fontSize === 22 ? "bg-secondary text-white" : "bg-muted text-ink"}`}
+            >
+              A+
+            </button>
+            <button
+              type="button"
+              onClick={() => setFontSize(26)}
+              className={`rounded px-2 py-0.5 font-semibold ${fontSize === 26 ? "bg-secondary text-white" : "bg-muted text-ink"}`}
+            >
+              150%
+            </button>
+          </div>
+
+          {/* Reading Themes */}
+          <div className="flex items-center gap-1.5" role="group" aria-label="Reading theme controls">
+            <span className="font-semibold text-ink-muted flex items-center gap-1 mr-1">
+              <Sun size={13} /> Theme:
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setReaderTheme("standard");
+                setDarkMode(false);
+              }}
+              className={`rounded px-2 py-0.5 font-semibold ${readerTheme === "standard" && !darkMode ? "bg-secondary text-white" : "bg-muted text-ink"}`}
+            >
+              Standard
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setReaderTheme("sepia");
+                setDarkMode(false);
+              }}
+              className={`rounded px-2 py-0.5 font-semibold bg-[#fbf0d9] text-[#433422] border ${readerTheme === "sepia" ? "ring-2 ring-amber-700 font-bold" : "border-amber-300"}`}
+            >
+              Sepia
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setReaderTheme("contrast");
+                setDarkMode(true);
+              }}
+              className={`rounded px-2 py-0.5 font-semibold bg-[#0f172a] text-[#f8fafc] border ${readerTheme === "contrast" ? "ring-2 ring-cyan-400 font-bold" : "border-slate-700"}`}
+            >
+              High Contrast AA
+            </button>
+          </div>
+
+          {/* Download Buttons */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                const blob = new Blob([chapter?.paragraphs?.join("\n\n") || ""], { type: "text/html" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${book.slug || "ebook"}-chapter-${ci + 1}.html`;
+                a.click();
+              }}
+              className="inline-flex items-center gap-1 rounded bg-muted hover:bg-muted/80 px-2 py-0.5 text-[11px] font-semibold text-ink transition"
+              title="Download HTML Chapter"
+            >
+              <Download size={11} />
+              <span>Download HTML</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const blob = new Blob([JSON.stringify({ title: book.title, chapters }, null, 2)], { type: "application/epub+zip" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${book.slug || "ebook"}.epub`;
+                a.click();
+              }}
+              className="inline-flex items-center gap-1 rounded bg-muted hover:bg-muted/80 px-2 py-0.5 text-[11px] font-semibold text-ink transition"
+              title="Download EPUB3"
+            >
+              <Download size={11} />
+              <span>Download EPUB3</span>
+            </button>
+          </div>
         </div>
         {!speechAvailable && (
           <p id="speech-unavailable" className="text-sm text-ink-muted">
@@ -563,6 +647,12 @@ export function EbookReader({
               </div>
 
               <h2 className="font-heading text-[24px] text-ink">{chapter.title}</h2>
+              {/* PaperMorph Interactive Storyboard Canvas */}
+              <PaperMorphStoryboard
+                bookId={book.id}
+                chapter={chapter}
+                chapterIndex={ci}
+              />
               <div
                 ref={textRef}
                 style={{ fontSize, lineHeight: 1.7 }}

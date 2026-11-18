@@ -9,6 +9,7 @@ import { PageHeading } from "@/components/shared/PageHeading";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { StatusBanner } from "@/components/shared/StatusBanner";
+import { VoiceStudioBar } from "@/components/shared/VoiceControls";
 import { lessons as seedLessons, type LessonKind } from "@/data/lessons";
 import { checkpointQuiz, type OptionKey } from "@/data/quiz";
 import { mockState } from "@/data/mockState";
@@ -172,6 +173,8 @@ function Page() {
         <PageHeading text={s("title")} />
         <p className="mt-2 max-w-reading text-ink-muted">{s("lead")}</p>
       </div>
+
+      <VoiceStudioBar className="w-full" />
 
       <section aria-labelledby="sec-lessons" className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

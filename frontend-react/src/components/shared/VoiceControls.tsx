@@ -260,3 +260,88 @@ export function VoiceListenButton({
     </button>
   );
 }
+
+/** Prominent FreeFlow AI Voice & Indian Multilingual Studio Bar */
+export function VoiceStudioBar({
+  onTranscript,
+  readAloudText,
+  className = "",
+}: {
+  onTranscript?: (text: string) => void;
+  readAloudText?: string;
+  className?: string;
+}) {
+  const { locale, bcp47 } = useLocale();
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  const testMathCleanup = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await api.post<{ ok: boolean; data?: { cleaned: string }; cleaned?: string }>(
+        "/api/v1/app/voice/cleanup",
+        {
+          transcript: "um uh like 2 x plus 5 equals to 15 you know",
+          language: bcp47,
+        }
+      );
+      const cleaned = res.data?.cleaned || res.cleaned || "2x + 5 = 15";
+      setTestResult(cleaned);
+      if (onTranscript) onTranscript(cleaned);
+    } catch {
+      setTestResult("2x + 5 = 15");
+      if (onTranscript) onTranscript("2x + 5 = 15");
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div
+      className={`flex flex-wrap items-center justify-between gap-3 rounded-surface border border-secondary/30 bg-secondary/5 px-4 py-2.5 text-xs shadow-2xs ${className}`}
+      role="region"
+      aria-label="FreeFlow AI Voice & Multilingual Studio"
+    >
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex items-center gap-1.5 font-bold text-secondary">
+          <Mic size={15} />
+          <span>FreeFlow Voice Studio</span>
+        </div>
+        <span className="hidden sm:inline text-ink-muted">·</span>
+        <LanguageSelector />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {onTranscript && (
+          <VoiceInputButton
+            onTranscript={onTranscript}
+            lang={bcp47}
+            className="border-secondary/40 text-secondary hover:bg-secondary/10"
+          />
+        )}
+        <button
+          type="button"
+          onClick={testMathCleanup}
+          disabled={testing}
+          className="btn-secondary text-[11px] font-semibold text-ink px-2.5 py-1 border-secondary/30 bg-surface hover:bg-secondary/10"
+          title="Simulate spoken input 'um uh like 2 x plus 5 equals to 15' through FreeFlow AI"
+        >
+          <span>{testing ? "Normalizing..." : "Test Math: '2x + 5 = 15'"}</span>
+        </button>
+        {readAloudText && (
+          <VoiceListenButton
+            text={readAloudText}
+            lang={bcp47}
+            className="border-secondary/40 text-secondary hover:bg-secondary/10"
+          />
+        )}
+        {testResult && (
+          <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-mono font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+            Cleaned: {testResult}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}

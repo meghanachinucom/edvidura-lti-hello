@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
+import { api } from "@/lib/api";
 import {
   Activity,
   BarChart3,
@@ -69,8 +70,36 @@ export function TopNav() {
   const { session, signOut, role } = useRole();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [dynamicItems, setDynamicItems] = useState<{ to: string; label: string }[]>([]);
   const navItems = roleNavItems[role];
-  const active = [...navItems]
+
+  useEffect(() => {
+    let active = true;
+    const qRole = role === "trainingOfficer" ? "admin" : role;
+    api
+      .get<{ ok: boolean; features?: Array<{ target_route: string; nav_label?: string; title?: string }> }>(
+        `/api/v1/app/ui-registry?role=${qRole}`
+      )
+      .then((res) => {
+        if (active && res && Array.isArray(res.features)) {
+          const existingRoutes = new Set(navItems.map((i) => i.to));
+          const extra = res.features
+            .filter((f) => f.target_route && !existingRoutes.has(f.target_route))
+            .map((f) => ({
+              to: f.target_route,
+              label: f.nav_label || f.title || "Feature",
+            }));
+          setDynamicItems(extra);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [role]);
+
+  const allItems = [...navItems, ...dynamicItems.map(d => ({ to: d.to, labelKey: d.label, isCustom: true }))];
+  const active = allItems
     .filter(({ to }) => pathname === to || pathname.startsWith(`${to}/`))
     .sort((a, b) => b.to.length - a.to.length)[0];
 
@@ -126,25 +155,26 @@ export function TopNav() {
           className="min-h-0 flex-1 overflow-y-auto px-3 py-4 tablet:px-2 desktop:px-3"
         >
           <ul className="space-y-1">
-            {navItems.map((item) => {
-              const Icon = routeIcons[item.to] ?? FileText;
+            {allItems.map((item) => {
+              const Icon = routeIcons[item.to] ?? Sparkles;
               const selected = active?.to === item.to;
+              const label = "isCustom" in item && (item as any).isCustom ? item.labelKey : t(item.labelKey);
               return (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     aria-current={selected ? "page" : undefined}
-                    title={t(item.labelKey)}
+                    title={label}
                     onClick={() => setMobileOpen(false)}
                     className={`group relative flex min-h-11 items-center gap-3 rounded-control border-l-[3px] px-3 text-sm font-semibold text-ink transition-colors duration-150 tablet:justify-center tablet:gap-0 tablet:px-0 desktop:justify-start desktop:gap-3 desktop:px-3 ${selected ? "border-l-secondary bg-secondary-container font-bold text-secondary" : "border-l-transparent hover:bg-page-bg"}`}
                   >
                     <Icon aria-hidden size={20} className="shrink-0" />
-                    <span className="tablet:hidden desktop:inline">{t(item.labelKey)}</span>
+                    <span className="tablet:hidden desktop:inline">{label}</span>
                     <span
                       role="tooltip"
                       className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-control bg-topbar px-3 py-2 text-xs text-white shadow-md tablet:group-hover:block tablet:group-focus-visible:block desktop:hidden"
                     >
-                      {t(item.labelKey)}
+                      {label}
                     </span>
                   </Link>
                 </li>

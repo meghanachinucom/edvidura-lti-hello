@@ -4,12 +4,13 @@ import { TopNav } from "@/components/shared/TopNav";
 import { SessionExpired } from "@/components/shared/SessionExpired";
 import { isSessionExpired, screenState } from "@/data/mockState";
 import { AccessUnavailable } from "@/components/shared/AccessUnavailable";
-import { t } from "@/i18n";
+import { t, useLocale } from "@/i18n";
 import { accessPage, allowedFor, roleHome } from "@/data/nav";
 import { AskViduraPanel } from "@/components/learner/AskViduraPanel";
 import { useRole } from "./RoleContext";
 
 export function AppShell() {
+  useLocale();
   const { session, role, isLoading } = useRole();
   const { pathname } = useLocation();
   const navigate = useNavigate();
