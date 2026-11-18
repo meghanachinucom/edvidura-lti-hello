@@ -146,7 +146,9 @@ const defaultClasses = [
 function Page() {
   const { session } = useRole();
   const token = session?.token || "";
-  const instUrl = token ? `/institution-detail?token=${encodeURIComponent(token)}` : "/institution-detail";
+  const instUrl = token
+    ? `/institution-detail?token=${encodeURIComponent(token)}`
+    : "/institution-detail";
 
   const [remoteClasses, setRemoteClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -203,32 +205,39 @@ function Page() {
     }
   };
 
-  const displayClasses = remoteClasses.length > 0
-    ? remoteClasses.map((c: any) => {
-        const leadTeacher = c.teachers?.[0]?.name
-          ? `${c.teachers[0].name} (${c.teachers[0].teacher_code || "Lead"})`
-          : c.teacher_name || "Assigned Faculty";
-        const isTarget = c.class_code === "RHS-C08" || c.code === "RHS-C08";
-        return {
-          id: c.id,
-          name: c.class_name || c.name || "Class Section",
-          code: c.class_code || c.code || "SEC-01",
-          room: c.room || (isTarget ? "Math Lab 8 · Room 204" : `Grade Room ${c.class_code?.replace("RHS-C", "") || "1"}`),
-          teacher: leadTeacher,
-          time: c.schedule || (isTarget ? "09:30–11:00" : "08:30–10:00"),
-          enrolled: Array.isArray(c.students) ? c.students.length : (c.enrolled ?? 22),
-          capacity: c.capacity ?? 25,
-          period: c.term || "2026–27",
-          synced: true,
-          students: c.students || [],
-          isTarget,
-        };
-      })
-    : defaultClasses;
+  const displayClasses =
+    remoteClasses.length > 0
+      ? remoteClasses.map((c: any) => {
+          const leadTeacher = c.teachers?.[0]?.name
+            ? `${c.teachers[0].name} (${c.teachers[0].teacher_code || "Lead"})`
+            : c.teacher_name || "Assigned Faculty";
+          const isTarget = c.class_code === "RHS-C08" || c.code === "RHS-C08";
+          return {
+            id: c.id,
+            name: c.class_name || c.name || "Class Section",
+            code: c.class_code || c.code || "SEC-01",
+            room:
+              c.room ||
+              (isTarget
+                ? "Math Lab 8 · Room 204"
+                : `Grade Room ${c.class_code?.replace("RHS-C", "") || "1"}`),
+            teacher: leadTeacher,
+            time: c.schedule || (isTarget ? "09:30–11:00" : "08:30–10:00"),
+            enrolled: Array.isArray(c.students) ? c.students.length : (c.enrolled ?? 22),
+            capacity: c.capacity ?? 25,
+            period: c.term || "2026–27",
+            synced: true,
+            students: c.students || [],
+            isTarget,
+          };
+        })
+      : defaultClasses;
 
   const totalCapacity = displayClasses.reduce((sum, c) => sum + (c.capacity || 30), 0);
   const totalEnrolled = displayClasses.reduce((sum, c) => sum + c.enrolled, 0);
-  const avgClassSize = displayClasses.length ? Math.round(totalEnrolled / displayClasses.length) : 0;
+  const avgClassSize = displayClasses.length
+    ? Math.round(totalEnrolled / displayClasses.length)
+    : 0;
 
   const stats = [
     ["Active sections", String(displayClasses.length)],
@@ -262,11 +271,7 @@ function Page() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={() => setShowAddModal(true)}
-          className="btn-primary"
-        >
+        <button type="button" onClick={() => setShowAddModal(true)} className="btn-primary">
           Add Section / Class
         </button>
       </div>
@@ -340,11 +345,7 @@ function Page() {
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn-primary text-sm"
-            >
+            <button type="submit" disabled={submitting} className="btn-primary text-sm">
               {submitting ? "Registering..." : "Create Class Section"}
             </button>
           </div>
@@ -353,7 +354,10 @@ function Page() {
 
       <div className="grid grid-cols-2 gap-3 desktop:grid-cols-4">
         {stats.map(([label, value]) => (
-          <article key={label} className="rounded-surface border border-border bg-surface p-4 shadow-sm">
+          <article
+            key={label}
+            className="rounded-surface border border-border bg-surface p-4 shadow-sm"
+          >
             <p className="text-sm text-ink-muted">{label}</p>
             <p className="mt-2 font-heading text-xl font-bold text-ink">{value}</p>
           </article>
@@ -433,7 +437,9 @@ function Page() {
               <h3 className="font-heading text-lg font-bold text-ink">
                 Enrolled Students: {viewingRoster.name} ({viewingRoster.code})
               </h3>
-              <p className="text-xs text-ink-muted">Section Capacity: {viewingRoster.capacity} learners</p>
+              <p className="text-xs text-ink-muted">
+                Section Capacity: {viewingRoster.capacity} learners
+              </p>
             </div>
             <button
               type="button"
@@ -448,13 +454,16 @@ function Page() {
               {viewingRoster.students.map((st: any, idx: number) => (
                 <li key={idx} className="py-2.5 flex items-center justify-between text-sm">
                   <span className="font-semibold text-ink">{st.name}</span>
-                  <span className="font-mono text-xs text-ink-muted">{st.student_code || `STU-${idx + 1}`}</span>
+                  <span className="font-mono text-xs text-ink-muted">
+                    {st.student_code || `STU-${idx + 1}`}
+                  </span>
                 </li>
               ))}
             </ul>
           ) : (
             <p className="text-sm text-ink-muted py-4 text-center">
-              No students enrolled in this section yet. Enrolment is federated via LMS course linkage.
+              No students enrolled in this section yet. Enrolment is federated via LMS course
+              linkage.
             </p>
           )}
         </div>

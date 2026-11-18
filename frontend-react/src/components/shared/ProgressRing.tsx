@@ -78,7 +78,12 @@ export function ProgressRing({
         {line1}
       </text>
       {line2 && (
-        <text x="60" y="72" textAnchor="middle" className="fill-ink-muted text-[11px] font-semibold">
+        <text
+          x="60"
+          y="72"
+          textAnchor="middle"
+          className="fill-ink-muted text-[11px] font-semibold"
+        >
           {line2}
         </text>
       )}

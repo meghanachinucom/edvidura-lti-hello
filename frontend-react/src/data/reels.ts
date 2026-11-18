@@ -35,7 +35,8 @@ export const reels: Reel[] = [
         "It reduces electricity meter consumption during standby",
       ],
       correct: 1,
-      explanation: "Correct! The earth wire routes fault current away from equipment enclosures directly to ground, causing the MCB/RCCB to trip instantly.",
+      explanation:
+        "Correct! The earth wire routes fault current away from equipment enclosures directly to ground, causing the MCB/RCCB to trip instantly.",
     },
   },
   {
@@ -50,7 +51,8 @@ export const reels: Reel[] = [
       "D-curve: trips at 10–20x rated current (high inrush transformers)",
     ],
     conceptCheck: {
-      question: "Which trip curve is most suitable for electric motors with high startup inrush current?",
+      question:
+        "Which trip curve is most suitable for electric motors with high startup inrush current?",
       options: [
         "Type A curve (ultrafast)",
         "Type B curve (3-5x In)",
@@ -58,7 +60,8 @@ export const reels: Reel[] = [
         "Type Z curve (precision electronics)",
       ],
       correct: 2,
-      explanation: "Correct! Type C breakers withstand short motor starting transients (5 to 10 times rated current) without nuisance tripping.",
+      explanation:
+        "Correct! Type C breakers withstand short motor starting transients (5 to 10 times rated current) without nuisance tripping.",
     },
   },
   {
@@ -73,7 +76,8 @@ export const reels: Reel[] = [
       "Step 3: Re-verify indicator on proving unit to ensure meter has not failed silently",
     ],
     conceptCheck: {
-      question: "Why must you re-test the voltage detector on a known source AFTER checking the isolated circuit?",
+      question:
+        "Why must you re-test the voltage detector on a known source AFTER checking the isolated circuit?",
       options: [
         "To discharge internal tester capacitors",
         "To confirm the tester battery or internal fuse did not fail while taking the isolation reading",
@@ -81,7 +85,8 @@ export const reels: Reel[] = [
         "To record the test timestamp in the digital logging unit",
       ],
       correct: 1,
-      explanation: "Correct! If the tester failed mid-measurement, a dead reading could falsely indicate safety on a live circuit.",
+      explanation:
+        "Correct! If the tester failed mid-measurement, a dead reading could falsely indicate safety on a live circuit.",
     },
   },
   {
@@ -96,13 +101,9 @@ export const reels: Reel[] = [
       "P = V * I = I^2 * R (Dissipated thermal power in watts)",
     ],
     conceptCheck: {
-      question: "If a 240V industrial heater element has a resistance of 48 ohms, what current will flow through it?",
-      options: [
-        "2.5 Amps",
-        "5.0 Amps",
-        "11.5 Amps",
-        "24.0 Amps",
-      ],
+      question:
+        "If a 240V industrial heater element has a resistance of 48 ohms, what current will flow through it?",
+      options: ["2.5 Amps", "5.0 Amps", "11.5 Amps", "24.0 Amps"],
       correct: 1,
       explanation: "Correct! I = V / R = 240V / 48 ohms = 5.0 Amperes.",
     },

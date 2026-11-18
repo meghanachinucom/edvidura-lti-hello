@@ -30,21 +30,16 @@ export const checkpointQuiz: Quiz = {
     q(
       "q1",
       "In algebra, a variable is best described as…",
-      ["A constant number that never changes", "A symbol that represents a quantity that can vary", "An arithmetic operator like + or -", "The answer to an examination"],
+      [
+        "A constant number that never changes",
+        "A symbol that represents a quantity that can vary",
+        "An arithmetic operator like + or -",
+        "The answer to an examination",
+      ],
       "B",
     ),
-    q(
-      "q2",
-      "In 2x + 3 = 11, what is x?",
-      ["3", "4", "5", "8"],
-      "B",
-    ),
-    q(
-      "q3",
-      "Solve for x: 3x - 5 = 10",
-      ["x = 3", "x = 5", "x = 15", "x = 25"],
-      "B",
-    ),
+    q("q2", "In 2x + 3 = 11, what is x?", ["3", "4", "5", "8"], "B"),
+    q("q3", "Solve for x: 3x - 5 = 10", ["x = 3", "x = 5", "x = 15", "x = 25"], "B"),
   ],
 };
 

@@ -150,11 +150,13 @@ export function StandaloneReader({
       setActiveParaIndex(null);
       // Track reading audio completed
       try {
-        api.post(`/api/v1/app/manuals/${book.id}/progress`, {
-          chapter_index: ci,
-          location: `audio_completed:ch-${ci}`,
-          percent: Math.round(((ci + 1) / chapters.length) * 100),
-        }).catch(() => {});
+        api
+          .post(`/api/v1/app/manuals/${book.id}/progress`, {
+            chapter_index: ci,
+            location: `audio_completed:ch-${ci}`,
+            percent: Math.round(((ci + 1) / chapters.length) * 100),
+          })
+          .catch(() => {});
       } catch {}
     };
 
@@ -177,11 +179,13 @@ export function StandaloneReader({
 
     // Emit xAPI progress / interaction
     try {
-      api.post(`/api/v1/app/manuals/${book.id}/progress`, {
-        chapter_index: ci,
-        location: `concept_check:${chapter?.id}:${isCorrect ? "correct" : "incorrect"}`,
-        percent: Math.round(((ci + 1) / chapters.length) * 100),
-      }).catch(() => {});
+      api
+        .post(`/api/v1/app/manuals/${book.id}/progress`, {
+          chapter_index: ci,
+          location: `concept_check:${chapter?.id}:${isCorrect ? "correct" : "incorrect"}`,
+          percent: Math.round(((ci + 1) / chapters.length) * 100),
+        })
+        .catch(() => {});
     } catch {}
   };
 
@@ -236,7 +240,9 @@ export function StandaloneReader({
   );
 
   return (
-    <div className={`min-h-screen transition-colors duration-200 ${theme === "sepia" ? "bg-[#f4ebd0]" : theme === "contrast" ? "bg-[#020617]" : "bg-page-bg"}`}>
+    <div
+      className={`min-h-screen transition-colors duration-200 ${theme === "sepia" ? "bg-[#f4ebd0]" : theme === "contrast" ? "bg-[#020617]" : "bg-page-bg"}`}
+    >
       <div className="mx-auto w-full max-w-content px-4 py-6 desktop:max-w-[1240px]">
         {/* Navigation & Title Header */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border pb-4">
@@ -295,7 +301,11 @@ export function StandaloneReader({
           </div>
 
           {/* Reading Theme Switcher */}
-          <div className="flex items-center gap-1.5" role="group" aria-label="Reading theme controls">
+          <div
+            className="flex items-center gap-1.5"
+            role="group"
+            aria-label="Reading theme controls"
+          >
             <span className="font-semibold text-ink-muted mr-1 flex items-center gap-1">
               <Sun size={14} />
               <span>Theme:</span>
@@ -367,7 +377,9 @@ export function StandaloneReader({
         <div className="mt-6 desktop:grid desktop:grid-cols-[280px_minmax(0,1fr)] desktop:gap-8">
           {/* Desktop Table of Contents Sidebar */}
           <aside className="hidden desktop:block">
-            <div className={`sticky top-20 rounded-surface border p-4 shadow-sm ${themeContainerClass}`}>
+            <div
+              className={`sticky top-20 rounded-surface border p-4 shadow-sm ${themeContainerClass}`}
+            >
               <Toc />
             </div>
           </aside>
@@ -392,7 +404,8 @@ export function StandaloneReader({
                     Chapter {ci + 1} of {chapters.length}
                   </span>
                   <span className="text-xs opacity-70">
-                    Page {chapter.startPage} · ~{Math.ceil(chapter.paragraphs.join(" ").split(" ").length / 150)} min read
+                    Page {chapter.startPage} · ~
+                    {Math.ceil(chapter.paragraphs.join(" ").split(" ").length / 150)} min read
                   </span>
                 </div>
 
@@ -487,7 +500,9 @@ export function StandaloneReader({
                     {showExplanation && (
                       <div className="mt-4 rounded-control bg-page-bg p-3.5 text-xs text-ink-muted border border-border">
                         <p className="font-semibold text-ink mb-1">
-                          {selectedOption === chapter.conceptCheck.correctIndex ? "✓ Correct!" : "Review Guidance:"}
+                          {selectedOption === chapter.conceptCheck.correctIndex
+                            ? "✓ Correct!"
+                            : "Review Guidance:"}
                         </p>
                         <p className="leading-relaxed">{chapter.conceptCheck.explanation}</p>
                       </div>

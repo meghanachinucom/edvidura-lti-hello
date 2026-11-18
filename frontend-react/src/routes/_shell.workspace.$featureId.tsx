@@ -93,9 +93,15 @@ export function WorkspaceFeatureScreen() {
     try {
       let payload: any = { input: actionInput };
       if (targetUrl.includes("voice/cleanup")) {
-        payload = { transcript: actionInput || "solve two x plus five equals fifteen", language: "en-IN" };
+        payload = {
+          transcript: actionInput || "solve two x plus five equals fifteen",
+          language: "en-IN",
+        };
       } else if (targetUrl.includes("coach")) {
-        payload = { message: actionInput || "How do I balance this linear equation?", mode: "socratic" };
+        payload = {
+          message: actionInput || "How do I balance this linear equation?",
+          mode: "socratic",
+        };
       }
 
       const res = await api.post<any>(targetUrl, payload);
@@ -126,10 +132,13 @@ export function WorkspaceFeatureScreen() {
           <Sparkles className="mx-auto size-10 text-secondary mb-3" />
           <h2 className="font-heading text-xl font-bold text-ink">Capability Discovered & Ready</h2>
           <p className="mt-2 text-sm text-ink-muted max-w-reading mx-auto">
-            This capability has been dynamically mounted from the backend catalog. You can interact with its underlying endpoints and view live telemetry below.
+            This capability has been dynamically mounted from the backend catalog. You can interact
+            with its underlying endpoints and view live telemetry below.
           </p>
           <div className="mt-6 flex justify-center gap-3">
-            <Link to="/home" className="btn-secondary text-xs">Return to Dashboard</Link>
+            <Link to="/home" className="btn-secondary text-xs">
+              Return to Dashboard
+            </Link>
           </div>
         </div>
       </div>
@@ -159,15 +168,16 @@ export function WorkspaceFeatureScreen() {
         )}
       </div>
 
-      <p className="max-w-reading text-sm text-ink-muted leading-relaxed">
-        {feature.description}
-      </p>
+      <p className="max-w-reading text-sm text-ink-muted leading-relaxed">{feature.description}</p>
 
       {/* KPI Cards */}
       {feature.kpis && feature.kpis.length > 0 && (
         <div className="grid gap-4 tablet:grid-cols-3">
           {feature.kpis.map((kpi, idx) => (
-            <div key={idx} className="rounded-surface border border-border bg-surface p-4 shadow-sm">
+            <div
+              key={idx}
+              className="rounded-surface border border-border bg-surface p-4 shadow-sm"
+            >
               <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
                 {kpi.label}
               </span>
@@ -207,10 +217,7 @@ export function WorkspaceFeatureScreen() {
               placeholder="e.g. solve two x plus five equals fifteen or prompt question..."
               className="flex-1 rounded-control border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:border-secondary focus:outline-none"
             />
-            <VoiceInputButton
-              onTranscript={(txt) => setActionInput(txt)}
-              className="shrink-0"
-            />
+            <VoiceInputButton onTranscript={(txt) => setActionInput(txt)} className="shrink-0" />
             <button
               type="button"
               disabled={actionLoading}

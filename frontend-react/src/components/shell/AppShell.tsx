@@ -47,7 +47,9 @@ export function AppShell() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-page-bg">
         <div className="flex flex-col items-center gap-3 text-center p-6">
-          <span className="text-sm font-semibold text-ink-muted">Redirecting to Moodle LMS launch...</span>
+          <span className="text-sm font-semibold text-ink-muted">
+            Redirecting to Moodle LMS launch...
+          </span>
           <a href="/" className="text-sm text-secondary hover:underline">
             Click here if not redirected
           </a>

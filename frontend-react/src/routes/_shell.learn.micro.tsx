@@ -1,6 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Captions, PlayCircle, Volume2, VolumeX, Headphones, BookOpen, Send, CheckCircle2, Clock, BarChart3, HelpCircle, Sparkles } from "lucide-react";
+import {
+  Captions,
+  PlayCircle,
+  Volume2,
+  VolumeX,
+  Headphones,
+  BookOpen,
+  Send,
+  CheckCircle2,
+  Clock,
+  BarChart3,
+  HelpCircle,
+  Sparkles,
+} from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { PillTabs, type PillTab } from "@/components/shared/PillTabs";
@@ -35,11 +48,7 @@ function Page() {
   const [activeTab, setActiveTab] = useState<"reels" | "pravachana">("reels");
   const [remoteReels, setRemoteReels] = useState<Reel[]>([]);
   const list =
-    remoteReels.length > 0
-      ? remoteReels
-      : mockState.micro.reels === "empty"
-        ? []
-        : reels;
+    remoteReels.length > 0 ? remoteReels : mockState.micro.reels === "empty" ? [] : reels;
 
   // Pravachana state
   const [episodes, setEpisodes] = useState<any[]>([]);
@@ -55,9 +64,16 @@ function Page() {
   useEffect(() => {
     let active = true;
     api
-      .get<{ items?: Array<{ id?: string; title?: string; summary?: string; idea?: string; lessonId?: string }>; reels?: any[] }>(
-        "/api/v1/app/micro",
-      )
+      .get<{
+        items?: Array<{
+          id?: string;
+          title?: string;
+          summary?: string;
+          idea?: string;
+          lessonId?: string;
+        }>;
+        reels?: any[];
+      }>("/api/v1/app/micro")
       .then((data) => {
         if (active && data) {
           const items = data.items || data.reels;
@@ -135,11 +151,13 @@ function Page() {
       // Record progress initiation
       const epId = activeEpisode.id || activeEpisode.episode_id;
       if (epId) {
-        api.post(`/api/v1/app/pravachanas/${epId}/progress`, {
-          position_sec: 15,
-          duration_sec: activeEpisode.duration_sec || 300,
-          completed: false,
-        }).catch(() => {});
+        api
+          .post(`/api/v1/app/pravachanas/${epId}/progress`, {
+            position_sec: 15,
+            duration_sec: activeEpisode.duration_sec || 300,
+            completed: false,
+          })
+          .catch(() => {});
       }
     }
   };
@@ -193,8 +211,16 @@ function Page() {
   }, [reel?.id, i, activeTab]);
 
   const tabItems: PillTab[] = [
-    { id: "reels", label: "Interactive Reels & Micro Lessons", onSelect: () => setActiveTab("reels") },
-    { id: "pravachana", label: `Pravachana Audio Series (${episodes.length})`, onSelect: () => setActiveTab("pravachana") },
+    {
+      id: "reels",
+      label: "Interactive Reels & Micro Lessons",
+      onSelect: () => setActiveTab("reels"),
+    },
+    {
+      id: "pravachana",
+      label: `Pravachana Audio Series (${episodes.length})`,
+      onSelect: () => setActiveTab("pravachana"),
+    },
   ];
 
   return (
@@ -307,10 +333,16 @@ function Page() {
                     </div>
                     {showReelExp && (
                       <div className="mt-2.5 pt-2 border-t border-border/60">
-                        <p className={`font-semibold ${reelAnswer === reel.conceptCheck.correct ? "text-emerald-700" : "text-rose-700"}`}>
-                          {reelAnswer === reel.conceptCheck.correct ? "✓ Correct!" : "✗ Review the key point above."}
+                        <p
+                          className={`font-semibold ${reelAnswer === reel.conceptCheck.correct ? "text-emerald-700" : "text-rose-700"}`}
+                        >
+                          {reelAnswer === reel.conceptCheck.correct
+                            ? "✓ Correct!"
+                            : "✗ Review the key point above."}
                         </p>
-                        <p className="mt-1 text-ink-muted text-[11px]">{reel.conceptCheck.explanation}</p>
+                        <p className="mt-1 text-ink-muted text-[11px]">
+                          {reel.conceptCheck.explanation}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -370,24 +402,34 @@ function Page() {
             <div className="rounded-surface border border-border bg-surface p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <BarChart3 size={18} className="text-secondary" />
-                <h3 className="font-heading font-semibold text-ink">Department Audio Engagement Telemetry</h3>
+                <h3 className="font-heading font-semibold text-ink">
+                  Department Audio Engagement Telemetry
+                </h3>
               </div>
               <div className="grid grid-cols-2 tablet:grid-cols-4 gap-4">
                 <div className="kpi-figure">
                   <dt className="text-xs text-ink-muted">Published Series</dt>
-                  <dd className="text-xl font-bold text-ink">{deptStats.episodes ?? episodes.length}</dd>
+                  <dd className="text-xl font-bold text-ink">
+                    {deptStats.episodes ?? episodes.length}
+                  </dd>
                 </div>
                 <div className="kpi-figure">
                   <dt className="text-xs text-ink-muted">Total Listens</dt>
-                  <dd className="text-xl font-bold text-ink">{deptStats.watches ?? deptStats.total_listens ?? 48}</dd>
+                  <dd className="text-xl font-bold text-ink">
+                    {deptStats.watches ?? deptStats.total_listens ?? 48}
+                  </dd>
                 </div>
                 <div className="kpi-figure">
                   <dt className="text-xs text-ink-muted">Completed Listens</dt>
-                  <dd className="text-xl font-bold text-ink">{deptStats.completed ?? deptStats.completions ?? 32}</dd>
+                  <dd className="text-xl font-bold text-ink">
+                    {deptStats.completed ?? deptStats.completions ?? 32}
+                  </dd>
                 </div>
                 <div className="kpi-figure">
                   <dt className="text-xs text-ink-muted">Learner Notes</dt>
-                  <dd className="text-xl font-bold text-ink">{deptStats.notes_count ?? notes.length ?? 12}</dd>
+                  <dd className="text-xl font-bold text-ink">
+                    {deptStats.notes_count ?? notes.length ?? 12}
+                  </dd>
                 </div>
               </div>
             </div>
@@ -405,10 +447,14 @@ function Page() {
                     </span>
                   </div>
                   <h2 className="font-heading text-2xl font-bold text-ink">
-                    {activeEpisode.title_en || activeEpisode.title || "Foundations of Electrical Engineering"}
+                    {activeEpisode.title_en ||
+                      activeEpisode.title ||
+                      "Foundations of Electrical Engineering"}
                   </h2>
                   <p className="text-ink text-sm">
-                    {activeEpisode.summary_en || activeEpisode.summary || "Guided auditory walkthrough of core trade competencies, safety standards, and real-world troubleshooting heuristics."}
+                    {activeEpisode.summary_en ||
+                      activeEpisode.summary ||
+                      "Guided auditory walkthrough of core trade competencies, safety standards, and real-world troubleshooting heuristics."}
                   </p>
 
                   <div className="rounded-surface bg-highlight p-4 flex items-center justify-between">
@@ -425,7 +471,9 @@ function Page() {
                         <p className="font-semibold text-ink text-sm">
                           {playing ? "Playing Narration Audio..." : "Ready to Stream"}
                         </p>
-                        <p className="text-xs text-ink-muted">High-fidelity voice synthesis engine</p>
+                        <p className="text-xs text-ink-muted">
+                          High-fidelity voice synthesis engine
+                        </p>
                       </div>
                     </div>
                     <span className="text-xs font-mono text-ink-muted">
@@ -438,7 +486,9 @@ function Page() {
                       Episode Study Notes
                     </h3>
                     {noteSuccess && (
-                      <StatusBanner variant="success">Note saved to your learner profile.</StatusBanner>
+                      <StatusBanner variant="success">
+                        Note saved to your learner profile.
+                      </StatusBanner>
                     )}
                     <form onSubmit={handleAddNote} className="space-y-2">
                       <textarea
@@ -459,12 +509,19 @@ function Page() {
 
                     <div className="space-y-2 pt-2">
                       {notes.length === 0 ? (
-                        <p className="text-xs text-ink-muted">No notes recorded for this episode.</p>
+                        <p className="text-xs text-ink-muted">
+                          No notes recorded for this episode.
+                        </p>
                       ) : (
                         notes.map((n: any, idx: number) => (
-                          <div key={n.id || idx} className="rounded-surface border border-border p-2.5 text-xs bg-surface">
+                          <div
+                            key={n.id || idx}
+                            className="rounded-surface border border-border p-2.5 text-xs bg-surface"
+                          >
                             <p className="text-ink">{n.body}</p>
-                            <p className="text-ink-muted text-[10px] mt-1">{n.created_at || "Recent"}</p>
+                            <p className="text-ink-muted text-[10px] mt-1">
+                              {n.created_at || "Recent"}
+                            </p>
                           </div>
                         ))
                       )}
@@ -479,18 +536,31 @@ function Page() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="font-heading text-lg font-bold text-ink">
-                Series Episodes
-              </h3>
+              <h3 className="font-heading text-lg font-bold text-ink">Series Episodes</h3>
               {pravLoading && episodes.length === 0 ? (
                 <p className="text-sm text-ink-muted">Loading episodes...</p>
               ) : (
                 <ul className="space-y-2">
-                  {(episodes.length > 0 ? episodes : [
-                    { id: "ep-1", title_en: "Episode 1: Trade Safety & PPE", duration_min: "10" },
-                    { id: "ep-2", title_en: "Episode 2: Circuit Breaker Principles", duration_min: "14" },
-                    { id: "ep-3", title_en: "Episode 3: Neutral & Earth Grounding", duration_min: "12" },
-                  ]).map((ep: any, idx: number) => {
+                  {(episodes.length > 0
+                    ? episodes
+                    : [
+                        {
+                          id: "ep-1",
+                          title_en: "Episode 1: Trade Safety & PPE",
+                          duration_min: "10",
+                        },
+                        {
+                          id: "ep-2",
+                          title_en: "Episode 2: Circuit Breaker Principles",
+                          duration_min: "14",
+                        },
+                        {
+                          id: "ep-3",
+                          title_en: "Episode 3: Neutral & Earth Grounding",
+                          duration_min: "12",
+                        },
+                      ]
+                  ).map((ep: any, idx: number) => {
                     const isSelected = activeEpisode?.id === ep.id;
                     return (
                       <li key={ep.id || idx}>

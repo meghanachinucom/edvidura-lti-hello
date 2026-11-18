@@ -48,7 +48,15 @@ function Page() {
   if (started || mockState.quiz.mode === "session") {
     return <QuizSession practice={practiceMode} />;
   }
-  return <Gate onStart={() => setStarted(true)} onStartPractice={() => { setPracticeMode(true); setStarted(true); }} />;
+  return (
+    <Gate
+      onStart={() => setStarted(true)}
+      onStartPractice={() => {
+        setPracticeMode(true);
+        setStarted(true);
+      }}
+    />
+  );
 }
 
 interface QuizGateApiResponse {
@@ -76,10 +84,17 @@ function Gate({ onStart, onStartPractice }: { onStart: () => void; onStartPracti
       try {
         const [quizResp, attemptsResp] = await Promise.all([
           api.get<QuizGateApiResponse>("/api/v1/app/quiz").catch((err) => {
-            if (err && typeof err === "object" && "code" in err && err.code === "ghost_coach_gate") {
+            if (
+              err &&
+              typeof err === "object" &&
+              "code" in err &&
+              err.code === "ghost_coach_gate"
+            ) {
               if (active) {
                 setGhostCoachBlocked(true);
-                setGhostCoachMsg(err.message || "Complete the required lessons before attempting the quiz.");
+                setGhostCoachMsg(
+                  err.message || "Complete the required lessons before attempting the quiz.",
+                );
               }
             } else {
               console.warn("Quiz gate API fallback:", err);
@@ -160,14 +175,11 @@ function Gate({ onStart, onStartPractice }: { onStart: () => void; onStartPracti
         <div className="rounded-surface border-l-4 border-amber-500 bg-amber-50/20 p-5 space-y-3">
           <p className="font-semibold text-ink">Ghost Coach Prerequisite Gate</p>
           <p className="text-sm text-ink-muted">
-            {ghostCoachMsg || "You must complete the required curriculum lessons before attempting the graded quiz."}
+            {ghostCoachMsg ||
+              "You must complete the required curriculum lessons before attempting the graded quiz."}
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={onStartPractice}
-            >
+            <button type="button" className="btn-primary" onClick={onStartPractice}>
               Take Practice Quiz (Unlocked)
             </button>
             <Link to="/lessons" className="btn-secondary">

@@ -1,9 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  Play,
-  Pause,
-  Sparkles,
-} from "lucide-react";
+import { Play, Pause, Sparkles } from "lucide-react";
 
 export interface VideoChapter {
   timeSec: number;
@@ -24,7 +20,8 @@ export const SAMPLE_LECTURES: VideoLectureItem[] = [
   {
     id: "lec-slope",
     title: "Slope as Rate of Change & Delta Intuition",
-    description: "Visual intuition into slope Δy/Δx, Cartesian grid translations, and slope-intercept form y = mx + b.",
+    description:
+      "Visual intuition into slope Δy/Δx, Cartesian grid translations, and slope-intercept form y = mx + b.",
     durationSec: 840,
     coverUrl: "/images/masterclass/slope-masterclass.svg",
     speaker: "Dr. K. S. Ramanujan · Department of Mathematics",
@@ -38,7 +35,8 @@ export const SAMPLE_LECTURES: VideoLectureItem[] = [
   {
     id: "lec-vedic",
     title: "Vedic Mathematical Speed Heuristics",
-    description: "Algorithmic methods for mental factorization, quadratic roots, and linear transformations.",
+    description:
+      "Algorithmic methods for mental factorization, quadratic roots, and linear transformations.",
     durationSec: 960,
     coverUrl: "/images/masterclass/vedic-masterclass.svg",
     speaker: "Vidwan S. Somayaji · AP State Education Council",
@@ -126,7 +124,11 @@ export function LessonVideoMasterclass({
                 className="w-14 h-14 rounded-full bg-amber-500 flex items-center justify-center text-slate-950 shadow-xl hover:bg-amber-400 transition"
                 aria-label={isPlaying ? "Pause Video" : "Play Video"}
               >
-                {isPlaying ? <Pause size={22} /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
+                {isPlaying ? (
+                  <Pause size={22} />
+                ) : (
+                  <Play size={22} fill="currentColor" className="ml-0.5" />
+                )}
               </button>
             </div>
             {/* Live Scrubber Line */}
@@ -137,7 +139,9 @@ export function LessonVideoMasterclass({
               />
             </div>
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-mono text-white/90">
-              <span className="rounded bg-black/60 px-2 py-0.5 backdrop-blur-xs font-sans">{lecture.speaker}</span>
+              <span className="rounded bg-black/60 px-2 py-0.5 backdrop-blur-xs font-sans">
+                {lecture.speaker}
+              </span>
               <span className="rounded bg-black/60 px-2 py-0.5 backdrop-blur-xs">
                 {formatClock(currentTime)} / {formatClock(lecture.durationSec)}
               </span>
@@ -146,7 +150,9 @@ export function LessonVideoMasterclass({
 
           {/* Chapter Markers */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Jump to:</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+              Jump to:
+            </span>
             {lecture.chapters.map((ch, idx) => (
               <button
                 key={idx}
@@ -154,7 +160,8 @@ export function LessonVideoMasterclass({
                 onClick={() => setCurrentTime(ch.timeSec)}
                 className={`rounded-lg px-2.5 py-1 text-xs transition ${
                   currentTime >= ch.timeSec &&
-                  (idx === lecture.chapters.length - 1 || currentTime < lecture.chapters[idx + 1]!.timeSec)
+                  (idx === lecture.chapters.length - 1 ||
+                    currentTime < lecture.chapters[idx + 1]!.timeSec)
                     ? "bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40 font-bold"
                     : "bg-page-bg border border-border text-ink-muted hover:border-amber-500"
                 }`}
@@ -182,7 +189,10 @@ export function LessonVideoMasterclass({
                 <p className="text-xs text-ink-muted text-center py-6">No notes pinned yet.</p>
               ) : (
                 notes.map((n) => (
-                  <div key={n.id} className="p-2 rounded-xl bg-surface border border-border text-xs space-y-0.5">
+                  <div
+                    key={n.id}
+                    className="p-2 rounded-xl bg-surface border border-border text-xs space-y-0.5"
+                  >
                     <span className="text-[10px] font-mono text-amber-600 font-bold">
                       {formatClock(n.time)}
                     </span>

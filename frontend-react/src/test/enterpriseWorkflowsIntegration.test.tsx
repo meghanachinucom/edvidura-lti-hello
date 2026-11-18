@@ -26,9 +26,7 @@ describe("Enterprise & Specialized Workflows Frontend Integration", () => {
             { code: "CAT-C1", title: "Aircraft Electrical Wiring Safety" },
             { code: "CAT-C2", title: "Connector Pinout Inspection" },
           ],
-          proposals: [
-            { id: "prop-1", title: "Proposed Wiring Standard", source: "NAVAIR-01" },
-          ],
+          proposals: [{ id: "prop-1", title: "Proposed Wiring Standard", source: "NAVAIR-01" }],
         },
       };
 
@@ -145,7 +143,9 @@ describe("Enterprise & Specialized Workflows Frontend Integration", () => {
       const mockSearch = {
         ok: true,
         data: {
-          hits: [{ title: "Earthing Standards", snippet: "Earth pit resistance < 1 ohm", score: 0.95 }],
+          hits: [
+            { title: "Earthing Standards", snippet: "Earth pit resistance < 1 ohm", score: 0.95 },
+          ],
         },
       };
 
@@ -159,9 +159,7 @@ describe("Enterprise & Specialized Workflows Frontend Integration", () => {
     it("fetches AuditPro sealed attempt logs and IQ review psychometrics", async () => {
       const mockAudit = {
         ok: true,
-        data: [
-          { id: "audit-1", quiz_title: "Wiring Safety", hash: "sha256:abc123sealed" },
-        ],
+        data: [{ id: "audit-1", quiz_title: "Wiring Safety", hash: "sha256:abc123sealed" }],
       };
 
       vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(mockJsonResponse(mockAudit) as any);
@@ -197,7 +195,10 @@ describe("Enterprise & Specialized Workflows Frontend Integration", () => {
         .mockResolvedValueOnce(mockJsonResponse(mockGroup, 201) as any)
         .mockResolvedValueOnce(mockJsonResponse(mockAssign, 201) as any);
 
-      const g = await api.post<any>("/api/v1/app/groups", { name: "Alpha Squad", members: ["p1", "p2"] });
+      const g = await api.post<any>("/api/v1/app/groups", {
+        name: "Alpha Squad",
+        members: ["p1", "p2"],
+      });
       expect(g.name).toBe("Alpha Squad");
 
       const a = await api.post<any>("/api/v1/app/groups/assign", {
@@ -339,7 +340,9 @@ describe("Enterprise & Specialized Workflows Frontend Integration", () => {
         },
       };
 
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(mockJsonResponse(mockCreated, 201) as any);
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        mockJsonResponse(mockCreated, 201) as any,
+      );
 
       const res = await api.post<any>("/admin/tenants", {
         slug: "poly-technic",
@@ -355,7 +358,9 @@ describe("Enterprise & Specialized Workflows Frontend Integration", () => {
     it("records micro-learning card viewed xAPI statement", async () => {
       const mockView = { ok: true, data: { recorded: true } };
 
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(mockJsonResponse(mockView) as any);
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(mockJsonResponse(mockView) as any);
 
       const res = await api.post<any>("/api/v1/app/micro/viewed", {
         skill_id: "reel-transformer-01",

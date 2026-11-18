@@ -16,10 +16,7 @@ import { AITrustNote } from "@/components/shared/AITrustNote";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CoachStarterChips } from "@/components/shared/CoachStarterChips";
-import {
-  VoiceInputButton,
-  VoiceListenButton,
-} from "@/components/shared/VoiceControls";
+import { VoiceInputButton, VoiceListenButton } from "@/components/shared/VoiceControls";
 import { coachExchanges, type CoachExchange } from "@/data/coach";
 import { mockState } from "@/data/mockState";
 import { api } from "@/lib/api";
@@ -160,11 +157,7 @@ function Page() {
     const reply = pickReply(q, id);
     setTurns((ts) =>
       ts.map((x) =>
-        x.id !== id
-          ? x
-          : m.reply === "error" || !reply
-            ? { ...x, failed: true }
-            : { ...x, reply },
+        x.id !== id ? x : m.reply === "error" || !reply ? { ...x, failed: true } : { ...x, reply },
       ),
     );
     setBusy(false);
@@ -192,9 +185,7 @@ function Page() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Brain className="text-brand size-5" />
-              <span className="font-heading font-semibold text-ink text-sm">
-                Tutor Mode
-              </span>
+              <span className="font-heading font-semibold text-ink text-sm">Tutor Mode</span>
             </div>
             <span className="rounded-pill bg-brand/10 text-brand px-2.5 py-0.5 text-xs font-medium">
               Socratic Guided Learning
@@ -243,16 +234,26 @@ function Page() {
             </div>
             <div className="space-y-2">
               {[
-                { id: "variables", label: "Variables & Expressions", level: skills["variables"] || 2 },
-                { id: "solve-linear", label: "Solving Linear Equations", level: skills["solve-linear"] || 2 },
-                { id: "word-problems", label: "Linear Word Problems", level: skills["word-problems"] || 1 },
+                {
+                  id: "variables",
+                  label: "Variables & Expressions",
+                  level: skills["variables"] || 2,
+                },
+                {
+                  id: "solve-linear",
+                  label: "Solving Linear Equations",
+                  level: skills["solve-linear"] || 2,
+                },
+                {
+                  id: "word-problems",
+                  label: "Linear Word Problems",
+                  level: skills["word-problems"] || 1,
+                },
               ].map((sk) => (
                 <div key={sk.id} className="text-xs">
                   <div className="flex justify-between text-ink-muted text-[11px] mb-1">
                     <span className="font-medium text-ink">{sk.label}</span>
-                    <span className="font-mono">
-                      Level {sk.level} / 5
-                    </span>
+                    <span className="font-mono">Level {sk.level} / 5</span>
                   </div>
                   <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
                     <div
@@ -302,14 +303,17 @@ function Page() {
                   <Brain className="mx-auto size-8 text-brand/60 mb-2" />
                   <p className="font-semibold text-ink">Ask Vidura — AI Study Coach</p>
                   <p className="text-xs mt-1">
-                    Ask questions about your Class 8 lessons or use voice dictation in your preferred Indian language.
+                    Ask questions about your Class 8 lessons or use voice dictation in your
+                    preferred Indian language.
                   </p>
                 </div>
               )}
               {turns.map((x) => (
                 <li key={x.id} className="space-y-3">
                   <div className="ml-auto max-w-[85%] rounded-surface bg-highlight p-3 text-ink shadow-2xs">
-                    <p className="text-xs font-semibold text-ink-muted mb-0.5">{s("yourQuestion")}</p>
+                    <p className="text-xs font-semibold text-ink-muted mb-0.5">
+                      {s("yourQuestion")}
+                    </p>
                     <p className="text-sm">{x.question}</p>
                   </div>
                   {x.failed && <ErrorAlert message={s("error")} />}
@@ -361,7 +365,11 @@ function Page() {
               />
               <div className="flex items-center justify-between">
                 <div className="flex gap-2">
-                  <button type="submit" disabled={busy || !text.trim()} className="btn-primary text-xs py-1.5">
+                  <button
+                    type="submit"
+                    disabled={busy || !text.trim()}
+                    className="btn-primary text-xs py-1.5"
+                  >
                     {s("send")}
                   </button>
                   {busy && (
@@ -421,9 +429,7 @@ function Reply({
               </div>
               <p className="text-xs text-ink">{ex.checkYourself}</p>
               {socratic?.hint && (
-                <p className="text-[11px] text-ink-muted italic mt-1.5">
-                  💡 Hint: {socratic.hint}
-                </p>
+                <p className="text-[11px] text-ink-muted italic mt-1.5">💡 Hint: {socratic.hint}</p>
               )}
               {onAskFollowUp && (
                 <button
@@ -442,7 +448,8 @@ function Reply({
             <div className="inline-flex items-center gap-1.5 rounded-pill bg-emerald-50 border border-emerald-300 px-3 py-1 text-xs text-emerald-800">
               <Award size={14} className="text-emerald-600" />
               <span>
-                Level Up! Advanced to <strong>Level {socratic.mastery_level}</strong> in {socratic.skill_name}
+                Level Up! Advanced to <strong>Level {socratic.mastery_level}</strong> in{" "}
+                {socratic.skill_name}
               </span>
             </div>
           )}
@@ -474,7 +481,9 @@ function Reply({
               aria-label={s(v === "up" ? "yes" : "no")}
               onClick={() => setVote(vote === v ? null : v)}
               className={`inline-flex size-8 items-center justify-center rounded-surface border ${
-                vote === v ? "border-brand bg-highlight text-brand" : "border-border bg-surface text-ink-muted"
+                vote === v
+                  ? "border-brand bg-highlight text-brand"
+                  : "border-border bg-surface text-ink-muted"
               }`}
             >
               <Icon aria-hidden size={14} />

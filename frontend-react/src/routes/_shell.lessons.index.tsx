@@ -164,7 +164,11 @@ function Page() {
         <>
           <LessonVideoMasterclass />
           <LessonGrid items={list} upNextId={next?.id} />
-          <DynamicBlockCatalog role="learner" compact title="Class 8 Modular Labs & Learning Blocks" />
+          <DynamicBlockCatalog
+            role="learner"
+            compact
+            title="Class 8 Modular Labs & Learning Blocks"
+          />
         </>
       )}
     </div>

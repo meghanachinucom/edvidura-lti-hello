@@ -67,10 +67,7 @@ function Page() {
         });
       }
       setSavedQuestions((current) => [
-        ...new Set([
-          ...current,
-          ...picked.flatMap((selected, index) => (selected ? [index] : [])),
-        ]),
+        ...new Set([...current, ...picked.flatMap((selected, index) => (selected ? [index] : []))]),
       ]);
       setResult("saved");
       setSaving(false);
@@ -110,7 +107,10 @@ function Page() {
     }
   };
 
-  const handleReviewBank = async (actionStatus: "approved" | "rejected", shouldPromote: boolean) => {
+  const handleReviewBank = async (
+    actionStatus: "approved" | "rejected",
+    shouldPromote: boolean,
+  ) => {
     setReviewingBank(true);
     setReviewMessage(null);
     try {
@@ -123,10 +123,12 @@ function Page() {
       setReviewMessage(
         actionStatus === "approved"
           ? `Approved test bank items.${shouldPromote ? " Promoted to live active quizzes." : ""}`
-          : "Flagged test bank items as rejected."
+          : "Flagged test bank items as rejected.",
       );
     } catch (err: any) {
-      setReviewMessage(`Bank review completed: ${actionStatus}.${shouldPromote ? " Promoted to live quiz pool." : ""}`);
+      setReviewMessage(
+        `Bank review completed: ${actionStatus}.${shouldPromote ? " Promoted to live quiz pool." : ""}`,
+      );
     } finally {
       setReviewingBank(false);
     }
@@ -188,7 +190,8 @@ function Page() {
               Automated Test Bank Ingestion & Review
             </h3>
             <p className="text-xs text-ink-muted mt-1">
-              Generate items from active materials, review, and optionally promote directly to live active quizzes.
+              Generate items from active materials, review, and optionally promote directly to live
+              active quizzes.
             </p>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">

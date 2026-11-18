@@ -5,10 +5,7 @@ import { useFocusTrap } from "@/components/shared/useFocusTrap";
 import { CoachStarterChips } from "@/components/shared/CoachStarterChips";
 import { CitationChip } from "@/components/shared/CitationChip";
 import { CheckQuestionCard } from "@/components/shared/CheckQuestionCard";
-import {
-  VoiceInputButton,
-  VoiceListenButton,
-} from "@/components/shared/VoiceControls";
+import { VoiceInputButton, VoiceListenButton } from "@/components/shared/VoiceControls";
 import {
   askViduraLanguages,
   pickViduraAnswer,
@@ -101,12 +98,21 @@ function Panel({ visible, onClose }: { visible: boolean; onClose: () => void }) 
           id: `ans-${id}`,
           question: q,
           answer: res.answer,
-          check: res.socratic?.diagnostic_question || res.check_question || "Review the lesson worked example.",
+          check:
+            res.socratic?.diagnostic_question ||
+            res.check_question ||
+            "Review the lesson worked example.",
           citations:
             res.citations && res.citations.length >= 2
               ? [
-                  { title: res.citations[0].title || "Class Manual", id: res.citations[0].id || "ch1" },
-                  { title: res.citations[1].title || "Worked Example", id: res.citations[1].id || "ch2" },
+                  {
+                    title: res.citations[0].title || "Class Manual",
+                    id: res.citations[0].id || "ch1",
+                  },
+                  {
+                    title: res.citations[1].title || "Worked Example",
+                    id: res.citations[1].id || "ch2",
+                  },
                 ]
               : [
                   { title: "Algebra I Chapter 1", id: "ch1" },
@@ -251,7 +257,11 @@ function Panel({ visible, onClose }: { visible: boolean; onClose: () => void }) 
           className="w-full rounded-surface border border-border bg-surface p-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
         />
         <div className="flex gap-2">
-          <button type="submit" disabled={busy || !text.trim()} className="btn-primary text-xs py-1.5">
+          <button
+            type="submit"
+            disabled={busy || !text.trim()}
+            className="btn-primary text-xs py-1.5"
+          >
             {s("send")}
           </button>
           {busy && (

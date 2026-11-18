@@ -30,18 +30,20 @@ const s = (k: string, v?: Record<string, string | number>) => t(`LR-10.${k}`, v)
 function Page() {
   const [remoteCards, setRemoteCards] = useState<Flashcard[]>([]);
   const allCards =
-    remoteCards.length > 0
-      ? remoteCards
-      : mockState.flashcards.deck === "empty"
-        ? []
-        : flashcards;
+    remoteCards.length > 0 ? remoteCards : mockState.flashcards.deck === "empty" ? [] : flashcards;
 
   useEffect(() => {
     let active = true;
     api
-      .get<{ flashcards?: Array<{ id?: string; term?: string; definition?: string; front?: string; back?: string }> }>(
-        "/api/v1/app/flashcards",
-      )
+      .get<{
+        flashcards?: Array<{
+          id?: string;
+          term?: string;
+          definition?: string;
+          front?: string;
+          back?: string;
+        }>;
+      }>("/api/v1/app/flashcards")
       .then((data) => {
         if (active && data?.flashcards && data.flashcards.length > 0) {
           setRemoteCards(

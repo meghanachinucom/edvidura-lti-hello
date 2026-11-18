@@ -71,7 +71,9 @@ function useSaving() {
 function Page() {
   const { session } = useRole();
   const token = session?.token || "";
-  const editorUrl = token ? `/teacher/content?token=${encodeURIComponent(token)}` : "/teacher/content";
+  const editorUrl = token
+    ? `/teacher/content?token=${encodeURIComponent(token)}`
+    : "/teacher/content";
 
   const [lessons, setLessons] = useState<LessonRow[]>(
     seedLessons.map((l) => ({
@@ -180,7 +182,8 @@ function Page() {
               {s("lessons")}
             </h2>
             <p className="text-sm text-ink-muted">
-              Curriculum overview. For live publishing, reordering, and full authoring, open the Studio.
+              Curriculum overview. For live publishing, reordering, and full authoring, open the
+              Studio.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

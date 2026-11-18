@@ -1,16 +1,5 @@
 export type Locale =
-  | "en"
-  | "hi"
-  | "te"
-  | "ta"
-  | "kn"
-  | "ml"
-  | "mr"
-  | "bn"
-  | "gu"
-  | "pa"
-  | "or"
-  | "ur";
+  "en" | "hi" | "te" | "ta" | "kn" | "ml" | "mr" | "bn" | "gu" | "pa" | "or" | "ur";
 
 export interface LocaleMeta {
   code: Locale;

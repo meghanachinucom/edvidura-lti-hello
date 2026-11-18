@@ -205,13 +205,21 @@ export function adaptEbook(backend: BackendManualItem): Ebook {
  */
 export function adaptEbookChapter(
   manualId: string,
-  chapter: { chapter_index: number; title: string; paragraphs?: string[]; takeaway?: string; conceptCheck?: any },
+  chapter: {
+    chapter_index: number;
+    title: string;
+    paragraphs?: string[];
+    takeaway?: string;
+    conceptCheck?: any;
+  },
 ): Chapter {
   return {
     id: `ch-${manualId}-${chapter.chapter_index}`,
     title: chapter.title,
     startPage: (chapter.chapter_index - 1) * 15 + 1,
-    takeaway: chapter.takeaway || "Review the key principles of this section before moving to the concept check.",
+    takeaway:
+      chapter.takeaway ||
+      "Review the key principles of this section before moving to the concept check.",
     paragraphs:
       chapter.paragraphs && chapter.paragraphs.length > 0
         ? chapter.paragraphs

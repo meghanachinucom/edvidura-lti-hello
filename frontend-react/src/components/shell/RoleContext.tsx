@@ -96,7 +96,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
         if (codeFromUrl) {
           try {
             const cached = _codeExchangeCache.get(codeFromUrl);
-            const isFresh = cached && (Date.now() - cached.createdAt < EXCHANGE_CACHE_TTL_MS);
+            const isFresh = cached && Date.now() - cached.createdAt < EXCHANGE_CACHE_TTL_MS;
 
             if (!isFresh) {
               if (cached) _codeExchangeCache.delete(codeFromUrl);
@@ -164,9 +164,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
             currentUrl.searchParams.delete("code");
             const queryStr = currentUrl.searchParams.toString();
             const cleanPath =
-              currentUrl.pathname +
-              (queryStr ? `?${queryStr}` : "") +
-              currentUrl.hash;
+              currentUrl.pathname + (queryStr ? `?${queryStr}` : "") + currentUrl.hash;
             window.history.replaceState(window.history.state ?? {}, document.title, cleanPath);
           }
         } else if (_lastResolvedSession) {
@@ -183,9 +181,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
           currentUrl.searchParams.delete("token");
           const queryStr = currentUrl.searchParams.toString();
           const cleanPath =
-            currentUrl.pathname +
-            (queryStr ? `?${queryStr}` : "") +
-            currentUrl.hash;
+            currentUrl.pathname + (queryStr ? `?${queryStr}` : "") + currentUrl.hash;
           window.history.replaceState(window.history.state ?? {}, document.title, cleanPath);
         }
 
@@ -293,10 +289,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
           session?.lmsReturnUrl ||
           (typeof window !== "undefined" ? sessionStorage.getItem("edvidura_return_url") : null) ||
           "";
-        const returnUrl =
-          rawReturn && rawReturn.includes("localhost:8085")
-            ? rawReturn
-            : "/review";
+        const returnUrl = rawReturn && rawReturn.includes("localhost:8085") ? rawReturn : "/review";
         try {
           sessionStorage.setItem("edvidura_signed_out", "true");
           sessionStorage.setItem("edvidura_return_url", returnUrl);

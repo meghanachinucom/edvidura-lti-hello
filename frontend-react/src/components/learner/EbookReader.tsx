@@ -167,7 +167,10 @@ export function EbookReader({
     chapterStartTimeRef.current = Date.now();
     return () => {
       if (book.id && chapter) {
-        const elapsedSeconds = Math.max(1, Math.round((Date.now() - chapterStartTimeRef.current) / 1000));
+        const elapsedSeconds = Math.max(
+          1,
+          Math.round((Date.now() - chapterStartTimeRef.current) / 1000),
+        );
         api
           .post(`/api/v1/app/manuals/${book.id}/page-time`, {
             chapter_slug: chapter.id || `chapter-${ci + 1}`,

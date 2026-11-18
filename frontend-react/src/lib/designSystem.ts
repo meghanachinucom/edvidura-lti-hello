@@ -32,7 +32,7 @@ export const DESIGN_TOKENS = {
   },
   radii: {
     surface: "12px", // var(--radius-surface)
-    control: "8px",  // var(--radius-control)
+    control: "8px", // var(--radius-control)
     full: "9999px",
   },
   typography: {
@@ -54,8 +54,8 @@ export const DESIGN_TOKENS = {
   },
   layout: {
     maxContentWidth: "960px", // max-w-content
-    maxReadingWidth: "68ch",  // max-w-reading
-    touchMinHeight: "44px",   // min-h-11
+    maxReadingWidth: "68ch", // max-w-reading
+    touchMinHeight: "44px", // min-h-11
   },
 } as const;
 
@@ -79,9 +79,12 @@ export const DESIGN_PRESETS = {
   kpiCard: "kpi-figure rounded-surface border border-border bg-surface p-4",
 
   // Form Controls (min 44px accessible touch target)
-  input: "min-h-11 w-full rounded-control border border-border-control bg-surface px-3 py-2 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring",
-  select: "min-h-11 w-full rounded-control border border-border-control bg-surface px-3 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring",
-  textarea: "w-full rounded-control border border-border-control bg-surface px-3 py-2 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring",
+  input:
+    "min-h-11 w-full rounded-control border border-border-control bg-surface px-3 py-2 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring",
+  select:
+    "min-h-11 w-full rounded-control border border-border-control bg-surface px-3 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring",
+  textarea:
+    "w-full rounded-control border border-border-control bg-surface px-3 py-2 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring",
 
   // Action Buttons
   btnPrimary: "btn-primary",
@@ -89,8 +92,10 @@ export const DESIGN_PRESETS = {
   iconBtn: "icon-btn inline-flex min-h-11 min-w-11 items-center justify-center rounded-control",
 
   // Badges & Status
-  badgeDraft: "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-tertiary-container text-tertiary",
-  badgeSuccess: "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-secondary-container text-secondary",
+  badgeDraft:
+    "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-tertiary-container text-tertiary",
+  badgeSuccess:
+    "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-secondary-container text-secondary",
 
   // Typography Elements
   heading1: "font-heading text-2xl font-bold text-ink tablet:text-3xl",

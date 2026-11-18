@@ -59,11 +59,7 @@ function CardHeading({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 id={`${id}-title`} className="font-heading text-xl text-ink">
-        {step && (
-          <span className="mr-2 font-mono font-bold text-secondary">
-            {step}
-          </span>
-        )}
+        {step && <span className="mr-2 font-mono font-bold text-secondary">{step}</span>}
         {s(title)}
       </h2>
       <label className="sr-only" htmlFor={`${id}-period`}>
@@ -251,12 +247,7 @@ export function LearnerFocusAnalytics() {
           ).map(([key, count, percent]) => (
             <div key={key} className="flex min-w-0 flex-col items-center text-center">
               <div className="flex items-center justify-center">
-                <ProgressRing
-                  percent={percent}
-                  label={s(key)}
-                  size={120}
-                  strokeWidth={10}
-                />
+                <ProgressRing percent={percent} label={s(key)} size={120} strokeWidth={10} />
               </div>
               <span className="mt-3 inline-block rounded-full bg-surface-muted/60 px-3 py-0.5 text-xs tablet:text-sm font-semibold text-ink">
                 {count} {s("items")}

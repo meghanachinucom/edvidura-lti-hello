@@ -36,7 +36,10 @@ export const Route = createFileRoute("/_shell/home")({
 export function StudentHomePage() {
   const navigate = useNavigate();
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
-  const [quizScore, setQuizScore] = useState<{ correct: number; total: number }>({ correct: 4, total: 5 });
+  const [quizScore, setQuizScore] = useState<{ correct: number; total: number }>({
+    correct: 4,
+    total: 5,
+  });
 
   useEffect(() => {
     try {
@@ -92,7 +95,8 @@ export function StudentHomePage() {
             <span className="text-amber-400">Make Today Count.</span>
           </h1>
           <p className="text-slate-200 text-sm tablet:text-base leading-relaxed">
-            Slope-intercept equations, 3D Cartesian coordinates, interactive labs, and concept video masterclasses all in one unified learning hub.
+            Slope-intercept equations, 3D Cartesian coordinates, interactive labs, and concept video
+            masterclasses all in one unified learning hub.
           </p>
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <Link
@@ -132,8 +136,12 @@ export function StudentHomePage() {
         {/* Course Syllabus Progress */}
         <div className="flex flex-col justify-between rounded-3xl border border-border bg-surface p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">Course Completion</span>
-            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-600">Unit 2</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+              Course Completion
+            </span>
+            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-600">
+              Unit 2
+            </span>
           </div>
           <div className="my-6 flex items-center justify-center">
             <ProgressRing
@@ -146,8 +154,13 @@ export function StudentHomePage() {
             />
           </div>
           <div className="flex items-center justify-between text-xs text-ink-muted border-t border-border pt-3">
-            <span>{doneCount} of {totalLessons} Lessons Mastered</span>
-            <Link to="/lessons" className="font-semibold text-amber-600 hover:underline inline-flex items-center gap-0.5">
+            <span>
+              {doneCount} of {totalLessons} Lessons Mastered
+            </span>
+            <Link
+              to="/lessons"
+              className="font-semibold text-amber-600 hover:underline inline-flex items-center gap-0.5"
+            >
               All Lessons <ChevronRight size={14} />
             </Link>
           </div>
@@ -156,16 +169,23 @@ export function StudentHomePage() {
         {/* Up Next Learning Card */}
         <div className="flex flex-col justify-between rounded-3xl border border-border bg-surface p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">Recommended Up Next</span>
-            <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-bold text-emerald-600">Formative</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+              Recommended Up Next
+            </span>
+            <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-bold text-emerald-600">
+              Formative
+            </span>
           </div>
           <div className="my-4 space-y-2">
-            <div className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Lesson {nextLesson?.number}</div>
+            <div className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
+              Lesson {nextLesson?.number}
+            </div>
             <h3 className="font-heading text-lg font-bold text-ink leading-snug">
               {nextLesson?.title || "Cartesian Graphs and Intercepts"}
             </h3>
             <p className="text-xs text-ink-muted line-clamp-2">
-              Explore how varying slope and intercept shifts the coordinate trajectory in 2D and 3D space.
+              Explore how varying slope and intercept shifts the coordinate trajectory in 2D and 3D
+              space.
             </p>
           </div>
           <div className="space-y-3 border-t border-border pt-3">
@@ -185,7 +205,9 @@ export function StudentHomePage() {
         {/* Today's Schedule & Milestones */}
         <div className="flex flex-col justify-between rounded-3xl border border-border bg-surface p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">Today's Schedule</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+              Today's Schedule
+            </span>
             <span className="text-xs font-semibold text-ink-muted">{dateLabel}</span>
           </div>
           <div className="my-4 space-y-2.5">
@@ -194,7 +216,9 @@ export function StudentHomePage() {
                 <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                 <span className="text-xs font-bold text-ink">Cartesian Slope Lab</span>
               </div>
-              <span className="text-[11px] font-mono text-amber-700 font-semibold">Active · 9:00 AM</span>
+              <span className="text-[11px] font-mono text-amber-700 font-semibold">
+                Active · 9:00 AM
+              </span>
             </div>
             <div className="flex items-center justify-between rounded-xl bg-page-bg p-3 border border-border">
               <div className="flex items-center gap-2.5">
@@ -212,7 +236,10 @@ export function StudentHomePage() {
             </div>
           </div>
           <div className="border-t border-border pt-3">
-            <Link to="/active-quizzes" className="text-xs font-semibold text-amber-600 hover:underline flex items-center justify-between">
+            <Link
+              to="/active-quizzes"
+              className="text-xs font-semibold text-amber-600 hover:underline flex items-center justify-between"
+            >
               <span>View All 3 Active Quizzes</span>
               <ChevronRight size={14} />
             </Link>
@@ -225,7 +252,9 @@ export function StudentHomePage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="font-heading text-xl font-bold text-ink">Weekly Study Rhythm</h2>
-            <p className="text-xs text-ink-muted mt-1">Deep-work focus hours tracked via formative activities and interactive labs.</p>
+            <p className="text-xs text-ink-muted mt-1">
+              Deep-work focus hours tracked via formative activities and interactive labs.
+            </p>
           </div>
           <div className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
             <span className="inline-block w-3 h-3 rounded bg-amber-500" /> Peak Day
@@ -238,13 +267,18 @@ export function StudentHomePage() {
           {rhythmDays.map((d) => {
             const heightPct = Math.round((d.hours / maxHours) * 100);
             return (
-              <div key={d.day} className="flex flex-col items-center gap-2 h-full justify-end group">
+              <div
+                key={d.day}
+                className="flex flex-col items-center gap-2 h-full justify-end group"
+              >
                 <span className="text-[11px] font-mono text-ink-muted opacity-0 group-hover:opacity-100 transition">
                   {d.hours}h
                 </span>
                 <div
                   className={`w-full max-w-[40px] rounded-t-xl transition-all duration-300 ${
-                    d.hot ? "bg-amber-500 shadow-md shadow-amber-500/20" : "bg-slate-200 dark:bg-slate-700"
+                    d.hot
+                      ? "bg-amber-500 shadow-md shadow-amber-500/20"
+                      : "bg-slate-200 dark:bg-slate-700"
                   }`}
                   style={{ height: `${heightPct}%` }}
                 />

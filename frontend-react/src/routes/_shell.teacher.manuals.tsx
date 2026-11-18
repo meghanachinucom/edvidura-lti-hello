@@ -58,7 +58,9 @@ type Msg = null | { kind: "ready" | "published"; n: number; custom?: string };
 function Page() {
   const { session } = useRole();
   const token = session?.token || "";
-  const manualsAdminUrl = token ? `/teacher/manuals?token=${encodeURIComponent(token)}` : "/teacher/manuals";
+  const manualsAdminUrl = token
+    ? `/teacher/manuals?token=${encodeURIComponent(token)}`
+    : "/teacher/manuals";
 
   const [records, setRecords] = useState<ManualRecord[]>(
     mockState.teacher.manuals === "empty" ? [] : manualRecords,
@@ -126,7 +128,8 @@ function Page() {
           <div>
             <div className="font-bold text-ink">{book?.title || r.ebookId}</div>
             <div className="text-xs text-ink-muted">
-              {book?.subjectCode || "Class 8"} · {book?.chaptersCount || 4} chapters · {book?.pages || 64} pages
+              {book?.subjectCode || "Class 8"} · {book?.chaptersCount || 4} chapters ·{" "}
+              {book?.pages || 64} pages
             </div>
           </div>
         );
@@ -147,7 +150,11 @@ function Page() {
       cell: (r) => (
         <span className="flex flex-wrap gap-2">
           {r.status === "draft" && (
-            <button type="button" className="btn-primary text-xs py-1.5" onClick={() => publish(r.ebookId)}>
+            <button
+              type="button"
+              className="btn-primary text-xs py-1.5"
+              onClick={() => publish(r.ebookId)}
+            >
               {r.versions.length === 1 ? s("publishV1") : s("publishNowBtn")}
             </button>
           )}
@@ -234,7 +241,9 @@ function Page() {
         <button
           type="button"
           aria-expanded={mode === "deeplink"}
-          className={mode === "deeplink" ? "btn-primary" : "btn-secondary border-primary/50 text-primary"}
+          className={
+            mode === "deeplink" ? "btn-primary" : "btn-secondary border-primary/50 text-primary"
+          }
           onClick={() => {
             setMsg(null);
             setMode(mode === "deeplink" ? null : "deeplink");
@@ -255,7 +264,9 @@ function Page() {
               {
                 ebookId: newId,
                 status: published ? "published" : "draft",
-                versions: [{ n: 1, date: new Date().toISOString(), note: "Created via WYSIWYG Editor" }],
+                versions: [
+                  { n: 1, date: new Date().toISOString(), note: "Created via WYSIWYG Editor" },
+                ],
               },
               ...prev,
             ]);
@@ -284,13 +295,12 @@ function Page() {
         />
       )}
 
-      {mode === "deeplink" && (
-        <DeepLinkPickerModal onCancel={() => setMode(null)} />
-      )}
+      {mode === "deeplink" && <DeepLinkPickerModal onCancel={() => setMode(null)} />}
 
       {msg && (
         <StatusBanner variant="success">
-          {msg.custom || (msg.kind === "ready" ? s("ready", { n: msg.n }) : s("publishedMsg", { n: msg.n }))}
+          {msg.custom ||
+            (msg.kind === "ready" ? s("ready", { n: msg.n }) : s("publishedMsg", { n: msg.n }))}
         </StatusBanner>
       )}
 
@@ -370,7 +380,8 @@ function WysiwygEditorForm({
             WYSIWYG Rich-Text eBook Authoring Studio (F-01)
           </h3>
           <p className="text-xs text-ink-muted">
-            Create multi-chapter interactive eBooks directly on EdVidura. Saved to PostgreSQL and bound to Class 8.
+            Create multi-chapter interactive eBooks directly on EdVidura. Saved to PostgreSQL and
+            bound to Class 8.
           </p>
         </div>
         <span className="rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-bold text-secondary">
@@ -540,7 +551,7 @@ function WysiwygEditorForm({
           title="Embed Interactive Concept Check"
           onClick={() =>
             applyFormat(
-              '\n:::concept-check\nQuestion: What is the main inverse operation?\n- Option A\n* Option B (Correct)\n- Option C\nExplanation: Active recall explanation here.\n:::\n'
+              "\n:::concept-check\nQuestion: What is the main inverse operation?\n- Option A\n* Option B (Correct)\n- Option C\nExplanation: Active recall explanation here.\n:::\n",
             )
           }
           className="inline-flex items-center gap-1 rounded bg-secondary/15 px-2 py-1 text-[11px] font-bold text-secondary hover:bg-secondary/25"
@@ -655,10 +666,13 @@ function AiUploadConversionForm({
       <div className="flex items-center justify-between border-b border-border pb-3">
         <div>
           <h3 className="font-heading text-lg font-bold text-ink">
-            {kind === "epub" ? "EPUB3 Edition Upload & Verification" : "AI Multi-Format Document Conversion Pipeline (F-02/F-03)"}
+            {kind === "epub"
+              ? "EPUB3 Edition Upload & Verification"
+              : "AI Multi-Format Document Conversion Pipeline (F-02/F-03)"}
           </h3>
           <p className="text-xs text-ink-muted">
-            Upload PDF, DOC, or TXT. Internal AI automatically extracts semantic HTML chapters, generates accessible ePub, audio narration, and WCAG 2.1 AA tags.
+            Upload PDF, DOC, or TXT. Internal AI automatically extracts semantic HTML chapters,
+            generates accessible ePub, audio narration, and WCAG 2.1 AA tags.
           </p>
         </div>
       </div>
@@ -682,28 +696,43 @@ function AiUploadConversionForm({
         <div className="my-4 rounded-control border border-border bg-page-bg p-4 space-y-3">
           <p className="text-xs font-bold text-ink">AI Conversion Pipeline Status: {fileName}</p>
           <div className="space-y-2 text-xs">
-            <div className={`flex items-center gap-2 ${step >= 1 ? "text-emerald-600 font-semibold" : "text-ink-muted"}`}>
+            <div
+              className={`flex items-center gap-2 ${step >= 1 ? "text-emerald-600 font-semibold" : "text-ink-muted"}`}
+            >
               <CheckCircle2 size={14} className={step >= 1 ? "text-emerald-600" : "opacity-30"} />
               <span>Step 1: Document structure analysis & semantic heading parsing</span>
             </div>
-            <div className={`flex items-center gap-2 ${step >= 2 ? "text-emerald-600 font-semibold" : "text-ink-muted"}`}>
+            <div
+              className={`flex items-center gap-2 ${step >= 2 ? "text-emerald-600 font-semibold" : "text-ink-muted"}`}
+            >
               <CheckCircle2 size={14} className={step >= 2 ? "text-emerald-600" : "opacity-30"} />
               <span>Step 2: Conversion to clean semantic HTML & EPUB3 packaging</span>
             </div>
-            <div className={`flex items-center gap-2 ${step >= 3 ? "text-emerald-600 font-semibold" : "text-ink-muted"}`}>
+            <div
+              className={`flex items-center gap-2 ${step >= 3 ? "text-emerald-600 font-semibold" : "text-ink-muted"}`}
+            >
               <CheckCircle2 size={14} className={step >= 3 ? "text-emerald-600" : "opacity-30"} />
               <span>Step 3: Audiobook narration track synthesis & BCP-47 language alignment</span>
             </div>
-            <div className={`flex items-center gap-2 ${step >= 4 ? "text-emerald-600 font-semibold" : "text-ink-muted"}`}>
+            <div
+              className={`flex items-center gap-2 ${step >= 4 ? "text-emerald-600 font-semibold" : "text-ink-muted"}`}
+            >
               <CheckCircle2 size={14} className={step >= 4 ? "text-emerald-600" : "opacity-30"} />
-              <span>Step 4: WCAG 2.1 AA accessibility tagging (landmarks, alt attributes, reading time)</span>
+              <span>
+                Step 4: WCAG 2.1 AA accessibility tagging (landmarks, alt attributes, reading time)
+              </span>
             </div>
           </div>
         </div>
       )}
 
       <div className="flex items-center justify-end gap-2 pt-2">
-        <button type="button" className="btn-secondary text-xs" onClick={onCancel} disabled={step > 0 && step < 5}>
+        <button
+          type="button"
+          className="btn-secondary text-xs"
+          onClick={onCancel}
+          disabled={step > 0 && step < 5}
+        >
           Cancel
         </button>
         <button
@@ -773,7 +802,8 @@ function DeepLinkPickerModal({ onCancel }: { onCancel: () => void }) {
             LTI 1.3 Deep Linking Content Picker (F-08 / REQ-07)
           </h3>
           <p className="text-xs text-ink-muted">
-            Configure learning resources directly for embedding into Moodle or Canvas courses via signed LTI 1.3 Deep Linking response.
+            Configure learning resources directly for embedding into Moodle or Canvas courses via
+            signed LTI 1.3 Deep Linking response.
           </p>
         </div>
       </div>
@@ -813,11 +843,7 @@ function DeepLinkPickerModal({ onCancel }: { onCancel: () => void }) {
       </div>
 
       <div className="flex items-center justify-between pt-2">
-        <button
-          type="button"
-          onClick={handleGeneratePreview}
-          className="btn-primary text-xs"
-        >
+        <button type="button" onClick={handleGeneratePreview} className="btn-primary text-xs">
           Generate Signed LTI Deep Link Response
         </button>
         <button type="button" className="btn-secondary text-xs" onClick={onCancel}>
@@ -846,7 +872,8 @@ function DeepLinkPickerModal({ onCancel }: { onCancel: () => void }) {
             {JSON.stringify(preview.jwtClaims, null, 2)}
           </pre>
           <p className="text-[11px] text-ink-muted">
-            Platform JWKS Verification Endpoint: <code className="font-mono text-secondary">{preview.jwksUrl}</code>
+            Platform JWKS Verification Endpoint:{" "}
+            <code className="font-mono text-secondary">{preview.jwksUrl}</code>
           </p>
         </div>
       )}
@@ -922,7 +949,11 @@ function History({ record, onAdd }: { record: ManualRecord; onAdd: (note: string
             )}
           </div>
           <div className="flex flex-col-reverse gap-2 tablet:flex-row">
-            <button type="button" className="btn-secondary text-xs" onClick={() => setAdding(false)}>
+            <button
+              type="button"
+              className="btn-secondary text-xs"
+              onClick={() => setAdding(false)}
+            >
               {s("cancel")}
             </button>
             <button type="submit" className="btn-primary text-xs">

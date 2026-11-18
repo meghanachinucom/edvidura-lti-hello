@@ -52,9 +52,8 @@ function Landing() {
   if (session) return null;
 
   const returnUrl =
-    (typeof window !== "undefined"
-      ? sessionStorage.getItem("edvidura_return_url")
-      : null) || "/review";
+    (typeof window !== "undefined" ? sessionStorage.getItem("edvidura_return_url") : null) ||
+    "/review";
 
   return (
     <div className="flex min-h-screen flex-col bg-page-bg">
@@ -82,23 +81,31 @@ function Landing() {
             Signed Out / LTI Launch Required
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-ink-muted">
-            EdVidura is integrated with Moodle LMS via IMS Global LTI 1.3. For security and role integrity, learning sessions must be launched directly from an authorized Moodle course activity.
+            EdVidura is integrated with Moodle LMS via IMS Global LTI 1.3. For security and role
+            integrity, learning sessions must be launched directly from an authorized Moodle course
+            activity.
           </p>
 
           <div className="my-6 rounded-control border border-border bg-page-bg p-4 text-left">
-            <p className="text-xs font-bold uppercase tracking-wider text-ink-muted">Launch Details</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+              Launch Details
+            </p>
             <div className="mt-2 space-y-1 text-xs text-ink">
               <p>
-                <span className="font-semibold text-ink-muted">Institution:</span> Riverside High School
+                <span className="font-semibold text-ink-muted">Institution:</span> Riverside High
+                School
               </p>
               <p>
-                <span className="font-semibold text-ink-muted">Course:</span> Class 8 · Algebra I (Course 10)
+                <span className="font-semibold text-ink-muted">Course:</span> Class 8 · Algebra I
+                (Course 10)
               </p>
               <p>
-                <span className="font-semibold text-ink-muted">Activity:</span> Activity 21 — Riverside Algebra check
+                <span className="font-semibold text-ink-muted">Activity:</span> Activity 21 —
+                Riverside Algebra check
               </p>
               <p>
-                <span className="font-semibold text-ink-muted">Authentication:</span> Single Sign-On (LTI 1.3 Core)
+                <span className="font-semibold text-ink-muted">Authentication:</span> Single Sign-On
+                (LTI 1.3 Core)
               </p>
             </div>
           </div>

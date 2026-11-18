@@ -38,8 +38,7 @@ function Page() {
       const resp = await api.post<{ hint?: string; text?: string }>("/api/v1/app/ai/hint", {
         prompt: question.text,
         correct_choice:
-          question.options.find((o) => o.key === question.correct)?.text ||
-          "Correct answer",
+          question.options.find((o) => o.key === question.correct)?.text || "Correct answer",
         lesson_excerpts: ["Review transformer core insulation and winding safety standards."],
       });
       if (resp?.hint || resp?.text) {

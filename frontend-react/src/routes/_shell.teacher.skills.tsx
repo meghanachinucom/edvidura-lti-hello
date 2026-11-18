@@ -1,7 +1,17 @@
 import { StatusGem } from "@/components/shared/StatusGem";
 import { useEffect, useId, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CheckCircle2, ChevronRight, FileText, PlusCircle, ShieldCheck, XCircle, Award, Compass, RefreshCw } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronRight,
+  FileText,
+  PlusCircle,
+  ShieldCheck,
+  XCircle,
+  Award,
+  Compass,
+  RefreshCw,
+} from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { PillTabs, type PillTab } from "@/components/shared/PillTabs";
@@ -48,7 +58,9 @@ function Err({ id, text }: { id: string; text: string }) {
 
 function Page() {
   const id = useId();
-  const [activeTab, setActiveTab] = useState<"roles" | "cat" | "proposals" | "passport" | "workforce" | "linked_data">("roles");
+  const [activeTab, setActiveTab] = useState<
+    "roles" | "cat" | "proposals" | "passport" | "workforce" | "linked_data"
+  >("roles");
   const [roles, setRoles] = useState<Role[]>(
     targetRoles.map((r) => ({ id: r.id, title: r.title, skills: [...r.skills] })),
   );
@@ -209,10 +221,22 @@ function Page() {
   const tabItems: PillTab[] = [
     { id: "roles", label: "Roles & Skills", onSelect: () => setActiveTab("roles") },
     { id: "cat", label: "CAT Competencies & TO Map", onSelect: () => setActiveTab("cat") },
-    { id: "proposals", label: `Proposals (${proposals.length})`, onSelect: () => setActiveTab("proposals") },
+    {
+      id: "proposals",
+      label: `Proposals (${proposals.length})`,
+      onSelect: () => setActiveTab("proposals"),
+    },
     { id: "passport", label: "Skills Passport", onSelect: () => setActiveTab("passport") },
-    { id: "workforce", label: "Workforce & Sim-to-Real", onSelect: () => setActiveTab("workforce") },
-    { id: "linked_data", label: "IEEE Linked Data (JSON-LD)", onSelect: () => setActiveTab("linked_data") },
+    {
+      id: "workforce",
+      label: "Workforce & Sim-to-Real",
+      onSelect: () => setActiveTab("workforce"),
+    },
+    {
+      id: "linked_data",
+      label: "IEEE Linked Data (JSON-LD)",
+      onSelect: () => setActiveTab("linked_data"),
+    },
   ];
 
   return (
@@ -384,7 +408,8 @@ function Page() {
               CAT F-4: Technical Order & Competency Ingestion
             </h2>
             <p className="mt-1 text-sm text-ink-muted">
-              Map industrial Technical Orders, military manuals, or standard syllabi onto structured competency frameworks and automatically derive test items.
+              Map industrial Technical Orders, military manuals, or standard syllabi onto structured
+              competency frameworks and automatically derive test items.
             </p>
             <form onSubmit={handleMapTo} className="mt-4 space-y-4">
               <div>
@@ -438,13 +463,18 @@ function Page() {
                 ) : (
                   <div className="space-y-2 text-sm text-ink">
                     <p>
-                      Mapped <strong>{mappingResult.mapped_count || (mappingResult.competencies?.length ?? 0)}</strong> competencies from source.
+                      Mapped{" "}
+                      <strong>
+                        {mappingResult.mapped_count || (mappingResult.competencies?.length ?? 0)}
+                      </strong>{" "}
+                      competencies from source.
                     </p>
                     {mappingResult.competencies && (
                       <ul className="list-inside list-disc space-y-1">
                         {mappingResult.competencies.slice(0, 5).map((c: any, i: number) => (
                           <li key={i}>
-                            <strong>{c.code || c.title || `Competency ${i + 1}`}</strong>: {c.description || c.title || JSON.stringify(c)}
+                            <strong>{c.code || c.title || `Competency ${i + 1}`}</strong>:{" "}
+                            {c.description || c.title || JSON.stringify(c)}
                           </li>
                         ))}
                       </ul>
@@ -461,7 +491,8 @@ function Page() {
                   <p className="text-sm text-error">{bankResult.error}</p>
                 ) : (
                   <p className="text-sm text-ink">
-                    Generated <strong>{bankResult.questions?.length ?? 20}</strong> assessment items saved to tenant test bank.
+                    Generated <strong>{bankResult.questions?.length ?? 20}</strong> assessment items
+                    saved to tenant test bank.
                   </p>
                 )}
               </div>
@@ -470,9 +501,7 @@ function Page() {
 
           <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="font-heading text-lg font-bold text-ink">
-                Tenant Competency Catalog
-              </h2>
+              <h2 className="font-heading text-lg font-bold text-ink">Tenant Competency Catalog</h2>
               <button
                 type="button"
                 onClick={loadCat}
@@ -488,13 +517,16 @@ function Page() {
             ) : (
               <div className="mt-4 space-y-3">
                 <p className="text-sm text-ink">
-                  Total competencies cataloged: <strong>{catOverview?.competencies?.length || allSkills.length}</strong>
+                  Total competencies cataloged:{" "}
+                  <strong>{catOverview?.competencies?.length || allSkills.length}</strong>
                 </p>
                 <div className="grid gap-3 tablet:grid-cols-2">
                   {(catOverview?.competencies || allSkills).slice(0, 6).map((c: any, i: number) => (
                     <div key={i} className="rounded-surface border border-border p-3 bg-surface">
                       <p className="font-semibold text-ink">{c.title || c.name || c.code}</p>
-                      <p className="text-xs font-mono text-ink-muted">{c.code || `CAT-C${i + 1}`}</p>
+                      <p className="text-xs font-mono text-ink-muted">
+                        {c.code || `CAT-C${i + 1}`}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -523,16 +555,26 @@ function Page() {
           </p>
           {proposals.length === 0 ? (
             <p className="py-8 text-center text-sm text-ink-muted">
-              No pending Technical Order proposals. Submit new procedures via the CAT Competencies tab.
+              No pending Technical Order proposals. Submit new procedures via the CAT Competencies
+              tab.
             </p>
           ) : (
             <ul className="divide-y divide-border">
               {proposals.map((p) => (
-                <li key={p.id} className="py-4 flex flex-col tablet:flex-row items-start justify-between gap-4">
+                <li
+                  key={p.id}
+                  className="py-4 flex flex-col tablet:flex-row items-start justify-between gap-4"
+                >
                   <div>
-                    <h3 className="font-semibold text-ink">{p.title || "Proposed Competency Mapping"}</h3>
-                    <p className="text-xs text-ink-muted mt-1">Source: {p.filename || p.source || "Manual upload"}</p>
-                    <p className="text-sm text-ink mt-2">{p.notes || p.summary || "Pending teacher verification."}</p>
+                    <h3 className="font-semibold text-ink">
+                      {p.title || "Proposed Competency Mapping"}
+                    </h3>
+                    <p className="text-xs text-ink-muted mt-1">
+                      Source: {p.filename || p.source || "Manual upload"}
+                    </p>
+                    <p className="text-sm text-ink mt-2">
+                      {p.notes || p.summary || "Pending teacher verification."}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -575,7 +617,8 @@ function Page() {
             </button>
           </div>
           <p className="text-sm text-ink-muted">
-            Certified competency passports tracking verified skills, remediation pathways, and institutional credentials.
+            Certified competency passports tracking verified skills, remediation pathways, and
+            institutional credentials.
           </p>
           {passportLoading && !passportData ? (
             <p className="text-sm text-ink-muted">Loading Skills Passport data...</p>
@@ -617,7 +660,8 @@ function Page() {
               Wave C — Workforce & Apprenticeship Manager
             </h2>
             <p className="mt-1 text-sm text-ink-muted">
-              Apprenticeship progress, on-the-job training verification, and qualification continuity.
+              Apprenticeship progress, on-the-job training verification, and qualification
+              continuity.
             </p>
             {wfLoading ? (
               <p className="mt-4 text-sm text-ink-muted">Loading workforce telemetry...</p>
@@ -635,10 +679,14 @@ function Page() {
                 <div className="rounded-surface border border-border p-4 bg-surface">
                   <h3 className="font-semibold text-ink">Sim-to-Real Transfer Analytics</h3>
                   <p className="mt-2 text-sm text-ink">
-                    Transfer Score: <strong>{simToRealData?.transfer_score ? `${simToRealData.transfer_score}%` : "92%"}</strong>
+                    Transfer Score:{" "}
+                    <strong>
+                      {simToRealData?.transfer_score ? `${simToRealData.transfer_score}%` : "92%"}
+                    </strong>
                   </p>
                   <p className="text-sm text-ink">
-                    Real-World Correlation: <strong>{simToRealData?.correlation ?? "0.89 (High)"}</strong>
+                    Real-World Correlation:{" "}
+                    <strong>{simToRealData?.correlation ?? "0.89 (High)"}</strong>
                   </p>
                 </div>
               </div>
@@ -656,7 +704,8 @@ function Page() {
                   Semantic Knowledge & Competency Graph (JSON-LD)
                 </h2>
                 <p className="mt-1 text-sm text-ink-muted">
-                  Standard Competency Definitions & Linked Learning Metadata connected to 5 Textbooks and RHS-C08 Assessments.
+                  Standard Competency Definitions & Linked Learning Metadata connected to 5
+                  Textbooks and RHS-C08 Assessments.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -688,12 +737,17 @@ function Page() {
               <div className="mt-6 space-y-6">
                 {/* W3C Vocabularies & Context */}
                 <div className="rounded-card border border-brand/20 bg-brand/5 p-4 text-xs font-mono">
-                  <div className="font-semibold text-brand mb-1">JSON-LD 1.1 Context (@context)</div>
+                  <div className="font-semibold text-brand mb-1">
+                    JSON-LD 1.1 Context (@context)
+                  </div>
                   <div className="text-ink-muted">
                     <div>@vocab: {ldGraph["@context"]?.["@vocab"]}</div>
                     <div>schema: {ldGraph["@context"]?.["schema"]}</div>
                     <div>ieee1484: {ldGraph["@context"]?.["ieee1484"]}</div>
-                    <div>standard: IEEE 1484.20.3 (Standard for Learning Technology - Data Model for Reusable Competency Definitions)</div>
+                    <div>
+                      standard: IEEE 1484.20.3 (Standard for Learning Technology - Data Model for
+                      Reusable Competency Definitions)
+                    </div>
                   </div>
                 </div>
 
@@ -721,9 +775,14 @@ function Page() {
                       <div className="mt-3 pt-3 border-t border-border/60 text-xs space-y-1.5">
                         {item.prerequisite && item.prerequisite.length > 0 && (
                           <div className="flex flex-wrap items-center gap-1">
-                            <span className="font-medium text-ink-muted text-[11px]">Prerequisites:</span>
+                            <span className="font-medium text-ink-muted text-[11px]">
+                              Prerequisites:
+                            </span>
                             {item.prerequisite.map((p: string) => (
-                              <span key={p} className="rounded bg-page-bg px-2 py-0.5 font-mono text-[10px] text-ink">
+                              <span
+                                key={p}
+                                className="rounded bg-page-bg px-2 py-0.5 font-mono text-[10px] text-ink"
+                              >
                                 {p.split(":").pop()}
                               </span>
                             ))}
@@ -732,9 +791,14 @@ function Page() {
 
                         {item.evidencedBy && item.evidencedBy.length > 0 && (
                           <div className="flex flex-wrap items-center gap-1">
-                            <span className="font-medium text-emerald-700 text-[11px]">Evidenced By:</span>
+                            <span className="font-medium text-emerald-700 text-[11px]">
+                              Evidenced By:
+                            </span>
                             {item.evidencedBy.map((e: string) => (
-                              <span key={e} className="rounded bg-emerald-50 text-emerald-800 px-2 py-0.5 font-mono text-[10px]">
+                              <span
+                                key={e}
+                                className="rounded bg-emerald-50 text-emerald-800 px-2 py-0.5 font-mono text-[10px]"
+                              >
                                 {e.split(":").pop()}
                               </span>
                             ))}
@@ -745,7 +809,10 @@ function Page() {
                           <div className="flex flex-wrap items-center gap-1">
                             <span className="font-medium text-brand text-[11px]">Teaches:</span>
                             {item.teaches.map((t: string) => (
-                              <span key={t} className="rounded bg-primary-fixed text-secondary px-2 py-0.5 font-mono text-[10px]">
+                              <span
+                                key={t}
+                                className="rounded bg-primary-fixed text-secondary px-2 py-0.5 font-mono text-[10px]"
+                              >
                                 {t.split(":").pop()}
                               </span>
                             ))}

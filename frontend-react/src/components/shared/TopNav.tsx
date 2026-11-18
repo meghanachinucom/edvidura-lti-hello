@@ -162,23 +162,35 @@ export function TopNav() {
           </div>
           <a
             className="group relative flex min-h-11 items-center rounded-control px-2 text-sm text-ink hover:bg-page-bg tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
-            title={session?.lmsReturnUrl?.includes("localhost:8085") ? t("nav.backToMoodle") : "Switch Persona / Review Portal"}
-            href={session?.lmsReturnUrl?.includes("localhost:8085") ? session.lmsReturnUrl : "/review"}
+            title={
+              session?.lmsReturnUrl?.includes("localhost:8085")
+                ? t("nav.backToMoodle")
+                : "Switch Persona / Review Portal"
+            }
+            href={
+              session?.lmsReturnUrl?.includes("localhost:8085") ? session.lmsReturnUrl : "/review"
+            }
             onClick={(e) => {
               e.preventDefault();
-              const dest = session?.lmsReturnUrl?.includes("localhost:8085") ? session.lmsReturnUrl : "/review";
+              const dest = session?.lmsReturnUrl?.includes("localhost:8085")
+                ? session.lmsReturnUrl
+                : "/review";
               window.location.href = dest;
             }}
           >
             <ArrowLeft aria-hidden size={18} className="hidden tablet:block desktop:hidden" />
             <span className="tablet:hidden desktop:inline">
-              {session?.lmsReturnUrl?.includes("localhost:8085") ? t("nav.backToMoodle") : "Review Portal / Personas"}
+              {session?.lmsReturnUrl?.includes("localhost:8085")
+                ? t("nav.backToMoodle")
+                : "Review Portal / Personas"}
             </span>
             <span
               role="tooltip"
               className="pointer-events-none absolute left-full z-50 ml-2 hidden whitespace-nowrap rounded-control bg-topbar px-3 py-2 text-xs text-white shadow-md tablet:group-hover:block tablet:group-focus-visible:block desktop:hidden"
             >
-              {session?.lmsReturnUrl?.includes("localhost:8085") ? t("nav.backToMoodle") : "Review Portal / Personas"}
+              {session?.lmsReturnUrl?.includes("localhost:8085")
+                ? t("nav.backToMoodle")
+                : "Review Portal / Personas"}
             </span>
           </a>
           <button

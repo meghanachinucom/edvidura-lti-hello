@@ -61,7 +61,9 @@ const columns: Column<Attempt>[] = [
 ];
 
 function Page() {
-  const [activeTab, setActiveTab] = useState<"attempts" | "passport" | "apprentice" | "goals">("attempts");
+  const [activeTab, setActiveTab] = useState<"attempts" | "passport" | "apprentice" | "goals">(
+    "attempts",
+  );
   const m = mockState.analytics;
   const rows =
     m.attempts === "empty"
@@ -121,7 +123,10 @@ function Page() {
         <PageHeading titleKey="pages.learnAnalytics" />
         <div className="flex items-center gap-2">
           <PillTabs items={tabItems} active={activeTab} label="Analytics Navigation" />
-          <a href="/learner-analytics" className="text-xs text-ink-muted underline hidden tablet:inline">
+          <a
+            href="/learner-analytics"
+            className="text-xs text-ink-muted underline hidden tablet:inline"
+          >
             Open Server View
           </a>
         </div>
@@ -185,10 +190,16 @@ function Page() {
             <Link to="/learn/gap" className="inline-flex min-h-11 items-center text-ink underline">
               {s("plan")}
             </Link>
-            <Link to="/active-quizzes" className="inline-flex min-h-11 items-center text-ink underline">
+            <Link
+              to="/active-quizzes"
+              className="inline-flex min-h-11 items-center text-ink underline"
+            >
               {s("practise")}
             </Link>
-            <Link to="/learn/activity" className="inline-flex min-h-11 items-center text-ink underline">
+            <Link
+              to="/learn/activity"
+              className="inline-flex min-h-11 items-center text-ink underline"
+            >
               {s("activity")}
             </Link>
           </div>
@@ -215,7 +226,8 @@ function Page() {
               </button>
             </div>
             <p className="mt-1 text-sm text-ink-muted">
-              Certified trade credentials and competency masteries verified through formative attempts and instructor evaluations.
+              Certified trade credentials and competency masteries verified through formative
+              attempts and instructor evaluations.
             </p>
 
             {passportLoading && !passportData ? (
@@ -235,20 +247,18 @@ function Page() {
                   <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
                     Passport Status
                   </span>
-                  <p className="mt-2 text-2xl font-bold text-success">
-                    Active & Compliant
-                  </p>
+                  <p className="mt-2 text-2xl font-bold text-success">Active & Compliant</p>
                   <p className="text-xs text-ink-muted mt-1">Tamper-proof verifiable credential</p>
                 </div>
                 <div className="rounded-surface border border-border p-4 bg-surface">
                   <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
                     Remediation Required
                   </span>
-                  <p className="mt-2 text-2xl font-bold text-secondary">
-                    {below} Topics
-                  </p>
+                  <p className="mt-2 text-2xl font-bold text-secondary">{below} Topics</p>
                   <p className="text-xs text-ink-muted mt-1">
-                    <Link to="/learn/gap" className="underline">View personalized study plan</Link>
+                    <Link to="/learn/gap" className="underline">
+                      View personalized study plan
+                    </Link>
                   </p>
                 </div>
               </div>
@@ -264,14 +274,18 @@ function Page() {
                 <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-semibold text-ink">Three-Phase Circuit Analysis</h4>
-                  <p className="text-xs text-ink-muted mt-0.5">NSQF Level 5 • Verified via 3 Graded Quizzes</p>
+                  <p className="text-xs text-ink-muted mt-0.5">
+                    NSQF Level 5 • Verified via 3 Graded Quizzes
+                  </p>
                 </div>
               </div>
               <div className="rounded-surface border border-border p-4 bg-surface flex items-start gap-3">
                 <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-semibold text-ink">Electrical Safety & PPE Protocols</h4>
-                  <p className="text-xs text-ink-muted mt-0.5">Industrial Safety Standard • 100% Score</p>
+                  <p className="text-xs text-ink-muted mt-0.5">
+                    Industrial Safety Standard • 100% Score
+                  </p>
                 </div>
               </div>
               <div className="rounded-surface border border-border p-4 bg-surface flex items-start gap-3">
@@ -303,7 +317,8 @@ function Page() {
               </h2>
             </div>
             <p className="mt-1 text-sm text-ink-muted">
-              SCERT / NCVT dual-education vocational placement tracking verified through employer mentor sign-offs.
+              SCERT / NCVT dual-education vocational placement tracking verified through employer
+              mentor sign-offs.
             </p>
 
             <div className="mt-6 grid gap-4 tablet:grid-cols-3">
@@ -318,7 +333,9 @@ function Page() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
                   Host Industry Partner
                 </span>
-                <p className="mt-2 text-lg font-bold text-ink truncate">APTRANSCO 220kV Substation</p>
+                <p className="mt-2 text-lg font-bold text-ink truncate">
+                  APTRANSCO 220kV Substation
+                </p>
                 <p className="text-xs text-ink-muted mt-1">Mentor: Er. R. Sreenivasulu</p>
               </div>
               <div className="rounded-surface border border-border p-4 bg-surface">
@@ -337,16 +354,38 @@ function Page() {
             </h3>
             <div className="mt-4 space-y-3">
               {[
-                { title: "Transformer Oil Breakdown Voltage Testing (BDV)", hours: "16 hrs", status: "Signed Off", date: "14 Nov 2026" },
-                { title: "Switchyard Single-Line Diagram (SLD) Tracing", hours: "24 hrs", status: "Signed Off", date: "08 Nov 2026" },
-                { title: "Battery Bank Float Voltage & Specific Gravity Monitoring", hours: "12 hrs", status: "In Progress", date: "Active" },
+                {
+                  title: "Transformer Oil Breakdown Voltage Testing (BDV)",
+                  hours: "16 hrs",
+                  status: "Signed Off",
+                  date: "14 Nov 2026",
+                },
+                {
+                  title: "Switchyard Single-Line Diagram (SLD) Tracing",
+                  hours: "24 hrs",
+                  status: "Signed Off",
+                  date: "08 Nov 2026",
+                },
+                {
+                  title: "Battery Bank Float Voltage & Specific Gravity Monitoring",
+                  hours: "12 hrs",
+                  status: "In Progress",
+                  date: "Active",
+                },
               ].map((m, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 rounded-surface border border-border bg-page-bg">
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-4 rounded-surface border border-border bg-page-bg"
+                >
                   <div>
                     <h4 className="text-xs font-bold text-ink">{m.title}</h4>
-                    <span className="text-[11px] text-ink-muted">{m.hours} · Logged {m.date}</span>
+                    <span className="text-[11px] text-ink-muted">
+                      {m.hours} · Logged {m.date}
+                    </span>
                   </div>
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${m.status === "Signed Off" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>
+                  <span
+                    className={`text-xs font-bold px-2.5 py-1 rounded-full ${m.status === "Signed Off" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}
+                  >
                     {m.status}
                   </span>
                 </div>
@@ -366,19 +405,29 @@ function Page() {
               </h2>
             </div>
             <p className="mt-1 text-sm text-ink-muted">
-              Adaptive pacing goals based on your recent quiz attempts, handbook reading progress, and skill deficits.
+              Adaptive pacing goals based on your recent quiz attempts, handbook reading progress,
+              and skill deficits.
             </p>
 
             <div className="mt-6 grid gap-4 tablet:grid-cols-2">
               <div className="rounded-surface border border-border p-5 bg-surface space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">Goal 1 · Weekly Target</span>
+                  <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">
+                    Goal 1 · Weekly Target
+                  </span>
                   <span className="text-xs font-bold text-ink">80% Done</span>
                 </div>
-                <h4 className="font-bold text-ink text-sm">Master Linear Equations & Slope-Intercept Form</h4>
-                <p className="text-xs text-ink-muted">Complete Lesson 4 reading and score at least 4/5 on the Checkpoint 2 quiz.</p>
+                <h4 className="font-bold text-ink text-sm">
+                  Master Linear Equations & Slope-Intercept Form
+                </h4>
+                <p className="text-xs text-ink-muted">
+                  Complete Lesson 4 reading and score at least 4/5 on the Checkpoint 2 quiz.
+                </p>
                 <div className="pt-2">
-                  <Link to="/lessons/lesson-4" className="inline-flex items-center gap-1.5 text-xs font-bold text-secondary hover:underline">
+                  <Link
+                    to="/lessons/lesson-4"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-secondary hover:underline"
+                  >
                     Continue Lesson 4 <ArrowRight size={14} />
                   </Link>
                 </div>
@@ -386,13 +435,20 @@ function Page() {
 
               <div className="rounded-surface border border-border p-5 bg-surface space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Goal 2 · Spatial Lab</span>
+                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
+                    Goal 2 · Spatial Lab
+                  </span>
                   <span className="text-xs font-bold text-ink">Unlocked</span>
                 </div>
                 <h4 className="font-bold text-ink text-sm">Explore 3D Cartesian Coordinate Walk</h4>
-                <p className="text-xs text-ink-muted">Experiment with positive and negative slopes in the WebXR 3D laboratory.</p>
+                <p className="text-xs text-ink-muted">
+                  Experiment with positive and negative slopes in the WebXR 3D laboratory.
+                </p>
                 <div className="pt-2">
-                  <Link to="/xr-store" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:underline">
+                  <Link
+                    to="/xr-store"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:underline"
+                  >
                     Open Spatial Lab <ArrowRight size={14} />
                   </Link>
                 </div>

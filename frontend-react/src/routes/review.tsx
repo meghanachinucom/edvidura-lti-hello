@@ -1,5 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GraduationCap, BookOpen, Users, ShieldCheck, ExternalLink, ArrowRight } from "lucide-react";
+import {
+  GraduationCap,
+  BookOpen,
+  Users,
+  ShieldCheck,
+  ExternalLink,
+  ArrowRight,
+} from "lucide-react";
 import { DynamicBlockCatalog } from "@/components/shared/DynamicBlockCatalog";
 import { t } from "@/i18n";
 
@@ -9,7 +16,8 @@ export const Route = createFileRoute("/review")({
       { title: "EdVidura — Senior Review Gateway" },
       {
         name: "description",
-        content: "Direct access gateway for senior management review of EdVidura LTI 1.3 learning tool.",
+        content:
+          "Direct access gateway for senior management review of EdVidura LTI 1.3 learning tool.",
       },
     ],
   }),
@@ -27,7 +35,9 @@ function ReviewGateway() {
             </div>
             <div>
               <p className="font-heading text-lg font-bold text-ink">{t("app.name")}</p>
-              <p className="text-[11px] font-medium text-ink-muted">Senior Review Gateway · Riverside High</p>
+              <p className="text-[11px] font-medium text-ink-muted">
+                Senior Review Gateway · Riverside High
+              </p>
             </div>
           </div>
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full">
@@ -43,7 +53,9 @@ function ReviewGateway() {
               EdVidura Management Review Portal
             </h1>
             <p className="text-sm text-ink-muted max-w-2xl mx-auto">
-              Welcome, senior leadership. Choose an authorized persona below to launch a genuine, database-backed LTI 1.3 session into Riverside High School Class 8 Algebra I (<code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">RHS-C08</code>).
+              Welcome, senior leadership. Choose an authorized persona below to launch a genuine,
+              database-backed LTI 1.3 session into Riverside High School Class 8 Algebra I (
+              <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">RHS-C08</code>).
             </p>
           </div>
 
@@ -55,12 +67,16 @@ function ReviewGateway() {
                   <GraduationCap size={26} aria-hidden />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">Persona 1 · Learner</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
+                    Persona 1 · Learner
+                  </span>
                   <h2 className="text-lg font-bold text-ink mt-0.5">Alice Nguyen</h2>
                   <p className="text-xs text-ink-muted font-mono">Subject ID: 6 · Class 8</p>
                 </div>
                 <p className="text-xs text-ink-muted leading-relaxed">
-                  Student experience: Class 8 Algebra lessons, interactive Slice A quiz, PEBL eBook reader with xAPI tracking, micro-learning reels, active recall flashcards, and AskVidura AI tutor.
+                  Student experience: Class 8 Algebra lessons, interactive Slice A quiz, PEBL eBook
+                  reader with xAPI tracking, micro-learning reels, active recall flashcards, and
+                  AskVidura AI tutor.
                 </p>
               </div>
               <a
@@ -79,12 +95,16 @@ function ReviewGateway() {
                   <BookOpen size={26} aria-hidden />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary">Persona 2 · Faculty</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                    Persona 2 · Faculty
+                  </span>
                   <h2 className="text-lg font-bold text-ink mt-0.5">Priya Sharma</h2>
                   <p className="text-xs text-ink-muted font-mono">Teacher ID: TCH-08 · Algebra</p>
                 </div>
                 <p className="text-xs text-ink-muted leading-relaxed">
-                  Instructor workflows: Live class results, verified grade receipts, Content Studio (create/edit lessons & questions), class analytics, activity audit stream, and AI authoring tools.
+                  Instructor workflows: Live class results, verified grade receipts, Content Studio
+                  (create/edit lessons & questions), class analytics, activity audit stream, and AI
+                  authoring tools.
                 </p>
               </div>
               <a
@@ -103,12 +123,18 @@ function ReviewGateway() {
                   <ShieldCheck size={26} aria-hidden />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-accent">Persona 3 · Administrator</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
+                    Persona 3 · Administrator
+                  </span>
                   <h2 className="text-lg font-bold text-ink mt-0.5">Alex Morgan</h2>
-                  <p className="text-xs text-ink-muted font-mono">Admin Code: ADM-01 · Subject: 5</p>
+                  <p className="text-xs text-ink-muted font-mono">
+                    Admin Code: ADM-01 · Subject: 5
+                  </p>
                 </div>
                 <p className="text-xs text-ink-muted leading-relaxed">
-                  School administration: Institutional overview, faculty directory, student directory, class sections management, school profile, and LTI 1.3 deployment bindings.
+                  School administration: Institutional overview, faculty directory, student
+                  directory, class sections management, school profile, and LTI 1.3 deployment
+                  bindings.
                 </p>
               </div>
               <a
@@ -144,10 +170,15 @@ function ReviewGateway() {
                 className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
               >
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 1 · Primary Dashboard</span>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Learner Course Dashboard</h4>
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">
+                    Screen 1 · Primary Dashboard
+                  </span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">
+                    Learner Course Dashboard
+                  </h4>
                   <p className="text-[11px] text-ink-muted leading-tight">
-                    Inspirational hero, study rhythm bar chart, syllabus ring, and Up Next lesson launcher.
+                    Inspirational hero, study rhythm bar chart, syllabus ring, and Up Next lesson
+                    launcher.
                   </p>
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
@@ -162,10 +193,15 @@ function ReviewGateway() {
                 className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
               >
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 2 · Integrated Video</span>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Lessons & Video Masterclasses</h4>
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">
+                    Screen 2 · Integrated Video
+                  </span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">
+                    Lessons & Video Masterclasses
+                  </h4>
                   <p className="text-[11px] text-ink-muted leading-tight">
-                    Modular lessons list with embedded video masterclass, chapter jumping, and timestamped notes.
+                    Modular lessons list with embedded video masterclass, chapter jumping, and
+                    timestamped notes.
                   </p>
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
@@ -180,10 +216,15 @@ function ReviewGateway() {
                 className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
               >
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 3 · Dedicated Tab</span>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">3D Spatial Math Labs</h4>
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">
+                    Screen 3 · Dedicated Tab
+                  </span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">
+                    3D Spatial Math Labs
+                  </h4>
                   <p className="text-[11px] text-ink-muted leading-tight">
-                    Interactive Cartesian coordinate simulator (slope & intercept sliders, dynamic y = mx + b).
+                    Interactive Cartesian coordinate simulator (slope & intercept sliders, dynamic y
+                    = mx + b).
                   </p>
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
@@ -198,10 +239,15 @@ function ReviewGateway() {
                 className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
               >
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 4 · Socratic AI Coach</span>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Ask Vidura Tutor</h4>
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">
+                    Screen 4 · Socratic AI Coach
+                  </span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">
+                    Ask Vidura Tutor
+                  </h4>
                   <p className="text-[11px] text-ink-muted leading-tight">
-                    6-stage mastery ladder, Socratic guided inquiry, voice dictation, and diagnostic checks.
+                    6-stage mastery ladder, Socratic guided inquiry, voice dictation, and diagnostic
+                    checks.
                   </p>
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
@@ -216,10 +262,15 @@ function ReviewGateway() {
                 className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
               >
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 5 · Digital Textbooks</span>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Interactive eBooks & Audiobooks</h4>
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">
+                    Screen 5 · Digital Textbooks
+                  </span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">
+                    Interactive eBooks & Audiobooks
+                  </h4>
                   <p className="text-[11px] text-ink-muted leading-tight">
-                    5 full textbooks, WCAG 2.1 AA accessibility, multi-lingual TTS, and concept checks.
+                    5 full textbooks, WCAG 2.1 AA accessibility, multi-lingual TTS, and concept
+                    checks.
                   </p>
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
@@ -234,10 +285,15 @@ function ReviewGateway() {
                 className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
               >
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 6 · Competency Graph</span>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Knowledge Graph & Plan</h4>
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">
+                    Screen 6 · Competency Graph
+                  </span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">
+                    Knowledge Graph & Plan
+                  </h4>
                   <p className="text-[11px] text-ink-muted leading-tight">
-                    Interactive node-and-edge semantic graph linking curriculum standards to learner mastery.
+                    Interactive node-and-edge semantic graph linking curriculum standards to learner
+                    mastery.
                   </p>
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
@@ -252,10 +308,15 @@ function ReviewGateway() {
                 className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
               >
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 7 · Visual Reels</span>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Micro-Learning Reels</h4>
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">
+                    Screen 7 · Visual Reels
+                  </span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">
+                    Micro-Learning Reels
+                  </h4>
                   <p className="text-[11px] text-ink-muted leading-tight">
-                    Interactive concept reels with animated schematics, diagram callouts, and inline questions.
+                    Interactive concept reels with animated schematics, diagram callouts, and inline
+                    questions.
                   </p>
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
@@ -270,10 +331,15 @@ function ReviewGateway() {
                 className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
               >
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 8 · Credentials</span>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Focus & Performance Analytics</h4>
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">
+                    Screen 8 · Credentials
+                  </span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">
+                    Focus & Performance Analytics
+                  </h4>
                   <p className="text-[11px] text-ink-muted leading-tight">
-                    Weekly focus hours, study rhythm analysis, activity maps, and productive gauge rings.
+                    Weekly focus hours, study rhythm analysis, activity maps, and productive gauge
+                    rings.
                   </p>
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
@@ -290,7 +356,11 @@ function ReviewGateway() {
               <span>Full IMS Global LTI 1.3 Moodle Integration</span>
             </h3>
             <p className="text-xs text-ink-muted leading-relaxed">
-              In production cloud deployment, the 1-click persona launches above immediately establish authentic database-backed sessions with signed tokens. When developing locally with Docker Moodle (<code className="font-mono">localhost:8085</code>), launches arrive via standard LTI 1.3 OIDC login at <code className="font-mono">/lti/launch</code>.
+              In production cloud deployment, the 1-click persona launches above immediately
+              establish authentic database-backed sessions with signed tokens. When developing
+              locally with Docker Moodle (<code className="font-mono">localhost:8085</code>),
+              launches arrive via standard LTI 1.3 OIDC login at{" "}
+              <code className="font-mono">/lti/launch</code>.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <a
@@ -303,7 +373,9 @@ function ReviewGateway() {
                 <ExternalLink size={13} aria-hidden />
               </a>
               <span className="text-xs text-ink-muted">
-                (Local Moodle test accounts: <code className="font-mono">riverside_alice</code>, <code className="font-mono">riverside_priya</code>, or <code className="font-mono">riverside_admin</code>)
+                (Local Moodle test accounts: <code className="font-mono">riverside_alice</code>,{" "}
+                <code className="font-mono">riverside_priya</code>, or{" "}
+                <code className="font-mono">riverside_admin</code>)
               </span>
             </div>
           </div>
@@ -318,4 +390,3 @@ function ReviewGateway() {
     </div>
   );
 }
-

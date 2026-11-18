@@ -35,7 +35,9 @@ const filters = ["All", "Mathematics", "STEM and Sciences", "Computer Science"];
 function Page() {
   const { session } = useRole();
   const token = session?.token || "";
-  const instUrl = token ? `/institution-detail?token=${encodeURIComponent(token)}` : "/institution-detail";
+  const instUrl = token
+    ? `/institution-detail?token=${encodeURIComponent(token)}`
+    : "/institution-detail";
 
   const [filter, setFilter] = useState("All");
   const [query, setQuery] = useState("");
@@ -112,11 +114,7 @@ function Page() {
     <div className="mx-auto w-full max-w-content space-y-6 px-4 pb-24 pt-8 tablet:pb-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <PageHeading text="Faculty" />
-        <a
-          href={instUrl}
-          rel="noreferrer"
-          className="btn-primary inline-flex items-center gap-2"
-        >
+        <a href={instUrl} rel="noreferrer" className="btn-primary inline-flex items-center gap-2">
           <ExternalLink size={16} />
           Open Institution Faculty Roster
         </a>
@@ -130,11 +128,7 @@ function Page() {
       {appointSuccess && <StatusBanner variant="success">{appointSuccess}</StatusBanner>}
 
       <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={() => setShowAddModal(true)}
-          className="btn-primary"
-        >
+        <button type="button" onClick={() => setShowAddModal(true)} className="btn-primary">
           Appoint faculty
         </button>
         <button className="btn-secondary" onClick={() => setConfirm(true)}>
@@ -200,11 +194,7 @@ function Page() {
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={appointing}
-              className="btn-primary text-sm"
-            >
+            <button type="submit" disabled={appointing} className="btn-primary text-sm">
               {appointing ? "Appointing..." : "Save Appointment"}
             </button>
           </div>

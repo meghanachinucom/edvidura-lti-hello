@@ -1,6 +1,15 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertCircle, CheckCircle2, Clock3, Download, Eye, Search, Sparkles, XCircle } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock3,
+  Download,
+  Eye,
+  Search,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
 import { t } from "@/i18n";
 import { api } from "@/lib/api";
 import { adaptAttempts, type BackendAttemptCard } from "@/lib/adapters";
@@ -131,7 +140,9 @@ function Page() {
         activity_id: inboundActivity.trim(),
         source: inboundSource.trim(),
       });
-      setInboundMessage(`Ingested external grade for ${inboundLearner || inboundSubject}: ${inboundScore}/${inboundMax}`);
+      setInboundMessage(
+        `Ingested external grade for ${inboundLearner || inboundSubject}: ${inboundScore}/${inboundMax}`,
+      );
     } catch (err: any) {
       setInboundMessage(`External grade recorded for ${inboundLearner || inboundSubject}`);
     } finally {
@@ -600,7 +611,9 @@ function Page() {
           </DialogHeader>
           <form onSubmit={handleGradeEssay} className="space-y-3 pt-2">
             <div>
-              <label className="block text-xs font-semibold text-ink">Assessment Prompt / Question</label>
+              <label className="block text-xs font-semibold text-ink">
+                Assessment Prompt / Question
+              </label>
               <textarea
                 required
                 rows={2}
@@ -610,7 +623,9 @@ function Page() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-ink">Student Answer Submission</label>
+              <label className="block text-xs font-semibold text-ink">
+                Student Answer Submission
+              </label>
               <textarea
                 required
                 rows={3}
@@ -621,7 +636,9 @@ function Page() {
             </div>
             <div className="grid gap-3 grid-cols-2">
               <div>
-                <label className="block text-xs font-semibold text-ink">Grading Rubric / Criteria (Optional)</label>
+                <label className="block text-xs font-semibold text-ink">
+                  Grading Rubric / Criteria (Optional)
+                </label>
                 <input
                   type="text"
                   value={essayRubric}
@@ -649,11 +666,7 @@ function Page() {
               >
                 Close
               </button>
-              <button
-                type="submit"
-                disabled={essayGrading}
-                className="btn-primary text-xs"
-              >
+              <button type="submit" disabled={essayGrading} className="btn-primary text-xs">
                 {essayGrading ? "Evaluating with AI..." : "Evaluate Submission"}
               </button>
             </div>
@@ -671,9 +684,16 @@ function Page() {
                       {essayResult.score ?? 9} / {essayResult.max_score ?? essayMaxScore}
                     </span>
                   </div>
-                  <p><strong>Rationale:</strong> {essayResult.reasoning || essayResult.feedback || "Accurate coverage of isolation procedures and safety verification."}</p>
+                  <p>
+                    <strong>Rationale:</strong>{" "}
+                    {essayResult.reasoning ||
+                      essayResult.feedback ||
+                      "Accurate coverage of isolation procedures and safety verification."}
+                  </p>
                   {Array.isArray(essayResult.strengths) && essayResult.strengths.length > 0 && (
-                    <p><strong>Key Strengths:</strong> {essayResult.strengths.join("; ")}</p>
+                    <p>
+                      <strong>Key Strengths:</strong> {essayResult.strengths.join("; ")}
+                    </p>
                   )}
                 </>
               )}
@@ -688,12 +708,15 @@ function Page() {
               Ingest External / LTI Grade
             </DialogTitle>
             <DialogDescription className="text-xs text-ink-muted">
-              Record external trade assessment, lab practical, or LTI Passback grade into tenant records.
+              Record external trade assessment, lab practical, or LTI Passback grade into tenant
+              records.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleIngestGrade} className="mt-4 space-y-3">
             <div>
-              <label className="block text-xs font-semibold text-ink">Learner Subject / User ID</label>
+              <label className="block text-xs font-semibold text-ink">
+                Learner Subject / User ID
+              </label>
               <input
                 type="text"
                 required
@@ -755,9 +778,7 @@ function Page() {
                 />
               </div>
             </div>
-            {inboundMessage && (
-              <p className="text-xs font-medium text-success">{inboundMessage}</p>
-            )}
+            {inboundMessage && <p className="text-xs font-medium text-success">{inboundMessage}</p>}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
@@ -766,11 +787,7 @@ function Page() {
               >
                 Close
               </button>
-              <button
-                type="submit"
-                disabled={inboundIngesting}
-                className="btn-primary text-xs"
-              >
+              <button type="submit" disabled={inboundIngesting} className="btn-primary text-xs">
                 {inboundIngesting ? "Recording..." : "Record Inbound Grade"}
               </button>
             </div>

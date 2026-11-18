@@ -214,7 +214,8 @@ function Page() {
                   Who Lacks What: Student Competency Deficiency Matrix
                 </h3>
                 <p className="text-xs text-ink-muted">
-                  Cross-checks formative quiz errors against curriculum standards to isolate individual skill gaps.
+                  Cross-checks formative quiz errors against curriculum standards to isolate
+                  individual skill gaps.
                 </p>
               </div>
 
@@ -250,18 +251,60 @@ function Page() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {[
-                    { name: "Alice Nguyen", s1: "mastered", s2: "mastered", s3: "deficient", s4: "progress" },
-                    { name: "Bob Smith", s1: "mastered", s2: "deficient", s3: "deficient", s4: "deficient" },
-                    { name: "Charlie Lee", s1: "progress", s2: "mastered", s3: "mastered", s4: "progress" },
-                    { name: "Diana Prince", s1: "mastered", s2: "mastered", s3: "mastered", s4: "mastered" },
-                    { name: "Evan Wright", s1: "deficient", s2: "progress", s3: "deficient", s4: "deficient" },
+                    {
+                      name: "Alice Nguyen",
+                      s1: "mastered",
+                      s2: "mastered",
+                      s3: "deficient",
+                      s4: "progress",
+                    },
+                    {
+                      name: "Bob Smith",
+                      s1: "mastered",
+                      s2: "deficient",
+                      s3: "deficient",
+                      s4: "deficient",
+                    },
+                    {
+                      name: "Charlie Lee",
+                      s1: "progress",
+                      s2: "mastered",
+                      s3: "mastered",
+                      s4: "progress",
+                    },
+                    {
+                      name: "Diana Prince",
+                      s1: "mastered",
+                      s2: "mastered",
+                      s3: "mastered",
+                      s4: "mastered",
+                    },
+                    {
+                      name: "Evan Wright",
+                      s1: "deficient",
+                      s2: "progress",
+                      s3: "deficient",
+                      s4: "deficient",
+                    },
                   ].map((st) => {
                     const badge = (status: string) => {
                       if (status === "mastered")
-                        return <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-bold text-[10px]">Mastered</span>;
+                        return (
+                          <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-bold text-[10px]">
+                            Mastered
+                          </span>
+                        );
                       if (status === "progress")
-                        return <span className="inline-block px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 font-semibold text-[10px]">In Progress</span>;
-                      return <span className="inline-block px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 font-bold text-[10px]">Deficient</span>;
+                        return (
+                          <span className="inline-block px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 font-semibold text-[10px]">
+                            In Progress
+                          </span>
+                        );
+                      return (
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 font-bold text-[10px]">
+                          Deficient
+                        </span>
+                      );
                     };
                     return (
                       <tr key={st.name} className="hover:bg-page-bg transition">
@@ -317,7 +360,9 @@ function Page() {
                   <tr className="border-b border-border text-ink-muted">
                     <th className="py-2 text-left font-sans font-bold">Learner</th>
                     {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-                      <th key={d} className="py-2 text-center font-bold px-1">{d}</th>
+                      <th key={d} className="py-2 text-center font-bold px-1">
+                        {d}
+                      </th>
                     ))}
                   </tr>
                 </thead>
@@ -333,14 +378,20 @@ function Page() {
                       <td className="py-2.5 font-sans font-semibold text-ink">{row.name}</td>
                       {row.counts.map((cnt, idx) => {
                         const bg =
-                          cnt >= 8 ? "bg-amber-600 text-white font-bold"
-                          : cnt >= 5 ? "bg-amber-400 text-slate-950 font-semibold"
-                          : cnt >= 2 ? "bg-amber-200 text-slate-950"
-                          : cnt > 0 ? "bg-amber-100 text-slate-700"
-                          : "bg-slate-100 text-slate-400";
+                          cnt >= 8
+                            ? "bg-amber-600 text-white font-bold"
+                            : cnt >= 5
+                              ? "bg-amber-400 text-slate-950 font-semibold"
+                              : cnt >= 2
+                                ? "bg-amber-200 text-slate-950"
+                                : cnt > 0
+                                  ? "bg-amber-100 text-slate-700"
+                                  : "bg-slate-100 text-slate-400";
                         return (
                           <td key={idx} className="py-2 px-1 text-center">
-                            <span className={`inline-flex items-center justify-center w-7 h-7 rounded-md ${bg}`}>
+                            <span
+                              className={`inline-flex items-center justify-center w-7 h-7 rounded-md ${bg}`}
+                            >
                               {cnt > 0 ? cnt : "·"}
                             </span>
                           </td>
@@ -363,18 +414,43 @@ function Page() {
             </div>
             <div className="grid gap-4 tablet:grid-cols-4 pt-1">
               {[
-                { q: "Q1: Slope Calculation", diff: "0.88 (Easy)", disc: "0.42 (Good)", color: "text-emerald-600" },
-                { q: "Q2: Perpendicular Slopes", diff: "0.44 (Hard)", disc: "0.65 (High)", color: "text-rose-600" },
-                { q: "Q3: Parallel Lines", diff: "0.72 (Moderate)", disc: "0.51 (Good)", color: "text-amber-600" },
-                { q: "Q4: Standard Form", diff: "0.38 (Hard)", disc: "0.58 (High)", color: "text-rose-600" },
+                {
+                  q: "Q1: Slope Calculation",
+                  diff: "0.88 (Easy)",
+                  disc: "0.42 (Good)",
+                  color: "text-emerald-600",
+                },
+                {
+                  q: "Q2: Perpendicular Slopes",
+                  diff: "0.44 (Hard)",
+                  disc: "0.65 (High)",
+                  color: "text-rose-600",
+                },
+                {
+                  q: "Q3: Parallel Lines",
+                  diff: "0.72 (Moderate)",
+                  disc: "0.51 (Good)",
+                  color: "text-amber-600",
+                },
+                {
+                  q: "Q4: Standard Form",
+                  diff: "0.38 (Hard)",
+                  disc: "0.58 (High)",
+                  color: "text-rose-600",
+                },
               ].map((item, i) => (
-                <div key={i} className="p-4 rounded-surface border border-border bg-page-bg space-y-2">
+                <div
+                  key={i}
+                  className="p-4 rounded-surface border border-border bg-page-bg space-y-2"
+                >
                   <div className="text-xs font-bold text-ink">{item.q}</div>
                   <div className="text-[11px] text-ink-muted">
-                    Difficulty: <span className={`font-mono font-bold ${item.color}`}>{item.diff}</span>
+                    Difficulty:{" "}
+                    <span className={`font-mono font-bold ${item.color}`}>{item.diff}</span>
                   </div>
                   <div className="text-[11px] text-ink-muted">
-                    Discrimination (<span className="font-serif italic">r</span>): <span className="font-mono font-bold text-ink">{item.disc}</span>
+                    Discrimination (<span className="font-serif italic">r</span>):{" "}
+                    <span className="font-mono font-bold text-ink">{item.disc}</span>
                   </div>
                 </div>
               ))}

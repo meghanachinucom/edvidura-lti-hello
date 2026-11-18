@@ -330,7 +330,11 @@ describe("EdVidura Priority Fixes & Role Recognition Suite", () => {
       expect(isUnauthNoSession(null, "instructor", "/teacher/attempts")).toBe(true);
 
       // Authenticated learner requesting instructor route -> blocked
-      const learnerSession = { name: "Alice", username: "riverside_alice", role: "learner" as const };
+      const learnerSession = {
+        name: "Alice",
+        username: "riverside_alice",
+        role: "learner" as const,
+      };
       expect(isUnauthNoSession(learnerSession, "learner", "/teacher/attempts")).toBe(true);
       expect(isUnauthNoSession(learnerSession, "learner", "/teacher/content")).toBe(true);
       expect(isUnauthNoSession(learnerSession, "learner", "/school-admin")).toBe(true);
@@ -339,7 +343,11 @@ describe("EdVidura Priority Fixes & Role Recognition Suite", () => {
       expect(isUnauthNoSession(learnerSession, "learner", "/lessons")).toBe(false);
 
       // Authenticated instructor requesting instructor route -> not blocked
-      const instructorSession = { name: "Priya", username: "riverside_priya", role: "instructor" as const };
+      const instructorSession = {
+        name: "Priya",
+        username: "riverside_priya",
+        role: "instructor" as const,
+      };
       expect(isUnauthNoSession(instructorSession, "instructor", "/teacher/attempts")).toBe(false);
       expect(isUnauthNoSession(instructorSession, "instructor", "/teacher/content")).toBe(false);
 
@@ -388,4 +396,3 @@ describe("EdVidura Priority Fixes & Role Recognition Suite", () => {
     });
   });
 });
-

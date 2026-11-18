@@ -55,7 +55,7 @@ describe("Master Frontend Design System and Global Change Architecture", () => {
       const { rerender } = render(
         <Button variant="edviduraPrimary" data-testid="btn">
           Save Changes
-        </Button>
+        </Button>,
       );
       const btn = screen.getByTestId("btn");
       expect(btn.className).toContain("btn-primary");
@@ -63,7 +63,7 @@ describe("Master Frontend Design System and Global Change Architecture", () => {
       rerender(
         <Button variant="edviduraSecondary" data-testid="btn">
           Cancel Action
-        </Button>
+        </Button>,
       );
       expect(btn.className).toContain("btn-secondary");
     });
@@ -72,7 +72,7 @@ describe("Master Frontend Design System and Global Change Architecture", () => {
       render(
         <Button variant="edviduraPrimary" size="edvidura" data-testid="touch-btn">
           Interactive Tap
-        </Button>
+        </Button>,
       );
       const btn = screen.getByTestId("touch-btn");
       expect(btn.className).toContain("min-h-11");
@@ -87,7 +87,7 @@ describe("Master Frontend Design System and Global Change Architecture", () => {
             <CardTitle>Master Architecture Card</CardTitle>
           </CardHeader>
           <CardContent>Standardized content layout.</CardContent>
-        </Card>
+        </Card>,
       );
       const card = screen.getByTestId("test-card");
       expect(card.className).toContain("rounded-surface");
@@ -104,7 +104,7 @@ describe("Master Frontend Design System and Global Change Architecture", () => {
           className={DESIGN_PRESETS.sectionCard}
         >
           <h2>Warning Section</h2>
-        </section>
+        </section>,
       );
       const card = screen.getByTestId("sec-card");
       expect(card.className).toContain("section-card");
@@ -128,7 +128,7 @@ describe("Master Frontend Design System and Global Change Architecture", () => {
           data-testid="custom-input"
           className={DESIGN_PRESETS.input}
           placeholder="Search lessons"
-        />
+        />,
       );
       const input = screen.getByTestId("custom-input");
       expect(input.className).toContain("min-h-11");
@@ -161,7 +161,7 @@ describe("Master Frontend Design System and Global Change Architecture", () => {
           columns={columns}
           rows={sampleRows}
           rowKey={(r) => r.id}
-        />
+        />,
       );
       // Desktop table verification
       const table = screen.getByRole("table", { hidden: true });
@@ -181,7 +181,7 @@ describe("Master Frontend Design System and Global Change Architecture", () => {
           rows={[]}
           rowKey={(r) => r.id}
           empty={<p>No lessons available.</p>}
-        />
+        />,
       );
       expect(screen.getByText("No lessons available.")).toBeInTheDocument();
     });
@@ -200,7 +200,7 @@ describe("Master Frontend Design System and Global Change Architecture", () => {
           cancelLabel="Cancel"
           onConfirm={onConfirm}
           onCancel={onCancel}
-        />
+        />,
       );
 
       expect(screen.getByRole("alertdialog")).toBeInTheDocument();
@@ -224,7 +224,7 @@ describe("Master Frontend Design System and Global Change Architecture", () => {
             <PageHeading text="Global Design System" />
             <StatusBanner variant="success">Theme change propagated successfully</StatusBanner>
             <EmptyState title="No items" help="Click to create your first lesson." />
-          </RoleProvider>
+          </RoleProvider>,
         );
       });
       expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Global Design System");

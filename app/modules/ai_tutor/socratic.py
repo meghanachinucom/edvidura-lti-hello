@@ -33,7 +33,7 @@ SOCRATIC_SKILLS: dict[str, dict[str, Any]] = {
         },
         "diagnostics": [
             "In the term 7x, what does the '7' represent and what does the 'x' represent?",
-            "If an apple costs \$a and a banana costs \$b, how would you write the total cost of 3 apples and 2 bananas?",
+            "If an apple costs $a and a banana costs $b, how would you write the total cost of 3 apples and 2 bananas?",
         ],
         "hints": [
             "Remember: a variable is a placeholder for a quantity that can change or is unknown.",

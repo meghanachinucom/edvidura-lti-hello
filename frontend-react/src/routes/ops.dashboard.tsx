@@ -1,6 +1,18 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Server, Activity, Database, ShieldAlert, ExternalLink, RefreshCw, Layers, CheckCircle2, AlertCircle, PlusCircle, Blocks } from "lucide-react";
+import {
+  Server,
+  Activity,
+  Database,
+  ShieldAlert,
+  ExternalLink,
+  RefreshCw,
+  Layers,
+  CheckCircle2,
+  AlertCircle,
+  PlusCircle,
+  Blocks,
+} from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { CountUp } from "@/components/shared/CountUp";
@@ -100,10 +112,30 @@ function Page() {
       .catch(() => {
         setBlocksData({
           blocks: [
-            { id: "core-lms", name: "Core LTI 1.3 LMS Connector", category: "core", status: "active" },
-            { id: "xr-suite", name: "Spatial & XR Training Suite", category: "spatial", status: "active" },
-            { id: "ai-tutor", name: "Adaptive AI Coach & RAG Tutor", category: "ai", status: "active" },
-            { id: "pravachana", name: "Episodic Audio Series Engine", category: "audio", status: "active" },
+            {
+              id: "core-lms",
+              name: "Core LTI 1.3 LMS Connector",
+              category: "core",
+              status: "active",
+            },
+            {
+              id: "xr-suite",
+              name: "Spatial & XR Training Suite",
+              category: "spatial",
+              status: "active",
+            },
+            {
+              id: "ai-tutor",
+              name: "Adaptive AI Coach & RAG Tutor",
+              category: "ai",
+              status: "active",
+            },
+            {
+              id: "pravachana",
+              name: "Episodic Audio Series Engine",
+              category: "audio",
+              status: "active",
+            },
           ],
           presets: ["vocational_standard", "industrial_polytechnic", "higher_ed_enterprise"],
         });
@@ -158,20 +190,41 @@ function Page() {
   };
 
   const tenants = data?.tenants || [
-    { id: "tenant-default", slug: "default", name: "EdVidura Primary Institution", status: "active", segment: "vocational" },
-    { id: "tenant-demo", slug: "demo", name: "Apex Technical Institute", status: "active", segment: "higher_ed" },
+    {
+      id: "tenant-default",
+      slug: "default",
+      name: "EdVidura Primary Institution",
+      status: "active",
+      segment: "vocational",
+    },
+    {
+      id: "tenant-demo",
+      slug: "demo",
+      name: "Apex Technical Institute",
+      status: "active",
+      segment: "higher_ed",
+    },
   ];
   const institutions = data?.institutions || [
     { id: "inst-1", name: "EdVidura Primary Institution", code: "INST-01" },
   ];
   const platforms = data?.platforms || [
-    { id: "plat-1", issuer: "https://moodle.example.edu", client_id: "moodle-client-01", tenant_id: "default" },
+    {
+      id: "plat-1",
+      issuer: "https://moodle.example.edu",
+      client_id: "moodle-client-01",
+      tenant_id: "default",
+    },
   ];
 
   const tabItems: PillTab[] = [
     { id: "overview", label: "Tenants & Telemetry", onSelect: () => setActiveTab("overview") },
     { id: "blocks", label: "Sellable Blocks Catalog", onSelect: () => setActiveTab("blocks") },
-    { id: "platforms", label: `LTI 1.3 Deployments (${platforms.length})`, onSelect: () => setActiveTab("platforms") },
+    {
+      id: "platforms",
+      label: `LTI 1.3 Deployments (${platforms.length})`,
+      onSelect: () => setActiveTab("platforms"),
+    },
   ];
 
   return (
@@ -204,7 +257,8 @@ function Page() {
       </div>
 
       <p className="max-w-reading text-sm text-ink-muted">
-        Multi-tenant platform orchestration, health telemetry, and LTI 1.3 platform deployment management across institutional deployments.
+        Multi-tenant platform orchestration, health telemetry, and LTI 1.3 platform deployment
+        management across institutional deployments.
       </p>
 
       {lrsMessage && <StatusBanner variant="success">{lrsMessage}</StatusBanner>}
@@ -249,11 +303,14 @@ function Page() {
                 LRS Telemetry & Statement Pipeline
               </h2>
               <p className="text-sm text-ink-muted">
-                Monitors xAPI statement queuing, failed delivery buffers, and tenant isolation state.
+                Monitors xAPI statement queuing, failed delivery buffers, and tenant isolation
+                state.
               </p>
               <div className="flex items-center justify-between p-3 rounded-surface bg-highlight text-sm text-ink">
                 <span>Pending Queued Statements:</span>
-                <span className="font-mono font-semibold">{data?.integration_status?.lrs_pending ?? 0}</span>
+                <span className="font-mono font-semibold">
+                  {data?.integration_status?.lrs_pending ?? 0}
+                </span>
               </div>
               <button
                 type="button"
@@ -270,7 +327,8 @@ function Page() {
                 Tenant Provisioning & Governance
               </h2>
               <p className="text-sm text-ink-muted">
-                Onboard new educational institutions, manage tenant feature flags, and bind LMS keys.
+                Onboard new educational institutions, manage tenant feature flags, and bind LMS
+                keys.
               </p>
               <div className="flex flex-col gap-2">
                 <button
@@ -293,7 +351,10 @@ function Page() {
           </div>
 
           {/* Multi-Tenant Directory Table */}
-          <section aria-labelledby="tenants-dir" className="rounded-surface border border-border bg-surface p-6 shadow-sm">
+          <section
+            aria-labelledby="tenants-dir"
+            className="rounded-surface border border-border bg-surface p-6 shadow-sm"
+          >
             <h2 id="tenants-dir" className="font-heading text-xl font-bold text-ink mb-4">
               Multi-Tenant Realm Directory
             </h2>
@@ -337,7 +398,10 @@ function Page() {
       )}
 
       {activeTab === "blocks" && (
-        <section aria-labelledby="blocks-cat" className="rounded-surface border border-border bg-surface p-6 shadow-sm space-y-4">
+        <section
+          aria-labelledby="blocks-cat"
+          className="rounded-surface border border-border bg-surface p-6 shadow-sm space-y-4"
+        >
           <div className="flex items-center justify-between">
             <div>
               <h2 id="blocks-cat" className="font-heading text-xl font-bold text-ink">
@@ -358,7 +422,10 @@ function Page() {
           </div>
           <div className="grid gap-3 tablet:grid-cols-2">
             {(blocksData?.blocks || []).map((b: any, i: number) => (
-              <div key={b.id || i} className="p-4 rounded-surface border border-border bg-highlight/20 flex flex-col justify-between">
+              <div
+                key={b.id || i}
+                className="p-4 rounded-surface border border-border bg-highlight/20 flex flex-col justify-between"
+              >
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-ink text-sm">{b.name || b.id}</span>
@@ -380,7 +447,10 @@ function Page() {
       )}
 
       {activeTab === "platforms" && (
-        <section aria-labelledby="platforms-dir" className="rounded-surface border border-border bg-surface p-6 shadow-sm">
+        <section
+          aria-labelledby="platforms-dir"
+          className="rounded-surface border border-border bg-surface p-6 shadow-sm"
+        >
           <h2 id="platforms-dir" className="font-heading text-xl font-bold text-ink mb-4">
             Registered LTI 1.3 LMS Platforms
           </h2>
@@ -421,7 +491,8 @@ function Page() {
               Provision New Tenant Realm
             </DialogTitle>
             <DialogDescription className="text-xs text-ink-muted">
-              Create an isolated tenant namespace with custom feature block composition and LMS binding.
+              Create an isolated tenant namespace with custom feature block composition and LMS
+              binding.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateTenant} className="mt-4 space-y-3">
@@ -437,7 +508,9 @@ function Page() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-ink">Unique Slug (URL Namespace)</label>
+              <label className="block text-xs font-semibold text-ink">
+                Unique Slug (URL Namespace)
+              </label>
               <input
                 type="text"
                 required
@@ -468,11 +541,7 @@ function Page() {
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                disabled={creatingTenant}
-                className="btn-primary text-xs"
-              >
+              <button type="submit" disabled={creatingTenant} className="btn-primary text-xs">
                 {creatingTenant ? "Provisioning..." : "Create Tenant Realm"}
               </button>
             </div>

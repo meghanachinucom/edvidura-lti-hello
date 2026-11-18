@@ -34,8 +34,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 1 — Foundations of Algebraic Reasoning & Variable Notation",
       startPage: 1,
       diagramTitle: "Balance Scale Analogy of Algebraic Equality",
-      diagramCaption: "An algebraic equation behaves like a balanced scale: whatever operation is performed on the left hand must be mirrored on the right hand to maintain equilibrium.",
-      takeaway: "Variables are placeholders for quantities that satisfy mathematical constraints; equality is an invariant state preserved under symmetric transformations.",
+      diagramCaption:
+        "An algebraic equation behaves like a balanced scale: whatever operation is performed on the left hand must be mirrored on the right hand to maintain equilibrium.",
+      takeaway:
+        "Variables are placeholders for quantities that satisfy mathematical constraints; equality is an invariant state preserved under symmetric transformations.",
       paragraphs: [
         "In algebra, letters such as x, y, and z serve as symbols for numbers whose values are currently unknown or subject to change.",
         "An expression combines variables, numbers, and operations (e.g., 3x + 7), while an equation asserts that two expressions denote identical values (e.g., 3x + 7 = 22).",
@@ -43,7 +45,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "When modeling real-world situations, we define the unknown quantity explicitly before translating verbal statements into mathematical constraints.",
       ],
       conceptCheck: {
-        question: "In the expression 4x + 9 = 25, what is the first inverse operation to isolate the term with the variable x?",
+        question:
+          "In the expression 4x + 9 = 25, what is the first inverse operation to isolate the term with the variable x?",
         options: [
           "Divide both sides by 4",
           "Subtract 9 from both sides",
@@ -51,7 +54,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
           "Add 9 to both sides",
         ],
         correctIndex: 1,
-        explanation: "By applying inverse operations in reverse PEMDAS order, subtract the constant term 9 first: 4x = 16, then divide by 4 to find x = 4.",
+        explanation:
+          "By applying inverse operations in reverse PEMDAS order, subtract the constant term 9 first: 4x = 16, then divide by 4 to find x = 4.",
         skillTag: "variables-isolation",
       },
       narration: {
@@ -65,8 +69,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 2 — Solving Linear Equations (One-Step, Two-Step & Multi-Step)",
       startPage: 16,
       diagramTitle: "Step-by-Step Inverse Operation Workflow",
-      diagramCaption: "Systematic simplification: Expand brackets → Collect like terms → Isolate variable term → Divide by coefficient → Verify by back-substitution.",
-      takeaway: "Mastery of linear equation solving requires systematic inversion of addition, subtraction, multiplication, and division in reverse hierarchical sequence.",
+      diagramCaption:
+        "Systematic simplification: Expand brackets → Collect like terms → Isolate variable term → Divide by coefficient → Verify by back-substitution.",
+      takeaway:
+        "Mastery of linear equation solving requires systematic inversion of addition, subtraction, multiplication, and division in reverse hierarchical sequence.",
       paragraphs: [
         "Solving a multi-step linear equation such as 2(3x - 4) + 5 = 27 requires systematic simplification before variable isolation.",
         "First, apply the distributive property to eliminate parentheses: 6x - 8 + 5 = 27.",
@@ -77,7 +83,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
         question: "What is the solution to 3(x - 2) = 15?",
         options: ["x = 5", "x = 7", "x = 3", "x = 9"],
         correctIndex: 1,
-        explanation: "Divide both sides by 3 to get x - 2 = 5, then add 2 to both sides: x = 7. Check: 3(7 - 2) = 3(5) = 15.",
+        explanation:
+          "Divide both sides by 3 to get x - 2 = 5, then add 2 to both sides: x = 7. Check: 3(7 - 2) = 3(5) = 15.",
         skillTag: "solve-linear",
       },
       narration: {
@@ -91,8 +98,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 3 — Linear Inequalities & Graphing on the Cartesian Plane",
       startPage: 32,
       diagramTitle: "Slope-Intercept Form y = mx + b on Cartesian Plane",
-      diagramCaption: "Visualizing linear functions: slope m indicates rate of vertical rise per horizontal unit; intercept b marks the intersection with the y-axis.",
-      takeaway: "Every linear relationship has both an algebraic signature (y = mx + b) and a geometric reality on the 2D Cartesian plane.",
+      diagramCaption:
+        "Visualizing linear functions: slope m indicates rate of vertical rise per horizontal unit; intercept b marks the intersection with the y-axis.",
+      takeaway:
+        "Every linear relationship has both an algebraic signature (y = mx + b) and a geometric reality on the 2D Cartesian plane.",
       paragraphs: [
         "When an equation is written in slope-intercept form, y = mx + b, m represents the steepness or slope (Δy / Δx) and b represents the vertical intercept (0, b).",
         "A positive slope slopes upward from left to right, whereas a negative slope slopes downward.",
@@ -103,7 +112,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
         question: "When solving -2x < 10, what is the resulting inequality?",
         options: ["x < -5", "x > -5", "x > 5", "x < 5"],
         correctIndex: 1,
-        explanation: "Dividing both sides by negative 2 flips the inequality sign from less-than to greater-than: x > -5.",
+        explanation:
+          "Dividing both sides by negative 2 flips the inequality sign from less-than to greater-than: x > -5.",
         skillTag: "inequalities-cartesian",
       },
       narration: {
@@ -117,8 +127,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 4 — Real-World Applications & Word Problem Modeling",
       startPage: 48,
       diagramTitle: "Translating Natural Language to Algebraic Equations",
-      diagramCaption: "Sentence mapping: 'Total cost of 5 books and shipping $12 is $82' maps directly to 5b + 12 = 82.",
-      takeaway: "Algebra transforms complex real-world rate, geometry, and finance challenges into solvable linear constraints.",
+      diagramCaption:
+        "Sentence mapping: 'Total cost of 5 books and shipping $12 is $82' maps directly to 5b + 12 = 82.",
+      takeaway:
+        "Algebra transforms complex real-world rate, geometry, and finance challenges into solvable linear constraints.",
       paragraphs: [
         "Real-world problems require translating descriptive narratives into symbolic mathematics.",
         "For example, a municipal water utility charges a flat monthly meter fee of $15 plus $2.50 per thousand gallons consumed.",
@@ -126,10 +138,12 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Subtracting 15 yields 2.50g = 100, and dividing by 2.50 yields g = 40. The school consumed 40,000 gallons of water.",
       ],
       conceptCheck: {
-        question: "A taxi charges $4 base fare plus $3 per mile. If the total fare is $25, how many miles was the trip?",
+        question:
+          "A taxi charges $4 base fare plus $3 per mile. If the total fare is $25, how many miles was the trip?",
         options: ["5 miles", "7 miles", "8 miles", "6 miles"],
         correctIndex: 1,
-        explanation: "Model as 4 + 3m = 25. Subtract 4 to get 3m = 21, then divide by 3: m = 7 miles.",
+        explanation:
+          "Model as 4 + 3m = 25. Subtract 4 to get 3m = 21, then divide by 3: m = 7 miles.",
         skillTag: "word-problems",
       },
       narration: {
@@ -147,8 +161,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 1 — Kinematics: Distance, Displacement, Speed & Velocity",
       startPage: 1,
       diagramTitle: "Vector Displacement vs Scalar Distance",
-      diagramCaption: "Scalar distance measures total path traveled; vector displacement measures the straight-line directed distance from origin to destination.",
-      takeaway: "Physics distinguishes scalar quantities (magnitude only) from vector quantities (magnitude with spatial direction).",
+      diagramCaption:
+        "Scalar distance measures total path traveled; vector displacement measures the straight-line directed distance from origin to destination.",
+      takeaway:
+        "Physics distinguishes scalar quantities (magnitude only) from vector quantities (magnitude with spatial direction).",
       paragraphs: [
         "Kinematics describes the motion of objects without reference to the forces causing that motion.",
         "Distance is a scalar quantity indicating how much ground an object has covered during its motion.",
@@ -156,10 +172,12 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Average speed is distance divided by elapsed time, whereas average velocity is displacement divided by elapsed time.",
       ],
       conceptCheck: {
-        question: "A runner completes one full 400-meter circular lap and returns to the start line. What is their displacement?",
+        question:
+          "A runner completes one full 400-meter circular lap and returns to the start line. What is their displacement?",
         options: ["400 meters", "200 meters", "0 meters", "100 meters"],
         correctIndex: 2,
-        explanation: "Because the starting and ending positions are identical, the vector change in position is 0 meters, even though distance is 400 meters.",
+        explanation:
+          "Because the starting and ending positions are identical, the vector change in position is 0 meters, even though distance is 400 meters.",
         skillTag: "kinematics-vectors",
       },
       narration: {
@@ -173,8 +191,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 2 — Newton's Three Laws of Motion & Net Force Calculations",
       startPage: 18,
       diagramTitle: "Free-Body Diagram & Net Force Equilibrium",
-      diagramCaption: "When normal force equals gravitational force and applied force exceeds friction, net force accelerates the mass according to F = ma.",
-      takeaway: "Forces are interactions that change motion; an object accelerates in the exact direction of the unbalanced net vector force.",
+      diagramCaption:
+        "When normal force equals gravitational force and applied force exceeds friction, net force accelerates the mass according to F = ma.",
+      takeaway:
+        "Forces are interactions that change motion; an object accelerates in the exact direction of the unbalanced net vector force.",
       paragraphs: [
         "Newton's First Law (Law of Inertia) states that an object at rest remains at rest, and an object in uniform motion continues unless acted on by a net external force.",
         "Newton's Second Law establishes the fundamental formula F_net = m · a, connecting force, mass, and acceleration.",
@@ -182,7 +202,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Free-body diagrams resolve all concurrent vectors into orthogonal components to determine acceleration.",
       ],
       conceptCheck: {
-        question: "A net force of 30 Newtons is applied to a 6-kilogram cart. What is the acceleration of the cart?",
+        question:
+          "A net force of 30 Newtons is applied to a 6-kilogram cart. What is the acceleration of the cart?",
         options: ["180 m/s²", "5 m/s²", "0.2 m/s²", "24 m/s²"],
         correctIndex: 1,
         explanation: "According to Newton's Second Law, a = F / m = 30 N / 6 kg = 5 m/s².",
@@ -199,8 +220,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 3 — Work, Power, Potential & Kinetic Energy Transformations",
       startPage: 36,
       diagramTitle: "Rollercoaster Energy Exchange: PE to KE",
-      diagramCaption: "At the peak, gravitational potential energy is maximum; as the coaster drops, PE converts to kinetic energy KE = 1/2 m v².",
-      takeaway: "Energy cannot be destroyed; in conservative systems, mechanical energy alternates seamlessly between stored potential and active kinetic states.",
+      diagramCaption:
+        "At the peak, gravitational potential energy is maximum; as the coaster drops, PE converts to kinetic energy KE = 1/2 m v².",
+      takeaway:
+        "Energy cannot be destroyed; in conservative systems, mechanical energy alternates seamlessly between stored potential and active kinetic states.",
       paragraphs: [
         "In physics, work is done when a force causes a displacement in the direction of the force: W = F · d · cos(θ).",
         "Gravitational potential energy depends on elevation and gravity: PE = m · g · h.",
@@ -208,10 +231,12 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Power measures the rate at which work is performed or energy is converted over time: P = W / Δt, measured in Watts (Joules per second).",
       ],
       conceptCheck: {
-        question: "If a car's velocity doubles from 10 m/s to 20 m/s, by what factor does its kinetic energy increase?",
+        question:
+          "If a car's velocity doubles from 10 m/s to 20 m/s, by what factor does its kinetic energy increase?",
         options: ["Doubles (2x)", "Triples (3x)", "Quadruples (4x)", "Remains the same"],
         correctIndex: 2,
-        explanation: "Because kinetic energy is proportional to the square of velocity (v²), doubling speed multiplies kinetic energy by 2² = 4 times.",
+        explanation:
+          "Because kinetic energy is proportional to the square of velocity (v²), doubling speed multiplies kinetic energy by 2² = 4 times.",
         skillTag: "energy-power",
       },
       narration: {
@@ -225,8 +250,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 4 — Conservation of Momentum & Energy Systems",
       startPage: 54,
       diagramTitle: "Elastic vs Inelastic Collision Dynamics",
-      diagramCaption: "Total momentum p = m · v is conserved in all isolated collisions, while kinetic energy is conserved strictly in elastic collisions.",
-      takeaway: "The law of conservation of momentum governs collisions from planetary orbits down to subatomic particle interactions.",
+      diagramCaption:
+        "Total momentum p = m · v is conserved in all isolated collisions, while kinetic energy is conserved strictly in elastic collisions.",
+      takeaway:
+        "The law of conservation of momentum governs collisions from planetary orbits down to subatomic particle interactions.",
       paragraphs: [
         "Momentum is the product of mass and velocity: p = m · v, measured in kilogram meters per second.",
         "The Law of Conservation of Momentum dictates that the total momentum of an isolated system before an interaction equals the total momentum afterward.",
@@ -234,10 +261,17 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "In inelastic collisions, objects stick together or deform, converting kinetic energy into thermal or acoustic energy while total momentum remains strictly conserved.",
       ],
       conceptCheck: {
-        question: "What is always conserved in an isolated system during both elastic and inelastic collisions?",
-        options: ["Only kinetic energy", "Only mechanical energy", "Total linear momentum", "Temperature"],
+        question:
+          "What is always conserved in an isolated system during both elastic and inelastic collisions?",
+        options: [
+          "Only kinetic energy",
+          "Only mechanical energy",
+          "Total linear momentum",
+          "Temperature",
+        ],
         correctIndex: 2,
-        explanation: "Total linear momentum is universally conserved in all collisions in an isolated system, regardless of whether energy is transformed into heat.",
+        explanation:
+          "Total linear momentum is universally conserved in all collisions in an isolated system, regardless of whether energy is transformed into heat.",
         skillTag: "momentum-conservation",
       },
       narration: {
@@ -255,8 +289,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 1 — Permanent Way Components: Rails, Sleepers, Ballast & Fastenings",
       startPage: 1,
       diagramTitle: "Cross-Section of Modern Indian Broad Gauge Track (1676 mm)",
-      diagramCaption: "Track foundation: 60 kg/m UIC rails fastened by Pandrol clips to PSC monoblock sleepers embedded in 300 mm crushed granite ballast.",
-      takeaway: "The permanent way safely distributes wheel axle loads up to 25 tonnes from steel rail heads through ballast cushions to the subgrade.",
+      diagramCaption:
+        "Track foundation: 60 kg/m UIC rails fastened by Pandrol clips to PSC monoblock sleepers embedded in 300 mm crushed granite ballast.",
+      takeaway:
+        "The permanent way safely distributes wheel axle loads up to 25 tonnes from steel rail heads through ballast cushions to the subgrade.",
       paragraphs: [
         "The permanent way is the bedrock of railway transportation across Indian Railways' 68,000+ kilometer network.",
         "Modern mainline tracks utilize 60 kg/m 90 UTS continuous welded rails (CWR) on 1676 mm broad gauge standard.",
@@ -267,7 +303,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
         question: "What is the standard broad gauge track measurement on Indian Railways?",
         options: ["1435 mm", "1676 mm", "1000 mm", "762 mm"],
         correctIndex: 1,
-        explanation: "Indian Railways broad gauge is standard 1676 mm (5 ft 6 in), the widest standard commercial gauge in the world.",
+        explanation:
+          "Indian Railways broad gauge is standard 1676 mm (5 ft 6 in), the widest standard commercial gauge in the world.",
         skillTag: "railway-track-specs",
       },
       narration: {
@@ -281,8 +318,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 2 — Track Inspection, Gauge Tolerance & Ultrasonic Defect Detection",
       startPage: 22,
       diagramTitle: "USFD Ultrasonic Flaw Detection Probe Angles",
-      diagramCaption: "USFD scanning: 0° probe detects horizontal head-web separation; 70° probes detect transverse fatigue fissures in the rail head.",
-      takeaway: "Ultrasonic flaw detection prevents catastrophic rail fractures through early non-destructive identification of internal metallurgical defects.",
+      diagramCaption:
+        "USFD scanning: 0° probe detects horizontal head-web separation; 70° probes detect transverse fatigue fissures in the rail head.",
+      takeaway:
+        "Ultrasonic flaw detection prevents catastrophic rail fractures through early non-destructive identification of internal metallurgical defects.",
       paragraphs: [
         "Track integrity requires daily keyman inspections and regular automated track recording car (TRC) sweeps.",
         "Broad gauge tolerance on straight track permits -3 mm to +6 mm gauge variation under standard operating speeds.",
@@ -290,10 +329,12 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Defective rails are classified as IMR (Immediate Removal) or OBS (Observe & Clamp), triggering immediate protective speed restrictions.",
       ],
       conceptCheck: {
-        question: "Which USFD probe angle is specifically designed to detect transverse fatigue cracks in the rail head?",
+        question:
+          "Which USFD probe angle is specifically designed to detect transverse fatigue cracks in the rail head?",
         options: ["0 degree probe", "45 degree probe", "70 degree probe", "90 degree probe"],
         correctIndex: 2,
-        explanation: "70-degree ultrasonic probes propagate beams forward and backward through the rail head to intercept vertical transverse fissures.",
+        explanation:
+          "70-degree ultrasonic probes propagate beams forward and backward through the rail head to intercept vertical transverse fissures.",
         skillTag: "railway-usfd-inspection",
       },
       narration: {
@@ -304,11 +345,14 @@ export const ebookChapters: Record<string, Chapter[]> = {
     },
     {
       id: "ch-rly-3",
-      title: "Chapter 3 — Railway Signalling, Interlocking Systems & Automatic Train Protection (Kavach)",
+      title:
+        "Chapter 3 — Railway Signalling, Interlocking Systems & Automatic Train Protection (Kavach)",
       startPage: 44,
       diagramTitle: "Kavach Automatic Train Protection Architecture",
-      diagramCaption: "Kavach ATP: RFID tags on tracks, UHF radio transceivers, and loco brake controllers enforce automatic braking if an SPAD occurs.",
-      takeaway: "Electronic interlocking and Kavach ATP eliminate collision risks by enforcing signal obedience through automated train brake interventions.",
+      diagramCaption:
+        "Kavach ATP: RFID tags on tracks, UHF radio transceivers, and loco brake controllers enforce automatic braking if an SPAD occurs.",
+      takeaway:
+        "Electronic interlocking and Kavach ATP eliminate collision risks by enforcing signal obedience through automated train brake interventions.",
       paragraphs: [
         "Railway signalling coordinates safe separation between trains using modern electronic interlocking (EI) systems with fail-safe architecture.",
         "Color-light signals convey speed authority: Green (proceed at speed), Double Yellow (proceed cautiously), Yellow (expect stop), and Red (absolute stop).",
@@ -316,7 +360,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Kavach automatically applies emergency brakes if an engineer passes a Signal at Danger (SPAD) or approaches a speed restriction too rapidly.",
       ],
       conceptCheck: {
-        question: "What safety action does the Kavach ATP system take if a train passes a signal at danger (red)?",
+        question:
+          "What safety action does the Kavach ATP system take if a train passes a signal at danger (red)?",
         options: [
           "Sounds an advisory chime only",
           "Automatically applies emergency train brakes to a complete stop",
@@ -324,7 +369,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
           "Changes the signal light to yellow",
         ],
         correctIndex: 1,
-        explanation: "Kavach enforces fail-safe braking directly on the locomotive pneumatic brake pipe, bringing the train to a complete stop without driver input.",
+        explanation:
+          "Kavach enforces fail-safe braking directly on the locomotive pneumatic brake pipe, bringing the train to a complete stop without driver input.",
         skillTag: "kavach-signalling",
       },
       narration: {
@@ -338,8 +384,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 4 — Trackside Safety Protocols, Lookout Duties & Emergency Work Rules",
       startPage: 66,
       diagramTitle: "Track Protection Banner & Detonator Placement",
-      diagramCaption: "Emergency track protection: Place red banner flag at 600m; lay 3 detonators 10m apart at 1200m to alert approaching trains.",
-      takeaway: "Zero accidents require strict personal protective discipline, designated lookouts with hooters, and standard distance-based track protection.",
+      diagramCaption:
+        "Emergency track protection: Place red banner flag at 600m; lay 3 detonators 10m apart at 1200m to alert approaching trains.",
+      takeaway:
+        "Zero accidents require strict personal protective discipline, designated lookouts with hooters, and standard distance-based track protection.",
       paragraphs: [
         "Track maintenance workers face severe hazards from high-speed trains traveling up to 130 km/h with silent electric traction.",
         "Every maintenance gang must deploy dedicated lookouts equipped with audible hooters and high-visibility retro-reflective jackets.",
@@ -347,10 +395,12 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Maintenance tools must be insulated to prevent accidental shunting of track circuits which could falsely trip green signals.",
       ],
       conceptCheck: {
-        question: "In an emergency track obstruction, at what distance must the outer detonators be placed from the danger point on broad gauge?",
+        question:
+          "In an emergency track obstruction, at what distance must the outer detonators be placed from the danger point on broad gauge?",
         options: ["100 meters", "600 meters", "1200 meters", "3000 meters"],
         correctIndex: 2,
-        explanation: "Indian Railways General Rules specify three detonators placed 10 meters apart at 1200 meters (or 600m in exceptional circumstances) to warn trains.",
+        explanation:
+          "Indian Railways General Rules specify three detonators placed 10 meters apart at 1200 meters (or 600m in exceptional circumstances) to warn trains.",
         skillTag: "railway-trackside-safety",
       },
       narration: {
@@ -368,8 +418,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 1 — Computing Architecture, Operating Systems & Networks",
       startPage: 1,
       diagramTitle: "Von Neumann Architecture & Bus Data Flow",
-      diagramCaption: "CPU executes the fetch-decode-execute cycle between ALU, Control Unit, Registers, and System RAM via 64-bit data and address buses.",
-      takeaway: "Computers translate human logic into binary operations through hardware layers, operating system kernels, and protocol networks.",
+      diagramCaption:
+        "CPU executes the fetch-decode-execute cycle between ALU, Control Unit, Registers, and System RAM via 64-bit data and address buses.",
+      takeaway:
+        "Computers translate human logic into binary operations through hardware layers, operating system kernels, and protocol networks.",
       paragraphs: [
         "Modern computers are built upon the Von Neumann architecture, featuring a Central Processing Unit (CPU), memory, and input/output subsystems.",
         "The CPU continuously executes the fetch-decode-execute cycle at gigahertz clock speeds.",
@@ -377,10 +429,17 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "The global Internet functions via the TCP/IP protocol suite, breaking information into routed packets transmitted across fiber-optic backbones.",
       ],
       conceptCheck: {
-        question: "Which computer subsystem is responsible for executing arithmetic operations and logical comparisons?",
-        options: ["Control Unit (CU)", "Arithmetic Logic Unit (ALU)", "Solid State Drive (SSD)", "Random Access Memory (RAM)"],
+        question:
+          "Which computer subsystem is responsible for executing arithmetic operations and logical comparisons?",
+        options: [
+          "Control Unit (CU)",
+          "Arithmetic Logic Unit (ALU)",
+          "Solid State Drive (SSD)",
+          "Random Access Memory (RAM)",
+        ],
         correctIndex: 1,
-        explanation: "The Arithmetic Logic Unit (ALU) within the CPU executes all binary arithmetic (+, -, *, /) and boolean logic (AND, OR, NOT).",
+        explanation:
+          "The Arithmetic Logic Unit (ALU) within the CPU executes all binary arithmetic (+, -, *, /) and boolean logic (AND, OR, NOT).",
         skillTag: "computer-architecture",
       },
       narration: {
@@ -394,8 +453,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 2 — Artificial Intelligence, Neural Networks & Machine Learning Foundations",
       startPage: 15,
       diagramTitle: "Deep Neural Network Architecture: Input, Hidden & Output Layers",
-      diagramCaption: "Multi-layer perceptron: Input vector weights propagate forward through activation functions; loss gradients backpropagate to optimize weights.",
-      takeaway: "Artificial Intelligence does not reason like a human mind; it optimizes mathematical weight tensors to recognize complex patterns in high-dimensional data.",
+      diagramCaption:
+        "Multi-layer perceptron: Input vector weights propagate forward through activation functions; loss gradients backpropagate to optimize weights.",
+      takeaway:
+        "Artificial Intelligence does not reason like a human mind; it optimizes mathematical weight tensors to recognize complex patterns in high-dimensional data.",
       paragraphs: [
         "Machine Learning represents a fundamental paradigm shift from rule-based programming to empirical pattern recognition.",
         "Instead of writing explicit IF-THEN rules, algorithms adjust internal numerical parameters (weights and biases) using training examples.",
@@ -403,10 +464,17 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Large Language Models (LLMs) rely on the Transformer architecture with self-attention mechanisms to predict sequence tokens based on context.",
       ],
       conceptCheck: {
-        question: "What core mechanism allows Transformer neural models to assess relationships between all words in a sentence simultaneously?",
-        options: ["Sequential recursion", "Self-attention mechanism", "Relational database joins", "Linear regression"],
+        question:
+          "What core mechanism allows Transformer neural models to assess relationships between all words in a sentence simultaneously?",
+        options: [
+          "Sequential recursion",
+          "Self-attention mechanism",
+          "Relational database joins",
+          "Linear regression",
+        ],
         correctIndex: 1,
-        explanation: "The self-attention mechanism computes pairwise attention scores between all tokens in a sequence, allowing the model to understand context holistically.",
+        explanation:
+          "The self-attention mechanism computes pairwise attention scores between all tokens in a sequence, allowing the model to understand context holistically.",
         skillTag: "ai-transformer-models",
       },
       narration: {
@@ -420,8 +488,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 3 — Cybersecurity Essentials: Phishing, Passwords, Encryption & MFA",
       startPage: 30,
       diagramTitle: "Asymmetric Public-Key Cryptography",
-      diagramCaption: "Public key encrypts plaintext; only the matched private key held securely by the recipient can decrypt the ciphertext.",
-      takeaway: "Modern cybersecurity balances cryptographic mathematics (AES-256, RSA) with human vigilance against social engineering.",
+      diagramCaption:
+        "Public key encrypts plaintext; only the matched private key held securely by the recipient can decrypt the ciphertext.",
+      takeaway:
+        "Modern cybersecurity balances cryptographic mathematics (AES-256, RSA) with human vigilance against social engineering.",
       paragraphs: [
         "Cybersecurity protects digital systems, networks, and confidential data from unauthorized access or malicious destruction.",
         "Social engineering attacks, such as phishing, deceive users into divulging passwords or credentials by impersonating legitimate authorities.",
@@ -429,7 +499,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Public-key cryptography uses matched mathematical key pairs: a public key for encryption and a secret private key for decryption.",
       ],
       conceptCheck: {
-        question: "Which of the following represents the strongest defense against credential theft via password guessing or database breaches?",
+        question:
+          "Which of the following represents the strongest defense against credential theft via password guessing or database breaches?",
         options: [
           "Changing passwords every Monday to simple words",
           "Multi-Factor Authentication (MFA) with authenticator apps",
@@ -437,7 +508,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
           "Saving passwords in plain text on your desktop",
         ],
         correctIndex: 1,
-        explanation: "MFA blocks over 99% of automated credential stuffing and password guessing attacks because attackers lack the second hardware factor.",
+        explanation:
+          "MFA blocks over 99% of automated credential stuffing and password guessing attacks because attackers lack the second hardware factor.",
         skillTag: "cybersecurity-mfa",
       },
       narration: {
@@ -451,8 +523,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 4 — Ethical Computing, Data Privacy (DPDP Act) & Digital Citizenship",
       startPage: 44,
       diagramTitle: "India's Digital Personal Data Protection (DPDP) Act Rights",
-      diagramCaption: "Citizen rights under DPDP: Right to access data, right to correction, right to grievance redressal, and right to withdraw consent.",
-      takeaway: "Responsible digital citizenship requires ethical awareness, respecting intellectual property, and safeguarding personal privacy online.",
+      diagramCaption:
+        "Citizen rights under DPDP: Right to access data, right to correction, right to grievance redressal, and right to withdraw consent.",
+      takeaway:
+        "Responsible digital citizenship requires ethical awareness, respecting intellectual property, and safeguarding personal privacy online.",
       paragraphs: [
         "With rapid digital transformation comes the imperative for ethical stewardship of algorithms and user data.",
         "India's Digital Personal Data Protection (DPDP) Act establishes strict consent mandates for processing citizen information.",
@@ -460,10 +534,17 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Digital citizens must practice responsible information verification, avoiding the viral spread of synthetic deepfakes and disinformation.",
       ],
       conceptCheck: {
-        question: "Under data privacy laws such as India's DPDP Act, what principle states that platforms should collect only necessary data for a specific purpose?",
-        options: ["Data maximization", "Data minimization", "Open harvesting", "Indefinite storage"],
+        question:
+          "Under data privacy laws such as India's DPDP Act, what principle states that platforms should collect only necessary data for a specific purpose?",
+        options: [
+          "Data maximization",
+          "Data minimization",
+          "Open harvesting",
+          "Indefinite storage",
+        ],
         correctIndex: 1,
-        explanation: "Data minimization requires data fiduciaries to collect only the bare minimum personal data necessary to fulfill the specific legitimate service.",
+        explanation:
+          "Data minimization requires data fiduciaries to collect only the bare minimum personal data necessary to fulfill the specific legitimate service.",
         skillTag: "data-privacy-ethics",
       },
       narration: {
@@ -481,8 +562,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 1 — Satya & Dharma: Truthfulness and Moral Responsibility in Daily Life",
       startPage: 1,
       diagramTitle: "The Pillar of Dharma: Conscience, Action & Social Harmony",
-      diagramCaption: "Satya (truth in thought, speech, and deed) aligned with Dharma (duty to family, community, and nation) builds enduring personal integrity.",
-      takeaway: "Moral character is founded on consistent truthfulness, personal accountability, and fulfilling one's obligations to others.",
+      diagramCaption:
+        "Satya (truth in thought, speech, and deed) aligned with Dharma (duty to family, community, and nation) builds enduring personal integrity.",
+      takeaway:
+        "Moral character is founded on consistent truthfulness, personal accountability, and fulfilling one's obligations to others.",
       paragraphs: [
         "In Indian philosophical traditions, Satya (truthfulness) and Dharma (righteous duty) form the bedrock of ethical existence.",
         "Satya extends beyond refraining from factual falsehood; it demands consistency between what one thinks, speaks, and performs.",
@@ -490,7 +573,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "In student life, practicing Satya means taking honest responsibility for one's academic work and standing up against unfair practices.",
       ],
       conceptCheck: {
-        question: "In ethical decision-making, what does the principle of 'Satya' demand beyond merely speaking factual words?",
+        question:
+          "In ethical decision-making, what does the principle of 'Satya' demand beyond merely speaking factual words?",
         options: [
           "Speaking loudly in debate",
           "Harmony between thought, word, and righteous action",
@@ -498,7 +582,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
           "Avoiding all difficult conversations",
         ],
         correctIndex: 1,
-        explanation: "Classical ethics defines Satya as the harmony of Manasa, Vacha, and Karmana — pure thought, truthful speech, and righteous conduct.",
+        explanation:
+          "Classical ethics defines Satya as the harmony of Manasa, Vacha, and Karmana — pure thought, truthful speech, and righteous conduct.",
         skillTag: "moral-integrity",
       },
       narration: {
@@ -512,8 +597,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 2 — Seva & Karuna: Compassion, Community Service and Social Empathy",
       startPage: 14,
       diagramTitle: "The Cycle of Seva: Empathy to Civic Action",
-      diagramCaption: "Recognizing distress in others (Karuna) inspires selfless service (Seva), strengthening the collective social fabric of the community.",
-      takeaway: "True strength of character is measured not by personal status, but by the compassion shown to the vulnerable and service to society.",
+      diagramCaption:
+        "Recognizing distress in others (Karuna) inspires selfless service (Seva), strengthening the collective social fabric of the community.",
+      takeaway:
+        "True strength of character is measured not by personal status, but by the compassion shown to the vulnerable and service to society.",
       paragraphs: [
         "Karuna is active empathy: the capacity to feel another person's difficulty and the genuine urge to alleviate it.",
         "Seva represents selfless service rendered without expectations of reward or social applause.",
@@ -521,7 +608,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Simple everyday acts — helping an injured stray animal, mentoring a younger classmate, or organizing neighborhood cleanliness — embody living Seva.",
       ],
       conceptCheck: {
-        question: "What distinguishes genuine 'Seva' (selfless service) from ordinary commercial transactions?",
+        question:
+          "What distinguishes genuine 'Seva' (selfless service) from ordinary commercial transactions?",
         options: [
           "Seva is done only for personal financial gain",
           "Seva is performed selflessly for community welfare without expectation of return",
@@ -529,7 +617,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
           "Seva must be advertised on social media",
         ],
         correctIndex: 1,
-        explanation: "The defining hallmark of Seva is Nishkama Karma: selfless action dedicated to the welfare of others without selfish motives.",
+        explanation:
+          "The defining hallmark of Seva is Nishkama Karma: selfless action dedicated to the welfare of others without selfish motives.",
         skillTag: "compassion-service",
       },
       narration: {
@@ -543,8 +632,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 3 — Vidya & Vinaya: Knowledge, Humility and the Scientific Temper",
       startPage: 28,
       diagramTitle: "Vidya Dadati Vinayam (Knowledge Generates Humility)",
-      diagramCaption: "True learning broadens awareness of what remains unknown, replacing intellectual arrogance with modest inquiry and scientific temper.",
-      takeaway: "The ancient proverb 'Vidya Dadati Vinayam' reminds us that real wisdom produces humility, openness, and rational inquiry.",
+      diagramCaption:
+        "True learning broadens awareness of what remains unknown, replacing intellectual arrogance with modest inquiry and scientific temper.",
+      takeaway:
+        "The ancient proverb 'Vidya Dadati Vinayam' reminds us that real wisdom produces humility, openness, and rational inquiry.",
       paragraphs: [
         "The Sanskrit aphorism 'Vidya Dadati Vinayam' encapsulates the ultimate objective of true education: wisdom breeds humility.",
         "Arrogance is the enemy of intellectual progress; assuming one already knows everything closes the door to further learning.",
@@ -552,10 +643,17 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "A truly educated student listens attentively to others, admits errors gracefully, and applies their intellect for the public good.",
       ],
       conceptCheck: {
-        question: "According to the Indian educational ideal 'Vidya Dadati Vinayam', what virtue naturally blossoms as one acquires true knowledge?",
-        options: ["Pride and arrogance", "Humility and respectfulness (Vinaya)", "Wealth accumulation", "Fear of questioning"],
+        question:
+          "According to the Indian educational ideal 'Vidya Dadati Vinayam', what virtue naturally blossoms as one acquires true knowledge?",
+        options: [
+          "Pride and arrogance",
+          "Humility and respectfulness (Vinaya)",
+          "Wealth accumulation",
+          "Fear of questioning",
+        ],
         correctIndex: 1,
-        explanation: "As knowledge deepens, an educated person recognizes the vastness of the universe and naturally develops humility (Vinaya).",
+        explanation:
+          "As knowledge deepens, an educated person recognizes the vastness of the universe and naturally develops humility (Vinaya).",
         skillTag: "wisdom-humility",
       },
       narration: {
@@ -569,8 +667,10 @@ export const ebookChapters: Record<string, Chapter[]> = {
       title: "Chapter 4 — Samata & Shanti: Equality, Environmental Harmony and Conflict Resolution",
       startPage: 40,
       diagramTitle: "Vasudhaiva Kutumbakam: Universal Family & Environmental Balance",
-      diagramCaption: "Ecological and social equilibrium: Treating all human beings as equals and preserving nature's balance for future generations.",
-      takeaway: "Living in peace requires treating all citizens with equal dignity, resolving interpersonal conflicts through dialogue, and caring for Mother Earth.",
+      diagramCaption:
+        "Ecological and social equilibrium: Treating all human beings as equals and preserving nature's balance for future generations.",
+      takeaway:
+        "Living in peace requires treating all citizens with equal dignity, resolving interpersonal conflicts through dialogue, and caring for Mother Earth.",
       paragraphs: [
         "Peace (Shanti) is not merely the absence of war; it is a positive state of social justice, mental tranquility, and mutual respect.",
         "Samata (equality) asserts the fundamental dignity of every human being, regardless of gender, caste, language, or socioeconomic background.",
@@ -586,7 +686,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
           "Nature can be exploited without limits",
         ],
         correctIndex: 1,
-        explanation: "'Vasudhaiva Kutumbakam' (from Maha Upanishad) teaches that the entire earth and all living beings constitute one single interconnected family.",
+        explanation:
+          "'Vasudhaiva Kutumbakam' (from Maha Upanishad) teaches that the entire earth and all living beings constitute one single interconnected family.",
         skillTag: "universal-peace",
       },
       narration: {
@@ -601,7 +702,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
       id: "ch-1",
       title: "Chapter 1 — Supply to the home",
       startPage: 1,
-      takeaway: "Power reaches the home through the main service cable and passes through the meter to the distribution board.",
+      takeaway:
+        "Power reaches the home through the main service cable and passes through the meter to the distribution board.",
       paragraphs: [
         "Power reaches a home through the service cable from the supply company. It ends at the meter and the main switch.",
         "After the main switch, the supply goes to the distribution board. Every circuit in the home starts here.",
@@ -609,19 +711,29 @@ export const ebookChapters: Record<string, Chapter[]> = {
         "Always find the main switch before you start work. You must know how to isolate the whole home.",
       ],
       conceptCheck: {
-        question: "Where should you isolate the electrical supply before beginning maintenance work?",
-        options: ["At the sub-socket", "At the main double-pole isolator switch", "By removing the appliance fuse only", "At the consumer light switch"],
+        question:
+          "Where should you isolate the electrical supply before beginning maintenance work?",
+        options: [
+          "At the sub-socket",
+          "At the main double-pole isolator switch",
+          "By removing the appliance fuse only",
+          "At the consumer light switch",
+        ],
         correctIndex: 1,
-        explanation: "Always isolate at the main double-pole isolator switch to ensure the entire installation is safely de-energized.",
+        explanation:
+          "Always isolate at the main double-pole isolator switch to ensure the entire installation is safely de-energized.",
         skillTag: "isolation-safety",
       },
-      narration: { en: "Chapter 1 introduces electrical service entrance and isolation procedures." },
+      narration: {
+        en: "Chapter 1 introduces electrical service entrance and isolation procedures.",
+      },
     },
     {
       id: "ch-2",
       title: "Chapter 2 — Ring and radial circuits",
       startPage: 14,
-      takeaway: "Understand the topology differences between radial single-path runs and ring continuous loop circuits.",
+      takeaway:
+        "Understand the topology differences between radial single-path runs and ring continuous loop circuits.",
       paragraphs: [
         "A radial circuit starts at the distribution board and runs out to each point, one after another. It ends at the last point.",
         "A ring circuit starts and ends at the same MCB. The cable goes around the sockets and comes back, so current has two paths.",
@@ -630,9 +742,15 @@ export const ebookChapters: Record<string, Chapter[]> = {
       ],
       conceptCheck: {
         question: "What differentiates a ring final circuit from a radial circuit?",
-        options: ["A ring circuit starts and returns to the same protective device", "A ring circuit has no earth wire", "A radial circuit carries current in two parallel directions", "A ring circuit is only used for low-voltage bells"],
+        options: [
+          "A ring circuit starts and returns to the same protective device",
+          "A ring circuit has no earth wire",
+          "A radial circuit carries current in two parallel directions",
+          "A ring circuit is only used for low-voltage bells",
+        ],
         correctIndex: 0,
-        explanation: "A ring circuit loops from the breaker through all socket outlets and returns to the identical breaker.",
+        explanation:
+          "A ring circuit loops from the breaker through all socket outlets and returns to the identical breaker.",
         skillTag: "circuit-topology",
       },
       narration: { en: "Chapter 2 covers ring and radial wiring configurations." },
@@ -650,9 +768,15 @@ export const ebookChapters: Record<string, Chapter[]> = {
       ],
       conceptCheck: {
         question: "What does an insulation resistance test measure?",
-        options: ["The length of copper wire in metres", "The resistance between current-carrying conductors and earth to verify insulation integrity", "The supply voltage from the grid", "The trip speed of the MCB"],
+        options: [
+          "The length of copper wire in metres",
+          "The resistance between current-carrying conductors and earth to verify insulation integrity",
+          "The supply voltage from the grid",
+          "The trip speed of the MCB",
+        ],
         correctIndex: 1,
-        explanation: "Insulation testing verifies there is no breakdown or current leakage between insulated cores and ground.",
+        explanation:
+          "Insulation testing verifies there is no breakdown or current leakage between insulated cores and ground.",
         skillTag: "dead-testing",
       },
       narration: { en: "Chapter 3 explains mandatory pre-energization testing protocols." },
@@ -663,7 +787,8 @@ export const ebookChapters: Record<string, Chapter[]> = {
       id: "ch-1",
       title: "Chapter 1 — Why earthing matters",
       startPage: 1,
-      takeaway: "Earthing provides a low-resistance path to trigger protective breakers during faults.",
+      takeaway:
+        "Earthing provides a low-resistance path to trigger protective breakers during faults.",
       paragraphs: [
         "This chapter introduces the topic in short, simple steps.",
         "Read each part slowly. Say the key words to yourself.",
@@ -672,9 +797,15 @@ export const ebookChapters: Record<string, Chapter[]> = {
       ],
       conceptCheck: {
         question: "Why is protective earthing essential?",
-        options: ["To save electricity", "To safely conduct fault current and trip breakers", "To brighten lamps", "To cool cables"],
+        options: [
+          "To save electricity",
+          "To safely conduct fault current and trip breakers",
+          "To brighten lamps",
+          "To cool cables",
+        ],
         correctIndex: 1,
-        explanation: "Protective earthing routes fault current to ground to trigger breakers instantly.",
+        explanation:
+          "Protective earthing routes fault current to ground to trigger breakers instantly.",
         skillTag: "earthing",
       },
       narration: { en: "Chapter 1 reviews earthing fundamentals." },
@@ -694,7 +825,12 @@ export const ebookChapters: Record<string, Chapter[]> = {
       ],
       conceptCheck: {
         question: "What should you check before measuring voltage with a test meter?",
-        options: ["Check the tester on a known live source to verify functionality", "Leave the tester in current (Amps) mode", "Measure with uninsulated probes", "Test in damp conditions"],
+        options: [
+          "Check the tester on a known live source to verify functionality",
+          "Leave the tester in current (Amps) mode",
+          "Measure with uninsulated probes",
+          "Test in damp conditions",
+        ],
         correctIndex: 0,
         explanation: "Always test your tester on a known proving unit before taking measurements.",
         skillTag: "safe-isolation",

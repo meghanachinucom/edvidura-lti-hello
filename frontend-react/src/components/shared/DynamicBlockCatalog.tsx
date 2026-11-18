@@ -117,7 +117,9 @@ export function DynamicBlockCatalog({
         </span>
       </div>
 
-      <div className={`grid gap-3.5 ${compact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
+      <div
+        className={`grid gap-3.5 ${compact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}
+      >
         {displayList.map((block) => {
           const isTested = testedBlock === block.id;
           const waveBadge = block.wave ? `Wave ${block.wave.toUpperCase()}` : "Live";
@@ -128,18 +130,16 @@ export function DynamicBlockCatalog({
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-[11px] font-bold text-secondary">
-                    {block.id}
-                  </span>
+                  <span className="font-mono text-[11px] font-bold text-secondary">{block.id}</span>
                   <span className="rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold text-secondary">
                     {waveBadge}
                   </span>
                 </div>
-                <h4 className="font-heading text-sm font-bold text-ink">
-                  {block.name}
-                </h4>
+                <h4 className="font-heading text-sm font-bold text-ink">{block.name}</h4>
                 <p className="text-xs text-ink-muted line-clamp-2 leading-relaxed">
-                  {block.summary || block.description || "Configured Lego module for educational courseware."}
+                  {block.summary ||
+                    block.description ||
+                    "Configured Lego module for educational courseware."}
                 </p>
               </div>
 

@@ -80,6 +80,8 @@ function Page() {
   const [assigning, setAssigning] = useState(false);
   const [assignSuccess, setAssignSuccess] = useState<string | null>(null);
   const [liveAssignments, setLiveAssignments] = useState<any[]>([]);
+  const [nrpsSyncing, setNrpsSyncing] = useState(false);
+  const [nrpsStatus, setNrpsStatus] = useState<string | null>(null);
 
   const loadAssignments = () => {
     api
@@ -92,11 +94,6 @@ function Page() {
       })
       .catch(() => {});
   };
-
-  // Role check: Instructor required
-  if (session && !session.isInstructor) {
-    return <AccessUnavailable back={{ to: "/school-admin", label: t("TC-18.title") }} />;
-  }
 
   const loadDirectory = () => {
     api
@@ -196,15 +193,21 @@ function Page() {
     }
   };
 
+  // Role check: Instructor required
+  if (session && !session.isInstructor) {
+    return <AccessUnavailable back={{ to: "/school-admin", label: t("TC-18.title") }} />;
+  }
+
   const base = remoteRows ?? (mockState.teacher.directory === "empty" ? [] : allRows);
-  const [nrpsSyncing, setNrpsSyncing] = useState(false);
-  const [nrpsStatus, setNrpsStatus] = useState<string | null>(null);
 
   const syncNrps = async () => {
     setNrpsSyncing(true);
     setNrpsStatus(null);
     try {
-      const res = await api.post<{ ok: boolean; message: string; member_count: number }>("/api/v1/app/roster/nrps/sync", {});
+      const res = await api.post<{ ok: boolean; message: string; member_count: number }>(
+        "/api/v1/app/roster/nrps/sync",
+        {},
+      );
       if (res && res.ok) {
         setNrpsStatus(`NRPS Synced: ${res.member_count} Members Matched`);
         loadDirectory();
@@ -221,7 +224,11 @@ function Page() {
 
   const tabItems: PillTab[] = [
     { id: "directory", label: "Student Directory", onSelect: () => setActiveTab("directory") },
-    { id: "groups", label: `Study Groups (${groups.length})`, onSelect: () => setActiveTab("groups") },
+    {
+      id: "groups",
+      label: `Study Groups (${groups.length})`,
+      onSelect: () => setActiveTab("groups"),
+    },
     { id: "assignments", label: "Group Assignments", onSelect: () => setActiveTab("assignments") },
   ];
 
@@ -290,17 +297,14 @@ function Page() {
           {groupSuccess && <StatusBanner variant="success">{groupSuccess}</StatusBanner>}
 
           <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
-            <h2 className="font-heading text-xl font-bold text-ink">
-              Create Study Group
-            </h2>
+            <h2 className="font-heading text-xl font-bold text-ink">Create Study Group</h2>
             <p className="mt-1 text-sm text-ink-muted">
-              Organize students into peer review cohorts, practical lab stations, or collaborative revision pods.
+              Organize students into peer review cohorts, practical lab stations, or collaborative
+              revision pods.
             </p>
             <form onSubmit={handleCreateGroup} className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-ink">
-                  Group Name
-                </label>
+                <label className="block text-sm font-semibold text-ink">Group Name</label>
                 <input
                   type="text"
                   value={newGroupName}
@@ -333,9 +337,7 @@ function Page() {
 
           <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="font-heading text-lg font-bold text-ink">
-                Active Study Groups
-              </h2>
+              <h2 className="font-heading text-lg font-bold text-ink">Active Study Groups</h2>
               <button
                 type="button"
                 onClick={loadGroups}
@@ -354,11 +356,16 @@ function Page() {
             ) : (
               <div className="mt-4 divide-y divide-border">
                 {groups.map((g: any, i: number) => (
-                  <div key={g.group_id || g.id || i} className="py-3 flex items-center justify-between">
+                  <div
+                    key={g.group_id || g.id || i}
+                    className="py-3 flex items-center justify-between"
+                  >
                     <div>
                       <p className="font-semibold text-ink">{g.name || `Study Group #${i + 1}`}</p>
                       <p className="text-xs text-ink-muted">
-                        Members: {Array.isArray(g.members) ? g.members.length : (g.member_count ?? 3)} students
+                        Members:{" "}
+                        {Array.isArray(g.members) ? g.members.length : (g.member_count ?? 3)}{" "}
+                        students
                       </p>
                     </div>
                     <span className="text-xs font-mono text-secondary bg-secondary/10 px-2.5 py-1 rounded-full">
@@ -381,14 +388,13 @@ function Page() {
               Assign Activity to Study Group
             </h2>
             <p className="mt-1 text-sm text-ink-muted">
-              Dispatch collaborative quizzes, interactive labs, or peer assignments to designated groups.
+              Dispatch collaborative quizzes, interactive labs, or peer assignments to designated
+              groups.
             </p>
             <form onSubmit={handleAssignWork} className="mt-4 space-y-4">
               <div className="grid gap-4 tablet:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-semibold text-ink">
-                    Target Study Group
-                  </label>
+                  <label className="block text-sm font-semibold text-ink">Target Study Group</label>
                   <select
                     value={assignGroupId}
                     onChange={(e) => setAssignGroupId(e.target.value)}
@@ -403,9 +409,7 @@ function Page() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink">
-                    Activity Type
-                  </label>
+                  <label className="block text-sm font-semibold text-ink">Activity Type</label>
                   <select
                     value={assignType}
                     onChange={(e) => setAssignType(e.target.value)}
@@ -418,9 +422,7 @@ function Page() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-ink">
-                  Assignment Title
-                </label>
+                <label className="block text-sm font-semibold text-ink">Assignment Title</label>
                 <input
                   type="text"
                   value={assignTitle}
@@ -440,9 +442,7 @@ function Page() {
           </div>
 
           <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
-            <h2 className="font-heading text-lg font-bold text-ink">
-              Group Assignments Board
-            </h2>
+            <h2 className="font-heading text-lg font-bold text-ink">Group Assignments Board</h2>
             <div className="mt-4 divide-y divide-border">
               {groupAssignments.length === 0 && liveAssignments.length === 0 ? (
                 <p className="text-sm text-ink-muted">No assignments dispatched yet.</p>
@@ -451,9 +451,12 @@ function Page() {
                   {groupAssignments.map((a: any, i: number) => (
                     <div key={a.id || i} className="py-3 flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-ink">{a.title || `Assignment #${i + 1}`}</p>
+                        <p className="font-semibold text-ink">
+                          {a.title || `Assignment #${i + 1}`}
+                        </p>
                         <p className="text-xs text-ink-muted">
-                          Type: <span className="uppercase">{a.activity_type || "quiz"}</span> | Group: {a.group_id}
+                          Type: <span className="uppercase">{a.activity_type || "quiz"}</span> |
+                          Group: {a.group_id}
                         </p>
                       </div>
                       <span className="text-xs font-mono text-success bg-success/10 px-2 py-0.5 rounded">
@@ -462,11 +465,19 @@ function Page() {
                     </div>
                   ))}
                   {liveAssignments.map((a: any, i: number) => (
-                    <div key={`live-${a.id || i}`} className="py-3 flex items-center justify-between">
+                    <div
+                      key={`live-${a.id || i}`}
+                      className="py-3 flex items-center justify-between"
+                    >
                       <div>
-                        <p className="font-semibold text-ink">{a.title || a.name || `Live Curriculum Assignment #${i + 1}`}</p>
+                        <p className="font-semibold text-ink">
+                          {a.title || a.name || `Live Curriculum Assignment #${i + 1}`}
+                        </p>
                         <p className="text-xs text-ink-muted">
-                          Subject: {a.subject || a.learner_name || "Enrolled Roster"} | Status: <span className="uppercase text-secondary font-semibold">{a.status || "Assigned"}</span>
+                          Subject: {a.subject || a.learner_name || "Enrolled Roster"} | Status:{" "}
+                          <span className="uppercase text-secondary font-semibold">
+                            {a.status || "Assigned"}
+                          </span>
                         </p>
                       </div>
                       <span className="text-xs font-mono text-secondary bg-secondary/10 px-2 py-0.5 rounded">

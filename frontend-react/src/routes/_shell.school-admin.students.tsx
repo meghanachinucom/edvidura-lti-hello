@@ -46,7 +46,9 @@ const cols: Column<Person>[] = [
 function Page() {
   const { session } = useRole();
   const token = session?.token || "";
-  const instUrl = token ? `/institution-detail?token=${encodeURIComponent(token)}` : "/institution-detail";
+  const instUrl = token
+    ? `/institution-detail?token=${encodeURIComponent(token)}`
+    : "/institution-detail";
 
   const [q, setQ] = useState("");
   const [byClass, setByClass] = useState(false);
@@ -59,7 +61,10 @@ function Page() {
     setNrpsSyncing(true);
     setNrpsStatus(null);
     try {
-      const res = await api.post<{ ok: boolean; message: string; member_count: number }>("/api/v1/app/roster/nrps/sync", {});
+      const res = await api.post<{ ok: boolean; message: string; member_count: number }>(
+        "/api/v1/app/roster/nrps/sync",
+        {},
+      );
       if (res && res.ok) {
         setNrpsStatus(`NRPS Synced: ${res.member_count} Members Matched`);
         loadStudents();
@@ -81,7 +86,7 @@ function Page() {
             id: st.id || st.student_code || `stu-${idx + 1}`,
             name: st.name,
             role: "learner",
-            classCode: (st.class_code === "ELE-B" ? "ELE-B" : "ELE-A"),
+            classCode: st.class_code === "ELE-B" ? "ELE-B" : "ELE-A",
           }));
           setRemoteStudents(mapped);
         }
@@ -94,11 +99,7 @@ function Page() {
     loadStudents();
   }, []);
 
-  const base = remoteStudents ?? (
-    mockState.schoolAdmin.students === "empty"
-      ? []
-      : learners
-  );
+  const base = remoteStudents ?? (mockState.schoolAdmin.students === "empty" ? [] : learners);
   const n = q.trim().toLowerCase();
   const rows = base.filter((p) => !n || p.name.toLowerCase().includes(n));
   const empty = (
@@ -145,7 +146,10 @@ function Page() {
       </div>
       <ol aria-label={s("steps")} className="flex flex-col gap-3 tablet:flex-row">
         {[1, 2, 3].map((i) => (
-          <li key={i} className="flex-1 rounded-surface border border-border bg-surface p-4 shadow-sm">
+          <li
+            key={i}
+            className="flex-1 rounded-surface border border-border bg-surface p-4 shadow-sm"
+          >
             <p className="font-heading text-[18px] text-ink font-bold">{s(`s${i}`)}</p>
             <p className="mt-1 text-ink text-sm">{s(`s${i}d`)}</p>
           </li>

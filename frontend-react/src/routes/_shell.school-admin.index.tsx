@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Activity, BarChart3, BookOpenCheck, ExternalLink, GraduationCap, Users } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  BookOpenCheck,
+  ExternalLink,
+  GraduationCap,
+  Users,
+} from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { CountUp } from "@/components/shared/CountUp";
@@ -58,7 +65,9 @@ function Page() {
   const m = mockState.schoolAdmin;
   const { session } = useRole();
   const token = session?.token || "";
-  const institutionDetailUrl = token ? `/institution-detail?token=${encodeURIComponent(token)}` : "/institution-detail";
+  const institutionDetailUrl = token
+    ? `/institution-detail?token=${encodeURIComponent(token)}`
+    : "/institution-detail";
 
   const [loading, setLoading] = useState(true);
   const [remoteData, setRemoteData] = useState<SchoolOverviewResponse | null>(null);
@@ -88,9 +97,11 @@ function Page() {
   }, [m.loadingMs]);
 
   const empty = m.home === "empty";
-  const f = remoteData?.figures ?? (empty
-    ? { learnersLaunched: 0, quizAttempts: 0, moodleUsers: 0, moodleBindings: 0, classesLinks: 0 }
-    : instituteFigures);
+  const f =
+    remoteData?.figures ??
+    (empty
+      ? { learnersLaunched: 0, quizAttempts: 0, moodleUsers: 0, moodleBindings: 0, classesLinks: 0 }
+      : instituteFigures);
   const figures: [string, number][] = [
     [s("learners"), f.learnersLaunched],
     [s("attempts"), f.quizAttempts],

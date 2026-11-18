@@ -140,15 +140,15 @@ export function VoiceInputButton({
         listening
           ? "bg-rose-600 text-white animate-pulse"
           : cleaning
-          ? "bg-amber-100 text-amber-900 border border-amber-300"
-          : "bg-surface border border-border text-ink hover:bg-highlight"
+            ? "bg-amber-100 text-amber-900 border border-amber-300"
+            : "bg-surface border border-border text-ink hover:bg-highlight"
       } ${className}`}
       title={
         listening
           ? "Listening... Click to stop"
           : cleaning
-          ? "Cleaning audio with smart voice filter..."
-          : `Speak in ${bcp47}`
+            ? "Cleaning audio with smart voice filter..."
+            : `Speak in ${bcp47}`
       }
       aria-label={listening ? "Stop microphone" : "Speak question"}
       aria-pressed={listening}

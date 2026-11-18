@@ -1,6 +1,15 @@
 import { useEffect, useId, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Box, Layers, RefreshCw, Send, CheckCircle2, Sparkles, ExternalLink, Play } from "lucide-react";
+import {
+  Box,
+  Layers,
+  RefreshCw,
+  Send,
+  CheckCircle2,
+  Sparkles,
+  ExternalLink,
+  Play,
+} from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { PillTabs, type PillTab } from "@/components/shared/PillTabs";
@@ -198,7 +207,11 @@ function Page() {
 
   const tabItems: PillTab[] = [
     { id: "planner", label: "Micro-Learning Planner", onSelect: () => setActiveTab("planner") },
-    { id: "labs", label: `Interactive Labs (${labPacks.length})`, onSelect: () => setActiveTab("labs") },
+    {
+      id: "labs",
+      label: `Interactive Labs (${labPacks.length})`,
+      onSelect: () => setActiveTab("labs"),
+    },
     { id: "xr", label: "XR Suite & Spatial Training", onSelect: () => setActiveTab("xr") },
   ];
 
@@ -341,21 +354,18 @@ function Page() {
 
       {activeTab === "labs" && (
         <div className="space-y-6">
-          {publishSuccess && (
-            <StatusBanner variant="success">{publishSuccess}</StatusBanner>
-          )}
+          {publishSuccess && <StatusBanner variant="success">{publishSuccess}</StatusBanner>}
           <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
             <h2 className="font-heading text-xl font-bold text-ink">
               Interactive Lab Pack Authoring
             </h2>
             <p className="mt-1 text-sm text-ink-muted">
-              Generate interactive simulation labs from textbook instructions, circuit diagrams, or maintenance procedures.
+              Generate interactive simulation labs from textbook instructions, circuit diagrams, or
+              maintenance procedures.
             </p>
             <form onSubmit={handleProposeLab} className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-ink">
-                  Lab / Chapter Title
-                </label>
+                <label className="block text-sm font-semibold text-ink">Lab / Chapter Title</label>
                 <input
                   type="text"
                   value={proposeTitle}
@@ -402,9 +412,16 @@ function Page() {
                   <p className="text-sm text-error">{proposalResult.error}</p>
                 ) : (
                   <div className="text-sm text-ink space-y-2">
-                    <p><strong>Title:</strong> {proposalResult.title || proposeTitle}</p>
-                    <p><strong>Steps:</strong> {proposalResult.steps?.length ?? 4} procedural stages configured.</p>
-                    <p><strong>Safety Checklist:</strong> Enforced before virtual energized state.</p>
+                    <p>
+                      <strong>Title:</strong> {proposalResult.title || proposeTitle}
+                    </p>
+                    <p>
+                      <strong>Steps:</strong> {proposalResult.steps?.length ?? 4} procedural stages
+                      configured.
+                    </p>
+                    <p>
+                      <strong>Safety Checklist:</strong> Enforced before virtual energized state.
+                    </p>
                   </div>
                 )}
               </div>
@@ -439,7 +456,8 @@ function Page() {
                     <div>
                       <p className="font-semibold text-ink">{pack.title || `Lab Pack #${i + 1}`}</p>
                       <p className="text-xs text-ink-muted font-mono">
-                        Status: <span className="uppercase">{pack.status || "draft"}</span> | Chapter: {pack.chapter_slug || "overview"}
+                        Status: <span className="uppercase">{pack.status || "draft"}</span> |
+                        Chapter: {pack.chapter_slug || "overview"}
                       </p>
                     </div>
                     {pack.status !== "published" && (
@@ -477,7 +495,8 @@ function Page() {
               </button>
             </div>
             <p className="mt-1 text-sm text-ink-muted">
-              Spatial training environments, 3D asset configurators, AR overlays, and VR maintainer modules.
+              Spatial training environments, 3D asset configurators, AR overlays, and VR maintainer
+              modules.
             </p>
             {xrLoading && !xrOverview ? (
               <p className="mt-4 text-sm text-ink-muted">Loading XR capabilities...</p>
@@ -491,7 +510,9 @@ function Page() {
                   <p className="mt-2 text-2xl font-bold text-ink">
                     {xrOverview?.products?.immersive_labs ? "Active" : "Enabled"}
                   </p>
-                  <p className="text-xs text-ink-muted mt-1">Multi-user spatial simulation rooms.</p>
+                  <p className="text-xs text-ink-muted mt-1">
+                    Multi-user spatial simulation rooms.
+                  </p>
                 </div>
                 <div className="rounded-surface border border-border p-4 bg-surface">
                   <div className="flex items-center gap-2">
@@ -522,16 +543,21 @@ function Page() {
               3D Asset Repository & Configurator
             </h2>
             <p className="text-sm text-ink-muted mt-1">
-              Industrial models, engine cutaways, and switchgear assemblies configured for classroom labs.
+              Industrial models, engine cutaways, and switchgear assemblies configured for classroom
+              labs.
             </p>
             <div className="mt-4 grid gap-3 tablet:grid-cols-2">
               <div className="rounded-surface border border-border p-3 bg-surface">
                 <p className="font-semibold text-ink">Three-Phase Induction Motor 5HP</p>
-                <p className="text-xs text-ink-muted">Format: GLTF/USDZ | Exploded View: Supported</p>
+                <p className="text-xs text-ink-muted">
+                  Format: GLTF/USDZ | Exploded View: Supported
+                </p>
               </div>
               <div className="rounded-surface border border-border p-3 bg-surface">
                 <p className="font-semibold text-ink">Distribution Panel MCCB & Busbar</p>
-                <p className="text-xs text-ink-muted">Format: GLTF/USDZ | Interactive Breakers: Yes</p>
+                <p className="text-xs text-ink-muted">
+                  Format: GLTF/USDZ | Interactive Breakers: Yes
+                </p>
               </div>
             </div>
           </div>

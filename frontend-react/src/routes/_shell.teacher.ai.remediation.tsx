@@ -58,9 +58,7 @@ function Page() {
       });
       if (resp?.remediation_body || resp?.remediation_text) {
         setTitle(
-          resp.remediation_title ||
-            resp.title ||
-            "Remediation: Arc Length and Voltage Balance",
+          resp.remediation_title || resp.title || "Remediation: Arc Length and Voltage Balance",
         );
         setBody(resp.remediation_body || resp.remediation_text || "");
         setDrafting(false);

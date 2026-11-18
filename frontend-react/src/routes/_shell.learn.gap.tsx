@@ -250,43 +250,75 @@ function Page() {
           </span>
         </div>
         <p className="text-xs text-ink-muted">
-          Your learning path is semantically linked to standardized competencies, textbook chapters, and xAPI diagnostic evidence.
+          Your learning path is semantically linked to standardized competencies, textbook chapters,
+          and xAPI diagnostic evidence.
         </p>
 
         <div className="grid grid-cols-1 gap-3 tablet:grid-cols-3">
           <div className="rounded-card border border-border bg-page-bg p-3.5 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-mono font-bold text-brand">comp-variables</span>
-              <span className="rounded bg-emerald-100 text-emerald-800 text-[10px] font-semibold px-1.5 py-0.2">Prerequisite Met</span>
+              <span className="rounded bg-emerald-100 text-emerald-800 text-[10px] font-semibold px-1.5 py-0.2">
+                Prerequisite Met
+              </span>
             </div>
             <h3 className="text-xs font-bold text-ink">Variables & Algebraic Expressions</h3>
-            <p className="text-[11px] text-ink-muted">Foundational skill for balancing equations.</p>
+            <p className="text-[11px] text-ink-muted">
+              Foundational skill for balancing equations.
+            </p>
             <div className="pt-2 border-t border-border/60 text-[11px] text-ink-muted">
-              Aligned: <Link to="/read/manuals/$manualId" params={{ manualId: "11111111-2222-3333-4444-555555555551" }} className="text-brand underline font-medium">Algebra I Ch. 1</Link>
+              Aligned:{" "}
+              <Link
+                to="/read/manuals/$manualId"
+                params={{ manualId: "11111111-2222-3333-4444-555555555551" }}
+                className="text-brand underline font-medium"
+              >
+                Algebra I Ch. 1
+              </Link>
             </div>
           </div>
 
           <div className="rounded-card border border-brand/40 bg-brand/5 p-3.5 space-y-2 ring-1 ring-brand/20">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-mono font-bold text-brand">comp-solve-linear</span>
-              <span className="rounded bg-amber-100 text-amber-800 text-[10px] font-semibold px-1.5 py-0.2">In Progress</span>
+              <span className="rounded bg-amber-100 text-amber-800 text-[10px] font-semibold px-1.5 py-0.2">
+                In Progress
+              </span>
             </div>
             <h3 className="text-xs font-bold text-ink">Solving Linear Equations</h3>
-            <p className="text-[11px] text-ink-muted">Two-step isolation and inverse balance operations.</p>
+            <p className="text-[11px] text-ink-muted">
+              Two-step isolation and inverse balance operations.
+            </p>
             <div className="pt-2 border-t border-border/60 text-[11px] text-ink-muted">
-              Aligned: <Link to="/active-quizzes" className="text-brand underline font-medium">Slice A Quiz (Q2, Q3)</Link>
+              Aligned:{" "}
+              <Link to="/active-quizzes" className="text-brand underline font-medium">
+                Slice A Quiz (Q2, Q3)
+              </Link>
             </div>
           </div>
 
           <div className="rounded-card border border-border bg-page-bg p-3.5 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono font-bold text-ink-muted">comp-word-problems</span>
-              <span className="rounded bg-gray-100 text-gray-700 text-[10px] font-semibold px-1.5 py-0.2">Next Goal</span>
+              <span className="text-[11px] font-mono font-bold text-ink-muted">
+                comp-word-problems
+              </span>
+              <span className="rounded bg-gray-100 text-gray-700 text-[10px] font-semibold px-1.5 py-0.2">
+                Next Goal
+              </span>
             </div>
             <h3 className="text-xs font-bold text-ink">Linear Word Problems</h3>
-            <p className="text-[11px] text-ink-muted">Formulating real-world quantitative conditions into models.</p>
+            <p className="text-[11px] text-ink-muted">
+              Formulating real-world quantitative conditions into models.
+            </p>
             <div className="pt-2 border-t border-border/60 text-[11px] text-ink-muted">
-              Aligned: <Link to="/read/manuals/$manualId" params={{ manualId: "11111111-2222-3333-4444-555555555551" }} className="text-brand underline font-medium">Algebra I Ch. 4</Link>
+              Aligned:{" "}
+              <Link
+                to="/read/manuals/$manualId"
+                params={{ manualId: "11111111-2222-3333-4444-555555555551" }}
+                className="text-brand underline font-medium"
+              >
+                Algebra I Ch. 4
+              </Link>
             </div>
           </div>
         </div>

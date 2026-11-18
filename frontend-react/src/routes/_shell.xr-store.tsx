@@ -23,7 +23,10 @@ export const Route = createFileRoute("/_shell/xr-store")({
   head: () => ({
     meta: [
       { title: "XR Store & 3D Spatial Labs" + t("app.titleSuffix") },
-      { name: "description", content: "Interactive WebXR 3D Spatial Labs and Cartesian coordinate simulators" },
+      {
+        name: "description",
+        content: "Interactive WebXR 3D Spatial Labs and Cartesian coordinate simulators",
+      },
     ],
   }),
   component: XrStorePage,
@@ -45,9 +48,11 @@ const XR_LABS: XrLabItem[] = [
     id: "cartesian-3d",
     name: "Walk the Graph in 3D: Cartesian Coordinate Lab",
     category: "spatial-math",
-    tagline: "Manipulate slope (m) and intercept (b) in real-time with dynamic delta-triangle geometry.",
+    tagline:
+      "Manipulate slope (m) and intercept (b) in real-time with dynamic delta-triangle geometry.",
     heroImage: "/images/xr/cartesian-3d.svg",
-    description: "Interactive visual laboratory for exploring linear equations y = mx + b on a Cartesian coordinate plane with responsive slope adjustments and point calculations.",
+    description:
+      "Interactive visual laboratory for exploring linear equations y = mx + b on a Cartesian coordinate plane with responsive slope adjustments and point calculations.",
     headsetReady: true,
     interactiveLabType: "cartesian",
   },
@@ -57,7 +62,8 @@ const XR_LABS: XrLabItem[] = [
     category: "geometry-ar",
     tagline: "Step-by-step augmented reality safety inspection for 33kV isolators and busbars.",
     heroImage: "/images/xr/substation-ar.svg",
-    description: "Industrial Lockout-Tagout (LOTO) protocol training with virtual step validation and hazardous voltage simulation.",
+    description:
+      "Industrial Lockout-Tagout (LOTO) protocol training with virtual step validation and hazardous voltage simulation.",
     headsetReady: true,
     interactiveLabType: "ar-checklist",
   },
@@ -67,7 +73,8 @@ const XR_LABS: XrLabItem[] = [
     category: "physics-lab",
     tagline: "Live voltage, current, and resistance parametric circuit simulator.",
     heroImage: "/images/xr/circuit-vr.svg",
-    description: "Build virtual parallel and series circuits with live multimeter readings, breaker trip thresholds, and ground fault safety checks.",
+    description:
+      "Build virtual parallel and series circuits with live multimeter readings, breaker trip thresholds, and ground fault safety checks.",
     headsetReady: false,
     interactiveLabType: "circuit",
   },
@@ -77,7 +84,8 @@ const XR_LABS: XrLabItem[] = [
     category: "simulations",
     tagline: "Simulate linear and circular interpolation G01/G02 cutter moves in 3D space.",
     heroImage: "/images/xr/cnc-toolpath.svg",
-    description: "Visualize coordinate translation and spindle paths on precision machining stock before physical shop-floor fabrication.",
+    description:
+      "Visualize coordinate translation and spindle paths on precision machining stock before physical shop-floor fabrication.",
     headsetReady: true,
   },
 ];
@@ -119,7 +127,8 @@ export function XrStorePage() {
             XR Store & Interactive 3D Spatial Labs
           </h1>
           <p className="text-xs tablet:text-sm text-ink-muted mt-1 max-w-2xl">
-            Hands-on WebGL and WebXR simulations designed for Chrome, Meta Quest, and spatial touchscreens.
+            Hands-on WebGL and WebXR simulations designed for Chrome, Meta Quest, and spatial
+            touchscreens.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-2xl bg-surface border border-border px-4 py-2 text-xs font-semibold text-ink shadow-sm">
@@ -145,9 +154,7 @@ export function XrStorePage() {
           <h2 className="font-heading text-2xl tablet:text-4xl font-black text-white">
             {XR_LABS[0]!.name}
           </h2>
-          <p className="text-xs tablet:text-sm text-slate-300">
-            {XR_LABS[0]!.tagline}
-          </p>
+          <p className="text-xs tablet:text-sm text-slate-300">{XR_LABS[0]!.tagline}</p>
           <div className="flex items-center gap-3 pt-2">
             <button
               id="launch-3d-lab-btn"
@@ -172,7 +179,8 @@ export function XrStorePage() {
               Live Cartesian Coordinate Plane: y = mx + b
             </h3>
             <p className="text-xs text-ink-muted">
-              Drag the sliders below to see how varying slope and intercept shifts the coordinate vector in real time.
+              Drag the sliders below to see how varying slope and intercept shifts the coordinate
+              vector in real time.
             </p>
           </div>
           <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600">
@@ -260,7 +268,8 @@ export function XrStorePage() {
             <div className="p-4 rounded-2xl bg-page-bg border border-border space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-                  Y-Intercept (b): <span className="text-sky-600 font-mono text-sm">{intercept}</span>
+                  Y-Intercept (b):{" "}
+                  <span className="text-sky-600 font-mono text-sm">{intercept}</span>
                 </span>
                 <span className="text-xs font-mono text-ink-muted">(0, {intercept})</span>
               </div>
@@ -283,7 +292,8 @@ export function XrStorePage() {
             <div className="p-4 rounded-2xl bg-page-bg border border-border space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-                  Evaluate at X = <span className="text-emerald-600 font-mono text-sm">{evalX}</span>
+                  Evaluate at X ={" "}
+                  <span className="text-emerald-600 font-mono text-sm">{evalX}</span>
                 </span>
                 <span className="text-xs font-mono text-emerald-600 font-bold">Y = {evalY}</span>
               </div>
@@ -358,9 +368,7 @@ export function XrStorePage() {
                 <h3 className="font-heading text-lg font-bold text-ink leading-snug group-hover:text-amber-600 transition">
                   {lab.name}
                 </h3>
-                <p className="text-xs text-ink-muted mt-2 leading-relaxed">
-                  {lab.tagline}
-                </p>
+                <p className="text-xs text-ink-muted mt-2 leading-relaxed">{lab.tagline}</p>
               </div>
 
               <div className="border-t border-border pt-4 flex items-center justify-between">
@@ -414,8 +422,22 @@ export function XrStorePage() {
                         {/* Grid lines */}
                         {[-80, -60, -40, -20, 20, 40, 60, 80].map((v) => (
                           <g key={v} opacity={0.15}>
-                            <line x1={v} y1="-100" x2={v} y2="100" stroke="#94a3b8" strokeWidth="0.5" />
-                            <line x1="-100" y1={v} x2="100" y2={v} stroke="#94a3b8" strokeWidth="0.5" />
+                            <line
+                              x1={v}
+                              y1="-100"
+                              x2={v}
+                              y2="100"
+                              stroke="#94a3b8"
+                              strokeWidth="0.5"
+                            />
+                            <line
+                              x1="-100"
+                              y1={v}
+                              x2="100"
+                              y2={v}
+                              stroke="#94a3b8"
+                              strokeWidth="0.5"
+                            />
                           </g>
                         ))}
                         {/* Axes */}
@@ -451,7 +473,8 @@ export function XrStorePage() {
                       {/* Legend overlay */}
                       <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-mono text-slate-300 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-xs">
                         <span className="text-amber-400 font-bold">
-                          Line: y = {slope}x {intercept >= 0 ? `+ ${intercept}` : `- ${Math.abs(intercept)}`}
+                          Line: y = {slope}x{" "}
+                          {intercept >= 0 ? `+ ${intercept}` : `- ${Math.abs(intercept)}`}
                         </span>
                         <span className="text-emerald-400 font-bold">
                           Point: ({evalX}, {evalY})
@@ -464,7 +487,8 @@ export function XrStorePage() {
                       <div className="p-4 rounded-2xl bg-page-bg border border-border space-y-4">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-                            Slope (m): <span className="text-amber-600 font-mono text-sm">{slope}</span>
+                            Slope (m):{" "}
+                            <span className="text-amber-600 font-mono text-sm">{slope}</span>
                           </span>
                           <span className="text-xs font-mono text-ink-muted">θ = {angleDeg}°</span>
                         </div>
@@ -487,7 +511,8 @@ export function XrStorePage() {
                       <div className="p-4 rounded-2xl bg-page-bg border border-border space-y-4">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-                            Y-Intercept (b): <span className="text-sky-600 font-mono text-sm">{intercept}</span>
+                            Y-Intercept (b):{" "}
+                            <span className="text-sky-600 font-mono text-sm">{intercept}</span>
                           </span>
                           <span className="text-xs font-mono text-ink-muted">(0, {intercept})</span>
                         </div>
@@ -510,9 +535,12 @@ export function XrStorePage() {
                       <div className="p-4 rounded-2xl bg-page-bg border border-border space-y-4">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-                            Evaluate at X = <span className="text-emerald-600 font-mono text-sm">{evalX}</span>
+                            Evaluate at X ={" "}
+                            <span className="text-emerald-600 font-mono text-sm">{evalX}</span>
                           </span>
-                          <span className="text-xs font-mono text-emerald-600 font-bold">Y = {evalY}</span>
+                          <span className="text-xs font-mono text-emerald-600 font-bold">
+                            Y = {evalY}
+                          </span>
                         </div>
                         <input
                           type="range"
@@ -531,7 +559,8 @@ export function XrStorePage() {
                 /* AR Substation Inspection Checklist */
                 <div className="space-y-4">
                   <p className="text-xs text-ink-muted">
-                    Simulate real-time augmented reality visual confirmation for high-voltage industrial equipment.
+                    Simulate real-time augmented reality visual confirmation for high-voltage
+                    industrial equipment.
                   </p>
                   <div className="space-y-3">
                     {arSteps.map((step) => (
@@ -540,7 +569,7 @@ export function XrStorePage() {
                         type="button"
                         onClick={() => {
                           setArSteps((prev) =>
-                            prev.map((s) => (s.id === step.id ? { ...s, done: !s.done } : s))
+                            prev.map((s) => (s.id === step.id ? { ...s, done: !s.done } : s)),
                           );
                         }}
                         className={`w-full flex items-center justify-between p-4 rounded-2xl border text-left transition ${
@@ -552,7 +581,9 @@ export function XrStorePage() {
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-6 h-6 rounded-lg flex items-center justify-center ${
-                              step.done ? "bg-emerald-500 text-white" : "border border-border bg-surface"
+                              step.done
+                                ? "bg-emerald-500 text-white"
+                                : "border border-border bg-surface"
                             }`}
                           >
                             {step.done && <CheckCircle2 size={16} />}
@@ -573,7 +604,9 @@ export function XrStorePage() {
                     <Sparkles size={32} />
                   </div>
                   <h4 className="font-heading text-lg font-bold text-ink">{selectedLab.name}</h4>
-                  <p className="text-xs text-ink-muted max-w-md mx-auto">{selectedLab.description}</p>
+                  <p className="text-xs text-ink-muted max-w-md mx-auto">
+                    {selectedLab.description}
+                  </p>
                 </div>
               )}
             </div>

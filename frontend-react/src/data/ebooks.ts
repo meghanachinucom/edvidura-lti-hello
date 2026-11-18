@@ -25,7 +25,8 @@ export const ebooks: Ebook[] = [
     id: "de7900fd-488b-4740-bf7e-7a11b3475cd6",
     slug: "algebra-i-foundations",
     title: "Algebra I: Foundations, Variables & Linear Equations Handbook",
-    description: "Foundational algebraic reasoning, single and multi-step linear equations, inequalities, and Cartesian graphing for Class 8.",
+    description:
+      "Foundational algebraic reasoning, single and multi-step linear equations, inequalities, and Cartesian graphing for Class 8.",
     pages: 64,
     currentPage: 1,
     cover: "accent",
@@ -42,7 +43,8 @@ export const ebooks: Ebook[] = [
     id: "eb-physical-science",
     slug: "physical-science-motion",
     title: "Physical Science: Motion, Forces & Energy Interactive Textbook",
-    description: "Kinematics, Newton's three laws of motion, work-energy transformations, and momentum conservation with interactive formula checks.",
+    description:
+      "Kinematics, Newton's three laws of motion, work-energy transformations, and momentum conservation with interactive formula checks.",
     pages: 72,
     currentPage: 1,
     cover: "focus",
@@ -59,7 +61,8 @@ export const ebooks: Ebook[] = [
     id: "eb-railways-safety",
     slug: "railways-safety-manual",
     title: "Indian Railways Track Maintenance & Signalling Safety Manual",
-    description: "Permanent way engineering, ultrasonic flaw detection, electronic interlocking, Kavach ATP systems, and field trackside safety protocols.",
+    description:
+      "Permanent way engineering, ultrasonic flaw detection, electronic interlocking, Kavach ATP systems, and field trackside safety protocols.",
     pages: 88,
     currentPage: 1,
     cover: "amber",
@@ -76,7 +79,8 @@ export const ebooks: Ebook[] = [
     id: "eb-digital-cybersecurity",
     slug: "digital-ai-cybersecurity",
     title: "Digital Literacy, AI & Cybersecurity Foundations",
-    description: "Computer architecture, modern artificial intelligence models, cybersecurity defense, DPDP compliance, and ethical digital citizenship.",
+    description:
+      "Computer architecture, modern artificial intelligence models, cybersecurity defense, DPDP compliance, and ethical digital citizenship.",
     pages: 58,
     currentPage: 1,
     cover: "emerald",
@@ -93,7 +97,8 @@ export const ebooks: Ebook[] = [
     id: "eb-niti-ethics",
     slug: "niti-ethics-companion",
     title: "Niti & Life Values: Student Character & Ethics Companion",
-    description: "Moral reasoning, Satya and Dharma in daily life, community compassion, and civic harmony with multilingual Indian language reflections.",
+    description:
+      "Moral reasoning, Satya and Dharma in daily life, community compassion, and civic harmony with multilingual Indian language reflections.",
     pages: 52,
     currentPage: 1,
     cover: "ink",
@@ -159,5 +164,4 @@ export const ebooks: Ebook[] = [
   },
 ];
 
-export const ebookById = (id: string) =>
-  ebooks.find((e) => e.id === id || e.slug === id);
+export const ebookById = (id: string) => ebooks.find((e) => e.id === id || e.slug === id);

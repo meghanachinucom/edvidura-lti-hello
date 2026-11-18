@@ -1,6 +1,15 @@
 import { useEffect, useId, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, FileSearch, HardDrive, ShieldCheck, XCircle, RefreshCw, AlertTriangle, Search } from "lucide-react";
+import {
+  CheckCircle2,
+  FileSearch,
+  HardDrive,
+  ShieldCheck,
+  XCircle,
+  RefreshCw,
+  AlertTriangle,
+  Search,
+} from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { PillTabs, type PillTab } from "@/components/shared/PillTabs";
@@ -108,7 +117,9 @@ function Page() {
     if (searchQuery.trim().length < 2) return;
     setSearchLoading(true);
     try {
-      const res: any = await api.get(`/api/v1/app/document-search?q=${encodeURIComponent(searchQuery.trim())}`);
+      const res: any = await api.get(
+        `/api/v1/app/document-search?q=${encodeURIComponent(searchQuery.trim())}`,
+      );
       setSearchResults(res?.hits || []);
     } catch (err) {
       console.error("Document search error:", err);
@@ -235,7 +246,8 @@ function Page() {
               </div>
               <div>
                 <label htmlFor={`${id}-d`} className="block font-semibold text-ink">
-                  {s("displayName")} <span className="font-normal text-ink-muted">{s("optional")}</span>
+                  {s("displayName")}{" "}
+                  <span className="font-normal text-ink-muted">{s("optional")}</span>
                 </label>
                 <input
                   id={`${id}-d`}
@@ -355,7 +367,8 @@ function Page() {
               Wave A — SME Handbook Document Search
             </h2>
             <p className="mt-1 text-sm text-ink-muted">
-              Vector and keyword search across indexed technical manuals, schematics, and instructional guides.
+              Vector and keyword search across indexed technical manuals, schematics, and
+              instructional guides.
             </p>
             <form onSubmit={handleSearch} className="mt-4 flex items-center gap-2">
               <div className="relative flex-1">
@@ -388,13 +401,20 @@ function Page() {
               <p className="text-sm text-ink-muted">Searching indexed documents...</p>
             ) : searchResults.length === 0 ? (
               <div className="rounded-surface border border-border bg-surface p-6 text-center text-sm text-ink-muted">
-                {searchQuery ? "No matching manual sections found." : "Enter a search term above to query the document index."}
+                {searchQuery
+                  ? "No matching manual sections found."
+                  : "Enter a search term above to query the document index."}
               </div>
             ) : (
               searchResults.map((hit: any, i: number) => (
-                <article key={i} className="rounded-surface border border-border bg-surface p-4 shadow-sm">
+                <article
+                  key={i}
+                  className="rounded-surface border border-border bg-surface p-4 shadow-sm"
+                >
                   <div className="flex items-start justify-between">
-                    <h3 className="font-semibold text-ink">{hit.title || `Handbook Match #${i + 1}`}</h3>
+                    <h3 className="font-semibold text-ink">
+                      {hit.title || `Handbook Match #${i + 1}`}
+                    </h3>
                     {hit.score && (
                       <span className="text-xs font-mono text-ink-muted">
                         Score: {Math.round(hit.score * 100)}%
@@ -442,11 +462,17 @@ function Page() {
             ) : (
               <div className="mt-4 divide-y divide-border">
                 {auditTrail.map((entry: any, i: number) => (
-                  <div key={entry.id || i} className="py-3 flex flex-col tablet:flex-row tablet:items-center justify-between gap-2">
+                  <div
+                    key={entry.id || i}
+                    className="py-3 flex flex-col tablet:flex-row tablet:items-center justify-between gap-2"
+                  >
                     <div>
-                      <p className="font-semibold text-ink">{entry.quiz_title || entry.action || `Audit Event #${i + 1}`}</p>
+                      <p className="font-semibold text-ink">
+                        {entry.quiz_title || entry.action || `Audit Event #${i + 1}`}
+                      </p>
                       <p className="text-xs text-ink-muted">
-                        User: {entry.subject || entry.user_id || "Student"} | Time: {entry.timestamp || "Recent"}
+                        User: {entry.subject || entry.user_id || "Student"} | Time:{" "}
+                        {entry.timestamp || "Recent"}
                       </p>
                     </div>
                     <span className="font-mono text-xs text-secondary bg-secondary/10 px-2 py-1 rounded">
@@ -463,16 +489,15 @@ function Page() {
               IQ Review — Item Quality & Psychometrics
             </h2>
             <p className="text-sm text-ink-muted mt-1">
-              Automated item discrimination index, distracter analysis, and flag detection for ambiguous questions.
+              Automated item discrimination index, distracter analysis, and flag detection for
+              ambiguous questions.
             </p>
             <div className="mt-4 grid gap-4 tablet:grid-cols-3">
               <div className="rounded-surface border border-border p-4 bg-surface">
                 <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
                   Items Analyzed
                 </span>
-                <p className="mt-2 text-2xl font-bold text-ink">
-                  {iqReport?.total_items ?? 48}
-                </p>
+                <p className="mt-2 text-2xl font-bold text-ink">{iqReport?.total_items ?? 48}</p>
               </div>
               <div className="rounded-surface border border-border p-4 bg-surface">
                 <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
@@ -512,7 +537,8 @@ function Page() {
               </button>
             </div>
             <p className="mt-1 text-sm text-ink-muted">
-              Pre-packaged offline runtime packages for disconnected naval ships, remote micro-grids, and air-gapped lab servers.
+              Pre-packaged offline runtime packages for disconnected naval ships, remote
+              micro-grids, and air-gapped lab servers.
             </p>
             {airgapLoading && !airgapData ? (
               <p className="mt-4 text-sm text-ink-muted">Checking air-gap readiness...</p>
@@ -522,10 +548,13 @@ function Page() {
                   <CheckCircle2 size={24} className="text-success shrink-0" />
                   <div>
                     <h3 className="font-semibold text-ink">
-                      {airgapData?.ready ? "Air-Gap Pack Ready for Export" : "Pack Packaging Certified"}
+                      {airgapData?.ready
+                        ? "Air-Gap Pack Ready for Export"
+                        : "Pack Packaging Certified"}
                     </h3>
                     <p className="text-xs text-ink-muted mt-0.5">
-                      All local assets, SQLite mirrors, client bundles, and fonts are cached locally.
+                      All local assets, SQLite mirrors, client bundles, and fonts are cached
+                      locally.
                     </p>
                   </div>
                 </div>
