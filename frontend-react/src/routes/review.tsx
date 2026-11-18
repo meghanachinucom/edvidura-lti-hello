@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GraduationCap, BookOpen, Users, ShieldCheck, ExternalLink, ArrowRight } from "lucide-react";
 import { DynamicBlockCatalog } from "@/components/shared/DynamicBlockCatalog";
-import { LanguageSelector } from "@/components/shared/VoiceControls";
-import { t, useLocale } from "@/i18n";
+import { t } from "@/i18n";
 
 export const Route = createFileRoute("/review")({
   head: () => ({
@@ -18,7 +17,6 @@ export const Route = createFileRoute("/review")({
 });
 
 function ReviewGateway() {
-  useLocale();
   return (
     <div className="flex min-h-screen flex-col bg-page-bg">
       <header className="border-b border-border bg-surface px-6 py-4">
@@ -32,12 +30,9 @@ function ReviewGateway() {
               <p className="text-[11px] font-medium text-ink-muted">Senior Review Gateway · Riverside High</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <LanguageSelector />
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full">
-              <span>Production Deployment Ready</span>
-            </span>
-          </div>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full">
+            <span>Production Deployment Ready</span>
+          </span>
         </div>
       </header>
 
@@ -211,214 +206,6 @@ function ReviewGateway() {
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
                   <span>Open /learn/analytics</span>
-                  <ArrowRight size={12} />
-                </div>
-              </a>
-            </div>
-          </div>
-
-          {/* Open-Source AI, Linked Data & Interactive eBook Direct Feature Launchpad */}
-          <div className="rounded-2xl border-2 border-secondary/40 bg-surface p-6 shadow-md space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
-                  Open-Source AI, Linked Data & Interactive eBook Direct Feature Launchpad
-                </span>
-                <h3 className="text-lg font-bold text-ink mt-0.5">
-                  1-Click Direct Authenticated Launches into Specialized Engines
-                </h3>
-              </div>
-              <span className="rounded-full bg-secondary/10 px-3 py-1 text-xs font-bold text-secondary">
-                Auto-Authenticating Launchers
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
-              {/* Jane Street Socratic Tutor */}
-              <a
-                href="/api/v1/auth/demo-launch?persona=learner&next=/learn/coach"
-                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary hover:shadow-sm transition"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-secondary uppercase">Learner · AI Tutor</span>
-                    <span className="text-[10px] bg-secondary/15 text-secondary px-1.5 py-0.2 rounded font-semibold">Jane Street</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Socratic Tutor (Ask Vidura)</h4>
-                  <p className="text-[11px] text-ink-muted leading-tight">
-                    6-stage maieutic tutor with 0–5 mastery tracker, diagnostic guided hints, and 12-language Indian voice STT.
-                  </p>
-                </div>
-                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
-                  <span>Launch /learn/coach</span>
-                  <ArrowRight size={12} />
-                </div>
-              </a>
-
-              {/* PaperMorph 5 Interactive eBooks */}
-              <a
-                href="/api/v1/auth/demo-launch?persona=learner&next=/manuals"
-                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary hover:shadow-sm transition"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-secondary uppercase">Learner · Digital Library</span>
-                    <span className="text-[10px] bg-secondary/15 text-secondary px-1.5 py-0.2 rounded font-semibold">PaperMorph</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">5 Interactive Demo Textbooks</h4>
-                  <p className="text-[11px] text-ink-muted leading-tight">
-                    Algebra I, Physical Science, Railways Safety, AI Literacy & Niti with animated visual diagrams & audiobook.
-                  </p>
-                </div>
-                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
-                  <span>Launch /manuals</span>
-                  <ArrowRight size={12} />
-                </div>
-              </a>
-
-              {/* I2IDL 5-Pillar Linked Data */}
-              <a
-                href="/api/v1/auth/demo-launch?persona=learner&next=/learn/gap"
-                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary hover:shadow-sm transition"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-secondary uppercase">Learner · Standards</span>
-                    <span className="text-[10px] bg-secondary/15 text-secondary px-1.5 py-0.2 rounded font-semibold">IEEE 1484.20.3</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">I2IDL Linked Data & Study Plan</h4>
-                  <p className="text-[11px] text-ink-muted leading-tight">
-                    Interactive SVG semantic graph connecting competencies, learning metadata, PEBL chapters, and xAPI evidence.
-                  </p>
-                </div>
-                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
-                  <span>Launch /learn/gap</span>
-                  <ArrowRight size={12} />
-                </div>
-              </a>
-
-              {/* PaperMorph Reels */}
-              <a
-                href="/api/v1/auth/demo-launch?persona=learner&next=/learn/micro"
-                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary hover:shadow-sm transition"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-secondary uppercase">Learner · Micro-Learning</span>
-                    <span className="text-[10px] bg-secondary/15 text-secondary px-1.5 py-0.2 rounded font-semibold">Web Book</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">PaperMorph Interactive Reels</h4>
-                  <p className="text-[11px] text-ink-muted leading-tight">
-                    Visual keyframe schematics with synchronized audio beats and inline interactive concept check cards.
-                  </p>
-                </div>
-                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
-                  <span>Launch /learn/micro</span>
-                  <ArrowRight size={12} />
-                </div>
-              </a>
-
-              {/* Teacher eBook Studio & Deep Link */}
-              <a
-                href="/api/v1/auth/demo-launch?persona=instructor&next=/teacher/manuals"
-                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-primary hover:shadow-sm transition"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-primary uppercase">Instructor · Authoring</span>
-                    <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.2 rounded font-semibold">WYSIWYG</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-primary">eBook Studio & LTI Deep Link</h4>
-                  <p className="text-[11px] text-ink-muted leading-tight">
-                    Rich-text editor, AI file converter (PDF to EPUB3), and LTI 1.3 Content-Item selection modal.
-                  </p>
-                </div>
-                <div className="pt-3 text-[11px] font-bold text-primary inline-flex items-center gap-1">
-                  <span>Launch /teacher/manuals</span>
-                  <ArrowRight size={12} />
-                </div>
-              </a>
-
-              {/* Teacher Skills & Linked Data */}
-              <a
-                href="/api/v1/auth/demo-launch?persona=instructor&next=/teacher/skills"
-                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-primary hover:shadow-sm transition"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-primary uppercase">Instructor · Competencies</span>
-                    <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.2 rounded font-semibold">JSON-LD</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-primary">Skills & Linked Data Graph</h4>
-                  <p className="text-[11px] text-ink-muted leading-tight">
-                    5-pillar interactive I2IDL knowledge graph and curriculum difference training alignment.
-                  </p>
-                </div>
-                <div className="pt-3 text-[11px] font-bold text-primary inline-flex items-center gap-1">
-                  <span>Launch /teacher/skills</span>
-                  <ArrowRight size={12} />
-                </div>
-              </a>
-
-              {/* SME RAG & Voice Search */}
-              <a
-                href="/api/v1/auth/demo-launch?persona=instructor&next=/teacher/sme"
-                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-primary hover:shadow-sm transition"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-primary uppercase">Instructor · AI Knowledge</span>
-                    <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.2 rounded font-semibold">Voice RAG</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-primary">SME RAG & Voice Search</h4>
-                  <p className="text-[11px] text-ink-muted leading-tight">
-                    Subject Matter Expert contextual retrieval engine with spoken query recognition in 12 Indian languages.
-                  </p>
-                </div>
-                <div className="pt-3 text-[11px] font-bold text-primary inline-flex items-center gap-1">
-                  <span>Launch /teacher/sme</span>
-                  <ArrowRight size={12} />
-                </div>
-              </a>
-
-              {/* School Admin NRPS Roster */}
-              <a
-                href="/api/v1/auth/demo-launch?persona=admin&next=/school-admin/students"
-                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-accent hover:shadow-sm transition"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-accent uppercase">Admin · Provisioning</span>
-                    <span className="text-[10px] bg-accent/15 text-accent px-1.5 py-0.2 rounded font-semibold">LTI NRPS</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-accent">NRPS Roster Provisioning Sync</h4>
-                  <p className="text-[11px] text-ink-muted leading-tight">
-                    Live Names and Roles Provisioning Service sync button, status badges, and 220-student directory.
-                  </p>
-                </div>
-                <div className="pt-3 text-[11px] font-bold text-accent inline-flex items-center gap-1">
-                  <span>Launch /school-admin/students</span>
-                  <ArrowRight size={12} />
-                </div>
-              </a>
-
-              {/* LTI 1.3 & Deep Linking */}
-              <a
-                href="/api/v1/auth/demo-launch?persona=admin&next=/lti-integration"
-                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-accent hover:shadow-sm transition"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-accent uppercase">Admin · Interoperability</span>
-                    <span className="text-[10px] bg-accent/15 text-accent px-1.5 py-0.2 rounded font-semibold">LTI Advantage</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-accent">LTI 1.3 & Deep Linking Console</h4>
-                  <p className="text-[11px] text-ink-muted leading-tight">
-                    Registered LMS platforms (Moodle, Canvas), public JWKS endpoints, and dynamic registration.
-                  </p>
-                </div>
-                <div className="pt-3 text-[11px] font-bold text-accent inline-flex items-center gap-1">
-                  <span>Launch /lti-integration</span>
                   <ArrowRight size={12} />
                 </div>
               </a>

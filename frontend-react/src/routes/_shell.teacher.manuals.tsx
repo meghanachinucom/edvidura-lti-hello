@@ -26,7 +26,6 @@ import { api } from "@/lib/api";
 import { useRole } from "@/components/shell/RoleContext";
 import type { BackendManualItem } from "@/lib/adapters";
 import { PageHeading } from "@/components/shared/PageHeading";
-import { VoiceStudioBar } from "@/components/shared/VoiceControls";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBanner } from "@/components/shared/StatusBanner";
@@ -190,8 +189,6 @@ function Page() {
           </a>
         </div>
       </div>
-
-      <VoiceStudioBar className="w-full" />
 
       {/* Action Mode Selectors */}
       <div className="flex flex-col gap-2 tablet:flex-row tablet:flex-wrap">

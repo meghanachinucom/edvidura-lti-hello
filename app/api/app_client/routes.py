@@ -242,16 +242,6 @@ def _attempt_card(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-# —— UI Feature Registry ——
-
-
-@router.get("/ui-registry")
-def app_ui_registry(role: str | None = None) -> Any:
-    """Dynamic UI feature registry and navigation catalog for client auto-discovery."""
-    from app.modules.ui_registry import get_ui_registry
-    return get_ui_registry(role=role)
-
-
 # —— Session ——
 
 

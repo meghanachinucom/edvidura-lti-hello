@@ -786,8 +786,6 @@ def list_launches(tenant_slug: str, request: Request):
 
 _SPA_CLIENT_ROOTS = {
     "",
-    "home",
-    "workspace",
     "lessons",
     "active-quizzes",
     "quiz",

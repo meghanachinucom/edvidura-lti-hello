@@ -11,7 +11,6 @@ import { skills, targetRoles } from "@/data/skills";
 import { mockState } from "@/data/mockState";
 import { RoleTransitionDelta } from "@/components/learner/RoleTransitionDelta";
 import { LessonName } from "@/components/shared/LessonList";
-import { I2IDLSemanticGraph } from "@/components/shared/I2IDLSemanticGraph";
 import { api } from "@/lib/api";
 
 // LR-09 My plan. Fixed step labels only; no percentages or dates.
@@ -238,7 +237,60 @@ function Page() {
       </section>
 
       {/* IEEE 1484.20.3 & ADL TLA Semantic Linked Data Competency Map */}
-      <I2IDLSemanticGraph />
+      <section className="rounded-surface border border-border bg-surface p-5 shadow-2xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Network className="text-brand size-5" />
+            <h2 className="font-heading text-lg font-bold text-ink">
+              IEEE 1484.20.3 Competency Graph & Learning Alignments
+            </h2>
+          </div>
+          <span className="rounded-pill bg-brand/10 text-brand px-2.5 py-0.5 text-xs font-mono font-medium">
+            JSON-LD Semantic Layer
+          </span>
+        </div>
+        <p className="text-xs text-ink-muted">
+          Your learning path is semantically linked to standardized competencies, textbook chapters, and xAPI diagnostic evidence.
+        </p>
+
+        <div className="grid grid-cols-1 gap-3 tablet:grid-cols-3">
+          <div className="rounded-card border border-border bg-page-bg p-3.5 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono font-bold text-brand">comp-variables</span>
+              <span className="rounded bg-emerald-100 text-emerald-800 text-[10px] font-semibold px-1.5 py-0.2">Prerequisite Met</span>
+            </div>
+            <h3 className="text-xs font-bold text-ink">Variables & Algebraic Expressions</h3>
+            <p className="text-[11px] text-ink-muted">Foundational skill for balancing equations.</p>
+            <div className="pt-2 border-t border-border/60 text-[11px] text-ink-muted">
+              Aligned: <Link to="/read/manuals/$manualId" params={{ manualId: "11111111-2222-3333-4444-555555555551" }} className="text-brand underline font-medium">Algebra I Ch. 1</Link>
+            </div>
+          </div>
+
+          <div className="rounded-card border border-brand/40 bg-brand/5 p-3.5 space-y-2 ring-1 ring-brand/20">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono font-bold text-brand">comp-solve-linear</span>
+              <span className="rounded bg-amber-100 text-amber-800 text-[10px] font-semibold px-1.5 py-0.2">In Progress</span>
+            </div>
+            <h3 className="text-xs font-bold text-ink">Solving Linear Equations</h3>
+            <p className="text-[11px] text-ink-muted">Two-step isolation and inverse balance operations.</p>
+            <div className="pt-2 border-t border-border/60 text-[11px] text-ink-muted">
+              Aligned: <Link to="/active-quizzes" className="text-brand underline font-medium">Slice A Quiz (Q2, Q3)</Link>
+            </div>
+          </div>
+
+          <div className="rounded-card border border-border bg-page-bg p-3.5 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono font-bold text-ink-muted">comp-word-problems</span>
+              <span className="rounded bg-gray-100 text-gray-700 text-[10px] font-semibold px-1.5 py-0.2">Next Goal</span>
+            </div>
+            <h3 className="text-xs font-bold text-ink">Linear Word Problems</h3>
+            <p className="text-[11px] text-ink-muted">Formulating real-world quantitative conditions into models.</p>
+            <div className="pt-2 border-t border-border/60 text-[11px] text-ink-muted">
+              Aligned: <Link to="/read/manuals/$manualId" params={{ manualId: "11111111-2222-3333-4444-555555555551" }} className="text-brand underline font-medium">Algebra I Ch. 4</Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

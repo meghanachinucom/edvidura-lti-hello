@@ -17,10 +17,7 @@ import {
   Sun,
   Eye,
   BookOpen,
-  Download,
 } from "lucide-react";
-import { PaperMorphStoryboard } from "@/components/learner/PaperMorphStoryboard";
-import { VoiceStudioBar } from "@/components/shared/VoiceControls";
 import { getLocaleBcp47, t, useLocale } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
@@ -364,42 +361,6 @@ export function StandaloneReader({
               <option value={1.25}>1.25x</option>
             </select>
           </div>
-
-          {/* F-02 & F-07: Download / Export Buttons */}
-          <div className="flex items-center gap-1.5" role="group" aria-label="Export eBook">
-            <button
-              type="button"
-              onClick={() => {
-                const blob = new Blob([chapter?.paragraphs?.join("\n\n") || ""], { type: "text/html" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `${book.slug || "ebook"}-chapter-${ci + 1}.html`;
-                a.click();
-              }}
-              className="inline-flex items-center gap-1 rounded bg-muted hover:bg-muted/80 px-2.5 py-1 text-[11px] font-semibold text-ink transition"
-              title="Download HTML Chapter"
-            >
-              <Download size={12} />
-              <span>Download HTML</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const blob = new Blob([JSON.stringify({ title: book.title, chapters }, null, 2)], { type: "application/epub+zip" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `${book.slug || "ebook"}.epub`;
-                a.click();
-              }}
-              className="inline-flex items-center gap-1 rounded bg-muted hover:bg-muted/80 px-2.5 py-1 text-[11px] font-semibold text-ink transition"
-              title="Download EPUB3"
-            >
-              <Download size={12} />
-              <span>Download EPUB3</span>
-            </button>
-          </div>
         </div>
 
         {/* Reader Layout Grid */}
@@ -413,7 +374,6 @@ export function StandaloneReader({
 
           {/* Main Chapter Content Column */}
           <div className="min-w-0">
-            <VoiceStudioBar className="w-full mb-4" readAloudText={chapter?.paragraphs?.join(" ")} />
             {m.state === "renderError" ? (
               <ErrorAlert message={r("renderError")} />
             ) : !chapter ? (
@@ -439,13 +399,6 @@ export function StandaloneReader({
                 <h1 className="font-heading text-2xl desktop:text-3xl font-extrabold tracking-tight mb-6">
                   {chapter.title}
                 </h1>
-
-                {/* PaperMorph Animated Storyboard & Step-Through Canvas */}
-                <PaperMorphStoryboard
-                  bookId={book.id}
-                  chapter={chapter}
-                  chapterIndex={ci}
-                />
 
                 {/* Paragraphs with Read-Aloud Highlighting */}
                 <div className="space-y-5" style={fontStyle}>
