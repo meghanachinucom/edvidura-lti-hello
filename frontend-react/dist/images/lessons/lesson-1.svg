@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#004D5A"/>
+      <stop offset="100%" stop-color="#00242C"/>
+    </linearGradient>
+    <linearGradient id="accent1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00E5FF"/>
+      <stop offset="100%" stop-color="#00A8B5"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg1)"/>
+  <circle cx="400" cy="225" r="160" fill="none" stroke="url(#accent1)" stroke-width="2" stroke-dasharray="8 8" opacity="0.4"/>
+  <circle cx="400" cy="225" r="120" fill="#003842" opacity="0.6"/>
+  <!-- Shield Icon -->
+  <path d="M400 135 L480 175 V255 C480 305 440 335 400 345 C360 335 320 305 320 255 V175 Z" fill="#005A69" stroke="url(#accent1)" stroke-width="4" stroke-linejoin="round"/>
+  <!-- Lightning bolt inside shield -->
+  <path d="M405 170 L365 240 H405 L395 300 L445 220 H405 Z" fill="#FFD54F" stroke="#FFE082" stroke-width="2" stroke-linejoin="round"/>
+  <text x="400" y="390" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="#E0F7FA" text-anchor="middle" letter-spacing="2">ELECTRICAL SAFETY &amp; PPE</text>
+</svg>

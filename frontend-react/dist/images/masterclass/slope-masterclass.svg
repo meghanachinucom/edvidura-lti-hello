@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <defs>
+    <linearGradient id="wbBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </linearGradient>
+    <linearGradient id="gridGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.8"/>
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background Board -->
+  <rect width="1280" height="720" fill="url(#wbBg)"/>
+
+  <!-- Subtle Blueprint / Graph Grid Pattern -->
+  <g stroke="#334155" stroke-width="0.5" opacity="0.35">
+    <!-- Vertical lines -->
+    <line x1="80" y1="0" x2="80" y2="720"/>
+    <line x1="160" y1="0" x2="160" y2="720"/>
+    <line x1="240" y1="0" x2="240" y2="720"/>
+    <line x1="320" y1="0" x2="320" y2="720"/>
+    <line x1="400" y1="0" x2="400" y2="720"/>
+    <line x1="480" y1="0" x2="480" y2="720"/>
+    <line x1="560" y1="0" x2="560" y2="720"/>
+    <line x1="640" y1="0" x2="640" y2="720"/>
+    <line x1="720" y1="0" x2="720" y2="720"/>
+    <line x1="800" y1="0" x2="800" y2="720"/>
+    <line x1="880" y1="0" x2="880" y2="720"/>
+    <line x1="960" y1="0" x2="960" y2="720"/>
+    <line x1="1040" y1="0" x2="1040" y2="720"/>
+    <line x1="1120" y1="0" x2="1120" y2="720"/>
+    <line x1="1200" y1="0" x2="1200" y2="720"/>
+    <!-- Horizontal lines -->
+    <line x1="0" y1="80" x2="1280" y2="80"/>
+    <line x1="0" y1="160" x2="1280" y2="160"/>
+    <line x1="0" y1="240" x2="1280" y2="240"/>
+    <line x1="0" y1="320" x2="1280" y2="320"/>
+    <line x1="0" y1="400" x2="1280" y2="400"/>
+    <line x1="0" y1="480" x2="1280" y2="480"/>
+    <line x1="0" y1="560" x2="1280" y2="560"/>
+    <line x1="0" y1="640" x2="1280" y2="640"/>
+  </g>
+
+  <!-- Left Side: System of Equations (as shown in user photo) -->
+  <g transform="translate(100, 140)">
+    <!-- Big Curly Bracket -->
+    <path d="M 40 40 C 0 80, 0 160, 0 190 C 0 210, -25 220, -40 225 C -25 230, 0 240, 0 260 C 0 290, 0 370, 40 410" 
+          fill="none" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Handwritten-style equations -->
+    <g font-family="'Courier New', Courier, monospace" font-size="38" fill="#f8fafc" font-weight="bold" letter-spacing="1">
+      <text x="70" y="100">2x<tspan font-size="24" dy="10">1</tspan><tspan font-size="38" dy="-10"> + x</tspan><tspan font-size="24" dy="10">2</tspan><tspan font-size="38" dy="-10"> = 7</tspan></text>
+      
+      <text x="70" y="185">x<tspan font-size="24" dy="10">1</tspan><tspan font-size="38" dy="-10"> + x</tspan><tspan font-size="24" dy="10">2</tspan><tspan font-size="38" dy="-10"> − 3x</tspan><tspan font-size="24" dy="10">3</tspan><tspan font-size="38" dy="-10"> = −10</tspan></text>
+      
+      <text x="70" y="270">6x<tspan font-size="24" dy="10">2</tspan><tspan font-size="38" dy="-10"> − 2x</tspan><tspan font-size="24" dy="10">3</tspan><tspan font-size="38" dy="-10"> + x</tspan><tspan font-size="24" dy="10">4</tspan><tspan font-size="38" dy="-10"> = 7</tspan></text>
+      
+      <text x="70" y="355">2x<tspan font-size="24" dy="10">3</tspan><tspan font-size="38" dy="-10"> − 3x</tspan><tspan font-size="24" dy="10">4</tspan><tspan font-size="38" dy="-10"> = 13</tspan></text>
+    </g>
+
+    <text x="70" y="435" font-family="system-ui, sans-serif" font-size="18" fill="#38bdf8" font-weight="600" letter-spacing="2">
+      TOPIC 1 · LINEAR SYSTEM MATRIX &amp; GAUSSIAN ELIMINATION
+    </text>
+  </g>
+
+  <!-- Right Side: 2D/3D Cartesian Coordinate System with Slope & Delta Geometry -->
+  <g transform="translate(760, 110)">
+    <!-- Sub-board / Coordinate Box -->
+    <rect width="440" height="440" rx="24" fill="#0b1329" stroke="#334155" stroke-width="2"/>
+    
+    <!-- Mini grid inside coordinate box -->
+    <g stroke="#1e293b" stroke-width="1.5">
+      <line x1="44" y1="0" x2="44" y2="440"/>
+      <line x1="88" y1="0" x2="88" y2="440"/>
+      <line x1="132" y1="0" x2="132" y2="440"/>
+      <line x1="176" y1="0" x2="176" y2="440"/>
+      <line x1="264" y1="0" x2="264" y2="440"/>
+      <line x1="308" y1="0" x2="308" y2="440"/>
+      <line x1="352" y1="0" x2="352" y2="440"/>
+      <line x1="396" y1="0" x2="396" y2="440"/>
+
+      <line x1="0" y1="44" x2="440" y2="44"/>
+      <line x1="0" y1="88" x2="440" y2="88"/>
+      <line x1="0" y1="132" x2="440" y2="132"/>
+      <line x1="0" y1="176" x2="440" y2="176"/>
+      <line x1="0" y1="264" x2="440" y2="264"/>
+      <line x1="0" y1="308" x2="440" y2="308"/>
+      <line x1="0" y1="352" x2="440" y2="352"/>
+      <line x1="0" y1="396" x2="440" y2="396"/>
+    </g>
+
+    <!-- Main X & Y Axes -->
+    <line x1="220" y1="20" x2="220" y2="420" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <line x1="20" y1="220" x2="420" y2="220" stroke="#64748b" stroke-width="2.5"/>
+    <text x="415" y="210" font-family="system-ui, sans-serif" font-size="14" fill="#94a3b8" font-weight="bold">x</text>
+    <text x="230" y="35" font-family="system-ui, sans-serif" font-size="14" fill="#94a3b8" font-weight="bold">y</text>
+
+    <!-- Delta Triangle (Δx and Δy) -->
+    <!-- Point 1 at (132, 308), Point 2 at (308, 132) -->
+    <polygon points="132,308 308,308 308,132" fill="#38bdf8" fill-opacity="0.15" stroke="#38bdf8" stroke-dasharray="4 4" stroke-width="2"/>
+    <text x="210" y="332" font-family="system-ui, sans-serif" font-size="14" fill="#38bdf8" font-weight="bold" text-anchor="middle">Δx = 4</text>
+    <text x="335" y="225" font-family="system-ui, sans-serif" font-size="14" fill="#38bdf8" font-weight="bold">Δy = 4</text>
+
+    <!-- Linear Graph Line y = mx + b -->
+    <line x1="60" y1="380" x2="380" y2="60" stroke="url(#lineGrad)" stroke-width="5" stroke-linecap="round" filter="url(#glow)"/>
+
+    <!-- Key Points -->
+    <circle cx="132" cy="308" r="6" fill="#38bdf8"/>
+    <circle cx="308" cy="132" r="6" fill="#f59e0b"/>
+    <circle cx="220" cy="220" r="4" fill="#ffffff"/>
+
+    <!-- Formula Badge -->
+    <rect x="25" y="25" width="180" height="42" rx="10" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="115" y="52" font-family="system-ui, sans-serif" font-size="16" fill="#fbbf24" font-weight="bold" text-anchor="middle">
+      m = Δy / Δx = 1.00
+    </text>
+  </g>
+
+  <!-- Bottom Visual Formula Strip -->
+  <g transform="translate(100, 620)">
+    <rect width="1080" height="54" rx="14" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="30" y="33" font-family="system-ui, sans-serif" font-size="15" fill="#e2e8f0" font-weight="600">
+      <tspan fill="#f59e0b">SLOPE-INTERCEPT:</tspan> y = mx + b
+    </text>
+    <text x="360" y="33" font-family="system-ui, sans-serif" font-size="15" fill="#e2e8f0" font-weight="600">
+      <tspan fill="#38bdf8">RATE OF CHANGE:</tspan> m = (y₂ − y₁) / (x₂ − x₁)
+    </text>
+    <text x="760" y="33" font-family="system-ui, sans-serif" font-size="15" fill="#e2e8f0" font-weight="600">
+      <tspan fill="#10b981">VECTOR ANGLE:</tspan> θ = arctan(m)
+    </text>
+  </g>
+</svg>

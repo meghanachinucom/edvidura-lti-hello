@@ -54,7 +54,10 @@ export function useLocale(): { locale: Locale; setLocale: (loc: Locale) => void;
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<Locale>).detail;
-      if (detail) setLocState(detail);
+      if (detail) {
+        currentLocale = detail;
+        setLocState(detail);
+      }
     };
     window.addEventListener("edvidura:locale-change", handler);
     return () => window.removeEventListener("edvidura:locale-change", handler);

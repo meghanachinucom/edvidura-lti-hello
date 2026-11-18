@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist (tracked in Git so Vercel can deploy static assets even without local build)
 dist-ssr
 .output
 .vinxi

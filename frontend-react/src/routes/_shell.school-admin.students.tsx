@@ -52,6 +52,8 @@ function Page() {
   const [byClass, setByClass] = useState(false);
   const [nrpsSyncing, setNrpsSyncing] = useState(false);
   const [nrpsStatus, setNrpsStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [remoteStudents, setRemoteStudents] = useState<Person[] | null>(null);
 
   const syncNrps = async () => {
     setNrpsSyncing(true);

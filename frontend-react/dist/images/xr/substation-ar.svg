@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
+  <defs>
+    <linearGradient id="arBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a192f"/>
+      <stop offset="50%" stop-color="#0f2b48"/>
+      <stop offset="100%" stop-color="#050e1a"/>
+    </linearGradient>
+    <linearGradient id="voltGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#e11d48"/>
+    </linearGradient>
+    <filter id="hologram" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="675" fill="url(#arBg)"/>
+
+  <!-- Isometric Ground Grid -->
+  <g stroke="#1e3a5f" stroke-width="1.5" opacity="0.6">
+    <path d="M 600 220 L 1080 480 L 600 640 L 120 480 Z" fill="#0c233c" fill-opacity="0.8"/>
+    <line x1="240" y1="440" x2="720" y2="600"/>
+    <line x1="360" y1="400" x2="840" y2="560"/>
+    <line x1="480" y1="360" x2="960" y2="520"/>
+  </g>
+
+  <!-- 3D Substation Switchgear Enclosure -->
+  <g transform="translate(420, 180)">
+    <!-- Main 3D Cabinet Body -->
+    <!-- Front face -->
+    <path d="M 60 120 L 260 220 L 260 420 L 60 320 Z" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+    <!-- Top face -->
+    <path d="M 60 120 L 260 220 L 380 150 L 180 50 Z" fill="#334155" stroke="#38bdf8" stroke-width="2"/>
+    <!-- Right side face -->
+    <path d="M 260 220 L 380 150 L 380 350 L 260 420 Z" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+
+    <!-- High Voltage Warning Triangle on Cabinet -->
+    <polygon points="160,210 195,270 125,270" fill="#facc15" stroke="#000000" stroke-width="2"/>
+    <path d="M 160 225 L 160 250" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="160" cy="260" r="2.5" fill="#000000"/>
+
+    <!-- 3D Transformer Insulator Bushings (3-Phase: Red, Yellow, Blue) -->
+    <!-- Phase A (Red) -->
+    <path d="M 140 30 L 140 70 M 130 50 H 150 M 125 60 H 155" stroke="#ef4444" stroke-width="3.5" filter="url(#hologram)"/>
+    <circle cx="140" cy="30" r="7" fill="#ef4444"/>
+    <!-- Phase B (Yellow) -->
+    <path d="M 230 75 L 230 115 M 220 95 H 240 M 215 105 H 245" stroke="#f59e0b" stroke-width="3.5" filter="url(#hologram)"/>
+    <circle cx="230" cy="75" r="7" fill="#f59e0b"/>
+    <!-- Phase C (Blue) -->
+    <path d="M 320 120 L 320 160 M 310 140 H 330 M 305 150 H 335" stroke="#38bdf8" stroke-width="3.5" filter="url(#hologram)"/>
+    <circle cx="320" cy="120" r="7" fill="#38bdf8"/>
+  </g>
+
+  <!-- AR Holographic Reticles & Inspection Callouts -->
+  <!-- Target 1: LOTO Lock Verified -->
+  <g transform="translate(180, 240)" filter="url(#hologram)">
+    <!-- AR Circular Reticle -->
+    <circle cx="80" cy="80" r="45" fill="none" stroke="#10b981" stroke-width="2.5" stroke-dasharray="10 6"/>
+    <circle cx="80" cy="80" r="5" fill="#10b981"/>
+    <line x1="80" y1="20" x2="80" y2="140" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <line x1="20" y1="80" x2="140" y2="80" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+    <!-- Callout Box -->
+    <rect x="150" y="45" width="220" height="70" rx="12" fill="#022c22" fill-opacity="0.9" stroke="#10b981" stroke-width="2"/>
+    <text x="165" y="72" font-family="system-ui, sans-serif" font-size="12" fill="#34d399" font-weight="bold">
+      [AR STEP 1 · VERIFIED]
+    </text>
+    <text x="165" y="98" font-family="system-ui, sans-serif" font-size="14" fill="#ffffff" font-weight="bold">
+      LOTO Padlock #41 Engaged
+    </text>
+  </g>
+
+  <!-- Target 2: Voltage Detector Zero-Check -->
+  <g transform="translate(780, 280)" filter="url(#hologram)">
+    <circle cx="60" cy="60" r="45" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="8 6"/>
+    <circle cx="60" cy="60" r="5" fill="#f59e0b"/>
+    <!-- Connecting Lead -->
+    <line x1="60" y1="60" x2="-80" y2="40" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 4"/>
+
+    <!-- Callout Box -->
+    <rect x="120" y="25" width="240" height="70" rx="12" fill="#451a03" fill-opacity="0.9" stroke="#f59e0b" stroke-width="2"/>
+    <text x="135" y="52" font-family="system-ui, sans-serif" font-size="12" fill="#fbbf24" font-weight="bold">
+      [AR STEP 2 · LIVE CHECK]
+    </text>
+    <text x="135" y="78" font-family="system-ui, sans-serif" font-size="14" fill="#ffffff" font-weight="bold">
+      Voltage: 0.00 kV (De-energized)
+    </text>
+  </g>
+
+  <!-- Top AR Status Bar -->
+  <g transform="translate(80, 50)">
+    <rect width="400" height="50" rx="12" fill="#0f172a" fill-opacity="0.9" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="20" y="32" font-family="system-ui, sans-serif" font-size="14" fill="#38bdf8" font-weight="bold">
+      WEBXR AUGMENTED REALITY · 33kV ISOLATOR
+    </text>
+  </g>
+</svg>

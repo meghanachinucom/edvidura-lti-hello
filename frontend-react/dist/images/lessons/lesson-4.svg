@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E1B4B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="accent4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg4)"/>
+  <rect x="330" y="130" width="140" height="190" rx="14" fill="#1E293B" stroke="url(#accent4)" stroke-width="4"/>
+  <rect x="370" y="180" width="60" height="80" rx="8" fill="#0F172A" stroke="#818CF8" stroke-width="2"/>
+  <rect x="375" y="185" width="50" height="35" rx="6" fill="#22C55E"/>
+  <circle cx="400" cy="155" r="8" fill="#22C55E"/>
+  <text x="400" y="295" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" fill="#CBD5E1" text-anchor="middle">MCB · 16A</text>
+  <text x="400" y="390" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="#C7D2FE" text-anchor="middle" letter-spacing="2">MCBs, FUSES &amp; RCCBs</text>
+</svg>

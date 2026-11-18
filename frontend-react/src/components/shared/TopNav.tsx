@@ -26,7 +26,7 @@ import {
   ArrowLeft,
   type LucideIcon,
 } from "lucide-react";
-import { t } from "@/i18n";
+import { t, useLocale } from "@/i18n";
 import { roleNavItems } from "@/data/nav";
 import { useRole } from "@/components/shell/RoleContext";
 import { LanguageSelector } from "@/components/shared/VoiceControls";
@@ -65,6 +65,7 @@ const routeIcons: Record<string, LucideIcon> = {
 };
 
 export function TopNav() {
+  useLocale();
   const { session, signOut, role } = useRole();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);

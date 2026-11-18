@@ -1,0 +1,72 @@
+[
+  {
+    "feature": "Canonical Review Gateway (/review)",
+    "requirement": "Zero /moodle links + 3 Persona 1-Click Launchers",
+    "evidence": "Title: 'EdVidura \u00b7 LTI 1.3 Learning Platform' | Fake Moodle: False | Personas: Learner, Instructor, Admin",
+    "latency": "3646ms",
+    "status": "PASS"
+  },
+  {
+    "feature": "12-Language Indian Switcher (TopNav)",
+    "requirement": "11 Indian languages + English with instant session translation",
+    "evidence": "Supported: 12 locales | Hindi rendered: True | Telugu rendered: True",
+    "latency": "6960ms",
+    "status": "PASS"
+  },
+  {
+    "feature": "5 Multi-Chapter Interactive Textbooks (/manuals)",
+    "requirement": "Algebra I, Physical Science, Railways, AI/Cyber, Niti seeded",
+    "evidence": "Seeded in library: (B1:True, B2:True, B3:True, B4:True, B5:True)",
+    "latency": "3123ms",
+    "status": "PASS"
+  },
+  {
+    "feature": "PEBL Reader & Accessibility Toolbar (F-03/F-04/F-11)",
+    "requirement": "Zoom A-/A+, Contrast Themes, Audiobook TTS, Multi-Chapter Reader",
+    "evidence": "Zoom: True | Themes: True | Audiobook: True | Reader Content: True",
+    "latency": "4123ms",
+    "status": "PASS"
+  },
+  {
+    "feature": "Jane Street Socratic Tutor (/learn/coach)",
+    "requirement": "Socratic Guided vs Direct mode toggle + 0\u20135 Mastery Level Tracker + Voice STT",
+    "evidence": "Socratic Mode: True | Mastery Tracker: True | Voice STT: True",
+    "latency": "3071ms",
+    "status": "PASS"
+  },
+  {
+    "feature": "I2IDL Linked Data Layer (/api/v1/ld/graph & /learn/gap)",
+    "requirement": "IEEE 1484.20.3 Competencies, IEEE 2881 Metadata, RDF Triples, UI Map",
+    "evidence": "JSON-LD Graph: 8 nodes | Vocab: True | /learn/gap Graph UI: True",
+    "latency": "4674ms",
+    "status": "PASS"
+  },
+  {
+    "feature": "PaperMorph Interactive Reels (/learn/micro)",
+    "requirement": "Visual keyframe schematics + inline interactive concept checks",
+    "evidence": "Keyframe Diagram: True | Reel Card: True",
+    "latency": "3051ms",
+    "status": "PASS"
+  },
+  {
+    "feature": "FreeFlow AI Voice Cleanup (/api/v1/app/voice/cleanup)",
+    "requirement": "Strips verbal fillers + normalizes spoken math ('2x + 5 = 15')",
+    "evidence": "Cleaned Result: 'Like 2x + 5 = 15' | Math Normalized: True | Fillers Removed: True",
+    "latency": "1383ms",
+    "status": "PASS"
+  },
+  {
+    "feature": "Teacher eBook Authoring & Deep Linking (F-01/F-02/F-08)",
+    "requirement": "WYSIWYG eBook Editor, AI File Upload, LTI Deep Link Picker, Linked Data Tab",
+    "evidence": "Deep Link Items: 6 | Editor: True | AI Converter: True | LD Tab: True",
+    "latency": "11013ms",
+    "status": "PASS"
+  },
+  {
+    "feature": "NRPS Roster Provisioning Sync (F-09)",
+    "requirement": "NRPS Roster API + Sync LMS Roster button & status badge",
+    "evidence": "NRPS API in Session: True | Admin Students UI: True",
+    "latency": "6881ms",
+    "status": "PASS"
+  }
+]
