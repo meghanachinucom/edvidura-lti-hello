@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Captions, PlayCircle, Volume2, VolumeX, Headphones, BookOpen, Send, CheckCircle2, Clock, BarChart3 } from "lucide-react";
+import { Captions, PlayCircle, Volume2, VolumeX, Headphones, BookOpen, Send, CheckCircle2, Clock, BarChart3, HelpCircle, Sparkles } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { PillTabs, type PillTab } from "@/components/shared/PillTabs";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CircuitWorkbench } from "@/components/learner/CircuitWorkbench";
 import { StatusBanner } from "@/components/shared/StatusBanner";
+import { VoiceListenButton } from "@/components/shared/VoiceControls";
 import { useRole } from "@/components/shell/RoleContext";
 import { reels, type Reel } from "@/data/reels";
 import { mockState } from "@/data/mockState";
@@ -170,9 +171,15 @@ function Page() {
   const [i, setI] = useState(0);
   const [sound, setSound] = useState(false);
   const [captions, setCaptions] = useState(true);
+  const [reelAnswer, setReelAnswer] = useState<number | null>(null);
+  const [showReelExp, setShowReelExp] = useState(false);
   const startY = useRef<number | null>(null);
   const reel = list[i];
-  const go = (n: number) => setI(Math.max(0, Math.min(list.length - 1, n)));
+  const go = (n: number) => {
+    setReelAnswer(null);
+    setShowReelExp(false);
+    setI(Math.max(0, Math.min(list.length - 1, n)));
+  };
 
   useEffect(() => {
     if (reel && activeTab === "reels") {
@@ -223,11 +230,30 @@ function Page() {
                 }}
                 className="mx-auto flex min-h-[70vh] max-w-md flex-col gap-3 rounded-surface border border-border bg-surface p-4 text-ink tablet:min-h-0"
               >
-                <p className="text-sm text-ink-muted">
-                  {s("counter", { n: i + 1, total: list.length })}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-ink-muted">
+                    {s("counter", { n: i + 1, total: list.length })}
+                  </p>
+                  <VoiceListenButton text={`${reel.title}. ${reel.idea}`} />
+                </div>
                 <h2 className="font-heading text-[22px]">{reel.title}</h2>
                 <p>{reel.idea}</p>
+
+                {/* PaperMorph Keyframe Diagram Schematic */}
+                {reel.diagramTitle && (
+                  <div className="rounded-card border border-brand/20 bg-brand/5 p-3 text-ink text-xs">
+                    <div className="font-semibold text-brand flex items-center gap-1.5 mb-1.5">
+                      <Sparkles size={14} />
+                      {reel.diagramTitle}
+                    </div>
+                    <ul className="space-y-1 text-ink-muted list-disc list-inside">
+                      {reel.keyPoints?.map((pt, idx) => (
+                        <li key={idx}>{pt}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="reel-frame relative mx-auto flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-[28px] border-4 border-ink bg-ink text-white">
                   <PlayCircle aria-hidden size={48} />
                   <span>{s("video")}</span>
@@ -246,12 +272,49 @@ function Page() {
                   <Captions aria-hidden size={18} className="mr-2" />
                   {s(captions ? "captionsOn" : "captionsOff")}
                 </button>
-                <div className="rounded-surface border border-border bg-highlight p-3 text-ink">
-                  <p className="font-semibold">{s("practicePrompt")}</p>
-                  <p className="mt-1">
-                    {s("explainPrompt")} {reel.idea}
-                  </p>
-                </div>
+
+                {/* PaperMorph Interactive Concept Check */}
+                {reel.conceptCheck && (
+                  <div className="rounded-surface border border-border bg-highlight p-3 text-ink text-xs">
+                    <div className="flex items-center gap-1.5 font-semibold text-brand mb-1.5">
+                      <HelpCircle size={15} />
+                      PaperMorph Concept Check
+                    </div>
+                    <p className="font-medium text-ink mb-2">{reel.conceptCheck.question}</p>
+                    <div className="space-y-1.5">
+                      {reel.conceptCheck.options.map((opt, optIdx) => (
+                        <button
+                          key={optIdx}
+                          type="button"
+                          onClick={() => {
+                            setReelAnswer(optIdx);
+                            setShowReelExp(true);
+                          }}
+                          className={`w-full text-left rounded-card p-2 border transition-all text-xs ${
+                            reelAnswer === optIdx
+                              ? optIdx === reel.conceptCheck?.correct
+                                ? "bg-emerald-50 border-emerald-400 text-emerald-900 font-medium"
+                                : "bg-rose-50 border-rose-300 text-rose-900"
+                              : "bg-surface border-border text-ink hover:bg-page-bg"
+                          }`}
+                        >
+                          <span className="font-mono font-semibold mr-1.5">
+                            {String.fromCharCode(65 + optIdx)}.
+                          </span>
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                    {showReelExp && (
+                      <div className="mt-2.5 pt-2 border-t border-border/60">
+                        <p className={`font-semibold ${reelAnswer === reel.conceptCheck.correct ? "text-emerald-700" : "text-rose-700"}`}>
+                          {reelAnswer === reel.conceptCheck.correct ? "✓ Correct!" : "✗ Review the key point above."}
+                        </p>
+                        <p className="mt-1 text-ink-muted text-[11px]">{reel.conceptCheck.explanation}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="mt-auto flex flex-col gap-2 tablet:flex-row">
                   <Link
                     to="/lessons/$lessonId"

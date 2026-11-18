@@ -215,6 +215,13 @@ export function RoleProvider({ children }: { children: ReactNode }) {
 
             if (!cancelled) {
               queryClient.clear();
+              const rawReturn = data.lms_return_url || "";
+              const safeReturn =
+                rawReturn && !rawReturn.includes("/moodle")
+                  ? rawReturn
+                  : typeof window !== "undefined" && window.location.hostname.includes("localhost")
+                    ? "http://localhost:8085/course/view.php?id=10"
+                    : "/review";
               const sessData: Session = {
                 name: data.learner_name || "Learner",
                 username: data.subject || "user",
@@ -224,7 +231,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
                 className: data.class_name,
                 isInstructor,
                 isSchoolAdmin,
-                lmsReturnUrl: data.lms_return_url || "/moodle/course/view.php?id=10",
+                lmsReturnUrl: safeReturn,
               };
               try {
                 if (sessData.lmsReturnUrl) {
@@ -282,10 +289,14 @@ export function RoleProvider({ children }: { children: ReactNode }) {
         return true;
       },
       signOut: () => {
-        const returnUrl =
+        const rawReturn =
           session?.lmsReturnUrl ||
           (typeof window !== "undefined" ? sessionStorage.getItem("edvidura_return_url") : null) ||
-          "http://localhost:8085/course/view.php?id=10";
+          "";
+        const returnUrl =
+          rawReturn && rawReturn.includes("localhost:8085")
+            ? rawReturn
+            : "/review";
         try {
           sessionStorage.setItem("edvidura_signed_out", "true");
           sessionStorage.setItem("edvidura_return_url", returnUrl);
@@ -304,7 +315,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
           keepalive: true,
         }).catch(() => {});
         if (typeof window !== "undefined") {
-          window.location.href = "/";
+          window.location.href = returnUrl;
         }
       },
     }),

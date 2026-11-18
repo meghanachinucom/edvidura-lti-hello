@@ -29,6 +29,7 @@ import {
 import { t } from "@/i18n";
 import { roleNavItems } from "@/data/nav";
 import { useRole } from "@/components/shell/RoleContext";
+import { LanguageSelector } from "@/components/shared/VoiceControls";
 
 const routeIcons: Record<string, LucideIcon> = {
   "/lessons": BookOpen,
@@ -151,27 +152,32 @@ export function TopNav() {
           </ul>
         </nav>
         <div className="shrink-0 border-t border-border bg-surface p-3 tablet:px-2 desktop:p-4">
+          <div className="mb-2 px-1 tablet:hidden desktop:block">
+            <LanguageSelector className="w-full justify-between" />
+          </div>
           <div className="mb-3 px-2 text-sm font-semibold text-ink tablet:hidden desktop:block">
             <div className="truncate">{session?.name}</div>
             <div className="font-semibold text-ink-muted">{t(`roles.${role}`)}</div>
           </div>
           <a
             className="group relative flex min-h-11 items-center rounded-control px-2 text-sm text-ink hover:bg-page-bg tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
-            title={t("nav.backToMoodle")}
-            href={session?.lmsReturnUrl || "/moodle/course/view.php?id=10"}
+            title={session?.lmsReturnUrl?.includes("localhost:8085") ? t("nav.backToMoodle") : "Switch Persona / Review Portal"}
+            href={session?.lmsReturnUrl?.includes("localhost:8085") ? session.lmsReturnUrl : "/review"}
             onClick={(e) => {
               e.preventDefault();
-              const dest = session?.lmsReturnUrl || "/moodle/course/view.php?id=10";
+              const dest = session?.lmsReturnUrl?.includes("localhost:8085") ? session.lmsReturnUrl : "/review";
               window.location.href = dest;
             }}
           >
             <ArrowLeft aria-hidden size={18} className="hidden tablet:block desktop:hidden" />
-            <span className="tablet:hidden desktop:inline">{t("nav.backToMoodle")}</span>
+            <span className="tablet:hidden desktop:inline">
+              {session?.lmsReturnUrl?.includes("localhost:8085") ? t("nav.backToMoodle") : "Review Portal / Personas"}
+            </span>
             <span
               role="tooltip"
               className="pointer-events-none absolute left-full z-50 ml-2 hidden whitespace-nowrap rounded-control bg-topbar px-3 py-2 text-xs text-white shadow-md tablet:group-hover:block tablet:group-focus-visible:block desktop:hidden"
             >
-              {t("nav.backToMoodle")}
+              {session?.lmsReturnUrl?.includes("localhost:8085") ? t("nav.backToMoodle") : "Review Portal / Personas"}
             </span>
           </a>
           <button

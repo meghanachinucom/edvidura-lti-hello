@@ -48,7 +48,7 @@ function Err({ id, text }: { id: string; text: string }) {
 
 function Page() {
   const id = useId();
-  const [activeTab, setActiveTab] = useState<"roles" | "cat" | "proposals" | "passport" | "workforce">("roles");
+  const [activeTab, setActiveTab] = useState<"roles" | "cat" | "proposals" | "passport" | "workforce" | "linked_data">("roles");
   const [roles, setRoles] = useState<Role[]>(
     targetRoles.map((r) => ({ id: r.id, title: r.title, skills: [...r.skills] })),
   );
@@ -80,6 +80,17 @@ function Page() {
   const [continuityData, setContinuityData] = useState<any>(null);
   const [simToRealData, setSimToRealData] = useState<any>(null);
   const [wfLoading, setWfLoading] = useState(false);
+  const [ldGraph, setLdGraph] = useState<any>(null);
+  const [ldLoading, setLdLoading] = useState(false);
+
+  const loadLdGraph = () => {
+    setLdLoading(true);
+    fetch("/api/v1/ld/graph")
+      .then((res) => res.json())
+      .then((data) => setLdGraph(data))
+      .catch(() => {})
+      .finally(() => setLdLoading(false));
+  };
 
   const role = roles.find((r) => r.id === sel);
   const rows = role
@@ -141,6 +152,8 @@ function Page() {
       loadPassport();
     } else if (activeTab === "workforce") {
       loadWorkforce();
+    } else if (activeTab === "linked_data") {
+      loadLdGraph();
     }
   }, [activeTab]);
 
@@ -199,6 +212,7 @@ function Page() {
     { id: "proposals", label: `Proposals (${proposals.length})`, onSelect: () => setActiveTab("proposals") },
     { id: "passport", label: "Skills Passport", onSelect: () => setActiveTab("passport") },
     { id: "workforce", label: "Workforce & Sim-to-Real", onSelect: () => setActiveTab("workforce") },
+    { id: "linked_data", label: "IEEE Linked Data (JSON-LD)", onSelect: () => setActiveTab("linked_data") },
   ];
 
   return (
@@ -627,6 +641,124 @@ function Page() {
                     Real-World Correlation: <strong>{simToRealData?.correlation ?? "0.89 (High)"}</strong>
                   </p>
                 </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "linked_data" && (
+        <div className="space-y-6">
+          <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+              <div>
+                <h2 className="font-heading text-xl font-bold text-ink">
+                  I2IDL & ADL TLA Semantic Linked Data Graph (JSON-LD)
+                </h2>
+                <p className="mt-1 text-sm text-ink-muted">
+                  IEEE 1484.20.3 Reusable Competency Definitions & IEEE 2881 Learning Metadata connected to 5 Textbooks and RHS-C08 Assessments.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="/api/v1/ld/graph"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-secondary text-xs"
+                >
+                  View JSON-LD Endpoint
+                </a>
+                <button
+                  type="button"
+                  onClick={loadLdGraph}
+                  disabled={ldLoading}
+                  className="btn-primary text-xs flex items-center gap-1.5"
+                >
+                  <RefreshCw size={14} className={ldLoading ? "animate-spin" : ""} />
+                  Refresh Graph
+                </button>
+              </div>
+            </div>
+
+            {ldLoading ? (
+              <div className="py-12 text-center text-sm text-ink-muted">
+                Resolving Linked Data Subject-Predicate-Object triples...
+              </div>
+            ) : ldGraph ? (
+              <div className="mt-6 space-y-6">
+                {/* W3C Vocabularies & Context */}
+                <div className="rounded-card border border-brand/20 bg-brand/5 p-4 text-xs font-mono">
+                  <div className="font-semibold text-brand mb-1">JSON-LD 1.1 Context (@context)</div>
+                  <div className="text-ink-muted">
+                    <div>@vocab: {ldGraph["@context"]?.["@vocab"]}</div>
+                    <div>schema: {ldGraph["@context"]?.["schema"]}</div>
+                    <div>ieee1484: {ldGraph["@context"]?.["ieee1484"]}</div>
+                    <div>standard: IEEE 1484.20.3 (Standard for Learning Technology - Data Model for Reusable Competency Definitions)</div>
+                  </div>
+                </div>
+
+                {/* Graph Entities */}
+                <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
+                  {ldGraph["@graph"]?.map((item: any, idx: number) => (
+                    <div
+                      key={item.id || idx}
+                      className="rounded-surface border border-border bg-surface p-4 shadow-2xs hover:border-brand/40 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="rounded-pill bg-brand/10 text-brand px-2.5 py-0.5 text-[11px] font-mono font-semibold">
+                          {item.type}
+                        </span>
+                        <span className="text-[11px] font-mono text-ink-muted truncate max-w-[200px]">
+                          {item.id}
+                        </span>
+                      </div>
+
+                      <h3 className="font-heading font-bold text-ink text-sm">{item.name}</h3>
+                      <p className="mt-1 text-xs text-ink-muted leading-relaxed">
+                        {item.description}
+                      </p>
+
+                      <div className="mt-3 pt-3 border-t border-border/60 text-xs space-y-1.5">
+                        {item.prerequisite && item.prerequisite.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="font-medium text-ink-muted text-[11px]">Prerequisites:</span>
+                            {item.prerequisite.map((p: string) => (
+                              <span key={p} className="rounded bg-page-bg px-2 py-0.5 font-mono text-[10px] text-ink">
+                                {p.split(":").pop()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {item.evidencedBy && item.evidencedBy.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="font-medium text-emerald-700 text-[11px]">Evidenced By:</span>
+                            {item.evidencedBy.map((e: string) => (
+                              <span key={e} className="rounded bg-emerald-50 text-emerald-800 px-2 py-0.5 font-mono text-[10px]">
+                                {e.split(":").pop()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {item.teaches && item.teaches.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="font-medium text-brand text-[11px]">Teaches:</span>
+                            {item.teaches.map((t: string) => (
+                              <span key={t} className="rounded bg-primary-fixed text-secondary px-2 py-0.5 font-mono text-[10px]">
+                                {t.split(":").pop()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-sm text-ink-muted">
+                Click "Refresh Graph" to query the live JSON-LD knowledge graph.
               </div>
             )}
           </div>

@@ -1,0 +1,37 @@
+---
+description: Andrej Karpathy Coding Agent Skills & EdVidura Single-Frontend Lock
+globs: **/*
+---
+
+# Andrej Karpathy Coding Agent Skills & EdVidura Architecture Rules
+
+Implement the 4 core principles from `multica-ai/andrej-karpathy-skills`:
+
+1. **Think Before Coding**:
+   - State assumptions explicitly before modifying files.
+   - Surface tradeoffs, edge cases, and failure modes; never guess silently.
+   - Verify existing system behavior before proposing new architecture.
+
+2. **Simplicity First**:
+   - Implement the minimum code that solves the user's problem cleanly.
+   - Zero speculative abstractions, over-engineered layers, or dead code.
+   - Prefer simple, idiomatic TypeScript and Python over unnecessary complexity.
+
+3. **Surgical Changes**:
+   - Touch only the exact files and lines required.
+   - Preserve existing working code, tests, and UI layouts.
+   - Clean up only your own orphans.
+
+4. **Goal-Driven Execution**:
+   - Define concrete, testable acceptance criteria for every step.
+   - Run synchronous tests (`vitest run`, `pytest`, `tsc --noEmit`) to verify every change.
+   - Verify end-to-end functionality before marking tasks complete.
+
+---
+
+## EdVidura Strict Frontend Lock Rule
+
+- **ALL user-facing UI screens must be built exclusively inside `frontend-react/src/` using `AppShell`, `TopNav`, `PageHeading`, and the established design tokens.**
+- **Never create parallel frontend folders, alternate themes, or raw HTML/Jinja templates for user-facing views.**
+- Maintain full design system consistency with the established card, table, navigation, and color tokens.
+- Canonical cloud review entry URL: `https://edvidura-deployment.vercel.app/review`.

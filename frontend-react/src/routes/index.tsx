@@ -24,10 +24,15 @@ function Landing() {
   const navigate = useNavigate();
 
   // If a verified LTI session is established, automatically route directly to the role's home experience
+  // If unauthenticated, cleanly redirect cloud reviewers directly to the Senior Management Review Portal (/review)
   useEffect(() => {
-    if (!isLoading && session) {
-      const target = roleHome[session.role] || "/lessons";
-      void navigate({ to: target, replace: true });
+    if (!isLoading) {
+      if (session) {
+        const target = roleHome[session.role] || "/lessons";
+        void navigate({ to: target, replace: true });
+      } else {
+        void navigate({ to: "/review", replace: true });
+      }
     }
   }, [isLoading, session, navigate]);
 
@@ -43,13 +48,13 @@ function Landing() {
     );
   }
 
-  // If already authenticated, return null while redirect effect executes
+  // If already authenticated or redirecting, return null
   if (session) return null;
 
   const returnUrl =
     (typeof window !== "undefined"
       ? sessionStorage.getItem("edvidura_return_url")
-      : null) || "/moodle/course/view.php?id=10";
+      : null) || "/review";
 
   return (
     <div className="flex min-h-screen flex-col bg-page-bg">
@@ -63,7 +68,7 @@ function Landing() {
             href={returnUrl}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:underline"
           >
-            <span>Return to Moodle LMS</span>
+            <span>Senior Review Gateway</span>
             <ExternalLink size={14} aria-hidden />
           </a>
         </div>
@@ -102,7 +107,7 @@ function Landing() {
             href={returnUrl}
             className="btn-primary inline-flex w-full items-center justify-center gap-2 py-3 text-center text-sm font-semibold shadow-sm"
           >
-            <span>Return to Moodle LMS</span>
+            <span>Go to Senior Review Gateway (/review)</span>
             <ExternalLink size={16} aria-hidden />
           </a>
 

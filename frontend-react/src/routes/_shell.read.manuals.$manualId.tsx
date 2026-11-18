@@ -53,7 +53,7 @@ function Page() {
         const fallback = ebookById(manualId);
         if (fallback) {
           setBook(fallback);
-          setChapters(ebookChapters[manualId] ?? []);
+          setChapters(ebookChapters[fallback.id] ?? ebookChapters[manualId] ?? []);
         }
         setLoading(false);
       }

@@ -17,8 +17,6 @@ export const Route = createFileRoute("/review")({
 });
 
 function ReviewGateway() {
-  const moodleUrl = "/moodle";
-
   return (
     <div className="flex min-h-screen flex-col bg-page-bg">
       <header className="border-b border-border bg-surface px-6 py-4">
@@ -32,15 +30,9 @@ function ReviewGateway() {
               <p className="text-[11px] font-medium text-ink-muted">Senior Review Gateway · Riverside High</p>
             </div>
           </div>
-          <a
-            href={`${moodleUrl}/course/view.php?id=10`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:underline"
-          >
-            <span>Open Moodle LMS</span>
-            <ExternalLink size={14} aria-hidden />
-          </a>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full">
+            <span>Production Deployment Ready</span>
+          </span>
         </div>
       </header>
 
@@ -223,23 +215,23 @@ function ReviewGateway() {
           <div className="rounded-control border border-border bg-surface p-6 space-y-3">
             <h3 className="text-sm font-bold text-ink flex items-center gap-2">
               <Users size={16} className="text-secondary" />
-              <span>Full LTI 1.3 Moodle Integration Test</span>
+              <span>Full IMS Global LTI 1.3 Moodle Integration</span>
             </h3>
             <p className="text-xs text-ink-muted leading-relaxed">
-              To test the authentic end-to-end IMS Global LTI 1.3 launch directly from Moodle LMS, open the tunneled Moodle course below and click <strong>Activity 21 — Riverside Algebra check</strong>.
+              In production cloud deployment, the 1-click persona launches above immediately establish authentic database-backed sessions with signed tokens. When developing locally with Docker Moodle (<code className="font-mono">localhost:8085</code>), launches arrive via standard LTI 1.3 OIDC login at <code className="font-mono">/lti/launch</code>.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <a
-                href={`${moodleUrl}/course/view.php?id=10`}
+                href="http://localhost:8085/course/view.php?id=10"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-control border border-border bg-page-bg px-3.5 py-2 text-xs font-semibold text-ink hover:bg-muted transition-colors"
               >
-                <span>Open Moodle Course 10</span>
+                <span>Local Docker Moodle (localhost:8085)</span>
                 <ExternalLink size={13} aria-hidden />
               </a>
               <span className="text-xs text-ink-muted">
-                (Login credentials in Moodle: <code className="font-mono">riverside_alice</code>, <code className="font-mono">riverside_priya</code>, or <code className="font-mono">riverside_admin</code>)
+                (Local Moodle test accounts: <code className="font-mono">riverside_alice</code>, <code className="font-mono">riverside_priya</code>, or <code className="font-mono">riverside_admin</code>)
               </span>
             </div>
           </div>

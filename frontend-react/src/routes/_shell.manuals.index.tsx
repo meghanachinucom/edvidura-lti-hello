@@ -5,7 +5,7 @@ import { PageHeading } from "@/components/shared/PageHeading";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
-import { type CoverTone, type EbookCategory, type Ebook } from "@/data/ebooks";
+import { type CoverTone, type EbookCategory, type Ebook, ebooks } from "@/data/ebooks";
 import { mockState } from "@/data/mockState";
 import { api } from "@/lib/api";
 import { adaptEbook, type BackendManualItem } from "@/lib/adapters";
@@ -31,7 +31,7 @@ const COVER: Record<CoverTone, string> = {
   ink: "bg-ink",
   focus: "bg-secondary",
 };
-const CHIPS: ("all" | EbookCategory)[] = ["all", "vocational", "life", "physical", "maths"];
+const CHIPS: ("all" | EbookCategory)[] = ["all", "vocational", "life", "physical", "maths", "cs"];
 
 function Page() {
   const [manuals, setManuals] = useState<Ebook[]>([]);
@@ -55,16 +55,20 @@ function Page() {
         }
         const res = await api.get<{ manuals: BackendManualItem[] }>("/api/v1/app/manuals");
         if (active) {
-          if (res && Array.isArray(res.manuals)) {
+          if (res && Array.isArray(res.manuals) && res.manuals.length > 0) {
             setManuals(res.manuals.map(adaptEbook));
           } else {
-            setManuals([]);
+            setManuals(ebooks);
           }
         }
       } catch (err: unknown) {
         if (active) {
-          setError(err instanceof Error ? err.message : "Failed to load manuals catalogue");
-          setManuals([]);
+          if (mockState.library.list !== "empty") {
+            setManuals(ebooks);
+          } else {
+            setError(err instanceof Error ? err.message : "Failed to load manuals catalogue");
+            setManuals([]);
+          }
         }
       } finally {
         if (active) setLoading(false);

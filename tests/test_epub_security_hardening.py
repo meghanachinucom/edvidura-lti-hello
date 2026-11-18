@@ -138,6 +138,18 @@ def epub_test_assets(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(manuals_mod, "list_bookmarks", lambda **kw: [])
     monkeypatch.setattr(manuals_mod, "list_annotations", lambda **kw: [])
     monkeypatch.setattr(manuals_mod, "save_reading_progress", lambda **kw: {})
+    monkeypatch.setattr(manuals_mod, "resolve_reader_content", lambda *a, **kw: {"body_md": "", "title": "Biology 101"})
+    monkeypatch.setattr(manuals_mod, "get_locale", lambda *a, **kw: None)
+    monkeypatch.setattr(manuals_mod, "list_locales", lambda *a, **kw: [])
+    from app import db
+    from tests.phase2_mock_db import mock_phase2_tenant_connection
+    monkeypatch.setattr(db, "tenant_connection", mock_phase2_tenant_connection)
+    monkeypatch.setattr(db, "get_tenant", lambda *a, **kw: {"id": TENANT_ID, "preferred_state": ""})
+    try:
+        from app.modules import pebl as pebl_mod
+        monkeypatch.setattr(pebl_mod, "chapter_counts", lambda *a, **kw: {})
+    except Exception:
+        pass
     monkeypatch.setattr(manuals_mod, "get_epub_storage_dir", lambda *args: tmp_path)
     monkeypatch.setattr(manuals_mod, "verify_reader_token", lambda **kw: kw.get("token") == "valid-sig-123")
     from app.modules import xapi as xapi_mod

@@ -769,7 +769,7 @@ def seed() -> None:
                 """
                 INSERT INTO class_teachers (tenant_id, class_id, teacher_id, role)
                 VALUES (%s, %s, %s, 'lead')
-                ON CONFLICT (tenant_id, class_id, teacher_id) DO NOTHING
+                ON CONFLICT (class_id, teacher_id) DO NOTHING
                 """,
                 (TENANT_ID, cid, teacher_ids[cls["lead"]]),
             )

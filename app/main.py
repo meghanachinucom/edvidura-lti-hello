@@ -25,6 +25,7 @@ from app.api.app_client import router as app_client_router
 from app.api.app_client.envelope import fail as app_fail
 from app.api.events import router as events_api_router
 from app.api.etims_webhook import router as etims_webhook_router
+from app.modules.linked_data.routes import router as linked_data_router
 from app.api.institution import router as institution_router
 from app.api.skills import router as skills_api_router
 from app.api.sme_public import router as sme_public_router
@@ -47,7 +48,6 @@ from app.auth_routes import router as auth_router
 from app.ops_routes import router as ops_router
 from app.deep_link_routes import router as deep_link_router
 from app.lti_register_routes import router as lti_register_router
-from app.moodle_routes import router as moodle_router
 from app.quiz_routes import SESSION_KEY as QUIZ_SESSION_KEY
 from app.quiz_routes import router as quiz_router
 from app.quiz_routes import store_quiz_context
@@ -125,15 +125,13 @@ app.include_router(events_api_router)
 app.include_router(ai_api_router)
 app.include_router(sme_public_router)
 app.include_router(etims_webhook_router)
+app.include_router(linked_data_router)
 app.include_router(quiz_router)
-app.include_router(moodle_router)
 
 _STATIC = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 
-_REACT_SPA_DIST = Path(__file__).resolve().parents[1] / "frontend-react" / "dist"
-_LEGACY_SPA_DIST = Path(__file__).resolve().parents[1] / "frontend" / "dist"
-_SPA_DIST = _REACT_SPA_DIST if (_REACT_SPA_DIST / "index.html").is_file() else _LEGACY_SPA_DIST
+_SPA_DIST = Path(__file__).resolve().parents[1] / "frontend-react" / "dist"
 if (_SPA_DIST / "index.html").is_file():
     app.mount("/app", StaticFiles(directory=str(_SPA_DIST), html=True), name="spa")
     if (_SPA_DIST / "assets").is_dir():

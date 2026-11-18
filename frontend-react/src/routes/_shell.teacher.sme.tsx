@@ -7,6 +7,7 @@ import { PillTabs, type PillTab } from "@/components/shared/PillTabs";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBanner } from "@/components/shared/StatusBanner";
+import { VoiceInputButton } from "@/components/shared/VoiceControls";
 import { smeSources, smeDefaults, type SourceDoc } from "@/data/smeSources";
 import { ebooks } from "@/data/ebooks";
 import { ebookChapters } from "@/data/ebookContent";
@@ -356,7 +357,7 @@ function Page() {
             <p className="mt-1 text-sm text-ink-muted">
               Vector and keyword search across indexed technical manuals, schematics, and instructional guides.
             </p>
-            <form onSubmit={handleSearch} className="mt-4 flex gap-2">
+            <form onSubmit={handleSearch} className="mt-4 flex items-center gap-2">
               <div className="relative flex-1">
                 <Search size={18} className="absolute left-3 top-3.5 text-ink-muted" />
                 <input
@@ -367,6 +368,11 @@ function Page() {
                   className="min-h-11 w-full rounded-surface border-control bg-surface pl-10 pr-3 text-ink"
                 />
               </div>
+              <VoiceInputButton
+                onTranscript={(transcript) => {
+                  setSearchQuery((prev) => (prev ? `${prev} ${transcript}` : transcript));
+                }}
+              />
               <button
                 type="submit"
                 disabled={searchLoading || searchQuery.trim().length < 2}

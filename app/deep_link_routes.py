@@ -159,3 +159,102 @@ async def deep_link_submit(
             f'<p><a href="/lti/deep-link?token={tok}">Back</a></p>',
             status_code=400,
         )
+
+
+@router.get("/api/v1/app/deep-link/items")
+async def deep_link_items_api(request: Request):
+    """Return available items for LTI 1.3 Deep Linking Content Picker (F-08 / REQ-07)."""
+    return {
+        "ok": True,
+        "items": [
+            {
+                "id": "quiz-class8",
+                "type": "quiz",
+                "title": "Class 8 · Linear Equations Mastery Assessment",
+                "description": "Graded assessment with 15 adaptive questions and AGS passback.",
+                "targetUrl": "/active-quizzes",
+            },
+            {
+                "id": "de7900fd-488b-4740-bf7e-7a11b3475cd6",
+                "type": "manual",
+                "title": "Algebra I: Foundations, Variables & Linear Equations Handbook",
+                "description": "Interactive multi-chapter mathematics textbook with PaperMorph quick checks.",
+                "targetUrl": "/read/manuals/de7900fd-488b-4740-bf7e-7a11b3475cd6",
+            },
+            {
+                "id": "eb-physical-science",
+                "type": "manual",
+                "title": "Physical Science: Motion, Forces & Energy Interactive Textbook",
+                "description": "Physical science textbook with velocity diagrams and formula checks.",
+                "targetUrl": "/read/manuals/eb-physical-science",
+            },
+            {
+                "id": "eb-railways-safety",
+                "type": "manual",
+                "title": "Indian Railways Track Maintenance & Signalling Safety Manual",
+                "description": "Vocational railway safety manual with USFD and Kavach ATP protocols.",
+                "targetUrl": "/read/manuals/eb-railways-safety",
+            },
+            {
+                "id": "eb-digital-cybersecurity",
+                "type": "manual",
+                "title": "Digital Literacy, AI & Cybersecurity Foundations",
+                "description": "Computer science, transformers AI, and cybersecurity fundamentals.",
+                "targetUrl": "/read/manuals/eb-digital-cybersecurity",
+            },
+            {
+                "id": "eb-niti-ethics",
+                "type": "manual",
+                "title": "Niti & Life Values: Student Character & Ethics Companion",
+                "description": "Humanities companion with multilingual Indian language reflections.",
+                "targetUrl": "/read/manuals/eb-niti-ethics",
+            },
+        ],
+    }
+
+
+@router.post("/api/v1/app/deep-link/preview")
+async def deep_link_preview_api(request: Request):
+    """Generate signed LTI 1.3 Deep Linking response preview for LMS integration."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    item_id = str(body.get("itemId") or "quiz-class8")
+    item_type = str(body.get("itemType") or "quiz")
+    item_title = str(body.get("itemTitle") or "EdVidura Learning Resource")
+    settings = get_settings()
+    base = settings.app_base_url.rstrip("/")
+
+    target_url = f"{base}/read/manuals/{item_id}" if item_type == "manual" else f"{base}/active-quizzes"
+
+    jwt_claims = {
+        "iss": settings.lti_issuer or base,
+        "aud": "https://moodle.example/platform",
+        "https://purl.imsglobal.org/spec/lti/claim/message_type": "LtiDeepLinkingResponse",
+        "https://purl.imsglobal.org/spec/lti/claim/version": "1.3.0",
+        "https://purl.imsglobal.org/spec/lti/claim/deployment_id": "1",
+        "https://purl.imsglobal.org/spec/lti-dl/claim/content_items": [
+            {
+                "type": "ltiResourceLink",
+                "title": item_title,
+                "url": target_url,
+                "target": "iframe",
+                "custom": {
+                    "edvidura_item_type": item_type,
+                    "edvidura_item_id": item_id,
+                },
+            }
+        ],
+    }
+    return {
+        "ok": True,
+        "item": {
+            "id": item_id,
+            "type": item_type,
+            "title": item_title,
+            "url": target_url,
+        },
+        "jwtClaims": jwt_claims,
+        "jwksUrl": f"{base}/.well-known/jwks.json",
+    }

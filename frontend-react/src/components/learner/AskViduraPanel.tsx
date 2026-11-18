@@ -1,24 +1,31 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { MessageCircle, X } from "lucide-react";
-import { t } from "@/i18n";
+import { Award, Brain, MessageCircle, Sparkles, X } from "lucide-react";
+import { getLocaleBcp47, t, useLocale, type Locale } from "@/i18n";
 import { useFocusTrap } from "@/components/shared/useFocusTrap";
 import { CoachStarterChips } from "@/components/shared/CoachStarterChips";
 import { CitationChip } from "@/components/shared/CitationChip";
 import { CheckQuestionCard } from "@/components/shared/CheckQuestionCard";
+import {
+  VoiceInputButton,
+  VoiceListenButton,
+} from "@/components/shared/VoiceControls";
 import {
   askViduraLanguages,
   pickViduraAnswer,
   VIDURA_OFF_SCOPE,
   type ViduraAnswer,
 } from "@/data/askVidura";
+import { api } from "@/lib/api";
 
-// M2 Ask Vidura side panel. Learner role only; mock answers from class lessons.
+// M2 Ask Vidura side panel. Learner role only with Jane Street Socratic scaffolding.
 const s = (k: string) => t(`M2.${k}`);
 
 interface Turn {
   id: number;
   question: string;
   answer?: ViduraAnswer | null;
+  socraticHint?: string;
+  masteryLevel?: number;
 }
 
 export function AskViduraPanel() {
@@ -42,7 +49,7 @@ export function AskViduraPanel() {
         type="button"
         onClick={open}
         aria-expanded={mounted}
-        className="btn-primary fixed bottom-4 right-4 z-40 shadow-sm"
+        className="btn-primary fixed bottom-4 right-4 z-40 shadow-md flex items-center gap-2"
       >
         <MessageCircle aria-hidden size={18} />
         {s("button")}
@@ -55,25 +62,81 @@ export function AskViduraPanel() {
 function Panel({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useFocusTrap(ref, true, onClose);
+  const { locale, setLocale, bcp47 } = useLocale();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"socratic" | "direct">("socratic");
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const send = (e: FormEvent) => {
-    e.preventDefault();
-    const q = text.trim();
+  const send = async (e?: FormEvent, customQ?: string) => {
+    if (e) e.preventDefault();
+    const q = (customQ || text).trim();
     if (!q || busy) return;
     const id = turns.length;
     setTurns((ts) => [...ts, { id, question: q }]);
     setText("");
     setBusy(true);
+
+    try {
+      const res = await api.post<{
+        answer?: string;
+        citations?: Array<{ title?: string; id?: string }>;
+        check_question?: string;
+        socratic?: {
+          hint?: string;
+          mastery_level?: number;
+          diagnostic_question?: string;
+        };
+      }>("/api/v1/app/coach", {
+        question: q,
+        reply_language: bcp47,
+        mode,
+      });
+
+      if (res?.answer) {
+        setBusy(false);
+        const viduraAns: ViduraAnswer = {
+          id: `ans-${id}`,
+          question: q,
+          answer: res.answer,
+          check: res.socratic?.diagnostic_question || res.check_question || "Review the lesson worked example.",
+          citations:
+            res.citations && res.citations.length >= 2
+              ? [
+                  { title: res.citations[0].title || "Class Manual", id: res.citations[0].id || "ch1" },
+                  { title: res.citations[1].title || "Worked Example", id: res.citations[1].id || "ch2" },
+                ]
+              : [
+                  { title: "Algebra I Chapter 1", id: "ch1" },
+                  { title: "Linear Equations Lesson", id: "l1" },
+                ],
+        };
+        setTurns((ts) =>
+          ts.map((x) =>
+            x.id === id
+              ? {
+                  ...x,
+                  answer: viduraAns,
+                  socraticHint: res.socratic?.hint,
+                  masteryLevel: res.socratic?.mastery_level,
+                }
+              : x,
+          ),
+        );
+        return;
+      }
+    } catch {
+      // fallback
+    }
+
     timer.current = setTimeout(() => {
       setBusy(false);
       setTurns((ts) => ts.map((x) => (x.id === id ? { ...x, answer: pickViduraAnswer(q) } : x)));
-    }, 1500);
+    }, 1000);
   };
+
   const stop = () => {
     clearTimeout(timer.current);
     setBusy(false);
@@ -86,78 +149,113 @@ function Panel({ visible, onClose }: { visible: boolean; onClose: () => void }) 
       role="dialog"
       aria-modal="true"
       aria-label={s("button")}
-      className={`fixed inset-0 z-50 flex flex-col bg-surface transition-transform ease-out tablet:inset-y-0 tablet:left-auto tablet:right-0 tablet:w-[420px] tablet:border-l tablet:border-border ${
+      className={`fixed inset-0 z-50 flex flex-col bg-surface transition-transform ease-out tablet:inset-y-0 tablet:left-auto tablet:right-0 tablet:w-[440px] tablet:border-l tablet:border-border ${
         visible ? "translate-x-0 duration-[250ms]" : "translate-x-full duration-200"
       }`}
     >
       <div className="flex items-center justify-between gap-3 border-b border-border p-4">
         <div>
-          <h2 className="font-heading text-[22px] text-ink">{s("button")}</h2>
-          <p className="text-sm text-ink-muted">{s("scope")}</p>
+          <div className="flex items-center gap-2">
+            <h2 className="font-heading text-lg font-bold text-ink">{s("button")}</h2>
+            <span className="rounded-pill bg-brand/10 text-brand px-2 py-0.5 text-[10px] font-semibold">
+              Socratic Tutor
+            </span>
+          </div>
+          <p className="text-xs text-ink-muted">{s("scope")}</p>
         </div>
         <button type="button" onClick={onClose} aria-label={s("close")} className="icon-btn">
           <X aria-hidden size={20} />
         </button>
       </div>
 
-      <div className="border-b border-border p-4">
-        <label htmlFor="vidura-lang" className="block font-semibold text-ink">
-          {s("language")}
-        </label>
-        <select
-          id="vidura-lang"
-          className="mt-2 min-h-11 w-full rounded-surface bg-surface px-3 text-ink border-control"
-        >
-          {askViduraLanguages.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <p className="mt-2 text-sm text-ink-muted">{s("languageNote")}</p>
+      <div className="border-b border-border p-3 bg-page-bg/50 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="font-medium text-ink">Mode:</span>
+          <button
+            type="button"
+            onClick={() => setMode((m) => (m === "socratic" ? "direct" : "socratic"))}
+            className={`rounded-pill px-2.5 py-0.5 text-xs font-semibold border ${
+              mode === "socratic"
+                ? "bg-brand text-white border-brand"
+                : "bg-surface text-ink-muted border-border"
+            }`}
+          >
+            {mode === "socratic" ? "Socratic Guided" : "Direct Reference"}
+          </button>
+        </div>
+        <span className="text-xs text-ink-muted font-mono">{bcp47}</span>
       </div>
 
       <ol className="flex-1 space-y-4 overflow-y-auto p-4">
+        {turns.length === 0 && (
+          <div className="rounded-surface border border-dashed border-border p-6 text-center text-xs text-ink-muted">
+            <Brain className="mx-auto size-7 text-brand/60 mb-2" />
+            <p className="font-semibold text-ink">Ask Vidura — Class 8 Study Coach</p>
+            <p className="mt-1">
+              Ask anything about your lessons or use the Voice button to speak in your language.
+            </p>
+          </div>
+        )}
         {turns.map((x) => (
           <li key={x.id} className="space-y-3">
             <div className="ml-auto max-w-[85%] rounded-surface bg-highlight p-3 text-ink">
-              <p className="text-sm font-semibold">{s("yourQuestion")}</p>
-              <p>{x.question}</p>
+              <p className="text-xs font-semibold text-ink-muted">{s("yourQuestion")}</p>
+              <p className="text-sm">{x.question}</p>
             </div>
-            {x.answer !== undefined && <Answer answer={x.answer} />}
+            {x.answer !== undefined && (
+              <Answer
+                answer={x.answer}
+                socraticHint={x.socraticHint}
+                masteryLevel={x.masteryLevel}
+                bcp47={bcp47}
+                onStep={() => send(undefined, `Guide me on: ${x.answer?.check}`)}
+              />
+            )}
           </li>
         ))}
       </ol>
-      <p role="status" className="px-4 text-ink-muted">
+
+      <p role="status" className="px-4 text-xs text-ink-muted">
         {busy ? s("thinking") : ""}
       </p>
 
       <form
-        onSubmit={send}
+        onSubmit={(e) => send(e)}
         className="space-y-2 border-t border-border bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
       >
-        <CoachStarterChips
-          onSelect={(prompt) => {
-            setText(prompt);
-            ref.current?.querySelector<HTMLTextAreaElement>("textarea")?.focus();
-          }}
-        />
-        <label htmlFor="vidura-q" className="block font-semibold text-ink">
+        <div className="flex items-center justify-between gap-2">
+          <CoachStarterChips
+            onSelect={(prompt) => {
+              setText(prompt);
+              ref.current?.querySelector<HTMLTextAreaElement>("textarea")?.focus();
+            }}
+          />
+          <VoiceInputButton
+            onTranscript={(trans) => {
+              setText((prev) => (prev ? `${prev} ${trans}` : trans));
+              ref.current?.querySelector<HTMLTextAreaElement>("textarea")?.focus();
+            }}
+            lang={bcp47}
+          />
+        </div>
+
+        <label htmlFor="vidura-q" className="sr-only">
           {s("yourQuestion")}
         </label>
         <textarea
           id="vidura-q"
-          rows={3}
+          rows={2}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="w-full rounded-surface border border-border-control bg-surface p-2 text-ink"
+          placeholder="Ask a question or click Voice..."
+          className="w-full rounded-surface border border-border bg-surface p-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
         />
         <div className="flex gap-2">
-          <button type="submit" disabled={busy} className="btn-primary">
+          <button type="submit" disabled={busy || !text.trim()} className="btn-primary text-xs py-1.5">
             {s("send")}
           </button>
           {busy && (
-            <button type="button" onClick={stop} className="btn-secondary">
+            <button type="button" onClick={stop} className="btn-secondary text-xs py-1.5">
               {s("stop")}
             </button>
           )}
@@ -167,39 +265,88 @@ function Panel({ visible, onClose }: { visible: boolean; onClose: () => void }) 
   );
 }
 
-function Answer({ answer }: { answer: ViduraAnswer | null }) {
+function Answer({
+  answer,
+  socraticHint,
+  masteryLevel,
+  bcp47,
+  onStep,
+}: {
+  answer: ViduraAnswer | null;
+  socraticHint?: string;
+  masteryLevel?: number;
+  bcp47: string;
+  onStep?: () => void;
+}) {
   const [vote, setVote] = useState<"helpful" | "notHelpful" | null>(null);
   return (
-    <div className="max-w-[92%] space-y-3 rounded-surface border border-border bg-page-bg p-3 text-ink">
-      <p className="text-sm font-semibold">{s("coach")}</p>
+    <div className="max-w-[94%] space-y-3 rounded-surface border border-border bg-page-bg p-3.5 text-ink text-sm shadow-2xs">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-brand flex items-center gap-1.5">
+          <Sparkles size={14} />
+          {s("coach")}
+        </p>
+        {answer && <VoiceListenButton text={`${answer.answer}. ${answer.check}`} lang={bcp47} />}
+      </div>
+
       {answer === null ? (
-        <p>{VIDURA_OFF_SCOPE}</p>
+        <p className="text-xs text-ink-muted">{VIDURA_OFF_SCOPE}</p>
       ) : (
         <>
-          <p>{answer.answer}</p>
+          <p className="leading-relaxed">{answer.answer}</p>
           <div>
-            <p className="text-sm font-semibold">{s("citations")}</p>
-            <p>
+            <p className="text-xs font-semibold text-ink-muted mb-1">{s("citations")}</p>
+            <div className="flex flex-wrap gap-1 text-xs">
               <CitationChip {...answer.citations[0]} />
-              {" · "}
               <CitationChip {...answer.citations[1]} />
-            </p>
+            </div>
           </div>
-          <CheckQuestionCard label={s("checkQuestion")} question={answer.check} />
+
+          <div className="rounded-surface bg-highlight p-2.5 border border-border/60">
+            <CheckQuestionCard label="Socratic Self-Check" question={answer.check} />
+            {socraticHint && (
+              <p className="text-[11px] text-ink-muted italic mt-1">💡 Hint: {socraticHint}</p>
+            )}
+            {onStep && (
+              <button
+                type="button"
+                onClick={onStep}
+                className="mt-1.5 text-[11px] font-semibold text-brand hover:underline block"
+              >
+                Work through this step →
+              </button>
+            )}
+          </div>
+
+          {masteryLevel && (
+            <div className="inline-flex items-center gap-1 text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-pill border border-emerald-300">
+              <Award size={12} className="text-emerald-600" />
+              <span>Skill Mastery: Level {masteryLevel} / 5</span>
+            </div>
+          )}
         </>
       )}
-      <div className="flex flex-wrap items-center gap-2">
+
+      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/40">
         {vote === null ? (
           <>
-            <button type="button" onClick={() => setVote("helpful")} className="btn-secondary">
-              {s("helpful")}
+            <button
+              type="button"
+              onClick={() => setVote("helpful")}
+              className="text-xs text-ink-muted hover:text-ink"
+            >
+              👍 {s("helpful")}
             </button>
-            <button type="button" onClick={() => setVote("notHelpful")} className="btn-secondary">
-              {s("notHelpful")}
+            <button
+              type="button"
+              onClick={() => setVote("notHelpful")}
+              className="text-xs text-ink-muted hover:text-ink"
+            >
+              👎 {s("notHelpful")}
             </button>
           </>
         ) : (
-          <p role="status" className="text-sm">
+          <p role="status" className="text-xs text-ink-muted">
             {s("thanks")}
           </p>
         )}

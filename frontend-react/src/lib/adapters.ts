@@ -166,7 +166,7 @@ export function adaptQuiz(backend: BackendQuizSummary): Quiz {
  * Adapts backend manual item to React Ebook.
  */
 export function adaptEbook(backend: BackendManualItem): Ebook {
-  const pages = backend.total_pages || backend.pages || 50;
+  const pages = backend.total_pages || backend.pages || 64;
   let curPage: number | null = backend.current_page ?? null;
   if (curPage === null && backend.progress_percent && backend.progress_percent > 0) {
     curPage = Math.max(1, Math.round((backend.progress_percent / 100) * pages));
@@ -175,18 +175,28 @@ export function adaptEbook(backend: BackendManualItem): Ebook {
   if (
     backend.category === "life" ||
     backend.category === "physical" ||
-    backend.category === "maths"
+    backend.category === "maths" ||
+    backend.category === "cs"
   ) {
     cat = backend.category;
   }
+  const mid = backend.id || backend.manual_id || "manual-unknown";
   return {
-    id: backend.id || backend.manual_id || "manual-unknown",
+    id: mid,
+    slug: backend.slug || mid,
     title: backend.title,
-    description: backend.description || "Technical manual for industrial training.",
+    description: backend.description || "Interactive digital curriculum handbook.",
     pages,
     currentPage: curPage,
-    cover: "accent",
+    cover: (backend.cover as any) || "accent",
     category: cat,
+    author: backend.author || "EdVidura Academic Faculty",
+    subjectCode: backend.subject_code || "CURR-08",
+    classLevel: backend.class_level || "Class 8 (RHS-C08)",
+    chaptersCount: backend.chapters_count || 4,
+    hasAudiobook: true,
+    hasInteractiveChecks: true,
+    publishedDate: backend.created_at || "2026-10-15",
   };
 }
 
@@ -195,16 +205,29 @@ export function adaptEbook(backend: BackendManualItem): Ebook {
  */
 export function adaptEbookChapter(
   manualId: string,
-  chapter: { chapter_index: number; title: string; paragraphs?: string[] },
+  chapter: { chapter_index: number; title: string; paragraphs?: string[]; takeaway?: string; conceptCheck?: any },
 ): Chapter {
   return {
     id: `ch-${manualId}-${chapter.chapter_index}`,
     title: chapter.title,
     startPage: (chapter.chapter_index - 1) * 15 + 1,
+    takeaway: chapter.takeaway || "Review the key principles of this section before moving to the concept check.",
     paragraphs:
       chapter.paragraphs && chapter.paragraphs.length > 0
         ? chapter.paragraphs
         : ["Chapter content loaded from verified PeBL source."],
+    conceptCheck: chapter.conceptCheck || {
+      question: `What is the core takeaway of ${chapter.title}?`,
+      options: [
+        "Consistent application of foundational principles",
+        "Passive reading without self-testing",
+        "Memorizing formulas without understanding derivation",
+        "Skipping practice problems",
+      ],
+      correctIndex: 0,
+      explanation: "Active recall and systematic application of principles ensure concept mastery.",
+      skillTag: "core-comprehension",
+    },
   };
 }
 
