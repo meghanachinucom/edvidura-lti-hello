@@ -48,15 +48,22 @@ function CardHeading({
   id,
   period,
   onChange,
+  step,
 }: {
   title: string;
   id: string;
   period: FocusPeriod;
   onChange: (period: FocusPeriod) => void;
+  step?: string;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 id={`${id}-title`} className="font-heading text-xl text-ink">
+        {step && (
+          <span className="mr-2 font-mono font-bold text-secondary">
+            {step}
+          </span>
+        )}
         {s(title)}
       </h2>
       <label className="sr-only" htmlFor={`${id}-period`}>
@@ -97,6 +104,7 @@ export function LearnerFocusAnalytics() {
         className="rounded-surface border border-border bg-surface p-4 tablet:p-5"
       >
         <CardHeading
+          step="01"
           title="focusTime"
           id="focus-time"
           period={periods.focus}
@@ -146,6 +154,7 @@ export function LearnerFocusAnalytics() {
         className="rounded-surface border border-border bg-surface p-4 tablet:p-5"
       >
         <CardHeading
+          step="02"
           title="studyRhythm"
           id="study-rhythm"
           period={periods.rhythm}
@@ -175,6 +184,7 @@ export function LearnerFocusAnalytics() {
         className="rounded-surface border border-border bg-surface p-4 tablet:p-5"
       >
         <CardHeading
+          step="03"
           title="focusMap"
           id="focus-map"
           period={periods.map}
@@ -225,6 +235,7 @@ export function LearnerFocusAnalytics() {
         className="rounded-surface border border-border bg-surface p-4 tablet:p-5"
       >
         <CardHeading
+          step="04"
           title="performance"
           id="performance"
           period={periods.performance}
@@ -239,10 +250,15 @@ export function LearnerFocusAnalytics() {
             ] as const
           ).map(([key, count, percent]) => (
             <div key={key} className="flex min-w-0 flex-col items-center text-center">
-              <div className="scale-[0.78] origin-center tablet:scale-100">
-                <ProgressRing percent={percent} label={s(key)} />
+              <div className="flex items-center justify-center">
+                <ProgressRing
+                  percent={percent}
+                  label={s(key)}
+                  size={120}
+                  strokeWidth={10}
+                />
               </div>
-              <span className="-mt-4 text-sm font-semibold text-ink">
+              <span className="mt-2.5 text-xs tablet:text-sm font-semibold text-ink">
                 {count} {s("items")}
               </span>
             </div>
