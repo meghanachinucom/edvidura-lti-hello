@@ -278,7 +278,7 @@ function Page() {
                   <div className="rounded-surface border border-border bg-highlight p-3 text-ink text-xs">
                     <div className="flex items-center gap-1.5 font-semibold text-brand mb-1.5">
                       <HelpCircle size={15} />
-                      PaperMorph Concept Check
+                      Interactive Concept Check
                     </div>
                     <p className="font-medium text-ink mb-2">{reel.conceptCheck.question}</p>
                     <div className="space-y-1.5">

@@ -178,7 +178,7 @@ async def deep_link_items_api(request: Request):
                 "id": "de7900fd-488b-4740-bf7e-7a11b3475cd6",
                 "type": "manual",
                 "title": "Algebra I: Foundations, Variables & Linear Equations Handbook",
-                "description": "Interactive multi-chapter mathematics textbook with PaperMorph quick checks.",
+                "description": "Interactive multi-chapter mathematics textbook with interactive quick checks.",
                 "targetUrl": "/read/manuals/de7900fd-488b-4740-bf7e-7a11b3475cd6",
             },
             {

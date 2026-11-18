@@ -147,7 +147,7 @@ export function VoiceInputButton({
         listening
           ? "Listening... Click to stop"
           : cleaning
-          ? "Cleaning audio with FreeFlow AI..."
+          ? "Cleaning audio with smart voice filter..."
           : `Speak in ${bcp47}`
       }
       aria-label={listening ? "Stop microphone" : "Speak question"}

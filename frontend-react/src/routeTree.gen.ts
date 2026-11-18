@@ -55,6 +55,7 @@ import { Route as ShellTeacherDctRouteImport } from "./routes/_shell.teacher.dct
 import { Route as ShellTeacherManualsRouteImport } from "./routes/_shell.teacher.manuals"
 import { Route as ShellTeacherSkillsRouteImport } from "./routes/_shell.teacher.skills"
 import { Route as ShellTeacherSmeRouteImport } from "./routes/_shell.teacher.sme"
+import { Route as ShellWorkspaceFeatureIdRouteImport } from "./routes/_shell.workspace.$featureId"
 import { Route as ShellLearnAiHintRouteImport } from "./routes/_shell.learn.ai.hint"
 import { Route as ShellQuizResultAttemptIdRouteImport } from "./routes/_shell.quiz.result.$attemptId"
 import { Route as ShellReadManualsManualIdRouteImport } from "./routes/_shell.read.manuals.$manualId"
@@ -302,6 +303,11 @@ const ShellTeacherSmeRoute = ShellTeacherSmeRouteImport.update({
   path: "/teacher/sme",
   getParentRoute: () => ShellRoute,
 } as any)
+const ShellWorkspaceFeatureIdRoute = ShellWorkspaceFeatureIdRouteImport.update({
+  id: "/workspace/$featureId",
+  path: "/workspace/$featureId",
+  getParentRoute: () => ShellRoute,
+} as any)
 const ShellLearnAiHintRoute = ShellLearnAiHintRouteImport.update({
   id: "/learn/ai/hint",
   path: "/learn/ai/hint",
@@ -406,6 +412,7 @@ export interface FileRoutesByFullPath {
   "/teacher/manuals": typeof ShellTeacherManualsRoute
   "/teacher/skills": typeof ShellTeacherSkillsRoute
   "/teacher/sme": typeof ShellTeacherSmeRoute
+  "/workspace/$featureId": typeof ShellWorkspaceFeatureIdRoute
   "/lessons/": typeof ShellLessonsIndexRoute
   "/manuals/": typeof ShellManualsIndexRoute
   "/quiz/": typeof ShellQuizIndexRoute
@@ -464,6 +471,7 @@ export interface FileRoutesByTo {
   "/teacher/manuals": typeof ShellTeacherManualsRoute
   "/teacher/skills": typeof ShellTeacherSkillsRoute
   "/teacher/sme": typeof ShellTeacherSmeRoute
+  "/workspace/$featureId": typeof ShellWorkspaceFeatureIdRoute
   "/lessons": typeof ShellLessonsIndexRoute
   "/manuals": typeof ShellManualsIndexRoute
   "/quiz": typeof ShellQuizIndexRoute
@@ -524,6 +532,7 @@ export interface FileRoutesById {
   "/_shell/teacher/manuals": typeof ShellTeacherManualsRoute
   "/_shell/teacher/skills": typeof ShellTeacherSkillsRoute
   "/_shell/teacher/sme": typeof ShellTeacherSmeRoute
+  "/_shell/workspace/$featureId": typeof ShellWorkspaceFeatureIdRoute
   "/_shell/lessons/": typeof ShellLessonsIndexRoute
   "/_shell/manuals/": typeof ShellManualsIndexRoute
   "/_shell/quiz/": typeof ShellQuizIndexRoute
@@ -584,6 +593,7 @@ export interface FileRouteTypes {
     | "/teacher/manuals"
     | "/teacher/skills"
     | "/teacher/sme"
+    | "/workspace/$featureId"
     | "/lessons/"
     | "/manuals/"
     | "/quiz/"
@@ -642,6 +652,7 @@ export interface FileRouteTypes {
     | "/teacher/manuals"
     | "/teacher/skills"
     | "/teacher/sme"
+    | "/workspace/$featureId"
     | "/lessons"
     | "/manuals"
     | "/quiz"
@@ -701,6 +712,7 @@ export interface FileRouteTypes {
     | "/_shell/teacher/manuals"
     | "/_shell/teacher/skills"
     | "/_shell/teacher/sme"
+    | "/_shell/workspace/$featureId"
     | "/_shell/lessons/"
     | "/_shell/manuals/"
     | "/_shell/quiz/"
@@ -1052,6 +1064,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ShellTeacherSmeRouteImport
       parentRoute: typeof ShellRoute
     }
+    "/_shell/workspace/$featureId": {
+      id: "/_shell/workspace/$featureId"
+      path: "/workspace/$featureId"
+      fullPath: "/workspace/$featureId"
+      preLoaderRoute: typeof ShellWorkspaceFeatureIdRouteImport
+      parentRoute: typeof ShellRoute
+    }
     "/_shell/learn/ai/hint": {
       id: "/_shell/learn/ai/hint"
       path: "/learn/ai/hint"
@@ -1166,6 +1185,7 @@ interface ShellRouteChildren {
   ShellTeacherManualsRoute: typeof ShellTeacherManualsRoute
   ShellTeacherSkillsRoute: typeof ShellTeacherSkillsRoute
   ShellTeacherSmeRoute: typeof ShellTeacherSmeRoute
+  ShellWorkspaceFeatureIdRoute: typeof ShellWorkspaceFeatureIdRoute
   ShellLessonsIndexRoute: typeof ShellLessonsIndexRoute
   ShellManualsIndexRoute: typeof ShellManualsIndexRoute
   ShellQuizIndexRoute: typeof ShellQuizIndexRoute
@@ -1218,6 +1238,7 @@ const ShellRouteChildren: ShellRouteChildren = {
   ShellTeacherManualsRoute: ShellTeacherManualsRoute,
   ShellTeacherSkillsRoute: ShellTeacherSkillsRoute,
   ShellTeacherSmeRoute: ShellTeacherSmeRoute,
+  ShellWorkspaceFeatureIdRoute: ShellWorkspaceFeatureIdRoute,
   ShellLessonsIndexRoute: ShellLessonsIndexRoute,
   ShellManualsIndexRoute: ShellManualsIndexRoute,
   ShellQuizIndexRoute: ShellQuizIndexRoute,

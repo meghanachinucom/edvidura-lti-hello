@@ -653,10 +653,10 @@ function Page() {
             <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
               <div>
                 <h2 className="font-heading text-xl font-bold text-ink">
-                  I2IDL & ADL TLA Semantic Linked Data Graph (JSON-LD)
+                  Semantic Knowledge & Competency Graph (JSON-LD)
                 </h2>
                 <p className="mt-1 text-sm text-ink-muted">
-                  IEEE 1484.20.3 Reusable Competency Definitions & IEEE 2881 Learning Metadata connected to 5 Textbooks and RHS-C08 Assessments.
+                  Standard Competency Definitions & Linked Learning Metadata connected to 5 Textbooks and RHS-C08 Assessments.
                 </p>
               </div>
               <div className="flex items-center gap-2">

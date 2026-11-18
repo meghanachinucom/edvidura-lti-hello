@@ -197,7 +197,7 @@ function Page() {
               </span>
             </div>
             <span className="rounded-pill bg-brand/10 text-brand px-2.5 py-0.5 text-xs font-medium">
-              Jane Street Agent Skills
+              Socratic Guided Learning
             </span>
           </div>
 
@@ -371,7 +371,7 @@ function Page() {
                   )}
                 </div>
                 <span className="text-[11px] text-ink-muted font-medium">
-                  {tutorMode === "socratic" ? "Socratic Mode (Jane Street)" : "Direct Mode"}
+                  {tutorMode === "socratic" ? "Socratic Guided Mode" : "Direct Mode"}
                 </span>
               </div>
             </form>

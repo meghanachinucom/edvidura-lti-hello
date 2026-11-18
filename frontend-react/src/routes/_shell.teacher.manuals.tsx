@@ -537,7 +537,7 @@ function WysiwygEditorForm({
         <span className="h-4 w-px bg-border mx-1" />
         <button
           type="button"
-          title="Embed PaperMorph Concept Check"
+          title="Embed Interactive Concept Check"
           onClick={() =>
             applyFormat(
               '\n:::concept-check\nQuestion: What is the main inverse operation?\n- Option A\n* Option B (Correct)\n- Option C\nExplanation: Active recall explanation here.\n:::\n'

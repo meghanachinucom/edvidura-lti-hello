@@ -15,7 +15,7 @@ export const manualRecords: ManualRecord[] = [
     ebookId: "de7900fd-488b-4740-bf7e-7a11b3475cd6",
     status: "published",
     versions: [
-      { n: 1, date: "2026-10-15T05:30:00Z", note: "Initial Class 8 curriculum edition with PaperMorph concept checks." },
+      { n: 1, date: "2026-10-15T05:30:00Z", note: "Initial Class 8 curriculum edition with interactive concept checks." },
       { n: 2, date: "2026-11-01T06:00:00Z", note: "Added worked examples and multilingual voice narration support." },
     ],
   },

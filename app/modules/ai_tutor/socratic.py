@@ -122,7 +122,7 @@ def evaluate_socratic_turn(
 
     return {
         "mode": "socratic_guided",
-        "method": "Jane Street Socratic Tutor",
+        "method": "EdVidura Socratic AI Tutor",
         "skill": skill_info["id"],
         "skill_name": skill_info["name"],
         "mastery_level": new_level,

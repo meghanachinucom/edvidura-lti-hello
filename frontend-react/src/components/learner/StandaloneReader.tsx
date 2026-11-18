@@ -444,7 +444,7 @@ export function StandaloneReader({
                     <div className="flex items-center justify-between pb-3 border-b border-border/60">
                       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
                         <HelpCircle size={15} />
-                        <span>PaperMorph Interactive Quick-Check</span>
+                        <span>Interactive Concept Quick-Check</span>
                       </div>
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-mono font-bold text-primary">
                         Tag: {chapter.conceptCheck.skillTag}

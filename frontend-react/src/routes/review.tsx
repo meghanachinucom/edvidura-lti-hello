@@ -194,14 +194,86 @@ function ReviewGateway() {
 
               {/* Screen 4 */}
               <a
+                href="/api/v1/auth/demo-launch?persona=learner&next=/learn/coach"
+                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
+              >
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 4 · Socratic AI Coach</span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Ask Vidura Tutor</h4>
+                  <p className="text-[11px] text-ink-muted leading-tight">
+                    6-stage mastery ladder, Socratic guided inquiry, voice dictation, and diagnostic checks.
+                  </p>
+                </div>
+                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
+                  <span>Open /learn/coach</span>
+                  <ArrowRight size={12} />
+                </div>
+              </a>
+
+              {/* Screen 5 */}
+              <a
+                href="/api/v1/auth/demo-launch?persona=learner&next=/manuals"
+                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
+              >
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 5 · Digital Textbooks</span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Interactive eBooks & Audiobooks</h4>
+                  <p className="text-[11px] text-ink-muted leading-tight">
+                    5 full textbooks, WCAG 2.1 AA accessibility, multi-lingual TTS, and concept checks.
+                  </p>
+                </div>
+                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
+                  <span>Open /manuals</span>
+                  <ArrowRight size={12} />
+                </div>
+              </a>
+
+              {/* Screen 6 */}
+              <a
+                href="/api/v1/auth/demo-launch?persona=learner&next=/learn/gap"
+                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
+              >
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 6 · Competency Graph</span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Knowledge Graph & Plan</h4>
+                  <p className="text-[11px] text-ink-muted leading-tight">
+                    Interactive node-and-edge semantic graph linking curriculum standards to learner mastery.
+                  </p>
+                </div>
+                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
+                  <span>Open /learn/gap</span>
+                  <ArrowRight size={12} />
+                </div>
+              </a>
+
+              {/* Screen 7 */}
+              <a
+                href="/api/v1/auth/demo-launch?persona=learner&next=/learn/micro"
+                className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
+              >
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 7 · Visual Reels</span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Micro-Learning Reels</h4>
+                  <p className="text-[11px] text-ink-muted leading-tight">
+                    Interactive concept reels with animated schematics, diagram callouts, and inline questions.
+                  </p>
+                </div>
+                <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">
+                  <span>Open /learn/micro</span>
+                  <ArrowRight size={12} />
+                </div>
+              </a>
+
+              {/* Screen 8 */}
+              <a
                 href="/api/v1/auth/demo-launch?persona=learner&next=/learn/analytics"
                 className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-page-bg hover:border-secondary transition shadow-2xs"
               >
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 4 · Credentials</span>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Skills Passport & Log</h4>
+                  <span className="text-[10px] font-mono font-bold text-amber-600 uppercase">Screen 8 · Credentials</span>
+                  <h4 className="text-xs font-bold text-ink group-hover:text-secondary">Focus & Performance Analytics</h4>
                   <p className="text-[11px] text-ink-muted leading-tight">
-                    NSQF Level 5 competency endorsements, APTRANSCO dual-training apprenticeship hours log.
+                    Weekly focus hours, study rhythm analysis, activity maps, and productive gauge rings.
                   </p>
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">

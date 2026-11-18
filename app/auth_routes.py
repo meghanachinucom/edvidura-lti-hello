@@ -303,8 +303,9 @@ def demo_launch(request: Request, persona: str = "learner", next: str = ""):
         dest = str(next)
 
     exchange_code = create_exchange_code(quiz_ctx, ttl_sec=300)
+    sep = "&" if "?" in dest else "?"
     return RedirectResponse(
-        url=f"{dest}?token={quiz_token}&code={exchange_code}",
+        url=f"{dest}{sep}token={quiz_token}&code={exchange_code}",
         status_code=302,
     )
 

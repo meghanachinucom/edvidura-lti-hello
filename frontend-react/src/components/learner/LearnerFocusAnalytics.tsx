@@ -258,7 +258,7 @@ export function LearnerFocusAnalytics() {
                   strokeWidth={10}
                 />
               </div>
-              <span className="mt-2.5 text-xs tablet:text-sm font-semibold text-ink">
+              <span className="mt-3 inline-block rounded-full bg-surface-muted/60 px-3 py-0.5 text-xs tablet:text-sm font-semibold text-ink">
                 {count} {s("items")}
               </span>
             </div>

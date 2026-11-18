@@ -82,7 +82,7 @@ LEARNING_RESOURCES = [
         "id": "urn:edvidura:manual:11111111-2222-3333-4444-555555555551",
         "type": "schema:Book",
         "name": "Algebra I: Foundations, Variables & Linear Equations Handbook",
-        "description": "Complete interactive textbook covering algebraic foundations with PaperMorph concept checks.",
+        "description": "Complete interactive textbook covering algebraic foundations with interactive concept checks.",
         "teaches": [
             "urn:edvidura:competency:variables",
             "urn:edvidura:competency:solve-linear",
