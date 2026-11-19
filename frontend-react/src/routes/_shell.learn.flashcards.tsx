@@ -194,6 +194,7 @@ function Page() {
               tabIndex={0}
               role="region"
               aria-label={`Flashcard: ${card.term}`}
+              onClick={() => flip(!back)}
               onKeyDown={(e) => {
                 if (e.key === "ArrowLeft") {
                   e.preventDefault();
@@ -206,7 +207,7 @@ function Page() {
                   flip(!back);
                 }
               }}
-              className="flashcard block w-full rounded-2xl shadow-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-secondary"
+              className="flashcard block w-full rounded-2xl shadow-md cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-secondary select-none"
             >
               <span className={`flashcard-inner ${back ? "is-flipped" : ""}`}>
                 {/* FRONT FACE: Question / Term */}
@@ -316,17 +317,17 @@ function Page() {
                       </div>
                     </div>
 
-                    <div className="flex justify-center">
+                    <div className="flex justify-center pt-1">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           flip(false);
                         }}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:underline py-1"
+                        className="inline-flex items-center gap-2 rounded-xl border border-secondary/30 bg-surface px-4 py-2 text-xs sm:text-sm font-bold text-secondary shadow-2xs hover:bg-secondary/10 transition active:scale-95"
                       >
-                        <RotateCw size={13} />
-                        <span>Flip back to term</span>
+                        <RotateCw size={14} />
+                        <span>Flip Back to Question</span>
                       </button>
                     </div>
                   </div>

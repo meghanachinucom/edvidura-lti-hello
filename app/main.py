@@ -56,6 +56,26 @@ from app.modules.mastery_tutor import router as mastery_tutor_router
 from app.modules.interactive_books import router as interactive_books_router
 from app.modules.learning_graph import router as learning_graph_router
 from app.modules.voice_studio import router as voice_studio_router
+from app.modules.agents.engine import router as agents_engine_router
+from app.modules.grader.service import router as grader_service_router
+from app.modules.adaptive.pathways import router as adaptive_pathways_router
+from app.modules.events.firehose import router as events_firehose_router
+from app.modules.tenancy.blueprint import router as tenancy_blueprint_router
+from app.modules.quiz.algorithmic import router as quiz_algorithmic_router
+from app.modules.skills.benchmark import router as skills_benchmark_router
+from app.modules.compliance.engine import router as compliance_engine_router
+from app.modules.peer_review.service import router as peer_review_router
+from app.modules.video.service import router as video_service_router
+from app.modules.credentials.minter import router as credentials_minter_router
+from app.modules.credits.broker import router as credits_broker_router
+from app.modules.i18n.gateway import router as i18n_gateway_router
+from app.modules.sync.crdt import router as sync_crdt_router
+from app.modules.proctoring.service import router as proctoring_service_router
+from app.modules.coach.quiz_minter import router as coach_quiz_minter_router
+from app.modules.interactive_books.synthesizer import router as interactive_books_synth_router
+from app.modules.coach.topic_bot import router as coach_topic_bot_router
+from app.modules.workforce.transfer import router as workforce_transfer_router
+from app.modules.workforce.apprenticeship import router as workforce_apprenticeship_router
 from app.settings import get_settings
 from app.security_boot import assert_safe_for_environment, require_dev_tools
 from app.monitoring import init_monitoring
@@ -135,6 +155,26 @@ app.include_router(mastery_tutor_router)
 app.include_router(interactive_books_router)
 app.include_router(learning_graph_router)
 app.include_router(voice_studio_router)
+app.include_router(agents_engine_router)
+app.include_router(grader_service_router)
+app.include_router(adaptive_pathways_router)
+app.include_router(events_firehose_router)
+app.include_router(tenancy_blueprint_router)
+app.include_router(quiz_algorithmic_router)
+app.include_router(skills_benchmark_router)
+app.include_router(compliance_engine_router)
+app.include_router(peer_review_router)
+app.include_router(video_service_router)
+app.include_router(credentials_minter_router)
+app.include_router(credits_broker_router)
+app.include_router(i18n_gateway_router)
+app.include_router(sync_crdt_router)
+app.include_router(proctoring_service_router)
+app.include_router(coach_quiz_minter_router)
+app.include_router(interactive_books_synth_router)
+app.include_router(coach_topic_bot_router)
+app.include_router(workforce_transfer_router)
+app.include_router(workforce_apprenticeship_router)
 
 _STATIC = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")

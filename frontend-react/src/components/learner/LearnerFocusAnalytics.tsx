@@ -228,7 +228,7 @@ export function LearnerFocusAnalytics() {
 
       <section
         aria-labelledby="performance-title"
-        className="rounded-surface border border-border bg-surface p-5 tablet:p-6 pb-8 shadow-xs"
+        className="rounded-surface border border-border bg-surface p-5 tablet:p-6 pb-6 shadow-xs"
       >
         <CardHeading
           step="04"
@@ -237,7 +237,7 @@ export function LearnerFocusAnalytics() {
           period={periods.performance}
           onChange={selectPeriod("performance")}
         />
-        <div className="mt-6 grid grid-cols-3 gap-3 tablet:gap-6 pb-3">
+        <div className="mt-6 grid grid-cols-3 gap-3 tablet:gap-6 pb-2">
           {(
             [
               [
@@ -255,12 +255,12 @@ export function LearnerFocusAnalytics() {
               ],
             ] as const
           ).map(([key, count, percent, badgeStyle]) => (
-            <div key={key} className="flex min-w-0 flex-col items-center text-center pb-2">
+            <div key={key} className="flex min-w-0 flex-col items-center text-center">
               <div className="flex items-center justify-center p-1">
-                <ProgressRing percent={percent} label={s(key)} size={120} strokeWidth={10} />
+                <ProgressRing percent={percent} label={s(key)} size={128} strokeWidth={10} />
               </div>
               <span
-                className={`mt-3 inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs tablet:text-sm font-bold tracking-wide shadow-2xs ${badgeStyle}`}
+                className={`mt-3 inline-flex items-center justify-center rounded-full border px-3.5 py-1 text-xs tablet:text-sm font-bold tracking-wide shadow-2xs ${badgeStyle}`}
               >
                 {count} {s("items")}
               </span>
