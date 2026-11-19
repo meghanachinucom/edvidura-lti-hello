@@ -157,7 +157,7 @@ function Panel({ visible, onClose }: { visible: boolean; onClose: () => void }) 
           <div className="flex items-center gap-2">
             <h2 className="font-heading text-lg font-bold text-ink">{s("button")}</h2>
             <span className="rounded-pill bg-brand/10 text-brand px-2 py-0.5 text-[10px] font-semibold">
-              Socratic Tutor
+              Guided Tutor
             </span>
           </div>
           <p className="text-xs text-ink-muted">{s("scope")}</p>
@@ -179,7 +179,7 @@ function Panel({ visible, onClose }: { visible: boolean; onClose: () => void }) 
                 : "bg-surface text-ink-muted border-border"
             }`}
           >
-            {mode === "socratic" ? "Socratic Guided" : "Direct Reference"}
+            {mode === "socratic" ? "Guided Inquiry" : "Direct Reference"}
           </button>
         </div>
         <span className="text-xs text-ink-muted font-mono">{bcp47}</span>
@@ -306,7 +306,7 @@ function Answer({
           </div>
 
           <div className="rounded-surface bg-highlight p-2.5 border border-border/60">
-            <CheckQuestionCard label="Socratic Self-Check" question={answer.check} />
+            <CheckQuestionCard label="Concept Self-Check" question={answer.check} />
             {socraticHint && (
               <p className="text-[11px] text-ink-muted italic mt-1">💡 Hint: {socraticHint}</p>
             )}

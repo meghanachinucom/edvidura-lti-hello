@@ -410,7 +410,7 @@ function Page() {
                 Ask Vidura: {selectedSkill.coachTopic}
               </div>
               <div className="text-[11px] text-slate-500 mt-1">
-                Multi-turn Socratic ladder practice
+                Multi-turn guided ladder practice
               </div>
             </Link>
           </div>
@@ -448,7 +448,7 @@ function Page() {
             className="inline-flex items-center gap-1.5 font-semibold text-secondary hover:underline"
           >
             <Download size={13} />
-            <span>Download Verifiable Record (JSON-LD)</span>
+            <span>Download Verifiable Mastery Record</span>
           </a>
         </div>
       </section>

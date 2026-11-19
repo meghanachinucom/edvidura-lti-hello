@@ -229,192 +229,194 @@ export function InteractiveChapterStage({
   }
 
   return (
-      <div className="rounded-2xl border border-slate-200 bg-surface p-6 shadow-sm space-y-6">
-        {/* Stage Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-secondary/10 text-secondary px-3 py-0.5 text-xs font-bold tracking-wide">
-                    Interactive Storyboard Beat {currentBeatIdx + 1} of {beats.length}
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">{chapterTitle}</span>
-              </div>
-              <h2 className="font-heading text-xl font-bold text-slate-900 mt-1">
-                {currentBeat.title}
-              </h2>
-            </div>
+    <div className="rounded-2xl border border-slate-200 bg-surface p-6 shadow-sm space-y-6">
+      {/* Stage Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-secondary/10 text-secondary px-3 py-0.5 text-xs font-bold tracking-wide">
+              Interactive Storyboard Beat {currentBeatIdx + 1} of {beats.length}
+            </span>
+            <span className="text-xs text-slate-500 font-medium">{chapterTitle}</span>
+          </div>
+          <h2 className="font-heading text-xl font-bold text-slate-900 mt-1">
+            {currentBeat.title}
+          </h2>
+        </div>
 
-              {/* Speed & Close Controls */}
-              <div className="flex items-center gap-2.5">
-                <label className="text-xs text-slate-600 font-semibold" htmlFor="stage-speed-select">
-                  Narration Speed:
-                </label>
-                <select
-                  id="stage-speed-select"
-                  value={speed}
-                  onChange={(e) => setSpeed(Number(e.target.value))}
-                  className="rounded-lg border border-slate-300 bg-surface px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-2xs focus:border-secondary focus:outline-none"
-                >
-                  <option value={0.75}>0.75x</option>
-                  <option value={1}>1.0x (Normal)</option>
-                  <option value={1.25}>1.25x</option>
-                </select>
-                {onClose && (
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200 ml-2"
-                  >
-                    Return to Book
-                  </button>
-                )}
-              </div>
-            </div>
-
-              {/* 16:9 Synchronized Visual Diagram Stage */}
-              <div className="relative aspect-video w-full max-w-3xl mx-auto flex flex-col items-center justify-center rounded-2xl border-2 border-slate-200 bg-gradient-to-b from-slate-50 to-slate-100/60 p-6 text-center shadow-inner overflow-hidden">
-                {currentBeat.visual_diagram?.type === "balance_scale" && (
-                        <div className="space-y-6 w-full max-w-lg mx-auto">
-                          <div className="flex justify-between items-center px-6">
-                            <div className="bg-white border-2 border-secondary text-secondary font-mono font-bold text-lg rounded-2xl px-6 py-3 shadow-md">
-                              {currentBeat.visual_diagram["left"]}
-                          </div>
-                          <div className="size-10 flex items-center justify-center rounded-full bg-amber-400 text-slate-950 font-black text-xl shadow-xs">
-                            =
-                          </div>
-                          <div className="bg-white border-2 border-secondary text-secondary font-mono font-bold text-lg rounded-2xl px-6 py-3 shadow-md">
-                            {currentBeat.visual_diagram["right"]}
-                        </div>
-                    </div>
-                      {/* Fulcrum scale representation */}
-                      <div className="relative w-4/5 mx-auto">
-                        <div className="h-2 bg-slate-300 rounded-full w-full" />
-                        <div className="size-5 bg-secondary rounded-full absolute left-1/2 -top-1.5 -translate-x-1/2 shadow-xs ring-4 ring-white" />
-                        <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-b-[20px] border-b-slate-400 mx-auto mt-2" />
-                      </div>
-                        <p className="text-xs font-medium text-slate-600">
-                          Balanced scale: Whatever operation is applied to one side must be applied equally to
-                          the other.
-                        </p>
-                    </div>
-        )}
-
-                    {currentBeat.visual_diagram?.type === "step_transformation" && (
-                          <div className="space-y-4 w-full max-w-md mx-auto">
-                            <div className="text-sm font-mono text-slate-400 line-through">
-                              {currentBeat.visual_diagram["initial"]}
-                            </div>
-                              <div className="inline-block rounded-xl bg-amber-100 border border-amber-300 px-4 py-1.5 text-xs font-bold text-amber-900 shadow-2xs">
-                                ⚡ {currentBeat.visual_diagram["action"]}
-                              </div>
-                                <div className="text-lg font-bold font-mono text-emerald-800 bg-emerald-50 border-2 border-emerald-400 px-6 py-3 rounded-2xl shadow-md">
-                                  {currentBeat.visual_diagram["result"]}
-                                </div>
-                                <p className="text-xs font-medium text-slate-600">
-                                  Variable term isolated using inverse operation.
-                                </p>
-                              </div>
-        )}
-
-                              {currentBeat.visual_diagram?.type !== "balance_scale" &&
-                                currentBeat.visual_diagram?.type !== "step_transformation" && (
-                                      <div className="space-y-3">
-                                        <div className="size-14 rounded-full bg-secondary/10 flex items-center justify-center mx-auto text-secondary shadow-xs">
-                                          <Sparkles size={28} />
-                                        </div>
-                                        <h3 className="text-base font-bold text-slate-900">{currentBeat.title}</h3>
-                                        <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-                                          {currentBeat.narration_text.slice(0, 140)}...
-                                        </p>
-                                      </div>
+        {/* Speed & Close Controls */}
+        <div className="flex items-center gap-2.5">
+          <label className="text-xs text-slate-600 font-semibold" htmlFor="stage-speed-select">
+            Narration Speed:
+          </label>
+          <select
+            id="stage-speed-select"
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            className="rounded-lg border border-slate-300 bg-surface px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-2xs focus:border-secondary focus:outline-none"
+          >
+            <option value={0.75}>0.75x</option>
+            <option value={1}>1.0x (Normal)</option>
+            <option value={1.25}>1.25x</option>
+          </select>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200 ml-2"
+            >
+              Return to Book
+            </button>
           )}
-                                  </div>
+        </div>
+      </div>
+
+      {/* 16:9 Synchronized Visual Diagram Stage */}
+      <div className="relative aspect-video w-full max-w-3xl mx-auto flex flex-col items-center justify-center rounded-2xl border-2 border-slate-200 bg-gradient-to-b from-slate-50 to-slate-100/60 p-6 text-center shadow-inner overflow-hidden">
+        {currentBeat.visual_diagram?.type === "balance_scale" && (
+          <div className="space-y-6 w-full max-w-lg mx-auto">
+            <div className="flex justify-between items-center px-6">
+              <div className="bg-white border-2 border-secondary text-secondary font-mono font-bold text-lg rounded-2xl px-6 py-3 shadow-md">
+                {currentBeat.visual_diagram["left"]}
+              </div>
+              <div className="size-10 flex items-center justify-center rounded-full bg-amber-400 text-slate-950 font-black text-xl shadow-xs">
+                =
+              </div>
+              <div className="bg-white border-2 border-secondary text-secondary font-mono font-bold text-lg rounded-2xl px-6 py-3 shadow-md">
+                {currentBeat.visual_diagram["right"]}
+              </div>
+            </div>
+            {/* Fulcrum scale representation */}
+            <div className="relative w-4/5 mx-auto">
+              <div className="h-2 bg-slate-300 rounded-full w-full" />
+              <div className="size-5 bg-secondary rounded-full absolute left-1/2 -top-1.5 -translate-x-1/2 shadow-xs ring-4 ring-white" />
+              <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-b-[20px] border-b-slate-400 mx-auto mt-2" />
+            </div>
+            <p className="text-xs font-medium text-slate-600">
+              Balanced scale: Whatever operation is applied to one side must be applied equally to
+              the other.
+            </p>
+          </div>
+        )}
+
+        {currentBeat.visual_diagram?.type === "step_transformation" && (
+          <div className="space-y-4 w-full max-w-md mx-auto">
+            <div className="text-sm font-mono text-slate-400 line-through">
+              {currentBeat.visual_diagram["initial"]}
+            </div>
+            <div className="inline-block rounded-xl bg-amber-100 border border-amber-300 px-4 py-1.5 text-xs font-bold text-amber-900 shadow-2xs">
+              ⚡ {currentBeat.visual_diagram["action"]}
+            </div>
+            <div className="text-lg font-bold font-mono text-emerald-800 bg-emerald-50 border-2 border-emerald-400 px-6 py-3 rounded-2xl shadow-md">
+              {currentBeat.visual_diagram["result"]}
+            </div>
+            <p className="text-xs font-medium text-slate-600">
+              Variable term isolated using inverse operation.
+            </p>
+          </div>
+        )}
+
+        {currentBeat.visual_diagram?.type !== "balance_scale" &&
+          currentBeat.visual_diagram?.type !== "step_transformation" && (
+            <div className="space-y-3">
+              <div className="size-14 rounded-full bg-secondary/10 flex items-center justify-center mx-auto text-secondary shadow-xs">
+                <Sparkles size={28} />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">{currentBeat.title}</h3>
+              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+                {currentBeat.narration_text.slice(0, 140)}...
+              </p>
+            </div>
+          )}
+      </div>
 
       {/* Narration Player & Subtitles */}
-                                    <div className="rounded-xl border border-slate-200 bg-surface p-4 space-y-3 shadow-2xs">
-                                      <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <div className="flex items-center gap-3">
-                                          <button
-                                            type="button"
-                                            onClick={togglePlayAudio}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition ${isPlaying ? "bg-rose-600 animate-pulse" : "bg-secondary hover:bg-secondary/90"
-                                              }`}
-                                          >
-                                            {isPlaying ? <Pause size={15} /> : <Play size={15} />}
-                                            <span>{isPlaying ? "Pause Narration" : "Listen to Beat"}</span>
-                                          </button>
-                                            <span className="text-xs text-slate-500 font-medium">
-                                              {currentBeat.duration_sec}s concept segment
-                                            </span>
-                                        </div>
+      <div className="rounded-xl border border-slate-200 bg-surface p-4 space-y-3 shadow-2xs">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={togglePlayAudio}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition ${
+                isPlaying ? "bg-rose-600 animate-pulse" : "bg-secondary hover:bg-secondary/90"
+              }`}
+            >
+              {isPlaying ? <Pause size={15} /> : <Play size={15} />}
+              <span>{isPlaying ? "Pause Narration" : "Listen to Beat"}</span>
+            </button>
+            <span className="text-xs text-slate-500 font-medium">
+              {currentBeat.duration_sec}s concept segment
+            </span>
+          </div>
 
-                                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-                                            <Volume2 size={15} className="text-secondary" />
-                                            <span>Voice Language: {bcp47}</span>
-                                          </div>
-                                        </div>
+          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+            <Volume2 size={15} className="text-secondary" />
+            <span>Voice Language: {bcp47}</span>
+          </div>
+        </div>
 
-                                          {/* Captions Text */}
-                                          <div className="rounded-lg bg-slate-50 p-3.5 border border-slate-200 text-xs text-slate-800 leading-relaxed font-medium">
-                                            <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px] block mb-1">
-                                              Narration Subtitles
-                                            </span>
-                                            {(currentBeat.narration_translations && currentBeat.narration_translations[locale]) ||
-                                              currentBeat.narration_text}
-                                          </div>
-                                        </div>
+        {/* Captions Text */}
+        <div className="rounded-lg bg-slate-50 p-3.5 border border-slate-200 text-xs text-slate-800 leading-relaxed font-medium">
+          <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px] block mb-1">
+            Narration Subtitles
+          </span>
+          {(currentBeat.narration_translations && currentBeat.narration_translations[locale]) ||
+            currentBeat.narration_text}
+        </div>
+      </div>
 
-                                        {/* Media Beat Navigation Bar */}
-                                        <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
-                                          <button
-                                            type="button"
-                                            onClick={() => setCurrentBeatIdx((idx) => Math.max(0, idx - 1))}
-                                            disabled={currentBeatIdx === 0}
-                                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-surface px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-                                          >
-                                            <ChevronLeft size={16} />
-                                            <span>Previous Beat</span>
-                                          </button>
+      {/* Media Beat Navigation Bar */}
+      <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
+        <button
+          type="button"
+          onClick={() => setCurrentBeatIdx((idx) => Math.max(0, idx - 1))}
+          disabled={currentBeatIdx === 0}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-surface px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+        >
+          <ChevronLeft size={16} />
+          <span>Previous Beat</span>
+        </button>
 
-                                          {/* Beat 1 of N dots */}
-                                          <div className="flex items-center gap-2">
-                                            {beats.map((_, idx) => (
-                                              <button
-                                                key={idx}
-                                                type="button"
-                                                onClick={() => setCurrentBeatIdx(idx)}
-                                                aria-label={`Jump to Beat ${idx + 1}`}
-                                                className={`h-2.5 rounded-full transition-all ${idx === currentBeatIdx
-                                                    ? "w-8 bg-secondary"
-                                                    : "w-2.5 bg-slate-300 hover:bg-slate-400"
-                                                  }`}
-                                              />
-                                            ))}
-                                          </div>
+        {/* Beat 1 of N dots */}
+        <div className="flex items-center gap-2">
+          {beats.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setCurrentBeatIdx(idx)}
+              aria-label={`Jump to Beat ${idx + 1}`}
+              className={`h-2.5 rounded-full transition-all ${
+                idx === currentBeatIdx
+                  ? "w-8 bg-secondary"
+                  : "w-2.5 bg-slate-300 hover:bg-slate-400"
+              }`}
+            />
+          ))}
+        </div>
 
-                                          <button
-                                            type="button"
-                                            onClick={() => setCurrentBeatIdx((idx) => Math.min(beats.length - 1, idx + 1))}
-                                            disabled={currentBeatIdx === beats.length - 1}
-                                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-surface px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-                                          >
-                                            <span>Next Beat</span>
-                                            <ChevronRight size={16} />
-                                          </button>
-                                        </div>
+        <button
+          type="button"
+          onClick={() => setCurrentBeatIdx((idx) => Math.min(beats.length - 1, idx + 1))}
+          disabled={currentBeatIdx === beats.length - 1}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-surface px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+        >
+          <span>Next Beat</span>
+          <ChevronRight size={16} />
+        </button>
+      </div>
 
-                                        {/* Interactive Quick-Check Card */}
-                                        {currentBeat.inline_check && (
-                                                <div className="rounded-2xl border-2 border-secondary/30 bg-secondary/5 p-5 shadow-xs space-y-4">
-                                                  <div className="flex items-center justify-between pb-2 border-b border-secondary/20">
-                                                    <div className="flex items-center gap-2 text-xs font-bold text-secondary uppercase tracking-wider">
-                                                      <HelpCircle size={16} />
-                                                      <span>Interactive Concept Check</span>
-                                                    </div>
-                                                    <span className="text-[11px] font-semibold text-slate-600">
-                                                      Immediate Concept Reinforcement
-                                                    </span>
-                                                  </div>
+      {/* Interactive Quick-Check Card */}
+      {currentBeat.inline_check && (
+        <div className="rounded-2xl border-2 border-secondary/30 bg-secondary/5 p-5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-secondary/20">
+            <div className="flex items-center gap-2 text-xs font-bold text-secondary uppercase tracking-wider">
+              <HelpCircle size={16} />
+              <span>Interactive Concept Check</span>
+            </div>
+            <span className="text-[11px] font-semibold text-slate-600">
+              Immediate Concept Reinforcement
+            </span>
+          </div>
 
           <p className="text-sm font-semibold text-slate-900 leading-snug">
             {currentBeat.inline_check.question}
@@ -446,12 +448,13 @@ export function InteractiveChapterStage({
             })}
           </div>
 
-                                                      {
-                                                        feedback && (
-                                                          <div
-                                                                    ? "bg-emerald-100 border-emerald-300 text-emerald-900"
-                                                                    : "bg-amber-100 border-amber-300 text-amber-900"
-                                                                }`}
+          {feedback && (
+            <div
+              className={`rounded-xl p-3 text-xs border font-medium ${
+                isCorrect
+                  ? "bg-emerald-100 border-emerald-300 text-emerald-900"
+                  : "bg-amber-100 border-amber-300 text-amber-900"
+              }`}
             >
               <div className="font-bold flex items-center gap-1.5 mb-1">
                 <CheckCircle2 size={15} />

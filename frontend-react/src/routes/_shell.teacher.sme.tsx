@@ -563,7 +563,7 @@ function Page() {
                   <div className="rounded-surface border border-border p-4 bg-surface">
                     <h4 className="font-semibold text-ink">Bundle Contents</h4>
                     <ul className="mt-2 text-sm text-ink space-y-1">
-                      <li>• PEBL e-Reader + SVG Assets</li>
+                      <li>• Interactive eBook Reader + SVG Assets</li>
                       <li>• Offline Quiz Assessment Bank</li>
                       <li>• Web Speech Narration Engine</li>
                       <li>• Local SQLite / File Store</li>

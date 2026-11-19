@@ -228,7 +228,7 @@ export function LearnerFocusAnalytics() {
 
       <section
         aria-labelledby="performance-title"
-        className="rounded-surface border border-border bg-surface p-4 tablet:p-5"
+        className="rounded-surface border border-border bg-surface p-5 tablet:p-6 pb-8 shadow-xs"
       >
         <CardHeading
           step="04"
@@ -237,19 +237,31 @@ export function LearnerFocusAnalytics() {
           period={periods.performance}
           onChange={selectPeriod("performance")}
         />
-        <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="mt-6 grid grid-cols-3 gap-3 tablet:gap-6 pb-3">
           {(
             [
-              ["productive", performance.productive, 78],
-              ["neutral", performance.neutral, 54],
-              ["distracted", performance.distracted, 30],
+              [
+                "productive",
+                performance.productive,
+                78,
+                "text-emerald-800 bg-emerald-50 border-emerald-200",
+              ],
+              ["neutral", performance.neutral, 54, "text-amber-800 bg-amber-50 border-amber-200"],
+              [
+                "distracted",
+                performance.distracted,
+                30,
+                "text-slate-700 bg-slate-100 border-slate-200",
+              ],
             ] as const
-          ).map(([key, count, percent]) => (
-            <div key={key} className="flex min-w-0 flex-col items-center text-center">
-              <div className="flex items-center justify-center">
+          ).map(([key, count, percent, badgeStyle]) => (
+            <div key={key} className="flex min-w-0 flex-col items-center text-center pb-2">
+              <div className="flex items-center justify-center p-1">
                 <ProgressRing percent={percent} label={s(key)} size={120} strokeWidth={10} />
               </div>
-              <span className="mt-3 inline-block rounded-full bg-surface-muted/60 px-3 py-0.5 text-xs tablet:text-sm font-semibold text-ink">
+              <span
+                className={`mt-3 inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs tablet:text-sm font-bold tracking-wide shadow-2xs ${badgeStyle}`}
+              >
                 {count} {s("items")}
               </span>
             </div>

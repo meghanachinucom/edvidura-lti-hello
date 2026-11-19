@@ -247,7 +247,7 @@ function ReviewGateway() {
                     Ask Vidura Tutor
                   </h4>
                   <p className="text-[11px] text-slate-600 leading-tight">
-                    Skill ladder, Socratic guided inquiry, voice dictation, and diagnostic checks.
+                    Skill ladder, guided inquiry, voice dictation, and diagnostic checks.
                   </p>
                 </div>
                 <div className="pt-3 text-[11px] font-bold text-secondary inline-flex items-center gap-1">

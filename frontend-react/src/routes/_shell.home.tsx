@@ -403,7 +403,7 @@ export function StudentHomePage() {
             </div>
             <div>
               <div className="text-xs font-bold text-ink">Ask Vidura AI</div>
-              <div className="text-[11px] text-ink-muted">24/7 Socratic Tutor</div>
+              <div className="text-[11px] text-ink-muted">24/7 Guided Mastery Tutor</div>
             </div>
           </Link>
 
