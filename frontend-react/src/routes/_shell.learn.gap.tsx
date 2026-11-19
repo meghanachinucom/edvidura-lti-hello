@@ -260,7 +260,7 @@ function Page() {
 
                 {/* 4-Step Connected Learning Strip */}
                 <div className="mt-4 pt-3 border-t border-slate-100">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     Connected Learning Path for this Skill:
                   </div>
 
@@ -273,10 +273,10 @@ function Page() {
                     >
                       <BookOpen size={18} className="text-secondary shrink-0" />
                       <div className="min-w-0">
-                        <div className="text-[10px] font-bold uppercase text-secondary">
+                        <div className="text-xs font-bold uppercase text-secondary">
                           1. Read Chapter
                         </div>
-                        <div className="text-xs font-semibold text-slate-800 truncate group-hover:text-secondary">
+                        <div className="text-sm font-semibold text-slate-800 truncate group-hover:text-secondary">
                           Ch. {sk.bookChapter.chapterNum} Textbook
                         </div>
                       </div>
@@ -289,10 +289,10 @@ function Page() {
                     >
                       <Video size={18} className="text-amber-600 shrink-0" />
                       <div className="min-w-0">
-                        <div className="text-[10px] font-bold uppercase text-amber-600">
+                        <div className="text-xs font-bold uppercase text-amber-600">
                           2. Watch 2-Min Reel
                         </div>
-                        <div className="text-xs font-semibold text-slate-800 truncate group-hover:text-amber-700">
+                        <div className="text-sm font-semibold text-slate-800 truncate group-hover:text-amber-700">
                           Concept Reel & Visual
                         </div>
                       </div>
@@ -305,10 +305,10 @@ function Page() {
                     >
                       <MessageCircle size={18} className="text-cyan-600 shrink-0" />
                       <div className="min-w-0">
-                        <div className="text-[10px] font-bold uppercase text-cyan-600">
+                        <div className="text-xs font-bold uppercase text-cyan-600">
                           3. Practice in Vidura
                         </div>
-                        <div className="text-xs font-semibold text-slate-800 truncate group-hover:text-cyan-700">
+                        <div className="text-sm font-semibold text-slate-800 truncate group-hover:text-cyan-700">
                           {sk.coachTopic}
                         </div>
                       </div>
@@ -325,10 +325,8 @@ function Page() {
                     >
                       <Trophy size={18} className="shrink-0" />
                       <div className="min-w-0">
-                        <div className="text-[10px] font-bold uppercase opacity-80">
-                          4. Take Quiz
-                        </div>
-                        <div className="text-xs font-bold truncate">
+                        <div className="text-xs font-bold uppercase opacity-80">4. Take Quiz</div>
+                        <div className="text-sm font-bold truncate">
                           {sk.quizScore !== undefined
                             ? `Mastered (${sk.quizScore}%)`
                             : "Mastery Check Quiz"}
@@ -367,12 +365,12 @@ function Page() {
         <div className="grid grid-cols-1 gap-4 tablet:grid-cols-4 pt-2">
           {/* Column 1: Course Skills */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
               1. Course Skill
             </div>
             <div className="rounded-lg border-2 border-secondary bg-white p-3 shadow-xs">
               <div className="text-xs font-bold text-slate-900">{selectedSkill.name}</div>
-              <div className="text-[11px] font-mono font-semibold text-secondary mt-1">
+              <div className="text-xs font-mono font-semibold text-secondary mt-1">
                 Class 8 Core Competency
               </div>
             </div>
@@ -380,7 +378,7 @@ function Page() {
 
           {/* Column 2: Lessons & Textbooks */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
               2. Textbook & Lesson
             </div>
             <Link
@@ -391,15 +389,13 @@ function Page() {
               <div className="text-xs font-bold text-slate-900 group-hover:text-secondary">
                 {selectedSkill.bookChapter.title}
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
-                Theory, diagrams & worked problems
-              </div>
+              <div className="text-xs text-slate-500 mt-1">Theory, diagrams & worked problems</div>
             </Link>
           </div>
 
           {/* Column 3: Interactive Practice */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
               3. Interactive Practice
             </div>
             <Link
@@ -409,15 +405,13 @@ function Page() {
               <div className="text-xs font-bold text-slate-900 group-hover:text-secondary">
                 Ask Vidura: {selectedSkill.coachTopic}
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
-                Multi-turn guided ladder practice
-              </div>
+              <div className="text-xs text-slate-500 mt-1">Multi-turn guided ladder practice</div>
             </Link>
           </div>
 
           {/* Column 4: Mastery Proof */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
               4. Mastery Proof
             </div>
             <Link
@@ -427,7 +421,7 @@ function Page() {
               <div className="text-xs font-bold text-slate-900 group-hover:text-secondary">
                 Verified Quiz Check
               </div>
-              <div className="text-[11px] text-emerald-700 font-semibold mt-1">
+              <div className="text-xs text-emerald-700 font-semibold mt-1">
                 {selectedSkill.quizScore !== undefined
                   ? "✓ Credential Recorded"
                   : "Pending Assessment"}

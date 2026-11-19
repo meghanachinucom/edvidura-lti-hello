@@ -185,11 +185,11 @@ function Page() {
               >
                 {/* Book Cover Banner */}
                 <div className={`relative p-5 text-white ${gradient}`}>
-                  <div className="flex items-center justify-between gap-2 text-[11px] font-semibold">
+                  <div className="flex items-center justify-between gap-2 text-xs font-semibold">
                     <span className="rounded-full bg-black/25 px-2.5 py-0.5 text-white backdrop-blur-xs font-mono">
                       {b.subjectCode || "EDV-LIB"}
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-white backdrop-blur-xs text-[10px]">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-white backdrop-blur-xs text-xs">
                       <Headphones size={11} /> Audiobook
                     </span>
                   </div>
@@ -202,7 +202,7 @@ function Page() {
                     {b.author || "EdVidura Academic Faculty"}
                   </p>
 
-                  <div className="mt-4 flex items-center justify-between text-[11px] text-white/90">
+                  <div className="mt-4 flex items-center justify-between text-xs text-white/90">
                     <span className="flex items-center gap-1">
                       <Layers size={13} /> {chapters} Chapters
                     </span>
@@ -214,13 +214,13 @@ function Page() {
 
                 {/* Card Body */}
                 <div className="flex flex-1 flex-col justify-between p-5 space-y-4">
-                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                  <p className="text-sm text-slate-600 leading-relaxed line-clamp-2">
                     {b.description}
                   </p>
 
                   {/* Progress Indicator */}
                   <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                    <div className="flex justify-between items-center text-[11px] font-semibold text-slate-700">
+                    <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
                       <span>{pct > 0 ? `Progress: ${pct}%` : "Not Started"}</span>
                       <span className="text-slate-500 font-mono">
                         {b.currentPage ? `Page ${b.currentPage} of ${b.pages}` : `${b.pages} pages`}

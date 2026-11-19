@@ -311,7 +311,7 @@ function Page() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-heading font-bold text-slate-900 text-sm">{c.name}</span>
-                    <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[11px] font-bold font-mono">
+                    <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-xs font-bold font-mono">
                       Level {c.level} of 5
                     </span>
                   </div>
@@ -325,7 +325,7 @@ function Page() {
                     {c.pills.map((pill) => (
                       <span
                         key={pill}
-                        className="inline-flex items-center gap-1 rounded-md bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 shadow-2xs"
+                        className="inline-flex items-center gap-1 rounded-md bg-white border border-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-700 shadow-2xs"
                       >
                         <CheckCircle2 size={11} className="text-emerald-600" />
                         {pill}
@@ -411,7 +411,7 @@ function Page() {
                 >
                   <div>
                     <h4 className="text-xs font-bold text-ink">{m.title}</h4>
-                    <span className="text-[11px] text-ink-muted">
+                    <span className="text-xs text-ink-muted">
                       {m.hours} · Logged {m.date}
                     </span>
                   </div>

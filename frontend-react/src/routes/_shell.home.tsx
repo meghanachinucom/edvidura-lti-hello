@@ -109,7 +109,7 @@ export function StudentHomePage() {
                 <span className="font-heading text-sm font-bold text-ink">
                   2-Minute Daily Skill Review
                 </span>
-                <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
                   {reviewsDue.length} Skills Due
                 </span>
               </div>
@@ -307,7 +307,7 @@ export function StudentHomePage() {
                 <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                 <span className="text-xs font-bold text-ink">Cartesian Slope Lab</span>
               </div>
-              <span className="text-[11px] font-mono text-amber-700 font-semibold">
+              <span className="text-xs font-mono text-amber-700 font-semibold">
                 Active · 9:00 AM
               </span>
             </div>
@@ -316,14 +316,14 @@ export function StudentHomePage() {
                 <MessageCircle size={14} className="text-sky-500" />
                 <span className="text-xs font-semibold text-ink">Ask Vidura Tutoring</span>
               </div>
-              <span className="text-[11px] font-mono text-ink-muted">12:00 PM</span>
+              <span className="text-xs font-mono text-ink-muted">12:00 PM</span>
             </div>
             <div className="flex items-center justify-between rounded-xl bg-page-bg p-3 border border-border">
               <div className="flex items-center gap-2.5">
                 <Trophy size={14} className="text-emerald-500" />
                 <span className="text-xs font-semibold text-ink">Checkpoint 2 Quiz</span>
               </div>
-              <span className="text-[11px] font-mono text-ink-muted">Due Friday</span>
+              <span className="text-xs font-mono text-ink-muted">Due Friday</span>
             </div>
           </div>
           <div className="border-t border-border pt-3">
@@ -362,7 +362,7 @@ export function StudentHomePage() {
                 key={d.day}
                 className="flex flex-col items-center gap-2 h-full justify-end group"
               >
-                <span className="text-[11px] font-mono text-ink-muted opacity-0 group-hover:opacity-100 transition">
+                <span className="text-xs font-mono text-ink-muted opacity-0 group-hover:opacity-100 transition">
                   {d.hours}h
                 </span>
                 <div
@@ -389,8 +389,8 @@ export function StudentHomePage() {
               <BookOpen size={20} />
             </div>
             <div>
-              <div className="text-xs font-bold text-ink">Study Handbooks</div>
-              <div className="text-[11px] text-ink-muted">Algebra I formulas</div>
+              <div className="text-sm font-bold text-ink">Study Handbooks</div>
+              <div className="text-xs sm:text-[13px] text-ink-muted">Algebra I formulas</div>
             </div>
           </Link>
 
@@ -402,8 +402,8 @@ export function StudentHomePage() {
               <MessageCircle size={20} />
             </div>
             <div>
-              <div className="text-xs font-bold text-ink">Ask Vidura AI</div>
-              <div className="text-[11px] text-ink-muted">24/7 Guided Mastery Tutor</div>
+              <div className="text-sm font-bold text-ink">Ask Vidura AI</div>
+              <div className="text-xs sm:text-[13px] text-ink-muted">24/7 Guided Mastery Tutor</div>
             </div>
           </Link>
 
@@ -415,8 +415,8 @@ export function StudentHomePage() {
               <Compass size={20} />
             </div>
             <div>
-              <div className="text-xs font-bold text-ink">Gap Analysis</div>
-              <div className="text-[11px] text-ink-muted">Personalized Study Plan</div>
+              <div className="text-sm font-bold text-ink">Gap Analysis</div>
+              <div className="text-xs sm:text-[13px] text-ink-muted">Personalized Study Plan</div>
             </div>
           </Link>
 
@@ -428,8 +428,8 @@ export function StudentHomePage() {
               <Trophy size={20} />
             </div>
             <div>
-              <div className="text-xs font-bold text-ink">Skills Passport</div>
-              <div className="text-[11px] text-ink-muted">Verified Credentials</div>
+              <div className="text-sm font-bold text-ink">Skills Passport</div>
+              <div className="text-xs sm:text-[13px] text-ink-muted">Verified Credentials</div>
             </div>
           </Link>
         </div>

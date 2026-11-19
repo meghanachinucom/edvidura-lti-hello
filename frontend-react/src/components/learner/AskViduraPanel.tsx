@@ -156,7 +156,7 @@ function Panel({ visible, onClose }: { visible: boolean; onClose: () => void }) 
         <div>
           <div className="flex items-center gap-2">
             <h2 className="font-heading text-lg font-bold text-ink">{s("button")}</h2>
-            <span className="rounded-pill bg-brand/10 text-brand px-2 py-0.5 text-[10px] font-semibold">
+            <span className="rounded-pill bg-brand/10 text-brand px-2 py-0.5 text-xs font-semibold">
               Guided Tutor
             </span>
           </div>
@@ -308,13 +308,13 @@ function Answer({
           <div className="rounded-surface bg-highlight p-2.5 border border-border/60">
             <CheckQuestionCard label="Concept Self-Check" question={answer.check} />
             {socraticHint && (
-              <p className="text-[11px] text-ink-muted italic mt-1">💡 Hint: {socraticHint}</p>
+              <p className="text-xs text-ink-muted italic mt-1">💡 Hint: {socraticHint}</p>
             )}
             {onStep && (
               <button
                 type="button"
                 onClick={onStep}
-                className="mt-1.5 text-[11px] font-semibold text-brand hover:underline block"
+                className="mt-1.5 text-xs font-semibold text-brand hover:underline block"
               >
                 Work through this step →
               </button>
@@ -322,7 +322,7 @@ function Answer({
           </div>
 
           {masteryLevel && (
-            <div className="inline-flex items-center gap-1 text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-pill border border-emerald-300">
+            <div className="inline-flex items-center gap-1 text-xs text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-pill border border-emerald-300">
               <Award size={12} className="text-emerald-600" />
               <span>Skill Mastery: Level {masteryLevel} / 5</span>
             </div>

@@ -736,7 +736,7 @@ function Page() {
                     <p className="mt-1 text-2xl font-bold text-ink">
                       {coverageData.coverage_percentage ?? 75}%
                     </p>
-                    <p className="text-[11px] text-ink-muted mt-0.5">
+                    <p className="text-xs text-ink-muted mt-0.5">
                       Average cross-resource alignment
                     </p>
                   </div>
@@ -748,9 +748,7 @@ function Page() {
                       {coverageData.fully_covered_skills ?? 2} /{" "}
                       {coverageData.total_curriculum_skills ?? 4}
                     </p>
-                    <p className="text-[11px] text-ink-muted mt-0.5">
-                      Lesson + eBook + Quiz verified
-                    </p>
+                    <p className="text-xs text-ink-muted mt-0.5">Lesson + eBook + Quiz verified</p>
                   </div>
                   <div className="rounded-card border border-border bg-page-bg p-4">
                     <span className="text-xs font-semibold text-ink-muted uppercase">
@@ -761,7 +759,7 @@ function Page() {
                         (coverageData.fully_covered_skills ?? 2)}{" "}
                       Skills
                     </p>
-                    <p className="text-[11px] text-ink-muted mt-0.5">
+                    <p className="text-xs text-ink-muted mt-0.5">
                       Missing quiz or textbook chapter
                     </p>
                   </div>
@@ -793,7 +791,7 @@ function Page() {
                             ) : (
                               <button
                                 type="button"
-                                className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100"
+                                className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
                               >
                                 <PlusCircle size={12} />
                                 <span>+ Link Lesson</span>
@@ -809,7 +807,7 @@ function Page() {
                             ) : (
                               <button
                                 type="button"
-                                className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100"
+                                className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
                               >
                                 <PlusCircle size={12} />
                                 <span>+ Link Chapter</span>
@@ -825,7 +823,7 @@ function Page() {
                             ) : (
                               <button
                                 type="button"
-                                className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100"
+                                className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
                               >
                                 <PlusCircle size={12} />
                                 <span>+ Link Quiz</span>
@@ -833,14 +831,14 @@ function Page() {
                             )}
                           </td>
                           <td className="p-3.5">
-                            <span className="inline-flex items-center gap-1 text-slate-600 font-mono text-[11px]">
+                            <span className="inline-flex items-center gap-1 text-slate-600 font-mono text-xs">
                               <FileText size={13} className="text-slate-400" />
                               <span>STD-MATH-08</span>
                             </span>
                           </td>
                           <td className="p-3.5">
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
                                 row.coverage_pct === 100
                                   ? "bg-emerald-100 text-emerald-800"
                                   : "bg-amber-100 text-amber-800"

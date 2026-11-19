@@ -357,7 +357,7 @@ export function InteractiveChapterStage({
 
         {/* Captions Text */}
         <div className="rounded-lg bg-slate-50 p-3.5 border border-slate-200 text-xs text-slate-800 leading-relaxed font-medium">
-          <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px] block mb-1">
+          <span className="font-bold text-slate-500 uppercase tracking-wider text-xs block mb-1">
             Narration Subtitles
           </span>
           {(currentBeat.narration_translations && currentBeat.narration_translations[locale]) ||
@@ -413,7 +413,7 @@ export function InteractiveChapterStage({
               <HelpCircle size={16} />
               <span>Interactive Concept Check</span>
             </div>
-            <span className="text-[11px] font-semibold text-slate-600">
+            <span className="text-xs font-semibold text-slate-600">
               Immediate Concept Reinforcement
             </span>
           </div>

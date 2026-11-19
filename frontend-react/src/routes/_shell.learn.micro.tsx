@@ -260,7 +260,7 @@ function Page() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-[11px] font-bold text-secondary uppercase tracking-wider">
+                      <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-xs font-bold text-secondary uppercase tracking-wider">
                         Reel {i + 1} of {list.length}
                       </span>
                       <span className="text-xs text-slate-500 font-medium">Concept Micro</span>
@@ -278,11 +278,11 @@ function Page() {
                       <Sparkles size={15} />
                       <span>{reel.diagramTitle || "Core Concept Schematic"}</span>
                     </div>
-                    <p className="text-xs text-slate-700 leading-relaxed font-normal">
+                    <p className="text-sm sm:text-[15px] text-slate-700 leading-relaxed font-normal">
                       {reel.idea}
                     </p>
                     {reel.keyPoints && reel.keyPoints.length > 0 && (
-                      <ul className="mt-2.5 space-y-1 text-[11px] text-slate-600 list-disc list-inside border-t border-slate-200/60 pt-2">
+                      <ul className="mt-2.5 space-y-1.5 text-xs sm:text-sm text-slate-600 list-disc list-inside border-t border-slate-200/60 pt-2">
                         {reel.keyPoints.map((pt, idx) => (
                           <li key={idx}>{pt}</li>
                         ))}
@@ -334,7 +334,7 @@ function Page() {
                             ? "✓ Spot on!"
                             : "Review the key principle above."}
                         </p>
-                        <p className="mt-0.5 text-slate-600 text-[11px] leading-relaxed">
+                        <p className="mt-0.5 text-slate-600 text-xs leading-relaxed">
                           {reel.conceptCheck.explanation}
                         </p>
                       </div>
@@ -526,7 +526,7 @@ function Page() {
                             className="rounded-surface border border-border p-2.5 text-xs bg-surface"
                           >
                             <p className="text-ink">{n.body}</p>
-                            <p className="text-ink-muted text-[10px] mt-1">
+                            <p className="text-ink-muted text-xs mt-1">
                               {n.created_at || "Recent"}
                             </p>
                           </div>
