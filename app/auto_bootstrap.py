@@ -39,25 +39,31 @@ def ensure_cloud_database_bootstrapped() -> bool:
 
             # 2. Check if Riverside tenant exists
             has_riverside = False
+            has_new_engines = False
             if migrations_exist:
                 t_row = conn.execute(
                     "SELECT 1 FROM tenants WHERE slug = 'riverside' LIMIT 1"
                 ).fetchone()
                 has_riverside = bool(t_row)
+                e_row = conn.execute(
+                    "SELECT to_regclass('public.learner_skill_mastery') IS NOT NULL AS exists"
+                ).fetchone()
+                has_new_engines = bool(e_row and e_row[0])
 
-        # If migrations or Riverside tenant missing, run migrations and seed
-        if not migrations_exist or not has_riverside:
-            logger.info("Fresh database detected. Running migrations...")
+        # If migrations or Riverside tenant missing or new engine tables missing, run migrations
+        if not migrations_exist or not has_riverside or not has_new_engines:
+            logger.info("Database migration check triggered. Running migrations...")
             from scripts.apply_migrations import main as apply_all_migrations
 
             migrate_res = apply_all_migrations()
             logger.info("Migrations completed with exit code %s", migrate_res)
 
-            logger.info("Seeding Riverside High School demo data...")
-            from scripts.reset_seed_single_school import seed as seed_riverside
+            if not has_riverside:
+                logger.info("Seeding Riverside High School demo data...")
+                from scripts.reset_seed_single_school import seed as seed_riverside
 
-            seed_riverside()
-            logger.info("Riverside High School data seeded successfully.")
+                seed_riverside()
+                logger.info("Riverside High School data seeded successfully.")
 
         _BOOTSTRAP_DONE = True
         return True

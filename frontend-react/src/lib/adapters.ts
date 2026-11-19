@@ -52,6 +52,12 @@ export interface BackendManualItem {
   progress_percent?: number | null;
   category?: string;
   version?: number;
+  cover?: string;
+  author?: string;
+  subject_code?: string;
+  class_level?: string;
+  chapters_count?: number;
+  created_at?: string;
 }
 
 export interface BackendChapterItem {

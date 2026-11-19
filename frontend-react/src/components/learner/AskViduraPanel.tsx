@@ -20,9 +20,9 @@ const s = (k: string) => t(`M2.${k}`);
 interface Turn {
   id: number;
   question: string;
-  answer?: ViduraAnswer | null;
-  socraticHint?: string;
-  masteryLevel?: number;
+  answer?: ViduraAnswer | null | undefined;
+  socraticHint?: string | undefined;
+  masteryLevel?: number | undefined;
 }
 
 export function AskViduraPanel() {
@@ -95,29 +95,22 @@ function Panel({ visible, onClose }: { visible: boolean; onClose: () => void }) 
       if (res?.answer) {
         setBusy(false);
         const viduraAns: ViduraAnswer = {
-          id: `ans-${id}`,
-          question: q,
+          key: `ans-${id}`,
           answer: res.answer,
           check:
             res.socratic?.diagnostic_question ||
             res.check_question ||
             "Review the lesson worked example.",
-          citations:
-            res.citations && res.citations.length >= 2
-              ? [
-                  {
-                    title: res.citations[0].title || "Class Manual",
-                    id: res.citations[0].id || "ch1",
-                  },
-                  {
-                    title: res.citations[1].title || "Worked Example",
-                    id: res.citations[1].id || "ch2",
-                  },
-                ]
-              : [
-                  { title: "Algebra I Chapter 1", id: "ch1" },
-                  { title: "Linear Equations Lesson", id: "l1" },
-                ],
+          citations: [
+            {
+              lesson: res.citations?.[0]?.title || "Algebra I Chapter 1",
+              section: res.citations?.[0]?.id || "Section 1",
+            },
+            {
+              lesson: res.citations?.[1]?.title || "Linear Equations Lesson",
+              section: res.citations?.[1]?.id || "Section 2",
+            },
+          ],
         };
         setTurns((ts) =>
           ts.map((x) =>
@@ -283,10 +276,10 @@ function Answer({
   onStep,
 }: {
   answer: ViduraAnswer | null;
-  socraticHint?: string;
-  masteryLevel?: number;
+  socraticHint?: string | undefined;
+  masteryLevel?: number | undefined;
   bcp47: string;
-  onStep?: () => void;
+  onStep?: (() => void) | undefined;
 }) {
   const [vote, setVote] = useState<"helpful" | "notHelpful" | null>(null);
   return (

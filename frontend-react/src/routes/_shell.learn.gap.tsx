@@ -39,6 +39,8 @@ function Page() {
   const [msg, setMsg] = useState<"" | "applied" | "error">("");
   const review = lessonById("3");
 
+  const [diffPlan, setDiffPlan] = useState<any>(null);
+
   useEffect(() => {
     let active = true;
     api
@@ -52,6 +54,18 @@ function Page() {
         }
       })
       .catch(() => {});
+
+    api
+      .get<{ ok?: boolean; personalized_study_path?: any[]; difference_steps?: any[] }>(
+        "/api/v1/app/ple/difference-plan?subject=6",
+      )
+      .then((data) => {
+        if (active && data && data.ok) {
+          setDiffPlan(data);
+        }
+      })
+      .catch(() => {});
+
     return () => {
       active = false;
     };
@@ -236,33 +250,91 @@ function Page() {
         </ul>
       </section>
 
-      {/* IEEE 1484.20.3 & ADL TLA Semantic Linked Data Competency Map */}
+      {/* Your Path to Mastery — Connected Curriculum & Step-by-Step Plan */}
       <section className="rounded-surface border border-border bg-surface p-5 shadow-2xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Network className="text-brand size-5" />
             <h2 className="font-heading text-lg font-bold text-ink">
-              IEEE 1484.20.3 Competency Graph & Learning Alignments
+              Your Path to Mastery: Connected Curriculum & Step-by-Step Plan
             </h2>
           </div>
-          <span className="rounded-pill bg-brand/10 text-brand px-2.5 py-0.5 text-xs font-mono font-medium">
-            JSON-LD Semantic Layer
+          <span className="rounded-pill bg-brand/10 text-brand px-2.5 py-0.5 text-xs font-semibold">
+            Personalized Study Path
           </span>
         </div>
         <p className="text-xs text-ink-muted">
-          Your learning path is semantically linked to standardized competencies, textbook chapters,
-          and xAPI diagnostic evidence.
+          Your learning path is dynamically tailored based on diagnostic quizzes, textbook reading
+          progress, and tutor interactions.
         </p>
 
-        <div className="grid grid-cols-1 gap-3 tablet:grid-cols-3">
+        {/* Ordered Step Cards for Current Gap */}
+        <div className="rounded-card border-2 border-brand/30 bg-brand/5 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-brand uppercase tracking-wider">
+              Immediate Focus: Solving Linear Equations (2-Step Balance Method)
+            </span>
+            <span className="text-[11px] text-ink-muted">4 Ordered Recovery Steps</span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2.5 tablet:grid-cols-4">
+            <Link
+              to="/read/manuals/$manualId"
+              params={{ manualId: "11111111-2222-3333-4444-555555555551" }}
+              className="rounded border border-border bg-surface p-3 text-left hover:border-brand transition hover:shadow-xs group"
+            >
+              <div className="text-[10px] font-bold uppercase text-brand">Step 1 • eBooks</div>
+              <div className="text-xs font-semibold text-ink mt-0.5 group-hover:text-brand">
+                Read Chapter 2: The Balance Method
+              </div>
+              <div className="text-[11px] text-ink-muted mt-1">Foundational inverse operations</div>
+            </Link>
+
+            <Link
+              to="/learn/micro"
+              className="rounded border border-border bg-surface p-3 text-left hover:border-brand transition hover:shadow-xs group"
+            >
+              <div className="text-[10px] font-bold uppercase text-brand">Step 2 • Reels</div>
+              <div className="text-xs font-semibold text-ink mt-0.5 group-hover:text-brand">
+                Watch 2-Min Concept Reel
+              </div>
+              <div className="text-[11px] text-ink-muted mt-1">Inverse operations in action</div>
+            </Link>
+
+            <Link
+              to="/learn/coach"
+              className="rounded border border-border bg-surface p-3 text-left hover:border-brand transition hover:shadow-xs group"
+            >
+              <div className="text-[10px] font-bold uppercase text-brand">Step 3 • Ask Vidura</div>
+              <div className="text-xs font-semibold text-ink mt-0.5 group-hover:text-brand">
+                Guided Mastery Practice
+              </div>
+              <div className="text-[11px] text-ink-muted mt-1">Work through 3-step hint ladder</div>
+            </Link>
+
+            <Link
+              to="/active-quizzes"
+              className="rounded border border-brand bg-brand text-white p-3 text-left hover:bg-brand/90 transition shadow-xs group"
+            >
+              <div className="text-[10px] font-bold uppercase opacity-80">Step 4 • Verify</div>
+              <div className="text-xs font-semibold mt-0.5">Take Mastery Check Quiz</div>
+              <div className="text-[11px] opacity-90 mt-1">Earn certified skill badge</div>
+            </Link>
+          </div>
+        </div>
+
+        {/* Connected Curriculum Matrix Cards */}
+        <div className="grid grid-cols-1 gap-3 tablet:grid-cols-3 pt-2">
           <div className="rounded-card border border-border bg-page-bg p-3.5 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono font-bold text-brand">comp-variables</span>
+              <span className="text-[11px] font-mono font-bold text-brand">
+                Variables & Expressions
+              </span>
               <span className="rounded bg-emerald-100 text-emerald-800 text-[10px] font-semibold px-1.5 py-0.2">
                 Prerequisite Met
               </span>
             </div>
-            <h3 className="text-xs font-bold text-ink">Variables & Algebraic Expressions</h3>
+            <h3 className="text-xs font-bold text-ink">Algebraic Foundations</h3>
             <p className="text-[11px] text-ink-muted">
               Foundational skill for balancing equations.
             </p>
@@ -280,12 +352,14 @@ function Page() {
 
           <div className="rounded-card border border-brand/40 bg-brand/5 p-3.5 space-y-2 ring-1 ring-brand/20">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono font-bold text-brand">comp-solve-linear</span>
+              <span className="text-[11px] font-mono font-bold text-brand">
+                Solving Linear Equations
+              </span>
               <span className="rounded bg-amber-100 text-amber-800 text-[10px] font-semibold px-1.5 py-0.2">
                 In Progress
               </span>
             </div>
-            <h3 className="text-xs font-bold text-ink">Solving Linear Equations</h3>
+            <h3 className="text-xs font-bold text-ink">Two-Step Equations</h3>
             <p className="text-[11px] text-ink-muted">
               Two-step isolation and inverse balance operations.
             </p>
@@ -300,13 +374,13 @@ function Page() {
           <div className="rounded-card border border-border bg-page-bg p-3.5 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-mono font-bold text-ink-muted">
-                comp-word-problems
+                Linear Word Problems
               </span>
               <span className="rounded bg-gray-100 text-gray-700 text-[10px] font-semibold px-1.5 py-0.2">
                 Next Goal
               </span>
             </div>
-            <h3 className="text-xs font-bold text-ink">Linear Word Problems</h3>
+            <h3 className="text-xs font-bold text-ink">Real-World Modeling</h3>
             <p className="text-[11px] text-ink-muted">
               Formulating real-world quantitative conditions into models.
             </p>

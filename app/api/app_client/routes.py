@@ -2558,11 +2558,17 @@ class VoiceCleanupRequest(BaseModel):
 
 @router.post("/voice/cleanup")
 def app_voice_cleanup(payload: VoiceCleanupRequest) -> Any:
-    """FreeFlow AI Voice Cleanup Helper — strips fillers, formats math, preserves names."""
-    from app.modules.ai_freeflow import clean_voice_transcript
+    """Smart Voice Studio Cleanup — strips fillers, formats math, preserves names."""
+    from app.modules.voice_studio.service import clean_voice_transcript
 
     cleaned = clean_voice_transcript(payload.transcript, language=payload.language)
-    return ok(json_safe(cleaned))
+    cleaned_text = cleaned.get("cleaned", "") if isinstance(cleaned, dict) else str(cleaned)
+    return {
+        "ok": True,
+        "data": cleaned,
+        "cleaned": cleaned_text,
+    }
+
 
 
 @router.get("/health")

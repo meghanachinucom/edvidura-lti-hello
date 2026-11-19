@@ -30,6 +30,8 @@ const COVER: Record<CoverTone, string> = {
   accent: "bg-accent",
   ink: "bg-ink",
   focus: "bg-secondary",
+  emerald: "bg-emerald-600",
+  amber: "bg-amber-600",
 };
 const CHIPS: ("all" | EbookCategory)[] = ["all", "vocational", "life", "physical", "maths", "cs"];
 

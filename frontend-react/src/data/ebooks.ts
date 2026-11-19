@@ -3,20 +3,20 @@ export type EbookCategory = "vocational" | "life" | "physical" | "maths" | "cs";
 
 export interface Ebook {
   id: string;
-  slug: string;
+  slug?: string;
   title: string;
   description: string;
   pages: number;
   currentPage: number | null;
   cover: CoverTone;
   category: EbookCategory;
-  author: string;
-  subjectCode: string;
-  classLevel: string;
-  chaptersCount: number;
-  hasAudiobook: boolean;
-  hasInteractiveChecks: boolean;
-  publishedDate: string;
+  author?: string;
+  subjectCode?: string;
+  classLevel?: string;
+  chaptersCount?: number;
+  hasAudiobook?: boolean;
+  hasInteractiveChecks?: boolean;
+  publishedDate?: string;
 }
 
 /** 5 Complete Multi-Chapter Interactive Demo Textbooks */

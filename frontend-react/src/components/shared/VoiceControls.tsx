@@ -35,14 +35,16 @@ interface VoiceInputButtonProps {
   lang?: string;
   className?: string;
   disabled?: boolean;
+  cleanupMode?: "smart" | "exact";
 }
 
-/** Microphone input button using Web Speech Recognition + FreeFlow AI cleanup */
+/** Microphone input button using Web Speech Recognition + Smart Voice Studio cleanup */
 export function VoiceInputButton({
   onTranscript,
   lang,
   className = "",
   disabled = false,
+  cleanupMode = "smart",
 }: VoiceInputButtonProps) {
   const { locale } = useLocale();
   const bcp47 = lang || getLocaleBcp47(locale);
@@ -97,7 +99,7 @@ export function VoiceInputButton({
       setCleaning(true);
 
       try {
-        // FreeFlow AI voice cleanup call
+        // Smart Voice Studio AI cleanup call
         const res = await api.post<{
           ok?: boolean;
           data?: { cleaned?: string };
@@ -105,6 +107,7 @@ export function VoiceInputButton({
         }>("/api/v1/app/voice/cleanup", {
           transcript: raw,
           language: bcp47,
+          mode: cleanupMode,
         });
         const cleanedText = res.data?.cleaned || res.cleaned || raw;
         onTranscript(cleanedText);
@@ -166,7 +169,7 @@ export function VoiceInputButton({
       ) : (
         <>
           <Mic aria-hidden size={14} className="text-brand" />
-          <span>Voice ({bcp47.split("-")[0].toUpperCase()})</span>
+          <span>Voice ({(bcp47.split("-")[0] || "EN").toUpperCase()})</span>
         </>
       )}
     </button>
@@ -221,9 +224,8 @@ export function VoiceListenButton({
 
     // Pick best voice for the language if available
     const voices = window.speechSynthesis.getVoices();
-    const match = voices.find(
-      (v) => v.lang.startsWith(bcp47) || v.lang.startsWith(bcp47.split("-")[0]),
-    );
+    const prefix = bcp47.split("-")[0] || bcp47;
+    const match = voices.find((v) => v.lang.startsWith(bcp47) || v.lang.startsWith(prefix));
     if (match) utterance.voice = match;
 
     utterance.onend = () => setSpeaking(false);

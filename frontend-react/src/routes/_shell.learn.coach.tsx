@@ -5,10 +5,13 @@ import {
   BookOpen,
   Brain,
   HelpCircle,
+  Lightbulb,
   Sparkles,
   ThumbsDown,
   ThumbsUp,
   Volume2,
+  CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
 import { getLocaleBcp47, t, useLocale } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
@@ -21,7 +24,7 @@ import { coachExchanges, type CoachExchange } from "@/data/coach";
 import { mockState } from "@/data/mockState";
 import { api } from "@/lib/api";
 
-// LR-07 Ask Vidura with Jane Street Socratic Tutor & Indian Multilingual Voice
+// LR-07 Ask Vidura with Guided Mastery Tutor & Multilingual Indian Voice Studio
 export const Route = createFileRoute("/_shell/learn/coach")({
   head: () => ({
     meta: [
@@ -38,7 +41,17 @@ export const Route = createFileRoute("/_shell/learn/coach")({
 
 const s = (k: string) => t(`LR-07.${k}`);
 
-interface SocraticTracker {
+interface SkillTreeItem {
+  id: string;
+  name: string;
+  parent_topic?: string;
+  mastery_level: number;
+  max_level: number;
+  status: string;
+  next_review_at?: string;
+}
+
+interface TutorTracker {
   skill: string;
   skill_name: string;
   mastery_level: number;
@@ -53,9 +66,9 @@ interface SocraticTracker {
 interface Turn {
   id: number;
   question: string;
-  reply?: CoachExchange;
-  socratic?: SocraticTracker;
-  failed?: boolean;
+  reply?: CoachExchange | undefined;
+  tutor?: TutorTracker | undefined;
+  failed?: boolean | undefined;
 }
 
 const norm = (x: string) => x.toLowerCase().replace(/[^a-z ]/g, "");
@@ -70,19 +83,157 @@ function pickReply(q: string, count: number): CoachExchange | undefined {
 
 function Page() {
   const m = mockState.coach;
-  const { locale, bcp47 } = useLocale();
-  const [tutorMode, setTutorMode] = useState<"socratic" | "direct">("socratic");
-  const [skills, setSkills] = useState<Record<string, number>>({
-    variables: 2,
-    "solve-linear": 2,
-    "word-problems": 1,
-  });
+  const { bcp47 } = useLocale();
+  const [tutorMode, setTutorMode] = useState<"guided" | "direct">("guided");
+  const [voiceCleanupMode, setVoiceCleanupMode] = useState<"smart" | "exact">("smart");
+  const [skillTree, setSkillTree] = useState<SkillTreeItem[]>([
+    {
+      id: "variables",
+      name: "Variables & Expressions",
+      mastery_level: 2,
+      max_level: 5,
+      status: "Building Confidence",
+    },
+    {
+      id: "solve-linear",
+      name: "Solving Linear Equations",
+      mastery_level: 2,
+      max_level: 5,
+      status: "Review Due",
+    },
+    {
+      id: "word-problems",
+      name: "Linear Word Problems",
+      mastery_level: 1,
+      max_level: 5,
+      status: "Getting Started",
+    },
+    {
+      id: "graphing-lines",
+      name: "Graphing Lines & Coordinates",
+      mastery_level: 0,
+      max_level: 5,
+      status: "Locked",
+    },
+  ]);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [activeHintLevel, setActiveHintLevel] = useState<number>(0);
+  const [hintText, setHintText] = useState<string>("");
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
+  const [diagnosticQuestions, setDiagnosticQuestions] = useState<any[]>([]);
+  const [diagStep, setDiagStep] = useState(0);
+  const [diagAnswers, setDiagAnswers] = useState<Record<string, number>>({});
+  const [diagComplete, setDiagComplete] = useState(false);
+
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const input = useRef<HTMLTextAreaElement>(null);
   useEffect(() => () => clearTimeout(timer.current), []);
+
+  // Fetch live skill tree
+  useEffect(() => {
+    api
+      .get<{ ok?: boolean; skills?: SkillTreeItem[] }>("/api/v1/app/tutor/skill-tree?subject=6")
+      .then((res) => {
+        if (res && res.skills && res.skills.length > 0) {
+          setSkillTree(res.skills);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Load diagnostic questions when opened
+  const startDiagnostic = async () => {
+    setShowDiagnostic(true);
+    setDiagStep(0);
+    setDiagAnswers({});
+    setDiagComplete(false);
+    try {
+      const res = await api.post<{ ok?: boolean; questions?: any[] }>(
+        "/api/v1/app/tutor/diagnostic",
+        { subject: "6" },
+      );
+      if (res && res.questions) {
+        setDiagnosticQuestions(res.questions.slice(0, 3));
+      }
+    } catch {
+      setDiagnosticQuestions([
+        {
+          question_id: "q_var_1",
+          question: "In the expression 4x + 7, what is the variable?",
+          options: ["4", "x", "7", "4x + 7"],
+          correct_index: 1,
+        },
+        {
+          question_id: "q_lin_1",
+          question: "To solve 2x + 5 = 15, what is the first inverse operation?",
+          options: ["Add 5", "Subtract 5 from both sides", "Divide by 5", "Multiply by 2"],
+          correct_index: 1,
+        },
+        {
+          question_id: "q_wp_1",
+          question: "A number doubled plus 3 is 11. What is the equation?",
+          options: ["2x - 3 = 11", "2x + 3 = 11", "x/2 + 3 = 11", "3x + 2 = 11"],
+          correct_index: 1,
+        },
+      ]);
+    }
+  };
+
+  const answerDiagnostic = async (optionIndex: number) => {
+    const q = diagnosticQuestions[diagStep];
+    const newAnswers = { ...diagAnswers, [q.question_id]: optionIndex };
+    setDiagAnswers(newAnswers);
+
+    if (diagStep < diagnosticQuestions.length - 1) {
+      setDiagStep(diagStep + 1);
+    } else {
+      setDiagComplete(true);
+      try {
+        const cal = await api.post<{ ok?: boolean; results?: any[]; skill_tree?: SkillTreeItem[] }>(
+          "/api/v1/app/tutor/diagnostic",
+          { subject: "6", answers: newAnswers },
+        );
+        if (cal && cal.skill_tree) {
+          setSkillTree(cal.skill_tree);
+        }
+      } catch {
+        // Fallback update
+        setSkillTree((prev) =>
+          prev.map((s) => (s.id === "solve-linear" ? { ...s, mastery_level: 2 } : s)),
+        );
+      }
+    }
+  };
+
+  // Request 3-step hint ladder
+  const requestHint = async (level: number) => {
+    setActiveHintLevel(level);
+    try {
+      const res = await api.post<{
+        ok?: boolean;
+        hint?: string;
+        feedback?: string;
+      }>("/api/v1/app/tutor/turn", {
+        skill_id: "solve-linear",
+        step: level,
+        answer: "",
+        mode: "guided",
+        subject: "6",
+      });
+      if (res && (res.hint || res.feedback)) {
+        setHintText(res.hint || res.feedback || "");
+      }
+    } catch {
+      const fallbacks = [
+        "Nudge: Look at the number added to the variable term.",
+        "Step-by-Step: Subtract 5 from both 2x + 5 and 15 to get 2x = 10.",
+        "Worked Example: 2x = 10 implies x = 10 / 2 = 5.",
+      ];
+      setHintText(fallbacks[level - 1] ?? fallbacks[0] ?? "");
+    }
+  };
 
   const send = async (e?: React.FormEvent, customQuestion?: string) => {
     if (e) e.preventDefault();
@@ -92,6 +243,8 @@ function Page() {
     setTurns((ts) => [...ts, { id, question: q }]);
     setText("");
     setBusy(true);
+    setActiveHintLevel(0);
+    setHintText("");
 
     try {
       const resp = await api.post<{
@@ -102,12 +255,12 @@ function Page() {
         sources?: string[];
         checkYourself?: string;
         check_question?: string;
-        socratic?: SocraticTracker;
+        socratic?: TutorTracker;
       }>("/api/v1/app/coach", {
         question: q,
         reply_language: bcp47,
-        mode: tutorMode,
-        current_level: skills["solve-linear"] || 1,
+        mode: tutorMode === "guided" ? "socratic" : "direct",
+        current_level: skillTree.find((s) => s.id === "solve-linear")?.mastery_level || 2,
       });
 
       const answerText = resp.answer || resp.text || resp.reply;
@@ -115,15 +268,16 @@ function Page() {
         const sourcesList =
           resp.sources ||
           (resp.citations
-            ? resp.citations.map((c) => c.title || c.id || "Class Manual Reference")
+            ? resp.citations.map((c) => c.title || c.id || "Class 8 RHS-C08 Manual")
             : ["Class 8 RHS-C08 Manual"]);
 
         if (resp.socratic?.all_skills) {
-          const updated: Record<string, number> = {};
-          for (const item of resp.socratic.all_skills) {
-            updated[item.id] = item.level;
-          }
-          setSkills((prev) => ({ ...prev, ...updated }));
+          setSkillTree((prev) =>
+            prev.map((s) => {
+              const found = resp.socratic?.all_skills?.find((x) => x.id === s.id);
+              return found ? { ...s, mastery_level: found.level } : s;
+            }),
+          );
         }
 
         setTurns((ts) =>
@@ -132,7 +286,7 @@ function Page() {
               ? x
               : {
                   ...x,
-                  socratic: resp.socratic,
+                  tutor: resp.socratic,
                   reply: {
                     id: `resp-${id}`,
                     question: q,
@@ -141,7 +295,7 @@ function Page() {
                       resp.socratic?.diagnostic_question ||
                       resp.check_question ||
                       resp.checkYourself ||
-                      "Verify your reasoning with the chapter worked example.",
+                      "Verify your reasoning with the chapter balance method.",
                     sources: sourcesList,
                   },
                 },
@@ -171,16 +325,20 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content px-4 py-8 tablet:grid tablet:grid-cols-[minmax(0,1fr)_460px] tablet:gap-8">
+      {/* Left Column: Skill Tree, Mode, & Quick Check */}
       <div className="space-y-6">
         <div>
           <PageHeading titleKey="pages.coach" />
           <div className="max-w-reading space-y-1 text-ink mt-1">
             <p>{s("line1")}</p>
-            <p className="text-sm text-ink-muted">{s("line2")}</p>
+            <p className="text-sm text-ink-muted">
+              Learn concepts step-by-step with guided hints, spoken math voice, and verified chapter
+              citations.
+            </p>
           </div>
         </div>
 
-        {/* Jane Street Socratic Tutor Mode Selector */}
+        {/* Guided Mastery Tutor Mode Selector */}
         <div className="rounded-surface border border-border bg-surface p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -188,23 +346,23 @@ function Page() {
               <span className="font-heading font-semibold text-ink text-sm">Tutor Mode</span>
             </div>
             <span className="rounded-pill bg-brand/10 text-brand px-2.5 py-0.5 text-xs font-medium">
-              Socratic Guided Learning
+              Guided Mastery
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => setTutorMode("socratic")}
+              onClick={() => setTutorMode("guided")}
               className={`rounded-card border p-2.5 text-left transition-all ${
-                tutorMode === "socratic"
+                tutorMode === "guided"
                   ? "border-brand bg-brand/5 ring-1 ring-brand text-ink"
                   : "border-border bg-page-bg text-ink-muted hover:text-ink"
               }`}
             >
-              <div className="font-semibold text-xs text-brand">Socratic Guided Mode</div>
+              <div className="font-semibold text-xs text-brand">Guided Mode</div>
               <div className="text-[11px] text-ink-muted mt-0.5">
-                Probing questions, one step at a time, targeted hints.
+                Probing questions, one step at a time, targeted hint ladder.
               </div>
             </button>
             <button
@@ -218,47 +376,52 @@ function Page() {
             >
               <div className="font-semibold text-xs">Direct Reference Mode</div>
               <div className="text-[11px] text-ink-muted mt-0.5">
-                Immediate factual explanations and direct manual excerpts.
+                Immediate factual explanations and direct textbook excerpts.
               </div>
             </button>
           </div>
 
-          {/* Socratic Mastery Level Tracker (0 to 5) */}
+          {/* Skill Ladder (Levels 0 to 5) */}
           <div className="mt-4 pt-3 border-t border-border">
             <div className="flex items-center justify-between text-xs font-semibold text-ink mb-2">
               <span className="flex items-center gap-1.5">
                 <Award className="size-4 text-amber-500" />
-                Socratic Mastery Tracker (Levels 0–5)
+                Your Skill Ladder (Levels 0–5)
               </span>
-              <span className="text-ink-muted text-[11px]">Class 8 RHS-C08</span>
+              <button
+                type="button"
+                onClick={startDiagnostic}
+                className="text-xs text-brand font-semibold hover:underline inline-flex items-center gap-1"
+              >
+                Quick 3-Question Check →
+              </button>
             </div>
-            <div className="space-y-2">
-              {[
-                {
-                  id: "variables",
-                  label: "Variables & Expressions",
-                  level: skills["variables"] || 2,
-                },
-                {
-                  id: "solve-linear",
-                  label: "Solving Linear Equations",
-                  level: skills["solve-linear"] || 2,
-                },
-                {
-                  id: "word-problems",
-                  label: "Linear Word Problems",
-                  level: skills["word-problems"] || 1,
-                },
-              ].map((sk) => (
-                <div key={sk.id} className="text-xs">
-                  <div className="flex justify-between text-ink-muted text-[11px] mb-1">
-                    <span className="font-medium text-ink">{sk.label}</span>
-                    <span className="font-mono">Level {sk.level} / 5</span>
+            <div className="space-y-2.5">
+              {skillTree.map((sk) => (
+                <div
+                  key={sk.id}
+                  className="text-xs rounded-card border border-border/70 p-2.5 bg-page-bg"
+                >
+                  <div className="flex justify-between items-center text-[11px] mb-1.5">
+                    <span className="font-semibold text-ink">{sk.name}</span>
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                        sk.mastery_level >= 3
+                          ? "bg-emerald-100 text-emerald-800"
+                          : sk.status === "Review Due"
+                            ? "bg-amber-100 text-amber-800"
+                            : sk.status === "Locked"
+                              ? "bg-gray-100 text-gray-500"
+                              : "bg-blue-100 text-blue-800"
+                      }`}
+                    >
+                      {sk.status} • Level {sk.mastery_level}/5
+                    </span>
                   </div>
                   <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
                     <div
                       className="h-full bg-brand transition-all duration-300"
-                      style={{ width: `${(sk.level / 5) * 100}%` }}
+                      style={{ width: `${(sk.mastery_level / 5) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -266,6 +429,64 @@ function Page() {
             </div>
           </div>
         </div>
+
+        {/* Diagnostic Placement Modal / Card */}
+        {showDiagnostic && (
+          <div className="rounded-surface border border-brand/40 bg-brand/5 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading text-xs font-bold text-ink">
+                Quick 3-Question Diagnostic Check
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowDiagnostic(false)}
+                className="text-xs text-ink-muted hover:text-ink font-semibold"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {!diagComplete && diagnosticQuestions[diagStep] ? (
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-[11px] text-ink-muted">
+                  <span>
+                    Question {diagStep + 1} of {diagnosticQuestions.length}
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-ink">
+                  {diagnosticQuestions[diagStep].question}
+                </p>
+                <div className="space-y-1.5">
+                  {diagnosticQuestions[diagStep].options.map((opt: string, idx: number) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => answerDiagnostic(idx)}
+                      className="w-full text-left rounded border border-border bg-surface px-3 py-1.5 text-xs hover:border-brand hover:bg-brand/5 transition-colors"
+                    >
+                      {String.fromCharCode(65 + idx)}. {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-2 space-y-1.5">
+                <CheckCircle2 className="size-6 text-emerald-600 mx-auto" />
+                <p className="text-xs font-bold text-ink">Starting Level Calibrated!</p>
+                <p className="text-[11px] text-ink-muted">
+                  Your skill ladder has been updated with verified starting masteries.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowDiagnostic(false)}
+                  className="btn-primary text-xs py-1 px-3 mt-1"
+                >
+                  Continue Tutoring
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         <nav
           aria-label={s("quick")}
@@ -282,11 +503,12 @@ function Page() {
           </Link>
           <Link to="/manuals" className="btn-secondary text-xs inline-flex items-center gap-1">
             <BookOpen size={14} />
-            eBooks & Manuals
+            eBooks & Textbooks
           </Link>
         </nav>
       </div>
 
+      {/* Right Column: Chat Conversation, 3-Step Hint Ladder & Voice Input */}
       <section
         aria-label={s("conversation")}
         className="mt-6 flex min-h-[65vh] flex-col rounded-surface border border-border bg-surface tablet:mt-0 shadow-sm"
@@ -301,9 +523,9 @@ function Page() {
               {turns.length === 0 && (
                 <div className="rounded-card border border-dashed border-border p-6 text-center text-ink-muted text-sm">
                   <Brain className="mx-auto size-8 text-brand/60 mb-2" />
-                  <p className="font-semibold text-ink">Ask Vidura — AI Study Coach</p>
+                  <p className="font-semibold text-ink">Ask Vidura — Guided Mastery Tutor</p>
                   <p className="text-xs mt-1">
-                    Ask questions about your Class 8 lessons or use voice dictation in your
+                    Ask questions about your Class 8 lessons or speak with math dictation in your
                     preferred Indian language.
                   </p>
                 </div>
@@ -320,7 +542,7 @@ function Page() {
                   {x.reply && (
                     <Reply
                       ex={x.reply}
-                      socratic={x.socratic}
+                      tutor={x.tutor}
                       noSources={m.reply === "noSources"}
                       onAskFollowUp={(followUp) => send(undefined, followUp)}
                     />
@@ -331,6 +553,59 @@ function Page() {
             <p role="status" className="px-4 text-xs text-ink-muted">
               {busy ? s("thinking") : ""}
             </p>
+
+            {/* 3-Step Hint Ladder Bar */}
+            <div className="border-t border-border/70 bg-page-bg/80 px-4 py-2.5">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-semibold text-ink inline-flex items-center gap-1">
+                  <Lightbulb size={13} className="text-amber-500" />
+                  3-Step Hint Ladder:
+                </span>
+                <span className="text-[11px] text-ink-muted">Need a step forward?</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => requestHint(1)}
+                  className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
+                    activeHintLevel === 1
+                      ? "border-brand bg-brand/10 text-brand font-bold"
+                      : "border-border bg-surface text-ink hover:border-brand"
+                  }`}
+                >
+                  Hint 1 (Nudge)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => requestHint(2)}
+                  className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
+                    activeHintLevel === 2
+                      ? "border-brand bg-brand/10 text-brand font-bold"
+                      : "border-border bg-surface text-ink hover:border-brand"
+                  }`}
+                >
+                  Hint 2 (Step-by-Step)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => requestHint(3)}
+                  className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
+                    activeHintLevel === 3
+                      ? "border-brand bg-brand/10 text-brand font-bold"
+                      : "border-border bg-surface text-ink hover:border-brand"
+                  }`}
+                >
+                  Hint 3 (Worked Example)
+                </button>
+              </div>
+              {hintText && (
+                <div className="mt-2 rounded bg-amber-50 border border-amber-200 p-2 text-xs text-amber-900 animate-fadeIn">
+                  💡 {hintText}
+                </div>
+              )}
+            </div>
+
+            {/* Input Form with Voice Mode Selector */}
             <form
               onSubmit={(e) => send(e)}
               className="sticky bottom-0 space-y-2 border-t border-border bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
@@ -342,13 +617,25 @@ function Page() {
                     input.current?.focus();
                   }}
                 />
-                <VoiceInputButton
-                  onTranscript={(transcript) => {
-                    setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
-                    input.current?.focus();
-                  }}
-                  lang={bcp47}
-                />
+                <div className="flex items-center gap-2">
+                  <select
+                    value={voiceCleanupMode}
+                    onChange={(e) => setVoiceCleanupMode(e.target.value as "smart" | "exact")}
+                    className="text-[11px] rounded border border-border bg-page-bg px-2 py-1 text-ink-muted hover:text-ink focus:outline-none"
+                    title="Voice cleanup mode"
+                  >
+                    <option value="smart">Smart Math Cleanup</option>
+                    <option value="exact">Exact Words</option>
+                  </select>
+                  <VoiceInputButton
+                    onTranscript={(transcript) => {
+                      setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
+                      input.current?.focus();
+                    }}
+                    lang={bcp47}
+                    cleanupMode={voiceCleanupMode}
+                  />
+                </div>
               </div>
 
               <label htmlFor="coach-q" className="sr-only">
@@ -379,7 +666,7 @@ function Page() {
                   )}
                 </div>
                 <span className="text-[11px] text-ink-muted font-medium">
-                  {tutorMode === "socratic" ? "Socratic Guided Mode" : "Direct Mode"}
+                  {tutorMode === "guided" ? "Guided Mastery Mode" : "Direct Mode"}
                 </span>
               </div>
             </form>
@@ -392,14 +679,14 @@ function Page() {
 
 function Reply({
   ex,
-  socratic,
+  tutor,
   noSources,
   onAskFollowUp,
 }: {
   ex: CoachExchange;
-  socratic?: SocraticTracker;
+  tutor?: TutorTracker | undefined;
   noSources: boolean;
-  onAskFollowUp?: (q: string) => void;
+  onAskFollowUp?: ((q: string) => void) | undefined;
 }) {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
   const { bcp47 } = useLocale();
@@ -420,16 +707,16 @@ function Reply({
         <>
           <p className="text-sm leading-relaxed">{ex.answer}</p>
 
-          {/* Socratic Guiding Check Card */}
+          {/* Guiding Question Check Card */}
           {ex.checkYourself && (
             <div className="rounded-surface bg-highlight p-3 border border-border/60">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-ink mb-1">
                 <HelpCircle size={14} className="text-brand" />
-                <span>{socratic ? "Socratic Check Question" : s("checkYourself")}</span>
+                <span>Guided Check Question</span>
               </div>
               <p className="text-xs text-ink">{ex.checkYourself}</p>
-              {socratic?.hint && (
-                <p className="text-[11px] text-ink-muted italic mt-1.5">💡 Hint: {socratic.hint}</p>
+              {tutor?.hint && (
+                <p className="text-[11px] text-ink-muted italic mt-1.5">💡 Hint: {tutor.hint}</p>
               )}
               {onAskFollowUp && (
                 <button
@@ -443,13 +730,13 @@ function Reply({
             </div>
           )}
 
-          {/* Socratic Progression Badge */}
-          {socratic?.leveled_up && (
+          {/* Level-Up Celebration Badge */}
+          {tutor?.leveled_up && (
             <div className="inline-flex items-center gap-1.5 rounded-pill bg-emerald-50 border border-emerald-300 px-3 py-1 text-xs text-emerald-800">
               <Award size={14} className="text-emerald-600" />
               <span>
-                Level Up! Advanced to <strong>Level {socratic.mastery_level}</strong> in{" "}
-                {socratic.skill_name}
+                Level Up! Advanced to <strong>Level {tutor.mastery_level}</strong> in{" "}
+                {tutor.skill_name}
               </span>
             </div>
           )}

@@ -16,25 +16,25 @@ BUILTIN_FEATURES: List[Dict[str, Any]] = [
     # -------------------------------------------------------------
     {
         "feature_id": "socratic-coach",
-        "title": "Socratic AI Tutor (Ask Vidura)",
+        "title": "Guided Mastery Tutor (Ask Vidura)",
         "nav_label": "Ask Vidura",
         "role": "learner",
         "category": "Intelligent Tutoring",
         "target_route": "/learn/coach",
         "has_dedicated_route": True,
-        "description": "6-stage maieutic tutor that guides students to independent mastery through diagnostic questions and guided hints.",
+        "description": "6-stage guided mastery tutor that helps students reach independent understanding through diagnostic questions, 3-step hint ladders, and spaced reviews.",
         "template_type": "tutor-chat",
         "icon": "MessageCircle",
-        "data_endpoint": "/api/v1/app/coach",
-        "mutation_endpoint": "/api/v1/app/coach",
+        "data_endpoint": "/api/v1/app/tutor/skill-tree",
+        "mutation_endpoint": "/api/v1/app/tutor/turn",
         "kpis": [
             {"label": "Mastery Stages", "value": "Levels 0 to 5"},
-            {"label": "Tutoring Mode", "value": "Socratic Guided"},
+            {"label": "Tutoring Mode", "value": "Guided Mastery"},
             {"label": "Voice Support", "value": "12 Indian Languages"},
         ],
         "actions": [
-            {"id": "run_diagnostic", "label": "Start Socratic Diagnostic", "endpoint": "/api/v1/app/coach"},
-            {"id": "request_hint", "label": "Request Guided Hint", "endpoint": "/api/v1/app/coach"},
+            {"id": "run_diagnostic", "label": "Start Skill Placement Check", "endpoint": "/api/v1/app/tutor/diagnostic"},
+            {"id": "request_hint", "label": "Request Guided Hint", "endpoint": "/api/v1/app/tutor/turn"},
         ],
     },
     {

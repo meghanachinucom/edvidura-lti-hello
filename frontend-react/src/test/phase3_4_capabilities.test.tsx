@@ -44,8 +44,8 @@ describe("Phase 2, 3 & 4 Architectural & Open-Source AI Capabilities", () => {
     for (const ch of algChapters!) {
       expect(ch.diagramTitle).toBeDefined();
       expect(ch.conceptCheck).toBeDefined();
-      expect(ch.conceptCheck.options.length).toBe(4);
-      expect(ch.conceptCheck.explanation).toBeTruthy();
+      expect(ch.conceptCheck!.options.length).toBe(4);
+      expect(ch.conceptCheck!.explanation).toBeTruthy();
     }
   });
 

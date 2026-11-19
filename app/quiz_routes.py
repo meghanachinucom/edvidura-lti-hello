@@ -332,6 +332,20 @@ async def quiz_submit(
             graded=graded,
         )
 
+        try:
+            from app.modules.learning_graph.service import record_learner_evidence
+            score_pct = int((score / max(1, max_score)) * 100)
+            record_learner_evidence(
+                subject=str(session["subject"]),
+                competency_uri="urn:edvidura:competency:variables",
+                evidence_source="quiz",
+                source_uri=f"urn:edvidura:quiz:{attempt.get('id', 'submit')}",
+                score_pct=score_pct,
+                mastery_level=3 if score_pct >= 80 else 2,
+            )
+        except Exception:
+            pass
+
         if not practice_mode:
             launch_id = str(session.get("launch_id") or "")
             if launch_id:

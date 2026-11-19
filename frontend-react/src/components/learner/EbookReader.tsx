@@ -9,8 +9,12 @@ import {
   List,
   NotebookPen,
   Volume2,
+  Sparkles,
+  Globe,
+  MessageSquare,
+  Film,
 } from "lucide-react";
-import { t } from "@/i18n";
+import { t, useLocale } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { SlowNetworkNote } from "@/components/shared/SlowNetworkNote";
@@ -26,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { useRole } from "@/components/shell/RoleContext";
 import type { BackendProgressItem, BackendBookmarkItem } from "@/lib/adapters";
+import { InteractiveChapterStage } from "@/components/learner/InteractiveChapterStage";
 
 const s = (k: string, v?: Record<string, string | number>) => t(`LR-15.${k}`, v);
 
@@ -114,7 +119,49 @@ export function EbookReader({
   const utterance = useRef<SpeechSynthesisUtterance | null>(null);
   const isCancelledRef = useRef(false);
   const textRef = useRef<HTMLDivElement>(null);
+  const { bcp47 } = useLocale();
+  const [readerMode, setReaderMode] = useState<"read" | "interactive">("read");
+  const [transformedText, setTransformedText] = useState<{ command: string; text: string } | null>(
+    null,
+  );
+  const [transforming, setTransforming] = useState(false);
   const dismiss = useCallback(() => setToast(null), []);
+
+  const transformSelection = async (command: "simplify" | "translate") => {
+    if (!sel || !sel.text) return;
+    setTransforming(true);
+    try {
+      const res = await api.post<{ ok?: boolean; transformed?: string; transformed_text?: string }>(
+        "/api/v1/app/voice/edit-selection",
+        {
+          selected_text: sel.text,
+          spoken_command: command,
+          language: bcp47,
+        },
+      );
+      const text = res.transformed || res.transformed_text || sel.text;
+      setTransformedText({ command, text });
+    } catch {
+      setTransformedText({
+        command,
+        text:
+          command === "simplify"
+            ? `Simplified: ${sel.text.split(".")[0]}.`
+            : `Translation (${bcp47}): ${sel.text}`,
+      });
+    } finally {
+      setTransforming(false);
+    }
+  };
+
+  const speakSelection = () => {
+    if (!sel || !sel.text || typeof window === "undefined" || !("speechSynthesis" in window))
+      return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(sel.text);
+    u.lang = bcp47;
+    window.speechSynthesis.speak(u);
+  };
 
   useEffect(() => {
     if (m.state === "renderError" || m.state === "chapterMissing") {
@@ -528,6 +575,40 @@ export function EbookReader({
         )}
       </header>
 
+      {/* Reader Mode Switcher */}
+      <div className="mt-4 flex items-center justify-between border-b border-border pb-3">
+        <div className="flex items-center gap-2 p-1 bg-surface border border-border rounded-pill">
+          <button
+            type="button"
+            onClick={() => setReaderMode("read")}
+            className={`px-3 py-1 text-xs font-semibold rounded-pill transition-colors ${
+              readerMode === "read"
+                ? "bg-brand text-white shadow-xs"
+                : "text-ink-muted hover:text-ink"
+            }`}
+          >
+            📖 Read Book
+          </button>
+          <button
+            type="button"
+            onClick={() => setReaderMode("interactive")}
+            className={`px-3 py-1 text-xs font-semibold rounded-pill transition-colors flex items-center gap-1.5 ${
+              readerMode === "interactive"
+                ? "bg-brand text-white shadow-xs"
+                : "text-ink-muted hover:text-ink"
+            }`}
+          >
+            <Film size={13} />
+            <span>Watch Interactive Chapter</span>
+          </button>
+        </div>
+        <span className="text-xs text-ink-muted hidden tablet:inline">
+          {readerMode === "interactive"
+            ? "Living Interactive Storyboard Stage"
+            : "Standard Textbook Reading Mode"}
+        </span>
+      </div>
+
       <div className="mt-6 desktop:grid desktop:grid-cols-[220px_minmax(0,1fr)_260px] desktop:gap-8">
         <aside className="hidden desktop:block">
           <Toc />
@@ -542,6 +623,15 @@ export function EbookReader({
             <div className="max-w-reading space-y-3">
               <LoadingSkeleton count={6} />
               <SlowNetworkNote pending={loading} />
+            </div>
+          ) : readerMode === "interactive" ? (
+            <div className="space-y-4">
+              <InteractiveChapterStage
+                manualId={book.id}
+                chapterIndex={ci}
+                chapterTitle={chapter.title}
+                onClose={() => setReaderMode("read")}
+              />
             </div>
           ) : (
             <article className={wideReading ? "max-w-none" : "max-w-reading"}>
@@ -573,11 +663,13 @@ export function EbookReader({
                 onMouseUp={() => {
                   setSel(readSelection());
                   setExplanation(null);
+                  setTransformedText(null);
                 }}
                 onTouchEnd={() =>
                   setTimeout(() => {
                     setSel(readSelection());
                     setExplanation(null);
+                    setTransformedText(null);
                   }, 50)
                 }
               >
@@ -593,29 +685,76 @@ export function EbookReader({
                   <div
                     role="toolbar"
                     aria-label={s("highlight")}
-                    className="reader-selection-toolbar flex flex-wrap gap-2"
+                    className="reader-selection-toolbar flex flex-wrap items-center gap-1.5 p-2 bg-page-bg border border-border rounded-card shadow-2xs"
                   >
                     <button
                       type="button"
                       onClick={() => highlight(sel)}
-                      className="btn-secondary gap-2"
+                      className="btn-secondary gap-1 text-xs py-1 px-2.5"
                     >
-                      <Highlighter aria-hidden size={18} />
+                      <Highlighter aria-hidden size={14} />
                       {s("highlight")}
                     </button>
-                    <button type="button" onClick={() => openNote(sel)} className="btn-secondary">
+                    <button
+                      type="button"
+                      onClick={() => openNote(sel)}
+                      className="btn-secondary text-xs py-1 px-2.5"
+                    >
                       {s("addNote")}
                     </button>
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      className="btn-secondary learning-control h-auto whitespace-normal"
-                      onClick={() =>
-                        setExplanation(explanationFor(sel.text) ?? "pass3.reader.missing")
-                      }
+                      onClick={speakSelection}
+                      className="btn-secondary gap-1 text-xs py-1 px-2.5"
+                      title="Listen aloud to selected text"
                     >
-                      {t("pass3.reader.explain")}
-                    </Button>
+                      <Volume2 size={14} />
+                      <span>Listen Aloud</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={transforming}
+                      onClick={() => transformSelection("simplify")}
+                      className="btn-secondary gap-1 text-xs py-1 px-2.5"
+                      title="Simplify difficult phrases"
+                    >
+                      <Sparkles size={14} className="text-amber-500" />
+                      <span>{transforming ? "Simplifying..." : "Simplify"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={transforming}
+                      onClick={() => transformSelection("translate")}
+                      className="btn-secondary gap-1 text-xs py-1 px-2.5"
+                      title="Translate to your chosen Indian language"
+                    >
+                      <Globe size={14} className="text-blue-500" />
+                      <span>Translate</span>
+                    </button>
+                    <Link
+                      to="/learn/coach"
+                      className="btn-secondary gap-1 text-xs py-1 px-2.5 inline-flex items-center"
+                      title="Ask Vidura study coach about this selection"
+                    >
+                      <MessageSquare size={14} className="text-brand" />
+                      <span>Ask Vidura</span>
+                    </Link>
+                  </div>
+                )}
+
+                {transformedText && (
+                  <div className="rounded bg-highlight p-3 border border-border text-xs text-ink space-y-1">
+                    <div className="flex justify-between font-semibold text-brand text-[11px]">
+                      <span className="capitalize">{transformedText.command} Result:</span>
+                      <button
+                        type="button"
+                        onClick={() => setTransformedText(null)}
+                        className="text-ink-muted hover:text-ink font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <p className="leading-relaxed">{transformedText.text}</p>
                   </div>
                 )}
                 {explanation && (

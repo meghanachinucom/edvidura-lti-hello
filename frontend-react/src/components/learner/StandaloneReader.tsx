@@ -17,6 +17,10 @@ import {
   Sun,
   Eye,
   BookOpen,
+  Film,
+  Globe,
+  MessageSquare,
+  Highlighter,
 } from "lucide-react";
 import { getLocaleBcp47, t, useLocale } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
@@ -29,6 +33,7 @@ import type { Ebook } from "@/data/ebooks";
 import { mockState } from "@/data/mockState";
 import { useRole } from "@/components/shell/RoleContext";
 import { api } from "@/lib/api";
+import { InteractiveChapterStage } from "@/components/learner/InteractiveChapterStage";
 
 const s = (k: string) => t(`LR-16.${k}`);
 const r = (k: string) => t(`LR-15.${k}`);
@@ -46,10 +51,12 @@ export function StandaloneReader({
   const m = mockState.reader;
   const { session } = useRole();
   const { locale, bcp47 } = useLocale();
-  const chapters =
+  const chapters: Chapter[] =
     initialChapters && initialChapters.length > 0
       ? initialChapters
-      : (ebookChapters[book.id] ?? ebookChapters[book.slug] ?? []);
+      : ((book.id ? ebookChapters[book.id] : undefined) ??
+        (book.slug ? ebookChapters[book.slug] : undefined) ??
+        []);
 
   const [ci, setCi] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -65,10 +72,53 @@ export function StandaloneReader({
   const [activeParaIndex, setActiveParaIndex] = useState<number | null>(null);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // PaperMorph Concept Check States
+  // Reader Mode & Highlight Selection States
+  const [readerMode, setReaderMode] = useState<"read" | "interactive">("read");
+  const [selectedText, setSelectedText] = useState<string>("");
+  const [transformedText, setTransformedText] = useState<{ command: string; text: string } | null>(
+    null,
+  );
+  const [transforming, setTransforming] = useState(false);
+
+  // Living Interactive Concept Check States
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [conceptCheckAnswered, setConceptCheckAnswered] = useState(false);
+
+  const transformSelection = async (command: "simplify" | "translate") => {
+    if (!selectedText) return;
+    setTransforming(true);
+    try {
+      const res = await api.post<{ ok?: boolean; transformed?: string; transformed_text?: string }>(
+        "/api/v1/app/voice/edit-selection",
+        {
+          selected_text: selectedText,
+          spoken_command: command,
+          language: bcp47,
+        },
+      );
+      const text = res.transformed || res.transformed_text || selectedText;
+      setTransformedText({ command, text });
+    } catch {
+      setTransformedText({
+        command,
+        text:
+          command === "simplify"
+            ? `Simplified: ${selectedText.split(".")[0]}.`
+            : `Translation (${bcp47}): ${selectedText}`,
+      });
+    } finally {
+      setTransforming(false);
+    }
+  };
+
+  const speakSelection = () => {
+    if (!selectedText || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(selectedText);
+    u.lang = bcp47;
+    window.speechSynthesis.speak(u);
+  };
 
   useEffect(() => {
     if (m.state === "renderError" || m.state === "chapterMissing") {
@@ -218,7 +268,7 @@ export function StandaloneReader({
         </span>
       </div>
       <ol className="mt-3 space-y-1.5">
-        {chapters.map((c, i) => (
+        {chapters.map((c: Chapter, i: number) => (
           <li key={c.id}>
             <button
               type="button"
@@ -373,6 +423,40 @@ export function StandaloneReader({
           </div>
         </div>
 
+        {/* Reader Mode Switcher */}
+        <div className="my-3 flex items-center justify-between border-b border-border/70 pb-3">
+          <div className="flex items-center gap-2 p-1 bg-surface border border-border rounded-pill">
+            <button
+              type="button"
+              onClick={() => setReaderMode("read")}
+              className={`px-3 py-1 text-xs font-semibold rounded-pill transition-colors ${
+                readerMode === "read"
+                  ? "bg-brand text-white shadow-xs"
+                  : "text-ink-muted hover:text-ink"
+              }`}
+            >
+              📖 Read Book
+            </button>
+            <button
+              type="button"
+              onClick={() => setReaderMode("interactive")}
+              className={`px-3 py-1 text-xs font-semibold rounded-pill transition-colors flex items-center gap-1.5 ${
+                readerMode === "interactive"
+                  ? "bg-brand text-white shadow-xs"
+                  : "text-ink-muted hover:text-ink"
+              }`}
+            >
+              <Film size={13} />
+              <span>Watch Interactive Chapter</span>
+            </button>
+          </div>
+          <span className="text-xs text-ink-muted hidden tablet:inline">
+            {readerMode === "interactive"
+              ? "Living Interactive Storyboard Stage"
+              : "Standard Textbook Reading"}
+          </span>
+        </div>
+
         {/* Reader Layout Grid */}
         <div className="mt-6 desktop:grid desktop:grid-cols-[280px_minmax(0,1fr)] desktop:gap-8">
           {/* Desktop Table of Contents Sidebar */}
@@ -395,6 +479,15 @@ export function StandaloneReader({
                 <LoadingSkeleton count={6} />
                 <SlowNetworkNote pending={loading} />
               </div>
+            ) : readerMode === "interactive" ? (
+              <div className="space-y-4">
+                <InteractiveChapterStage
+                  manualId={book.id}
+                  chapterIndex={ci}
+                  chapterTitle={chapter.title}
+                  onClose={() => setReaderMode("read")}
+                />
+              </div>
             ) : (
               <article
                 className={`rounded-surface border p-6 desktop:p-10 shadow-sm transition-colors duration-200 ${themeContainerClass}`}
@@ -413,9 +506,24 @@ export function StandaloneReader({
                   {chapter.title}
                 </h1>
 
-                {/* Paragraphs with Read-Aloud Highlighting */}
-                <div className="space-y-5" style={fontStyle}>
-                  {chapter.paragraphs.map((p, i) => (
+                {/* Paragraphs with Selection Listener */}
+                <div
+                  className="space-y-5"
+                  style={fontStyle}
+                  onMouseUp={() => {
+                    const sel = window.getSelection()?.toString().trim() || "";
+                    setSelectedText(sel);
+                    setTransformedText(null);
+                  }}
+                  onTouchEnd={() => {
+                    setTimeout(() => {
+                      const sel = window.getSelection()?.toString().trim() || "";
+                      setSelectedText(sel);
+                      setTransformedText(null);
+                    }, 50);
+                  }}
+                >
+                  {chapter.paragraphs.map((p: string, i: number) => (
                     <p
                       key={i}
                       className={`rounded-control p-2 transition-colors ${
@@ -429,7 +537,66 @@ export function StandaloneReader({
                   ))}
                 </div>
 
-                {/* PaperMorph Synchronized Diagram Callout */}
+                {/* Floating Text Selection Action Bar */}
+                {selectedText && (
+                  <div className="my-4 flex flex-wrap items-center gap-1.5 p-2 bg-page-bg border border-border rounded-card shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={speakSelection}
+                      className="btn-secondary gap-1 text-xs py-1 px-2.5"
+                      title="Listen aloud to selected text"
+                    >
+                      <Volume2 size={14} />
+                      <span>Listen Aloud</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={transforming}
+                      onClick={() => transformSelection("simplify")}
+                      className="btn-secondary gap-1 text-xs py-1 px-2.5"
+                      title="Simplify difficult phrases"
+                    >
+                      <Sparkles size={14} className="text-amber-500" />
+                      <span>{transforming ? "Simplifying..." : "Simplify"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={transforming}
+                      onClick={() => transformSelection("translate")}
+                      className="btn-secondary gap-1 text-xs py-1 px-2.5"
+                      title="Translate to your chosen Indian language"
+                    >
+                      <Globe size={14} className="text-blue-500" />
+                      <span>Translate</span>
+                    </button>
+                    <Link
+                      to="/learn/coach"
+                      className="btn-secondary gap-1 text-xs py-1 px-2.5 inline-flex items-center"
+                      title="Ask Vidura study coach about this selection"
+                    >
+                      <MessageSquare size={14} className="text-brand" />
+                      <span>Ask Vidura</span>
+                    </Link>
+                  </div>
+                )}
+
+                {transformedText && (
+                  <div className="my-3 rounded bg-highlight p-3 border border-border text-xs text-ink space-y-1">
+                    <div className="flex justify-between font-semibold text-brand text-[11px]">
+                      <span className="capitalize">{transformedText.command} Result:</span>
+                      <button
+                        type="button"
+                        onClick={() => setTransformedText(null)}
+                        className="text-ink-muted hover:text-ink font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <p className="leading-relaxed">{transformedText.text}</p>
+                  </div>
+                )}
+
+                {/* Synchronized Living Diagram Callout */}
                 {chapter.diagramTitle && (
                   <div className="my-8 rounded-surface border border-secondary/30 bg-secondary/5 p-5">
                     <div className="flex items-center gap-2 text-sm font-bold text-secondary mb-2">
@@ -451,7 +618,7 @@ export function StandaloneReader({
                   </div>
                 )}
 
-                {/* PaperMorph Inline Chapter Quick-Check Card */}
+                {/* Living Interactive Chapter Quick-Check Card */}
                 {chapter.conceptCheck && (
                   <div className="my-8 rounded-surface border-2 border-primary/40 bg-surface p-6 shadow-sm">
                     <div className="flex items-center justify-between pb-3 border-b border-border/60">
@@ -469,9 +636,9 @@ export function StandaloneReader({
                     </p>
 
                     <div className="mt-4 space-y-2">
-                      {chapter.conceptCheck.options.map((opt, oIdx) => {
+                      {chapter.conceptCheck.options.map((opt: string, oIdx: number) => {
                         const isSelected = selectedOption === oIdx;
-                        const isCorrect = oIdx === chapter.conceptCheck.correctIndex;
+                        const isCorrect = oIdx === chapter.conceptCheck!.correctIndex;
                         const buttonStyle =
                           conceptCheckAnswered && isSelected
                             ? isCorrect

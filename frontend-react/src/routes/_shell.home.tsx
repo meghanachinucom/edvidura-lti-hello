@@ -36,6 +36,9 @@ export const Route = createFileRoute("/_shell/home")({
 export function StudentHomePage() {
   const navigate = useNavigate();
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const [reviewsDue, setReviewsDue] = useState<
+    Array<{ id: string; name: string; mastery_level: number }>
+  >([]);
   const [quizScore, setQuizScore] = useState<{ correct: number; total: number }>({
     correct: 4,
     total: 5,
@@ -52,6 +55,17 @@ export function StudentHomePage() {
     } catch {
       setCompletedLessons(["lesson-1", "lesson-2"]);
     }
+
+    api
+      .get<{ ok: boolean; reviews: Array<{ id: string; name: string; mastery_level: number }> }>(
+        "/api/v1/app/tutor/reviews-due",
+      )
+      .then((res) => {
+        if (res && res.reviews) {
+          setReviewsDue(res.reviews);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const totalLessons = lessons.length;
@@ -83,6 +97,38 @@ export function StudentHomePage() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
+      {/* 2-Minute Daily Review Strip */}
+      {reviewsDue.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-amber-500/30 bg-amber-500/10 p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-slate-950 font-black">
+              <Clock size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-heading text-sm font-bold text-ink">
+                  2-Minute Daily Skill Review
+                </span>
+                <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                  {reviewsDue.length} Skills Due
+                </span>
+              </div>
+              <p className="text-xs text-ink-muted mt-0.5">
+                Spaced refresher for {reviewsDue.map((r) => r.name).join(" · ")}. A quick 2-minute
+                practice maintains your Level 5 mastery!
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/learn/coach"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 shadow hover:bg-amber-400 transition"
+          >
+            <span>Start 2-Min Review</span>
+            <ChevronRight size={14} />
+          </Link>
+        </div>
+      )}
+
       {/* Top Banner / Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f2942] via-[#163e63] to-[#0a1e30] p-6 tablet:p-10 text-white shadow-xl">
         <div className="relative z-10 max-w-2xl space-y-4">
@@ -105,7 +151,7 @@ export function StudentHomePage() {
               className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3 font-bold text-slate-950 transition hover:bg-amber-400 shadow-md"
             >
               <PlayCircle size={18} />
-              Continue Lesson {nextLesson?.number || 1}
+              Continue Lesson {nextLesson?.order || 1}
             </Link>
             <Link
               to="/xr-store"
@@ -178,7 +224,7 @@ export function StudentHomePage() {
           </div>
           <div className="my-4 space-y-2">
             <div className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
-              Lesson {nextLesson?.number}
+              Lesson {nextLesson?.order || 1}
             </div>
             <h3 className="font-heading text-lg font-bold text-ink leading-snug">
               {nextLesson?.title || "Cartesian Graphs and Intercepts"}

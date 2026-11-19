@@ -52,6 +52,10 @@ from app.quiz_routes import SESSION_KEY as QUIZ_SESSION_KEY
 from app.quiz_routes import router as quiz_router
 from app.quiz_routes import store_quiz_context
 from app.shell_routes import router as shell_router
+from app.modules.mastery_tutor import router as mastery_tutor_router
+from app.modules.interactive_books import router as interactive_books_router
+from app.modules.learning_graph import router as learning_graph_router
+from app.modules.voice_studio import router as voice_studio_router
 from app.settings import get_settings
 from app.security_boot import assert_safe_for_environment, require_dev_tools
 from app.monitoring import init_monitoring
@@ -127,6 +131,10 @@ app.include_router(sme_public_router)
 app.include_router(etims_webhook_router)
 app.include_router(linked_data_router)
 app.include_router(quiz_router)
+app.include_router(mastery_tutor_router)
+app.include_router(interactive_books_router)
+app.include_router(learning_graph_router)
+app.include_router(voice_studio_router)
 
 _STATIC = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")

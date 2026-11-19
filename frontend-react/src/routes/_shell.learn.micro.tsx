@@ -265,7 +265,7 @@ function Page() {
                 <h2 className="font-heading text-[22px]">{reel.title}</h2>
                 <p>{reel.idea}</p>
 
-                {/* PaperMorph Keyframe Diagram Schematic */}
+                {/* Living Concept Reel Diagram Schematic */}
                 {reel.diagramTitle && (
                   <div className="rounded-card border border-brand/20 bg-brand/5 p-3 text-ink text-xs">
                     <div className="font-semibold text-brand flex items-center gap-1.5 mb-1.5">
@@ -299,7 +299,7 @@ function Page() {
                   {s(captions ? "captionsOn" : "captionsOff")}
                 </button>
 
-                {/* PaperMorph Interactive Concept Check */}
+                {/* Living Interactive Concept Check */}
                 {reel.conceptCheck && (
                   <div className="rounded-surface border border-border bg-highlight p-3 text-ink text-xs">
                     <div className="flex items-center gap-1.5 font-semibold text-brand mb-1.5">

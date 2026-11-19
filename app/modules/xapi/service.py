@@ -28,6 +28,33 @@ from app.settings import get_settings
 logger = logging.getLogger("edvidura.xapi")
 
 
+def record_statement(
+    *,
+    tenant_id: UUID | str = "00000000-0000-0000-0000-000000000001",
+    statement: dict[str, Any],
+    actor_sub: str = "learner",
+    attempt_id: UUID | str | None = None,
+    source_event_id: UUID | str | None = None,
+    send_lrs: bool = False,
+    promote_on_valid: bool = True,
+) -> dict[str, Any]:
+    """Generic xAPI statement recorder with safe store-and-forward."""
+    try:
+        return _store_and_maybe_send(
+            tenant_id=tenant_id,
+            statement=statement,
+            actor_sub=actor_sub,
+            attempt_id=attempt_id,
+            source_event_id=source_event_id,
+            send_lrs=send_lrs,
+            promote_on_valid=promote_on_valid,
+        )
+    except Exception as exc:
+        logger.warning("record_statement storage fallback: %s", exc)
+        return {"ok": True, "stored": False, "statement": statement}
+
+
+
 def record_ebook_initialized(
     *,
     tenant_id: UUID | str,

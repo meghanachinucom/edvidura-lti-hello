@@ -14,9 +14,9 @@ export interface Chapter {
   diagramTitle?: string;
   diagramUrl?: string;
   diagramCaption?: string;
-  takeaway: string;
+  takeaway?: string;
   paragraphs: string[];
-  conceptCheck: ConceptCheck;
+  conceptCheck?: ConceptCheck;
   narration?: {
     en: string;
     hi?: string;

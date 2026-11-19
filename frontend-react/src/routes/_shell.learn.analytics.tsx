@@ -83,10 +83,11 @@ function Page() {
   const loadPassport = () => {
     setPassportLoading(true);
     Promise.all([
+      api.get("/api/v1/app/learner/passport?subject=6").catch(() => null),
       api.get("/api/v1/app/skills-passport").catch(() => null),
       api.get("/api/v1/app/cat").catch(() => null),
-    ]).then(([pass, cat]: any[]) => {
-      setPassportData(pass);
+    ]).then(([ledgerPass, pass, cat]: any[]) => {
+      setPassportData(ledgerPass || pass);
       setCatData(cat);
       setPassportLoading(false);
     });

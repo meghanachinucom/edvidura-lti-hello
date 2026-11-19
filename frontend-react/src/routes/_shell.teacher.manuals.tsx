@@ -345,13 +345,15 @@ function WysiwygEditorForm({
     if (!el) return;
     const start = el.selectionStart;
     const end = el.selectionEnd;
-    const currentText = chapters[currentChapter].body;
+    const currentText = chapters[currentChapter]?.body || "";
     const selected = currentText.substring(start, end);
     const replacement = `${prefix}${selected || "text"}${suffix}`;
     const newBody = currentText.substring(0, start) + replacement + currentText.substring(end);
 
     const updated = [...chapters];
-    updated[currentChapter].body = newBody;
+    if (updated[currentChapter]) {
+      updated[currentChapter].body = newBody;
+    }
     setChapters(updated);
     setTimeout(() => {
       el.focus();
@@ -459,10 +461,12 @@ function WysiwygEditorForm({
         </label>
         <input
           id={`${id}-ct`}
-          value={chapters[currentChapter].title}
+          value={chapters[currentChapter]?.title || ""}
           onChange={(e) => {
             const updated = [...chapters];
-            updated[currentChapter].title = e.target.value;
+            if (updated[currentChapter]) {
+              updated[currentChapter].title = e.target.value;
+            }
             setChapters(updated);
           }}
           className={`${input} py-1.5 text-sm`}
@@ -565,10 +569,12 @@ function WysiwygEditorForm({
       <textarea
         ref={textareaRef}
         rows={9}
-        value={chapters[currentChapter].body}
+        value={chapters[currentChapter]?.body || ""}
         onChange={(e) => {
           const updated = [...chapters];
-          updated[currentChapter].body = e.target.value;
+          if (updated[currentChapter]) {
+            updated[currentChapter].body = e.target.value;
+          }
           setChapters(updated);
         }}
         className="w-full rounded-b-control border border-t-0 border-border bg-surface p-3 font-mono text-xs text-ink leading-relaxed"
@@ -581,10 +587,12 @@ function WysiwygEditorForm({
         </label>
         <input
           id={`${id}-kw`}
-          value={chapters[currentChapter].takeaway}
+          value={chapters[currentChapter]?.takeaway || ""}
           onChange={(e) => {
             const updated = [...chapters];
-            updated[currentChapter].takeaway = e.target.value;
+            if (updated[currentChapter]) {
+              updated[currentChapter].takeaway = e.target.value;
+            }
             setChapters(updated);
           }}
           className={`${input} py-1.5 text-xs`}
