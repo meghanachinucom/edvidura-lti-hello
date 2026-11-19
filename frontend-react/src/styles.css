@@ -61,13 +61,12 @@
   --max-width-content: 960px;
   --max-width-reading: 68ch;
   --font-sans:
-    "Inter", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada",
-    "Noto Sans", system-ui, sans-serif;
+    "Maven Pro", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada",
+    "Noto Sans", Arial, sans-serif;
   --font-heading:
-    "Plus Jakarta Sans", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada",
-    "Noto Sans", system-ui, sans-serif;
-  --font-mono:
-    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    "Maven Pro", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada",
+    "Noto Sans", Arial, sans-serif;
+  --font-mono: ui-monospace, monospace;
 }
 
 @layer base {
