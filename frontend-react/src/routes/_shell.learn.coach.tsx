@@ -12,6 +12,8 @@ import {
   Volume2,
   CheckCircle2,
   ArrowRight,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import { getLocaleBcp47, t, useLocale } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
@@ -397,35 +399,48 @@ function Page() {
               </button>
             </div>
             <div className="space-y-2.5">
-              {skillTree.map((sk) => (
-                <div
-                  key={sk.id}
-                  className="text-xs rounded-card border border-border/70 p-2.5 bg-page-bg"
-                >
-                  <div className="flex justify-between items-center text-[11px] mb-1.5">
-                    <span className="font-semibold text-ink">{sk.name}</span>
-                    <span
-                      className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-                        sk.mastery_level >= 3
-                          ? "bg-emerald-100 text-emerald-800"
-                          : sk.status === "Review Due"
-                            ? "bg-amber-100 text-amber-800"
-                            : sk.status === "Locked"
-                              ? "bg-gray-100 text-gray-500"
-                              : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {sk.status} • Level {sk.mastery_level}/5
-                    </span>
+              {skillTree.map((sk) => {
+                const isLocked = sk.status === "Locked";
+                const isMastered = sk.mastery_level >= 4;
+                return (
+                  <div
+                    key={sk.id}
+                    className="text-xs rounded-xl border border-slate-200 p-3 bg-slate-50/60 shadow-2xs"
+                  >
+                    <div className="flex justify-between items-center text-[11px] mb-1.5">
+                      <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                        {isLocked ? (
+                          <Lock size={13} className="text-slate-400" />
+                        ) : isMastered ? (
+                          <CheckCircle2 size={13} className="text-emerald-600" />
+                        ) : (
+                          <Unlock size={13} className="text-secondary" />
+                        )}
+                        <span>{sk.name}</span>
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          sk.mastery_level >= 3
+                            ? "bg-emerald-100 text-emerald-800"
+                            : sk.status === "Review Due"
+                              ? "bg-amber-100 text-amber-800"
+                              : sk.status === "Locked"
+                                ? "bg-slate-100 text-slate-500"
+                                : "bg-cyan-100 text-cyan-800"
+                        }`}
+                      >
+                        {sk.status} • Level {sk.mastery_level}/5
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-secondary transition-all duration-300"
+                        style={{ width: `${(sk.mastery_level / 5) * 100}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-brand transition-all duration-300"
-                      style={{ width: `${(sk.mastery_level / 5) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -532,11 +547,11 @@ function Page() {
               )}
               {turns.map((x) => (
                 <li key={x.id} className="space-y-3">
-                  <div className="ml-auto max-w-[85%] rounded-surface bg-highlight p-3 text-ink shadow-2xs">
-                    <p className="text-xs font-semibold text-ink-muted mb-0.5">
+                  <div className="ml-auto max-w-[85%] rounded-2xl bg-amber-50 border border-amber-200/80 p-3.5 text-slate-900 shadow-2xs">
+                    <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1">
                       {s("yourQuestion")}
                     </p>
-                    <p className="text-sm">{x.question}</p>
+                    <p className="text-sm font-medium leading-relaxed">{x.question}</p>
                   </div>
                   {x.failed && <ErrorAlert message={s("error")} />}
                   {x.reply && (

@@ -20,16 +20,20 @@ export function PageHeading({
     ref.current?.focus();
   }, [label, locale]);
   return (
-    <div className="blueprint-grid rounded-surface px-3 py-2">
+    <div className="rounded-surface px-1 py-1">
       <h1
         ref={ref}
         tabIndex={-1}
-        className="font-heading text-[28px] font-extrabold tracking-[-0.02em] leading-tight text-ink"
+        className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-slate-900"
       >
         {label}
       </h1>
-      {context && <p className="mt-2 max-w-reading text-ink-muted">{context}</p>}
-      <div aria-hidden className="title-rule" />
+      {context && (
+        <p className="mt-1.5 max-w-reading text-sm sm:text-[15px] leading-relaxed font-normal text-slate-600">
+          {context}
+        </p>
+      )}
+      <div aria-hidden className="title-rule mt-2" />
     </div>
   );
 }

@@ -768,59 +768,85 @@ function Page() {
                 </div>
 
                 {/* Matrix Table */}
-                <div className="overflow-x-auto rounded-card border border-border">
+                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-surface shadow-2xs">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-page-bg text-ink-muted font-semibold border-b border-border">
+                    <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                       <tr>
-                        <th className="p-3">Skill / Competency</th>
-                        <th className="p-3">Lesson Module</th>
-                        <th className="p-3">Textbook Chapter</th>
-                        <th className="p-3">Assessment Quiz</th>
-                        <th className="p-3">Coverage</th>
-                        <th className="p-3">Status</th>
+                        <th className="p-3.5">Skill / Competency</th>
+                        <th className="p-3.5">Lesson Module</th>
+                        <th className="p-3.5">Textbook Chapter</th>
+                        <th className="p-3.5">Assessment Quiz</th>
+                        <th className="p-3.5">Reference Doc</th>
+                        <th className="p-3.5">Coverage Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border/60 text-ink">
+                    <tbody className="divide-y divide-slate-100 text-slate-800">
                       {coverageData.matrix?.map((row: any) => (
-                        <tr key={row.skill_id} className="hover:bg-page-bg/50">
-                          <td className="p-3 font-semibold">{row.name}</td>
-                          <td className="p-3">
+                        <tr key={row.skill_id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3.5 font-bold text-slate-900">{row.name}</td>
+                          <td className="p-3.5">
                             {row.has_lesson ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-700">
-                                <CheckCircle2 size={13} /> {row.lesson_title}
+                              <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700">
+                                <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                                <span>{row.lesson_title}</span>
                               </span>
                             ) : (
-                              <span className="text-ink-muted">—</span>
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100"
+                              >
+                                <PlusCircle size={12} />
+                                <span>+ Link Lesson</span>
+                              </button>
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-3.5">
                             {row.has_ebook ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-700">
-                                <CheckCircle2 size={13} /> {row.ebook_title}
+                              <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700">
+                                <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                                <span>{row.ebook_title}</span>
                               </span>
                             ) : (
-                              <span className="text-ink-muted">—</span>
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100"
+                              >
+                                <PlusCircle size={12} />
+                                <span>+ Link Chapter</span>
+                              </button>
                             )}
                           </td>
-                          <td className="p-3">
+                          <td className="p-3.5">
                             {row.has_quiz ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-700">
-                                <CheckCircle2 size={13} /> {row.quiz_title}
+                              <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700">
+                                <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                                <span>{row.quiz_title}</span>
                               </span>
                             ) : (
-                              <span className="text-amber-700 font-medium">Needs Quiz</span>
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100"
+                              >
+                                <PlusCircle size={12} />
+                                <span>+ Link Quiz</span>
+                              </button>
                             )}
                           </td>
-                          <td className="p-3 font-bold font-mono">{row.coverage_pct}%</td>
-                          <td className="p-3">
+                          <td className="p-3.5">
+                            <span className="inline-flex items-center gap-1 text-slate-600 font-mono text-[11px]">
+                              <FileText size={13} className="text-slate-400" />
+                              <span>STD-MATH-08</span>
+                            </span>
+                          </td>
+                          <td className="p-3.5">
                             <span
-                              className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
                                 row.coverage_pct === 100
                                   ? "bg-emerald-100 text-emerald-800"
                                   : "bg-amber-100 text-amber-800"
                               }`}
                             >
-                              {row.status}
+                              {row.coverage_pct === 100 ? "✓ Covered" : "Needs Resource"}
                             </span>
                           </td>
                         </tr>

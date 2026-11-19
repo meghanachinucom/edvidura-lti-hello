@@ -177,6 +177,51 @@ export function StudentHomePage() {
         </div>
       </div>
 
+      {/* 4 Balanced KPI Stat Cards */}
+      <div className="grid grid-cols-2 gap-4 tablet:grid-cols-4">
+        <div className="rounded-2xl border border-slate-200 bg-surface p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span>Lessons Done</span>
+            <CheckCircle2 size={16} className="text-secondary" />
+          </div>
+          <div className="mt-2 text-2xl font-bold font-mono text-slate-900">
+            {doneCount} / {totalLessons}
+          </div>
+          <p className="mt-0.5 text-xs text-slate-600">{percentComplete}% syllabus covered</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-surface p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span>Quiz Score</span>
+            <Trophy size={16} className="text-amber-500" />
+          </div>
+          <div className="mt-2 text-2xl font-bold font-mono text-slate-900">
+            {Math.round((quizScore.correct / quizScore.total) * 100)}%
+          </div>
+          <p className="mt-0.5 text-xs text-slate-600">
+            {quizScore.correct} of {quizScore.total} correct
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-surface p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span>eBooks Read</span>
+            <BookOpen size={16} className="text-teal-600" />
+          </div>
+          <div className="mt-2 text-2xl font-bold font-mono text-slate-900">1 / 5</div>
+          <p className="mt-0.5 text-xs text-slate-600">Algebra I Handbook</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-surface p-4 shadow-xs">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span>Active Streak</span>
+            <Flame size={16} className="text-orange-500" />
+          </div>
+          <div className="mt-2 text-2xl font-bold font-mono text-slate-900">5 Days</div>
+          <p className="mt-0.5 text-xs text-slate-600">Top 10% in Class 8</p>
+        </div>
+      </div>
+
       {/* Primary 3-Column Highlights */}
       <div className="grid gap-6 tablet:grid-cols-3">
         {/* Course Syllabus Progress */}

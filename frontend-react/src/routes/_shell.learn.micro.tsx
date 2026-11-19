@@ -240,7 +240,7 @@ function Page() {
           {!reel ? (
             <EmptyState title={s("empty")} help={s("emptyHelp")} />
           ) : (
-            <>
+            <div className="space-y-4">
               <article
                 aria-live="polite"
                 aria-label={s("counter", { n: i + 1, total: list.length })}
@@ -254,59 +254,53 @@ function Page() {
                   if (Math.abs(d) > 50) go(i + (d > 0 ? 1 : -1));
                   startY.current = null;
                 }}
-                className="mx-auto flex min-h-[70vh] max-w-md flex-col gap-3 rounded-surface border border-border bg-surface p-4 text-ink tablet:min-h-0"
+                className="mx-auto flex w-full max-w-md flex-col justify-between rounded-3xl border border-slate-200 bg-surface p-6 text-slate-900 shadow-lg min-h-[560px]"
               >
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-ink-muted">
-                    {s("counter", { n: i + 1, total: list.length })}
-                  </p>
-                  <VoiceListenButton text={`${reel.title}. ${reel.idea}`} />
-                </div>
-                <h2 className="font-heading text-[22px]">{reel.title}</h2>
-                <p>{reel.idea}</p>
-
-                {/* Living Concept Reel Diagram Schematic */}
-                {reel.diagramTitle && (
-                  <div className="rounded-card border border-brand/20 bg-brand/5 p-3 text-ink text-xs">
-                    <div className="font-semibold text-brand flex items-center gap-1.5 mb-1.5">
-                      <Sparkles size={14} />
-                      {reel.diagramTitle}
+                {/* Reel Header & Audio Bar */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-[11px] font-bold text-secondary uppercase tracking-wider">
+                        Reel {i + 1} of {list.length}
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium">Concept Micro</span>
                     </div>
-                    <ul className="space-y-1 text-ink-muted list-disc list-inside">
-                      {reel.keyPoints?.map((pt, idx) => (
-                        <li key={idx}>{pt}</li>
-                      ))}
-                    </ul>
+                    <VoiceListenButton text={`${reel.title}. ${reel.idea}`} />
                   </div>
-                )}
 
-                <div className="reel-frame relative mx-auto flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-[28px] border-4 border-ink bg-ink text-white">
-                  <PlayCircle aria-hidden size={48} />
-                  <span>{s("video")}</span>
-                  {captions && (
-                    <p className="absolute bottom-5 left-3 right-3 rounded bg-black/80 px-3 py-2 text-center text-white">
+                  <h2 className="font-heading text-xl font-bold tracking-tight text-slate-900">
+                    {reel.title}
+                  </h2>
+
+                  {/* Crisp Visual Diagram Header */}
+                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-amber-50/40 p-4 shadow-2xs">
+                    <div className="flex items-center gap-2 text-xs font-bold text-secondary mb-1.5">
+                      <Sparkles size={15} />
+                      <span>{reel.diagramTitle || "Core Concept Schematic"}</span>
+                    </div>
+                    <p className="text-xs text-slate-700 leading-relaxed font-normal">
                       {reel.idea}
                     </p>
-                  )}
+                    {reel.keyPoints && reel.keyPoints.length > 0 && (
+                      <ul className="mt-2.5 space-y-1 text-[11px] text-slate-600 list-disc list-inside border-t border-slate-200/60 pt-2">
+                        {reel.keyPoints.map((pt, idx) => (
+                          <li key={idx}>{pt}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  aria-pressed={captions}
-                  onClick={() => setCaptions((value) => !value)}
-                  className="btn-secondary self-start"
-                >
-                  <Captions aria-hidden size={18} className="mr-2" />
-                  {s(captions ? "captionsOn" : "captionsOff")}
-                </button>
 
-                {/* Living Interactive Concept Check */}
+                {/* Interactive Concept Quick-Check */}
                 {reel.conceptCheck && (
-                  <div className="rounded-surface border border-border bg-highlight p-3 text-ink text-xs">
-                    <div className="flex items-center gap-1.5 font-semibold text-brand mb-1.5">
-                      <HelpCircle size={15} />
-                      Interactive Concept Check
+                  <div className="my-3 rounded-2xl border border-secondary/20 bg-secondary/5 p-4 text-xs space-y-2.5">
+                    <div className="flex items-center gap-1.5 font-bold text-secondary text-xs uppercase tracking-wide">
+                      <HelpCircle size={14} />
+                      <span>Instant Concept Check</span>
                     </div>
-                    <p className="font-medium text-ink mb-2">{reel.conceptCheck.question}</p>
+                    <p className="font-semibold text-slate-800 text-xs">
+                      {reel.conceptCheck.question}
+                    </p>
                     <div className="space-y-1.5">
                       {reel.conceptCheck.options.map((opt, optIdx) => (
                         <button
@@ -316,15 +310,15 @@ function Page() {
                             setReelAnswer(optIdx);
                             setShowReelExp(true);
                           }}
-                          className={`w-full text-left rounded-card p-2 border transition-all text-xs ${
+                          className={`w-full text-left rounded-xl p-2.5 border transition-all text-xs font-medium ${
                             reelAnswer === optIdx
                               ? optIdx === reel.conceptCheck?.correct
-                                ? "bg-emerald-50 border-emerald-400 text-emerald-900 font-medium"
+                                ? "bg-emerald-50 border-emerald-400 text-emerald-900 font-bold"
                                 : "bg-rose-50 border-rose-300 text-rose-900"
-                              : "bg-surface border-border text-ink hover:bg-page-bg"
+                              : "bg-surface border-slate-200 text-slate-800 hover:bg-slate-50"
                           }`}
                         >
-                          <span className="font-mono font-semibold mr-1.5">
+                          <span className="font-mono font-bold mr-1.5 text-slate-500">
                             {String.fromCharCode(65 + optIdx)}.
                           </span>
                           {opt}
@@ -332,66 +326,79 @@ function Page() {
                       ))}
                     </div>
                     {showReelExp && (
-                      <div className="mt-2.5 pt-2 border-t border-border/60">
+                      <div className="pt-2 border-t border-secondary/20 text-xs">
                         <p
-                          className={`font-semibold ${reelAnswer === reel.conceptCheck.correct ? "text-emerald-700" : "text-rose-700"}`}
+                          className={`font-bold ${reelAnswer === reel.conceptCheck.correct ? "text-emerald-700" : "text-amber-700"}`}
                         >
                           {reelAnswer === reel.conceptCheck.correct
-                            ? "✓ Correct!"
-                            : "✗ Review the key point above."}
+                            ? "✓ Spot on!"
+                            : "Review the key principle above."}
                         </p>
-                        <p className="mt-1 text-ink-muted text-[11px]">
+                        <p className="mt-0.5 text-slate-600 text-[11px] leading-relaxed">
                           {reel.conceptCheck.explanation}
                         </p>
                       </div>
                     )}
                   </div>
                 )}
-                <div className="mt-auto flex flex-col gap-2 tablet:flex-row">
-                  <Link
-                    to="/lessons/$lessonId"
-                    params={{ lessonId: reel.lessonId }}
-                    className="btn-primary"
-                  >
-                    {s("full")}
-                  </Link>
-                  <Link to="/active-quizzes" className="btn-secondary">
-                    {s("practise")}
-                  </Link>
+
+                {/* Reel Footer: Open Full Chapter & Links */}
+                <div className="space-y-3 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between gap-2">
+                    <Link
+                      to="/lessons/$lessonId"
+                      params={{ lessonId: reel.lessonId || "1" }}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-secondary hover:underline"
+                    >
+                      <BookOpen size={14} />
+                      <span>Open Full Chapter Lesson</span>
+                    </Link>
+                    <Link
+                      to="/active-quizzes"
+                      className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                    >
+                      Mastery Quiz →
+                    </Link>
+                  </div>
+
+                  {/* Navigation Arrows & Dot Indicator */}
+                  <div className="flex items-center justify-between gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => go(i - 1)}
+                      disabled={i === 0}
+                      className="rounded-xl border border-slate-200 bg-surface px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-30"
+                    >
+                      ← Previous
+                    </button>
+
+                    <div className="flex items-center gap-1.5">
+                      {list.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => go(idx)}
+                          aria-label={`Go to Reel ${idx + 1}`}
+                          className={`h-2 rounded-full transition-all ${
+                            idx === i ? "w-6 bg-secondary" : "w-2 bg-slate-300 hover:bg-slate-400"
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => go(i + 1)}
+                      disabled={i === list.length - 1}
+                      className="rounded-xl border border-slate-200 bg-surface px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-30"
+                    >
+                      Next →
+                    </button>
+                  </div>
                 </div>
               </article>
-              <div className="mx-auto max-w-md space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => go(i - 1)}
-                    disabled={i === 0}
-                    className="btn-secondary"
-                  >
-                    {s("prev")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => go(i + 1)}
-                    disabled={i === list.length - 1}
-                    className="btn-secondary"
-                  >
-                    {s("next")}
-                  </button>
-                </div>
-                <p className="text-center text-sm text-ink-muted">{s("swipe")}</p>
-                <button
-                  type="button"
-                  aria-pressed={sound}
-                  onClick={() => setSound((x) => !x)}
-                  className="btn-secondary w-full"
-                >
-                  {sound ? <Volume2 aria-hidden size={18} /> : <VolumeX aria-hidden size={18} />}
-                  <span className="ml-2">{s("sound")}</span>
-                </button>
-              </div>
               <CircuitWorkbench />
-            </>
+            </div>
           )}
         </>
       )}

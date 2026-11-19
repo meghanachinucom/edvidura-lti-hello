@@ -266,43 +266,74 @@ function Page() {
             )}
           </div>
 
-          <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
-            <h3 className="font-heading text-lg font-bold text-ink">
-              Mastered Competency Endorsements
+          <div className="rounded-2xl border border-slate-200 bg-surface p-6 shadow-sm">
+            <h3 className="font-heading text-lg font-bold text-slate-900">
+              My Skill Passport Credentials
             </h3>
-            <div className="mt-4 grid gap-3 tablet:grid-cols-2">
-              <div className="rounded-surface border border-border p-4 bg-surface flex items-start gap-3">
-                <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-ink">Three-Phase Circuit Analysis</h4>
-                  <p className="text-xs text-ink-muted mt-0.5">
-                    NSQF Level 5 • Verified via 3 Graded Quizzes
-                  </p>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Certified learning achievements verified through authentic formative assessments and
+              course progress.
+            </p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {[
+                {
+                  id: "sk-1",
+                  name: "Variables & Mathematical Expressions",
+                  level: 5,
+                  pills: ["Quiz 100%", "eBook Completed", "Tutor Verified"],
+                  status: "Mastered",
+                },
+                {
+                  id: "sk-2",
+                  name: "Solving Linear Equations (Two-Step Balance)",
+                  level: 3,
+                  pills: ["eBook Completed", "Tutor Verified"],
+                  status: "Building Confidence",
+                },
+                {
+                  id: "sk-3",
+                  name: "Physical Science: Motion & Forces",
+                  level: 4,
+                  pills: ["Quiz 90%", "eBook Completed"],
+                  status: "Almost Mastered",
+                },
+                {
+                  id: "sk-4",
+                  name: "Digital Literacy & AI Foundations",
+                  level: 5,
+                  pills: ["Quiz 100%", "eBook Completed", "Tutor Verified"],
+                  status: "Mastered",
+                },
+              ].map((c) => (
+                <div
+                  key={c.id}
+                  className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3 shadow-2xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-heading font-bold text-slate-900 text-sm">{c.name}</span>
+                    <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[11px] font-bold font-mono">
+                      Level {c.level} of 5
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-secondary transition-all"
+                      style={{ width: `${(c.level / 5) * 100}%` }}
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {c.pills.map((pill) => (
+                      <span
+                        key={pill}
+                        className="inline-flex items-center gap-1 rounded-md bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 shadow-2xs"
+                      >
+                        <CheckCircle2 size={11} className="text-emerald-600" />
+                        {pill}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="rounded-surface border border-border p-4 bg-surface flex items-start gap-3">
-                <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-ink">Electrical Safety & PPE Protocols</h4>
-                  <p className="text-xs text-ink-muted mt-0.5">
-                    Industrial Safety Standard • 100% Score
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-surface border border-border p-4 bg-surface flex items-start gap-3">
-                <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-ink">Circuit Breaker & MCCB Heuristics</h4>
-                  <p className="text-xs text-ink-muted mt-0.5">Practical Diagnostic • Verified</p>
-                </div>
-              </div>
-              <div className="rounded-surface border border-border p-4 bg-surface flex items-start gap-3">
-                <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-ink">Earthing & Fault Current Protection</h4>
-                  <p className="text-xs text-ink-muted mt-0.5">Substation Guide • Verified</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>

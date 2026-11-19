@@ -1,22 +1,22 @@
-/* Design tokens — palette values from the EdVidura design system. */
+/* Design tokens — palette values from the EdVidura design system with high contrast (WCAG AA/AAA). */
 :root {
-  --page-bg: #fbf8f3;
+  --page-bg: #f8fafc;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --ink: #1b2a30;
-  --ink-muted: #5e6e75;
-  --border: #e2dcd2;
-  --border-control: #7a8a90;
+  --ink: #0f172a;
+  --ink-muted: #475569;
+  --border: #e2e8f0;
+  --border-control: #64748b;
   --accent: #c2410c;
-  --accent-ink: #17313a;
+  --accent-ink: #0f172a;
   --secondary: #0f6e6e;
-  --highlight: #f6e7b8;
-  --success: #2e7d4f;
-  --warning: #b42318;
-  --error: #b42318;
+  --highlight: #fef3c7;
+  --success: #15803d;
+  --warning: #b45309;
+  --error: #b91c1c;
   --focus-ring: #0f6e6e;
   --primary: #0f6e6e;
-  --topbar: #17313a;
+  --topbar: #0f2942;
   --button-main: #e8b04b;
   --selected: #d5ecea;
 

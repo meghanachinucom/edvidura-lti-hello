@@ -423,16 +423,16 @@ export function StandaloneReader({
           </div>
         </div>
 
-        {/* Reader Mode Switcher */}
-        <div className="my-3 flex items-center justify-between border-b border-border/70 pb-3">
-          <div className="flex items-center gap-2 p-1 bg-surface border border-border rounded-pill">
+        {/* Reader Mode & Export Toolbar */}
+        <div className="my-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/80 pb-3">
+          <div className="flex items-center gap-1.5 p-1 bg-surface border border-border rounded-xl shadow-2xs">
             <button
               type="button"
               onClick={() => setReaderMode("read")}
-              className={`px-3 py-1 text-xs font-semibold rounded-pill transition-colors ${
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 readerMode === "read"
-                  ? "bg-brand text-white shadow-xs"
-                  : "text-ink-muted hover:text-ink"
+                  ? "bg-secondary text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               📖 Read Book
@@ -440,21 +440,42 @@ export function StandaloneReader({
             <button
               type="button"
               onClick={() => setReaderMode("interactive")}
-              className={`px-3 py-1 text-xs font-semibold rounded-pill transition-colors flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
                 readerMode === "interactive"
-                  ? "bg-brand text-white shadow-xs"
-                  : "text-ink-muted hover:text-ink"
+                  ? "bg-secondary text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              <Film size={13} />
-              <span>Watch Interactive Chapter</span>
+              <Sparkles size={14} className="text-amber-400" />
+              <span>Interactive Visual Lesson</span>
             </button>
           </div>
-          <span className="text-xs text-ink-muted hidden tablet:inline">
-            {readerMode === "interactive"
-              ? "Living Interactive Storyboard Stage"
-              : "Standard Textbook Reading"}
-          </span>
+
+          {/* Download Options */}
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="font-semibold text-slate-500 mr-1">Download:</span>
+            <a
+              href={`/api/v1/app/manuals/${book.id}/export?format=html`}
+              download
+              className="rounded-lg border border-slate-200 bg-surface px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+            >
+              HTML
+            </a>
+            <a
+              href={`/api/v1/app/manuals/${book.id}/export?format=epub`}
+              download
+              className="rounded-lg border border-slate-200 bg-surface px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+            >
+              EPUB
+            </a>
+            <a
+              href={`/api/v1/app/manuals/${book.id}/export?format=scorm`}
+              download
+              className="rounded-lg border border-slate-200 bg-surface px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+            >
+              SCORM
+            </a>
+          </div>
         </div>
 
         {/* Reader Layout Grid */}

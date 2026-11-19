@@ -136,7 +136,7 @@ export function TopNav() {
                     aria-current={selected ? "page" : undefined}
                     title={t(item.labelKey)}
                     onClick={() => setMobileOpen(false)}
-                    className={`group relative flex min-h-11 items-center gap-3 rounded-control border-l-[3px] px-3 text-sm font-semibold text-ink transition-colors duration-150 tablet:justify-center tablet:gap-0 tablet:px-0 desktop:justify-start desktop:gap-3 desktop:px-3 ${selected ? "border-l-secondary bg-secondary-container font-bold text-secondary" : "border-l-transparent hover:bg-page-bg"}`}
+                    className={`group relative flex min-h-11 items-center gap-3 rounded-control border-l-[3px] px-3 text-sm transition-colors duration-150 tablet:justify-center tablet:gap-0 tablet:px-0 desktop:justify-start desktop:gap-3 desktop:px-3 ${selected ? "border-l-secondary bg-secondary/10 font-bold text-secondary" : "border-l-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium"}`}
                   >
                     <Icon aria-hidden size={20} className="shrink-0" />
                     <span className="tablet:hidden desktop:inline">{t(item.labelKey)}</span>
@@ -161,7 +161,7 @@ export function TopNav() {
             <div className="font-semibold text-ink-muted">{t(`roles.${role}`)}</div>
           </div>
           <a
-            className="group relative flex min-h-11 items-center rounded-control px-2 text-sm text-ink hover:bg-page-bg tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
+            className="group relative flex min-h-11 items-center rounded-control px-2 text-sm text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
             title={
               session?.lmsReturnUrl?.includes("localhost:8085")
                 ? t("nav.backToMoodle")
@@ -195,7 +195,7 @@ export function TopNav() {
           </a>
           <button
             type="button"
-            className="group relative flex min-h-11 w-full items-center rounded-control px-2 text-left text-sm text-ink hover:bg-page-bg tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
+            className="group relative flex min-h-11 w-full items-center rounded-control px-2 text-left text-sm text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
             title={t("nav.signOut")}
             onClick={() => {
               signOut();

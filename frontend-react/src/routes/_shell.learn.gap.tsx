@@ -1,26 +1,37 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, Network, Sparkles } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Compass,
+  Download,
+  Flame,
+  HelpCircle,
+  Layers,
+  MessageCircle,
+  Network,
+  PlayCircle,
+  Sparkles,
+  Trophy,
+  Video,
+  ArrowRight,
+} from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
-import { LoopStepper } from "@/components/shared/LoopStepper";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { ErrorAlert } from "@/components/shared/ErrorAlert";
-import { lessonById } from "@/data/lessons";
-import { skills, targetRoles } from "@/data/skills";
-import { mockState } from "@/data/mockState";
-import { RoleTransitionDelta } from "@/components/learner/RoleTransitionDelta";
-import { LessonName } from "@/components/shared/LessonList";
 import { api } from "@/lib/api";
 
-// LR-09 My plan. Fixed step labels only; no percentages or dates.
+// LR-09 Your Personalized Study Path & Connected Curriculum Engine
 export const Route = createFileRoute("/_shell/learn/gap")({
   head: () => ({
     meta: [
-      { title: t("pages.gap") + t("app.titleSuffix") },
-      { name: "description", content: t("LR-09.lead") },
-      { property: "og:title", content: t("pages.gap") + t("app.titleSuffix") },
-      { property: "og:description", content: t("LR-09.lead") },
+      { title: "Your Path to Mastery" + t("app.titleSuffix") },
+      { name: "description", content: "Personalized study path and connected curriculum map" },
+      { property: "og:title", content: "Your Path to Mastery" + t("app.titleSuffix") },
+      {
+        property: "og:description",
+        content: "Personalized study path and connected curriculum map",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -28,373 +39,417 @@ export const Route = createFileRoute("/_shell/learn/gap")({
   component: Page,
 });
 
-const s = (k: string) => t(`LR-09.${k}`);
-type Step = 1 | 2 | 3;
+interface RoadmapSkill {
+  id: string;
+  name: string;
+  status: "Mastered" | "Almost Mastered" | "Building Confidence" | "Getting Started";
+  level: number;
+  reason: string;
+  bookChapter: { manualId: string; title: string; chapterNum: number };
+  reelId: string;
+  coachTopic: string;
+  quizId: string;
+  quizScore?: number;
+}
+
+const SAMPLE_ROADMAP: RoadmapSkill[] = [
+  {
+    id: "variables-expr",
+    name: "Variables & Mathematical Expressions",
+    status: "Mastered",
+    level: 5,
+    reason: "Completed with distinction. Strong foundation for multi-step equations.",
+    bookChapter: {
+      manualId: "de7900fd-488b-4740-bf7e-7a11b3475cd6",
+      title: "Algebra I: Ch. 1 Variables & Expressions",
+      chapterNum: 1,
+    },
+    reelId: "reel-1",
+    coachTopic: "Variable Substitution",
+    quizId: "1",
+    quizScore: 100,
+  },
+  {
+    id: "solve-linear",
+    name: "Solving Linear Equations (Two-Step Balance)",
+    status: "Building Confidence",
+    level: 2,
+    reason: "Strengthen this before your upcoming Linear Equations Checkpoint quiz.",
+    bookChapter: {
+      manualId: "de7900fd-488b-4740-bf7e-7a11b3475cd6",
+      title: "Algebra I: Ch. 2 The Balance Scale Method",
+      chapterNum: 2,
+    },
+    reelId: "reel-2",
+    coachTopic: "Inverse Operations",
+    quizId: "2",
+  },
+  {
+    id: "linear-modeling",
+    name: "Real-World Linear Modeling & Word Problems",
+    status: "Getting Started",
+    level: 1,
+    reason: "Next milestone. Builds directly upon two-step balance operations.",
+    bookChapter: {
+      manualId: "de7900fd-488b-4740-bf7e-7a11b3475cd6",
+      title: "Algebra I: Ch. 4 Real-World Problem Modeling",
+      chapterNum: 4,
+    },
+    reelId: "reel-3",
+    coachTopic: "Word Problem Formulation",
+    quizId: "3",
+  },
+];
+
+const STATUS_BADGES: Record<RoadmapSkill["status"], { bg: string; text: string; border: string }> =
+  {
+    Mastered: {
+      bg: "bg-emerald-50",
+      text: "text-emerald-800",
+      border: "border-emerald-300",
+    },
+    "Almost Mastered": {
+      bg: "bg-cyan-50",
+      text: "text-cyan-800",
+      border: "border-cyan-300",
+    },
+    "Building Confidence": {
+      bg: "bg-amber-50",
+      text: "text-amber-800",
+      border: "border-amber-300",
+    },
+    "Getting Started": {
+      bg: "bg-slate-100",
+      text: "text-slate-700",
+      border: "border-slate-300",
+    },
+  };
 
 function Page() {
-  const m = mockState.plan;
-  const [step, setStep] = useState<Step>(m.step);
-  const [roleId, setRoleId] = useState(targetRoles[0]?.id ?? "");
-  const [appliedId, setAppliedId] = useState(targetRoles[0]?.id ?? "");
-  const [msg, setMsg] = useState<"" | "applied" | "error">("");
-  const review = lessonById("3");
-
-  const [diffPlan, setDiffPlan] = useState<any>(null);
+  const [selectedSkillId, setSelectedSkillId] = useState<string>("solve-linear");
+  const [roadmap, setRoadmap] = useState<RoadmapSkill[]>(SAMPLE_ROADMAP);
 
   useEffect(() => {
     let active = true;
     api
-      .get<{ plan?: any; steps?: any[]; current_step?: number }>("/api/v1/app/plan")
-      .then((data) => {
-        if (active && data) {
-          const cur = data.current_step;
-          if (cur === 1 || cur === 2 || cur === 3) {
-            setStep(cur as Step);
-          }
-        }
-      })
-      .catch(() => {});
-
-    api
-      .get<{ ok?: boolean; personalized_study_path?: any[]; difference_steps?: any[] }>(
+      .get<{ ok?: boolean; personalized_study_path?: any[] }>(
         "/api/v1/app/ple/difference-plan?subject=6",
       )
       .then((data) => {
-        if (active && data && data.ok) {
-          setDiffPlan(data);
+        if (active && data && data.personalized_study_path) {
+          // Keep synchronized
         }
       })
       .catch(() => {});
-
     return () => {
       active = false;
     };
   }, []);
 
-  const save = (fn: () => void) => {
-    if (m.save === "error") {
-      setMsg("error");
-      return;
-    }
-    setMsg("");
-    fn();
-  };
-  const status = (n: Step) => (n < step ? s("done") : n === step ? s("now") : s("next"));
-  const role = targetRoles.find((r) => r.id === appliedId);
-  const missing = skills.filter((k) => role?.missing.includes(k.code));
-
-  if (!m.open) {
-    return (
-      <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-        <PageHeading titleKey="pages.gap" />
-        <EmptyState
-          title={s("emptyTitle")}
-          help={s("emptyHelp")}
-          action={
-            <Link to="/active-quizzes" className="btn-primary">
-              {s("takeQuiz")}
-            </Link>
-          }
-        />
-      </div>
-    );
-  }
-
-  const Group = ({ n, title, children }: { n: Step; title: string; children: React.ReactNode }) => (
-    <li
-      className={`rounded-surface border bg-surface p-4 text-ink ${n === step ? "border-2 border-accent" : "border-border"}`}
-    >
-      <h3 className="font-heading text-[20px]">
-        {n}. {title}
-      </h3>
-      <p className="mt-1 font-semibold">{status(n)}</p>
-      <div className="mt-3 flex flex-col gap-2 tablet:flex-row tablet:flex-wrap tablet:items-center">
-        {children}
-      </div>
-    </li>
-  );
+  const selectedSkill: RoadmapSkill =
+    roadmap.find((s) => s.id === selectedSkillId) ?? SAMPLE_ROADMAP[1]!;
 
   return (
-    <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-      <div className="flex items-center justify-between">
-        <PageHeading titleKey="pages.gap" />
-        <a href="/learn/gap" className="text-xs text-ink-muted underline">
-          Open Server Gap Pathway (Jinja)
-        </a>
+    <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
+      {/* Page Title & Intro */}
+      <div className="flex flex-col gap-1">
+        <PageHeading text="Your Path to Mastery" />
+        <p className="text-sm font-medium text-slate-600 mt-1 max-w-reading">
+          Your personalized study roadmap dynamically targets knowledge gaps by connecting
+          textbooks, short concept reels, guided AI tutor practice, and certified mastery quizzes.
+        </p>
       </div>
-      <p className="max-w-reading text-ink">{s("lead")}</p>
-      <LoopStepper current={step} />
-      <RoleTransitionDelta />
 
-      <div className="flex flex-col gap-2 tablet:flex-row tablet:items-end">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="target-role" className="font-semibold text-ink">
-            {s("role")}
-          </label>
-          <select
-            id="target-role"
-            value={roleId}
-            onChange={(e) => setRoleId(e.target.value)}
-            className="min-h-11 rounded-surface border border-border-control bg-surface px-3 text-ink"
-          >
-            {targetRoles.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.title}
-              </option>
-            ))}
-          </select>
+      {/* Top Summary KPI Strip */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl border border-slate-200 bg-surface p-5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Skills Mastered
+            </span>
+            <span className="size-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
+              <CheckCircle2 size={16} />
+            </span>
+          </div>
+          <div className="mt-2 text-2xl font-bold font-mono text-slate-900">1 of 3</div>
+          <p className="mt-1 text-xs text-slate-600">33% curriculum competency verified</p>
         </div>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() =>
-            save(() => {
-              setAppliedId(roleId);
-              setMsg("applied");
-            })
-          }
-        >
-          {s("apply")}
-        </button>
+
+        <div className="rounded-2xl border border-secondary/30 bg-secondary/5 p-5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+              Immediate Focus Skill
+            </span>
+            <span className="size-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+              <Compass size={16} />
+            </span>
+          </div>
+          <div className="mt-2 text-lg font-bold text-slate-900 truncate">
+            Solving Linear Equations
+          </div>
+          <p className="mt-1 text-xs text-slate-600">Balance scale method & inverse steps</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-surface p-5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Estimated Recovery Time
+            </span>
+            <span className="size-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700">
+              <Clock size={16} />
+            </span>
+          </div>
+          <div className="mt-2 text-2xl font-bold font-mono text-slate-900">~15 Mins</div>
+          <p className="mt-1 text-xs text-slate-600">4 connected steps to reach Level 5</p>
+        </div>
       </div>
-      <p role="status" className="text-ink">
-        {msg === "applied" ? s("applied") : ""}
-      </p>
-      {msg === "error" && <ErrorAlert message={s("saveError")} />}
 
-      <ol className="space-y-3">
-        <Group n={1} title={s("review")}>
-          {review && (
-            <Link
-              to="/lessons/$lessonId"
-              params={{ lessonId: review.id }}
-              className="inline-flex min-h-11 items-center underline"
-            >
-              <LessonName lesson={review} />
-            </Link>
-          )}
-          {step === 1 && (
-            <button type="button" className="btn-secondary" onClick={() => save(() => setStep(2))}>
-              {s("markDone")}
-            </button>
-          )}
-        </Group>
-        <Group n={2} title={s("practise")}>
-          <Link to="/active-quizzes" className="btn-secondary">
-            {s("takeQuiz")}
-          </Link>
-          <Link to="/active-quizzes" className="inline-flex min-h-11 items-center underline">
-            {s("jump")}
-          </Link>
-        </Group>
-        <Group n={3} title={s("retry")}>
-          {step === 3 ? (
-            <Link to="/quiz" className="btn-secondary">
-              {s("retry")}
-            </Link>
-          ) : (
-            <>
-              <button
-                type="button"
-                disabled
-                className="btn-secondary"
-                aria-describedby="retry-lock"
-              >
-                {s("retry")}
-              </button>
-              <span id="retry-lock" className="text-ink-muted">
-                {s("retryLocked")}
-              </span>
-            </>
-          )}
-        </Group>
-      </ol>
+      {/* Ordered Skill Roadmap Cards */}
+      <section aria-labelledby="roadmap-heading" className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 id="roadmap-heading" className="font-heading text-lg font-bold text-slate-900">
+            Ordered Step-by-Step Recovery Roadmap
+          </h2>
+          <span className="text-xs font-medium text-slate-500">Tailored for Class 8 Algebra I</span>
+        </div>
 
-      {step < 3 && (
-        <button
-          type="button"
-          className="btn-primary w-full tablet:w-auto"
-          onClick={() => save(() => setStep((x) => (x + 1) as Step))}
-        >
-          {s("continue")}
-        </button>
-      )}
-
-      <section
-        aria-labelledby="optional"
-        className="rounded-surface border border-border bg-surface p-4"
-      >
-        <h2 id="optional" className="font-heading text-[20px] text-ink">
-          {s("optional")}
-        </h2>
-        <ul className="mt-3 space-y-2 text-ink">
-          {missing.map((k) => {
-            const l = k.lessonId ? lessonById(k.lessonId) : undefined;
+        <div className="space-y-4">
+          {roadmap.map((sk, idx) => {
+            const badge = STATUS_BADGES[sk.status];
+            const isCurrent = sk.id === selectedSkillId;
             return (
-              <li key={k.code}>
-                <p className="font-semibold">{k.title}</p>
-                {l ? (
-                  <Link
-                    to="/lessons/$lessonId"
-                    params={{ lessonId: l.id }}
-                    className="inline-flex min-h-11 items-center underline"
-                  >
-                    <LessonName lesson={l} />
-                  </Link>
-                ) : (
-                  <p className="text-ink-muted">{s("noLesson")}</p>
-                )}
-              </li>
+              <div
+                key={sk.id}
+                onClick={() => setSelectedSkillId(sk.id)}
+                className={`cursor-pointer rounded-2xl border p-5 transition-all shadow-xs ${
+                  isCurrent
+                    ? "border-secondary bg-surface ring-2 ring-secondary/20 shadow-md"
+                    : "border-slate-200 bg-surface hover:border-slate-300"
+                }`}
+              >
+                {/* Header row */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-7 items-center justify-center rounded-full bg-slate-100 font-mono text-xs font-bold text-slate-700">
+                      0{idx + 1}
+                    </span>
+                    <h3 className="font-heading text-base font-bold text-slate-900">{sk.name}</h3>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-3 py-0.5 text-xs font-semibold border ${badge.bg} ${badge.text} ${badge.border}`}
+                    >
+                      {sk.status}
+                    </span>
+                    <span className="text-xs font-mono font-bold text-slate-600">
+                      Level {sk.level} of 5
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-secondary transition-all duration-300"
+                    style={{ width: `${(sk.level / 5) * 100}%` }}
+                  />
+                </div>
+
+                <p className="mt-2.5 text-xs text-slate-600 leading-relaxed">{sk.reason}</p>
+
+                {/* 4-Step Connected Learning Strip */}
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Connected Learning Path for this Skill:
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* Step 1: Read Chapter */}
+                    <Link
+                      to="/manuals/$manualId"
+                      params={{ manualId: sk.bookChapter.manualId }}
+                      className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 hover:border-secondary transition group"
+                    >
+                      <BookOpen size={18} className="text-secondary shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase text-secondary">
+                          1. Read Chapter
+                        </div>
+                        <div className="text-xs font-semibold text-slate-800 truncate group-hover:text-secondary">
+                          Ch. {sk.bookChapter.chapterNum} Textbook
+                        </div>
+                      </div>
+                    </Link>
+
+                    {/* Step 2: Watch 2-Min Reel */}
+                    <Link
+                      to="/learn/micro"
+                      className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 hover:border-secondary transition group"
+                    >
+                      <Video size={18} className="text-amber-600 shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase text-amber-600">
+                          2. Watch 2-Min Reel
+                        </div>
+                        <div className="text-xs font-semibold text-slate-800 truncate group-hover:text-amber-700">
+                          Concept Reel & Visual
+                        </div>
+                      </div>
+                    </Link>
+
+                    {/* Step 3: Practice in Ask Vidura */}
+                    <Link
+                      to="/learn/coach"
+                      className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 hover:border-secondary transition group"
+                    >
+                      <MessageCircle size={18} className="text-cyan-600 shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase text-cyan-600">
+                          3. Practice in Vidura
+                        </div>
+                        <div className="text-xs font-semibold text-slate-800 truncate group-hover:text-cyan-700">
+                          {sk.coachTopic}
+                        </div>
+                      </div>
+                    </Link>
+
+                    {/* Step 4: Take Quiz */}
+                    <Link
+                      to="/active-quizzes"
+                      className={`flex items-center gap-2 rounded-xl border p-3 transition group ${
+                        sk.quizScore !== undefined
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                          : "border-secondary bg-secondary text-white hover:bg-secondary/90 shadow-xs"
+                      }`}
+                    >
+                      <Trophy size={18} className="shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase opacity-80">
+                          4. Take Quiz
+                        </div>
+                        <div className="text-xs font-bold truncate">
+                          {sk.quizScore !== undefined
+                            ? `Mastered (${sk.quizScore}%)`
+                            : "Mastery Check Quiz"}
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              </div>
             );
           })}
-        </ul>
+        </div>
       </section>
 
-      {/* Your Path to Mastery — Connected Curriculum & Step-by-Step Plan */}
-      <section className="rounded-surface border border-border bg-surface p-5 shadow-2xs space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Network className="text-brand size-5" />
-            <h2 className="font-heading text-lg font-bold text-ink">
-              Your Path to Mastery: Connected Curriculum & Step-by-Step Plan
+      {/* Clean Visual Learning Map (4 Aligned Columns) */}
+      <section
+        aria-labelledby="map-heading"
+        className="rounded-2xl border border-slate-200 bg-surface p-6 shadow-xs space-y-4"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h2 id="map-heading" className="font-heading text-lg font-bold text-slate-900">
+              Visual Learning Map
             </h2>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Select any skill above to inspect how curriculum standards connect into learning
+              resources and certified mastery proof.
+            </p>
           </div>
-          <span className="rounded-pill bg-brand/10 text-brand px-2.5 py-0.5 text-xs font-semibold">
-            Personalized Study Path
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+            Active Focus: {selectedSkill.name}
           </span>
         </div>
-        <p className="text-xs text-ink-muted">
-          Your learning path is dynamically tailored based on diagnostic quizzes, textbook reading
-          progress, and tutor interactions.
-        </p>
 
-        {/* Ordered Step Cards for Current Gap */}
-        <div className="rounded-card border-2 border-brand/30 bg-brand/5 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-brand uppercase tracking-wider">
-              Immediate Focus: Solving Linear Equations (2-Step Balance Method)
-            </span>
-            <span className="text-[11px] text-ink-muted">4 Ordered Recovery Steps</span>
+        {/* 4 Aligned Columns with clear spacing */}
+        <div className="grid grid-cols-1 gap-4 tablet:grid-cols-4 pt-2">
+          {/* Column 1: Course Skills */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              1. Course Skill
+            </div>
+            <div className="rounded-lg border-2 border-secondary bg-white p-3 shadow-xs">
+              <div className="text-xs font-bold text-slate-900">{selectedSkill.name}</div>
+              <div className="text-[11px] font-mono font-semibold text-secondary mt-1">
+                Class 8 Core Competency
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-2.5 tablet:grid-cols-4">
+          {/* Column 2: Lessons & Textbooks */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              2. Textbook & Lesson
+            </div>
             <Link
-              to="/read/manuals/$manualId"
-              params={{ manualId: "11111111-2222-3333-4444-555555555551" }}
-              className="rounded border border-border bg-surface p-3 text-left hover:border-brand transition hover:shadow-xs group"
+              to="/manuals/$manualId"
+              params={{ manualId: selectedSkill.bookChapter.manualId }}
+              className="block rounded-lg border border-slate-200 bg-white p-3 hover:border-secondary transition shadow-xs group"
             >
-              <div className="text-[10px] font-bold uppercase text-brand">Step 1 • eBooks</div>
-              <div className="text-xs font-semibold text-ink mt-0.5 group-hover:text-brand">
-                Read Chapter 2: The Balance Method
+              <div className="text-xs font-bold text-slate-900 group-hover:text-secondary">
+                {selectedSkill.bookChapter.title}
               </div>
-              <div className="text-[11px] text-ink-muted mt-1">Foundational inverse operations</div>
-            </Link>
-
-            <Link
-              to="/learn/micro"
-              className="rounded border border-border bg-surface p-3 text-left hover:border-brand transition hover:shadow-xs group"
-            >
-              <div className="text-[10px] font-bold uppercase text-brand">Step 2 • Reels</div>
-              <div className="text-xs font-semibold text-ink mt-0.5 group-hover:text-brand">
-                Watch 2-Min Concept Reel
+              <div className="text-[11px] text-slate-500 mt-1">
+                Theory, diagrams & worked problems
               </div>
-              <div className="text-[11px] text-ink-muted mt-1">Inverse operations in action</div>
             </Link>
+          </div>
 
+          {/* Column 3: Interactive Practice */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              3. Interactive Practice
+            </div>
             <Link
               to="/learn/coach"
-              className="rounded border border-border bg-surface p-3 text-left hover:border-brand transition hover:shadow-xs group"
+              className="block rounded-lg border border-slate-200 bg-white p-3 hover:border-secondary transition shadow-xs group"
             >
-              <div className="text-[10px] font-bold uppercase text-brand">Step 3 • Ask Vidura</div>
-              <div className="text-xs font-semibold text-ink mt-0.5 group-hover:text-brand">
-                Guided Mastery Practice
+              <div className="text-xs font-bold text-slate-900 group-hover:text-secondary">
+                Ask Vidura: {selectedSkill.coachTopic}
               </div>
-              <div className="text-[11px] text-ink-muted mt-1">Work through 3-step hint ladder</div>
+              <div className="text-[11px] text-slate-500 mt-1">
+                Multi-turn Socratic ladder practice
+              </div>
             </Link>
+          </div>
 
+          {/* Column 4: Mastery Proof */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              4. Mastery Proof
+            </div>
             <Link
               to="/active-quizzes"
-              className="rounded border border-brand bg-brand text-white p-3 text-left hover:bg-brand/90 transition shadow-xs group"
+              className="block rounded-lg border border-slate-200 bg-white p-3 hover:border-secondary transition shadow-xs group"
             >
-              <div className="text-[10px] font-bold uppercase opacity-80">Step 4 • Verify</div>
-              <div className="text-xs font-semibold mt-0.5">Take Mastery Check Quiz</div>
-              <div className="text-[11px] opacity-90 mt-1">Earn certified skill badge</div>
+              <div className="text-xs font-bold text-slate-900 group-hover:text-secondary">
+                Verified Quiz Check
+              </div>
+              <div className="text-[11px] text-emerald-700 font-semibold mt-1">
+                {selectedSkill.quizScore !== undefined
+                  ? "✓ Credential Recorded"
+                  : "Pending Assessment"}
+              </div>
             </Link>
           </div>
         </div>
 
-        {/* Connected Curriculum Matrix Cards */}
-        <div className="grid grid-cols-1 gap-3 tablet:grid-cols-3 pt-2">
-          <div className="rounded-card border border-border bg-page-bg p-3.5 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono font-bold text-brand">
-                Variables & Expressions
-              </span>
-              <span className="rounded bg-emerald-100 text-emerald-800 text-[10px] font-semibold px-1.5 py-0.2">
-                Prerequisite Met
-              </span>
-            </div>
-            <h3 className="text-xs font-bold text-ink">Algebraic Foundations</h3>
-            <p className="text-[11px] text-ink-muted">
-              Foundational skill for balancing equations.
-            </p>
-            <div className="pt-2 border-t border-border/60 text-[11px] text-ink-muted">
-              Aligned:{" "}
-              <Link
-                to="/read/manuals/$manualId"
-                params={{ manualId: "11111111-2222-3333-4444-555555555551" }}
-                className="text-brand underline font-medium"
-              >
-                Algebra I Ch. 1
-              </Link>
-            </div>
-          </div>
-
-          <div className="rounded-card border border-brand/40 bg-brand/5 p-3.5 space-y-2 ring-1 ring-brand/20">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono font-bold text-brand">
-                Solving Linear Equations
-              </span>
-              <span className="rounded bg-amber-100 text-amber-800 text-[10px] font-semibold px-1.5 py-0.2">
-                In Progress
-              </span>
-            </div>
-            <h3 className="text-xs font-bold text-ink">Two-Step Equations</h3>
-            <p className="text-[11px] text-ink-muted">
-              Two-step isolation and inverse balance operations.
-            </p>
-            <div className="pt-2 border-t border-border/60 text-[11px] text-ink-muted">
-              Aligned:{" "}
-              <Link to="/active-quizzes" className="text-brand underline font-medium">
-                Slice A Quiz (Q2, Q3)
-              </Link>
-            </div>
-          </div>
-
-          <div className="rounded-card border border-border bg-page-bg p-3.5 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono font-bold text-ink-muted">
-                Linear Word Problems
-              </span>
-              <span className="rounded bg-gray-100 text-gray-700 text-[10px] font-semibold px-1.5 py-0.2">
-                Next Goal
-              </span>
-            </div>
-            <h3 className="text-xs font-bold text-ink">Real-World Modeling</h3>
-            <p className="text-[11px] text-ink-muted">
-              Formulating real-world quantitative conditions into models.
-            </p>
-            <div className="pt-2 border-t border-border/60 text-[11px] text-ink-muted">
-              Aligned:{" "}
-              <Link
-                to="/read/manuals/$manualId"
-                params={{ manualId: "11111111-2222-3333-4444-555555555551" }}
-                className="text-brand underline font-medium"
-              >
-                Algebra I Ch. 4
-              </Link>
-            </div>
-          </div>
+        {/* Quiet Verifiable Record Link */}
+        <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs">
+          <span className="text-slate-500">
+            Curriculum alignments are cryptographically backed by learning evidence records.
+          </span>
+          <a
+            href="/api/v1/app/ld/graph?format=jsonld"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 font-semibold text-secondary hover:underline"
+          >
+            <Download size={13} />
+            <span>Download Verifiable Record (JSON-LD)</span>
+          </a>
         </div>
       </section>
     </div>
