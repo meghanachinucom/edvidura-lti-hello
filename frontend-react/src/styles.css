@@ -620,7 +620,6 @@ main dl.flex dd {
 }
 
 /* Use the dark teal navigation band and reserve red exclusively for errors/missed answers. */
-header,
 [data-topbar],
 .top-bar {
   background-color: var(--topbar);
