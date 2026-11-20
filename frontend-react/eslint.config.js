@@ -37,6 +37,7 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "off",
       "no-empty": ["error", { allowEmptyCatch: true }],
       "react-hooks/exhaustive-deps": "warn",
+      "prettier/prettier": ["error", { endOfLine: "auto" }],
     },
   },
   eslintPluginPrettier,

@@ -176,9 +176,7 @@ export function MasterBlueprintSyncPanel({
 
             <div className="flex items-center gap-4 text-xs">
               <div className="text-center">
-                <span className="text-ink-muted block text-xs font-bold uppercase">
-                  Sections
-                </span>
+                <span className="text-ink-muted block text-xs font-bold uppercase">Sections</span>
                 <span className="font-bold text-ink">
                   {blueprint.synced_sections_count} Classes
                 </span>

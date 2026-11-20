@@ -186,9 +186,7 @@ export function VideoCheckpointCard({ videoId = "les-transformer" }: { videoId?:
         {/* Progress tracker */}
         <div className="flex items-center gap-3 shrink-0 bg-page-bg px-4 py-2.5 rounded-2xl border border-border">
           <div className="text-right">
-            <span className="text-xs uppercase font-bold text-ink-muted block">
-              Checkpoints
-            </span>
+            <span className="text-xs uppercase font-bold text-ink-muted block">Checkpoints</span>
             <span className="text-sm font-extrabold text-secondary font-mono">
               {completedCount} / {cues.length} Completed
             </span>

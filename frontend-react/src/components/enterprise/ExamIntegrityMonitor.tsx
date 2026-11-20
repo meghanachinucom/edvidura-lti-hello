@@ -130,9 +130,7 @@ export function ExamIntegrityMonitor({ sessionId = "sess-alice-slice-a" }: { ses
 
       {showLog && incidents.length > 0 && (
         <div className="pt-2 border-t border-border/60 space-y-1">
-          <p className="text-xs uppercase font-bold text-ink-muted">
-            Recorded Focus Telemetry:
-          </p>
+          <p className="text-xs uppercase font-bold text-ink-muted">Recorded Focus Telemetry:</p>
           <div className="max-h-24 overflow-y-auto space-y-1 font-mono text-xs">
             {incidents.map((inc, i) => (
               <div

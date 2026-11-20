@@ -159,10 +159,7 @@ function Player({
         {s("back")}
       </Link>
       <div className="mt-2">
-        <PageHeading
-          text={lesson.title}
-          context={t(`shared.lessonKind.${lesson.kind}`)}
-        />
+        <PageHeading text={lesson.title} context={t(`shared.lessonKind.${lesson.kind}`)} />
       </div>
 
       {lesson.kind === "video" ? (

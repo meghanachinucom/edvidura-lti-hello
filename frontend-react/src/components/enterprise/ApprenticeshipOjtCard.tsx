@@ -179,9 +179,7 @@ export function ApprenticeshipOjtCard({ apprenticeId = "p-rajesh" }: { apprentic
               <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-secondary">
                 Tier {status.wage_tier}
               </p>
-              <span className="text-xs text-emerald-800 font-bold">
-                ₹14,500 / month Stipend
-              </span>
+              <span className="text-xs text-emerald-800 font-bold">₹14,500 / month Stipend</span>
             </div>
 
             <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">

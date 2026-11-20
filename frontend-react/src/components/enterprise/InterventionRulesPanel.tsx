@@ -238,9 +238,7 @@ export function InterventionRulesPanel() {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-xs font-bold text-ink block mb-1">
-                Pedagogical Action
-              </label>
+              <label className="text-xs font-bold text-ink block mb-1">Pedagogical Action</label>
               <input
                 type="text"
                 value={newAction}

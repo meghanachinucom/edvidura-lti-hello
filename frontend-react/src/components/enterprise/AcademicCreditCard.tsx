@@ -264,9 +264,7 @@ export function AcademicCreditCard({ userId = "6" }: { userId?: string }) {
               <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-emerald-700">
                 {ledger.graduation_progress_pct ?? 82}%
               </p>
-              <span className="text-xs text-emerald-800 font-medium">
-                On Track for Honor Roll
-              </span>
+              <span className="text-xs text-emerald-800 font-medium">On Track for Honor Roll</span>
             </div>
           </div>
 
