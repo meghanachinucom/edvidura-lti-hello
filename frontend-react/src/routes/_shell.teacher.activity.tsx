@@ -9,6 +9,7 @@ import { classActivity, type ActivityKind, type ActivityRow } from "@/data/activ
 import { personById } from "@/data/people";
 import { mockState } from "@/data/mockState";
 import { formatIST } from "@/lib/time";
+import { LiveEventStreamViewer } from "@/components/enterprise/LiveEventStreamViewer";
 
 // TC-04 Activity. For support, not surveillance — no time-spent, IDs or export.
 export const Route = createFileRoute("/_shell/teacher/activity")({
@@ -111,6 +112,11 @@ function Page() {
           }
         />
       )}
+
+      {/* Enterprise Suite: Live Real-Time Telemetry Event Stream */}
+      <div className="pt-6">
+        <LiveEventStreamViewer />
+      </div>
     </div>
   );
 }

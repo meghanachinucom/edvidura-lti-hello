@@ -25,6 +25,9 @@ import { VoiceInputButton, VoiceListenButton } from "@/components/shared/VoiceCo
 import { coachExchanges, type CoachExchange } from "@/data/coach";
 import { mockState } from "@/data/mockState";
 import { api } from "@/lib/api";
+import { ChatQuizMinter } from "@/components/enterprise/ChatQuizMinter";
+import { RevisionNotesSheet } from "@/components/enterprise/RevisionNotesSheet";
+import { SkillBenchmarkWidget } from "@/components/enterprise/SkillBenchmarkWidget";
 
 // LR-07 Ask Vidura with Guided Mastery Tutor & Multilingual Indian Voice Studio
 export const Route = createFileRoute("/_shell/learn/coach")({
@@ -521,6 +524,13 @@ function Page() {
             eBooks & Textbooks
           </Link>
         </nav>
+
+        {/* Enterprise Suite: Benchmark Diagnostic, Chat Quiz Minter, & Revision Sheet */}
+        <div className="space-y-6 pt-2">
+          <SkillBenchmarkWidget userId="6" />
+          <ChatQuizMinter userId="6" defaultTopic="Linear Equations & Industrial Balance" />
+          <RevisionNotesSheet userId="6" defaultTopic="Linear Equations & Industrial Balance" />
+        </div>
       </div>
 
       {/* Right Column: Chat Conversation, 3-Step Hint Ladder & Voice Input */}

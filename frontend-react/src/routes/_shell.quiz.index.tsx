@@ -13,6 +13,9 @@ import { myAttempts, type Attempt } from "@/data/attempts";
 import { mockState } from "@/data/mockState";
 import { api } from "@/lib/api";
 import { adaptAttempts, type BackendAttemptCard } from "@/lib/adapters";
+import { AlgorithmicPracticeCard } from "@/components/enterprise/AlgorithmicPracticeCard";
+import { ExamIntegrityMonitor } from "@/components/enterprise/ExamIntegrityMonitor";
+import { PeerReviewStudio } from "@/components/enterprise/PeerReviewStudio";
 
 // "/quiz" serves both the Quiz gate (LR-04) and the Quiz session (Batch L3), switched by mockState.quiz.mode.
 export const Route = createFileRoute("/_shell/quiz/")({
@@ -214,6 +217,15 @@ function Gate({ onStart, onStartPractice }: { onStart: () => void; onStartPracti
           )}
         </div>
       )}
+
+      {/* Enterprise Suite: Integrity Proctoring Monitor */}
+      <ExamIntegrityMonitor sessionId="sess-alice-slice-a" />
+
+      {/* Enterprise Suite: Algorithmic Math Generator */}
+      <AlgorithmicPracticeCard studentId="6" templateKey="linear-balance" />
+
+      {/* Enterprise Suite: Double-Blind Calibrated Peer Review */}
+      <PeerReviewStudio assignmentId="assign-slice-a" reviewerId="6" />
 
       <section aria-labelledby="gate-other">
         <h2 id="gate-other" className="font-heading text-[22px] text-ink">

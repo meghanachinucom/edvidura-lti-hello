@@ -26,6 +26,9 @@ import { formatIST } from "@/lib/time";
 import { PercentageBar } from "@/components/shared/PercentageBar";
 import { LearnerFocusAnalytics } from "@/components/learner/LearnerFocusAnalytics";
 import { api } from "@/lib/api";
+import { VerifiableCredentialCard } from "@/components/enterprise/VerifiableCredentialCard";
+import { AcademicCreditCard } from "@/components/enterprise/AcademicCreditCard";
+import { SkillBenchmarkWidget } from "@/components/enterprise/SkillBenchmarkWidget";
 
 // LR-12 My analytics and Learner Skills Passport Hub.
 export const Route = createFileRoute("/_shell/learn/analytics")({
@@ -209,6 +212,15 @@ function Page() {
 
       {activeTab === "passport" && (
         <div className="space-y-6">
+          {/* Enterprise Suite: Verifiable Credentials & Carnegie Credit Ledger */}
+          <VerifiableCredentialCard
+            userId="6"
+            studentName="Alice Nguyen"
+            courseName="Class 8 Mathematics"
+          />
+          <AcademicCreditCard userId="6" />
+          <SkillBenchmarkWidget userId="6" />
+
           <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

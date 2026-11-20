@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
+import { VirtualTransferReadiness } from "@/components/enterprise/VirtualTransferReadiness";
 
 export const Route = createFileRoute("/_shell/xr-store")({
   head: () => ({
@@ -310,6 +311,9 @@ export function XrStorePage() {
           </div>
         </div>
       </section>
+
+      {/* Enterprise Suite: Simulation-to-Real Transfer Readiness */}
+      <VirtualTransferReadiness studentId="p-rajesh" />
 
       {/* Category Pills */}
       <div className="flex flex-wrap items-center gap-2">

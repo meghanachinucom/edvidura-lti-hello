@@ -18,6 +18,8 @@ import { instituteFigures } from "@/data/schoolAdmin";
 import { mockState } from "@/data/mockState";
 import { useRole } from "@/components/shell/RoleContext";
 import { api } from "@/lib/api";
+import { ComplianceAlertsCard } from "@/components/enterprise/ComplianceAlertsCard";
+import { ApprenticeshipOjtCard } from "@/components/enterprise/ApprenticeshipOjtCard";
 
 interface SchoolOverviewResponse {
   institution: {
@@ -165,6 +167,12 @@ function Page() {
               </li>
             ))}
           </ul>
+
+          {/* Enterprise Suite: Compliance Alerts & Apprenticeship OJT Card */}
+          <div className="space-y-6 pt-4">
+            <ComplianceAlertsCard />
+            <ApprenticeshipOjtCard apprenticeId="p-rajesh" />
+          </div>
         </>
       )}
     </div>

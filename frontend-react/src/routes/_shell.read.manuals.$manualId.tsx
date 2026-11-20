@@ -9,6 +9,7 @@ import { ebookChapters, type Chapter } from "@/data/ebookContent";
 import { mockState } from "@/data/mockState";
 import { api } from "@/lib/api";
 import { adaptEbook, adaptChapters, type BackendManualDetail } from "@/lib/adapters";
+import { ChapterDoubtTutorDrawer } from "@/components/enterprise/ChapterDoubtTutorDrawer";
 
 // LR-16 Standalone reader (read-only).
 export const Route = createFileRoute("/_shell/read/manuals/$manualId")({
@@ -76,5 +77,16 @@ function Page() {
   if (!book || mockState.library.unavailableId === manualId)
     return <AccessUnavailable back={{ to: "/manuals", label: t("LR-16.back") }} />;
 
-  return <StandaloneReader key={book.id} book={book} chapters={chapters} />;
+  return (
+    <div className="relative">
+      <div className="fixed bottom-6 right-6 z-40">
+        <ChapterDoubtTutorDrawer
+          chapterId={chapters[0]?.id || manualId}
+          chapterTitle={chapters[0]?.title || book.title}
+          userId="6"
+        />
+      </div>
+      <StandaloneReader key={book.id} book={book} chapters={chapters} />
+    </div>
+  );
 }

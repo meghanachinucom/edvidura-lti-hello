@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { t } from "@/i18n";
@@ -6,6 +6,7 @@ import { PageHeading } from "@/components/shared/PageHeading";
 import { findReceipt, type Receipt } from "@/data/receipts";
 import { mockState } from "@/data/mockState";
 import { formatIST } from "@/lib/time";
+import { api } from "@/lib/api";
 
 // SH-04 Receipt verify.
 export const Route = createFileRoute("/_shell/receipts/verify")({
@@ -34,24 +35,67 @@ function ReceiptVerify() {
   const [emptyError, setEmptyError] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>({ kind: "idle" });
 
-  const verify = () => {
-    if (!text.trim()) {
+  const verifyCode = async (codeToVerify: string) => {
+    const trimmed = codeToVerify.trim();
+    if (!trimmed) {
       setEmptyError(true);
       setOutcome({ kind: "idle" });
       return;
     }
     setEmptyError(false);
     setOutcome({ kind: "checking" });
-    setTimeout(() => {
-      const forced = mockState.receiptVerify.result;
-      const match = findReceipt(text);
-      if (forced === "invalid" || (forced === "auto" && !match)) setOutcome({ kind: "invalid" });
-      else
+
+    // 1. Check Backend Enterprise Verifiable Credentials API
+    try {
+      const res = await api.get<{ valid: boolean; credential?: any }>(
+        `/api/v1/credentials/verify/${trimmed}`,
+      );
+      if (res && res.valid) {
+        const cred = res.credential || {};
         setOutcome({
           kind: "valid",
-          receipt: match ?? findReceipt("EDV1.SITI.7Q4M-WARM-UP.SEAL-3F9A2C")!,
+          receipt: {
+            text: trimmed,
+            learnerName: cred.recipient_name || "Alice Nguyen",
+            quizTitle: cred.course_name || "Class 8 Mathematics (Mastery Level 5)",
+            issuedAt: cred.issued_at || new Date().toISOString(),
+            score: 5,
+            kind: "graded",
+            moodleStatus: "sent",
+          },
         });
-    }, mockState.receiptVerify.checkingMs);
+        return;
+      }
+    } catch {
+      // Fall through to local receipt database check
+    }
+
+    // 2. Local receipt check
+    const forced = mockState.receiptVerify.result;
+    const match = findReceipt(trimmed);
+    if (forced === "invalid" || (forced === "auto" && !match)) {
+      setOutcome({ kind: "invalid" });
+    } else {
+      setOutcome({
+        kind: "valid",
+        receipt: match ?? findReceipt("EDV1.SITI.7Q4M-WARM-UP.SEAL-3F9A2C")!,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const paramId = sp.get("id") || sp.get("cid");
+      if (paramId) {
+        setText(paramId);
+        verifyCode(paramId);
+      }
+    }
+  }, []);
+
+  const verify = () => {
+    verifyCode(text);
   };
 
   const checking = outcome.kind === "checking";

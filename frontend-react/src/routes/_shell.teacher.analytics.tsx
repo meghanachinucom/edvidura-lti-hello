@@ -23,6 +23,7 @@ import {
 import { downloadBlob } from "@/lib/download";
 import { api } from "@/lib/api";
 import { adaptAttempts, type BackendAttemptCard } from "@/lib/adapters";
+import { InterventionRulesPanel } from "@/components/enterprise/InterventionRulesPanel";
 
 // TC-03 Analytics. Class scope only — no risk flags, mastery, time-on-task or rankings.
 export const Route = createFileRoute("/_shell/teacher/analytics")({
@@ -456,6 +457,9 @@ function Page() {
               ))}
             </div>
           </section>
+
+          {/* Enterprise Suite: Intelligent Intervention Agents & Rules */}
+          <InterventionRulesPanel />
         </>
       )}
     </div>

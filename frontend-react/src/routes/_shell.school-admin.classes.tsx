@@ -5,6 +5,7 @@ import { PageHeading } from "@/components/shared/PageHeading";
 import { StatusBanner } from "@/components/shared/StatusBanner";
 import { useRole } from "@/components/shell/RoleContext";
 import { api } from "@/lib/api";
+import { MasterBlueprintSyncPanel } from "@/components/enterprise/MasterBlueprintSyncPanel";
 
 export const Route = createFileRoute("/_shell/school-admin/classes")({ component: Page });
 
@@ -363,6 +364,9 @@ function Page() {
           </article>
         ))}
       </div>
+
+      {/* Enterprise Suite: Master Curriculum Blueprint Distribution */}
+      <MasterBlueprintSyncPanel blueprintId="bp-rhs-alg8" />
 
       <div className="grid gap-4 tablet:grid-cols-2 desktop:grid-cols-3">
         {displayClasses.map((c: any) => (

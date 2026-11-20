@@ -38,6 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { UnifiedRubricGraderDrawer } from "@/components/enterprise/UnifiedRubricGraderDrawer";
 
 export const Route = createFileRoute("/_shell/teacher/attempts")({
   head: () => ({
@@ -101,6 +102,7 @@ function Page() {
   const [remoteAttempts, setRemoteAttempts] = useState<Attempt[] | null>(null);
 
   // AI Essay & Open-Response Grader state
+  const [rubricGraderOpen, setRubricGraderOpen] = useState(false);
   const [essayGraderOpen, setEssayGraderOpen] = useState(false);
   const [essayPrompt, setEssayPrompt] = useState(
     "Explain the procedure for isolating a three-phase circuit breaker prior to scheduled maintenance.",
@@ -381,6 +383,14 @@ function Page() {
           >
             <Download aria-hidden size={18} className="text-accent" />
             Ingest Grade
+          </button>
+          <button
+            type="button"
+            className="btn-primary flex-1 tablet:flex-none inline-flex items-center gap-1.5"
+            onClick={() => setRubricGraderOpen(true)}
+          >
+            <Sparkles aria-hidden size={18} />
+            Unified Rubric Grader
           </button>
           <button
             type="button"
@@ -806,6 +816,11 @@ function Page() {
         cancelLabel={s("confirmSisNo")}
         onConfirm={confirmSend}
         onCancel={() => setConfirmRow(null)}
+      />
+      <UnifiedRubricGraderDrawer
+        isOpen={rubricGraderOpen}
+        onClose={() => setRubricGraderOpen(false)}
+        submissionId="sub-alice-slice-a"
       />
     </div>
   );

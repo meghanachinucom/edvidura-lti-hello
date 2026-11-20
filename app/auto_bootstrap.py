@@ -49,9 +49,13 @@ def ensure_cloud_database_bootstrapped() -> bool:
                     "SELECT to_regclass('public.learner_skill_mastery') IS NOT NULL AS exists"
                 ).fetchone()
                 has_new_engines = bool(e_row and e_row[0])
+                ent_row = conn.execute(
+                    "SELECT to_regclass('public.speedgrader_annotations') IS NOT NULL AS exists"
+                ).fetchone()
+                has_enterprise = bool(ent_row and ent_row[0])
 
-        # If migrations or Riverside tenant missing or new engine tables missing, run migrations
-        if not migrations_exist or not has_riverside or not has_new_engines:
+        # If migrations, Riverside tenant, or enterprise suite tables missing, run migrations
+        if not migrations_exist or not has_riverside or not has_new_engines or not has_enterprise:
             logger.info("Database migration check triggered. Running migrations...")
             from scripts.apply_migrations import main as apply_all_migrations
 

@@ -13,6 +13,9 @@ import { mockState } from "@/data/mockState";
 import { formatIST } from "@/lib/time";
 import { api } from "@/lib/api";
 import { adaptAttempts, type BackendAttemptCard } from "@/lib/adapters";
+import { AlgorithmicPracticeCard } from "@/components/enterprise/AlgorithmicPracticeCard";
+import { ExamIntegrityMonitor } from "@/components/enterprise/ExamIntegrityMonitor";
+import { PeerReviewStudio } from "@/components/enterprise/PeerReviewStudio";
 
 // LR-03 Quizzes.
 export const Route = createFileRoute("/_shell/active-quizzes")({
@@ -193,6 +196,13 @@ function Page() {
               }
             />
           </section>
+
+          {/* Enterprise Suite Components */}
+          <div className="space-y-6 pt-4">
+            <AlgorithmicPracticeCard studentId="6" templateKey="linear-balance" />
+            <PeerReviewStudio assignmentId="assign-slice-a" reviewerId="6" />
+            <ExamIntegrityMonitor sessionId="sess-alice-slice-a" />
+          </div>
         </>
       )}
     </div>

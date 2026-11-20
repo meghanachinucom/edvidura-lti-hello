@@ -14,6 +14,9 @@ import { myAttempts, type Attempt } from "@/data/attempts";
 import { PercentageBar } from "@/components/shared/PercentageBar";
 import { mockState } from "@/data/mockState";
 import { api } from "@/lib/api";
+import { AdaptivePathwayBanner } from "@/components/enterprise/AdaptivePathwayBanner";
+import { VideoCheckpointCard } from "@/components/enterprise/VideoCheckpointCard";
+import { OfflineSyncPill } from "@/components/enterprise/OfflineSyncPill";
 import {
   adaptLessons,
   adaptAttempts,
@@ -110,9 +113,15 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-      <HeroBand>
-        <PageHeading titleKey="pages.lessons" />
-      </HeroBand>
+      <div className="flex items-center justify-between">
+        <HeroBand>
+          <PageHeading titleKey="pages.lessons" />
+        </HeroBand>
+        <OfflineSyncPill />
+      </div>
+
+      <AdaptivePathwayBanner studentId="6" />
+
       {error && <ErrorAlert message={error} />}
       {!loading && list.length > 0 && (
         <section
@@ -163,6 +172,7 @@ function Page() {
       ) : (
         <>
           <LessonVideoMasterclass />
+          <VideoCheckpointCard videoId="les-transformer" />
           <LessonGrid items={list} upNextId={next?.id} />
           <DynamicBlockCatalog
             role="learner"
