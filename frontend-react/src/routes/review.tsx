@@ -52,7 +52,7 @@ function ReviewGateway() {
             <h1 className="font-heading text-3xl sm:text-4xl font-black tracking-tight text-ink">
               EdVidura Management Review Portal
             </h1>
-            <p className="text-sm sm:text-base font-medium text-slate-700 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base font-medium text-slate-800 max-w-2xl mx-auto leading-relaxed">
               Welcome, senior leadership. Choose an authorized persona below to launch an authentic,
               database-backed LTI 1.3 session into Riverside High School Class 8 Algebra I (
               <code className="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-xs font-mono font-bold text-slate-800">

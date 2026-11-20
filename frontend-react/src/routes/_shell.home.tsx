@@ -107,16 +107,16 @@ export function StudentHomePage() {
           <Link
             to="/lessons/$lessonId"
             params={{ lessonId: nextLesson?.id || "lesson-1" }}
-            className="btn-primary text-sm font-bold px-4 py-2.5 inline-flex items-center gap-1.5"
+            className="btn-primary text-xs font-bold px-4 py-2 inline-flex items-center gap-1.5"
           >
-            <PlayCircle size={16} />
+            <PlayCircle size={15} />
             <span>Continue Lesson {nextLesson?.order || 1}</span>
           </Link>
           <Link
             to="/active-quizzes"
-            className="btn-secondary text-sm font-bold px-4 py-2.5 inline-flex items-center gap-1.5"
+            className="btn-secondary text-xs font-bold px-4 py-2 inline-flex items-center gap-1.5"
           >
-            <Trophy size={16} />
+            <Trophy size={15} />
             <span>Active Quizzes</span>
           </Link>
         </div>

@@ -101,13 +101,13 @@ export function TopNav() {
           <Link
             to="/"
             onClick={() => setMobileOpen(false)}
-            className="font-heading text-2xl font-black tracking-tight text-secondary tablet:hidden desktop:block"
+            className="font-heading text-xl font-extrabold text-secondary tablet:hidden desktop:block"
           >
             EdVidura
           </Link>
           <span
             aria-hidden
-            className="hidden font-heading text-2xl font-black text-secondary tablet:block desktop:hidden"
+            className="hidden font-heading text-xl font-extrabold text-secondary tablet:block desktop:hidden"
           >
             E
           </span>
@@ -136,12 +136,14 @@ export function TopNav() {
                     aria-current={selected ? "page" : undefined}
                     title={t(item.labelKey)}
                     onClick={() => setMobileOpen(false)}
-                    className={`group relative flex min-h-12 items-center gap-3.5 rounded-control border-l-[3.5px] px-3.5 text-[15px] sm:text-base transition-colors duration-150 tablet:justify-center tablet:gap-0 tablet:px-0 desktop:justify-start desktop:gap-3.5 desktop:px-3.5 ${selected ? "border-l-secondary bg-secondary/15 font-black text-secondary shadow-xs" : "border-l-transparent text-slate-800 hover:text-secondary hover:bg-secondary/5 font-bold"}`}
+                    className={`group relative flex min-h-12 items-center gap-3 rounded-xl border-l-4 px-3.5 text-[15px] sm:text-base transition-all duration-150 tablet:justify-center tablet:gap-0 tablet:px-0 desktop:justify-start desktop:gap-3 desktop:px-3.5 ${selected ? "border-l-secondary bg-secondary/15 font-black text-secondary shadow-xs" : "border-l-transparent text-slate-800 hover:text-slate-950 hover:bg-slate-100 font-bold"}`}
                   >
-                    <Icon aria-hidden size={22} className="shrink-0" />
-                    <span className="tablet:hidden desktop:inline tracking-tight font-bold">
-                      {t(item.labelKey)}
-                    </span>
+                    <Icon
+                      aria-hidden
+                      size={22}
+                      className={`shrink-0 ${selected ? "stroke-[2.5]" : "stroke-2"}`}
+                    />
+                    <span className="tablet:hidden desktop:inline">{t(item.labelKey)}</span>
                     <span
                       role="tooltip"
                       className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-control bg-topbar px-3 py-2 text-xs text-white shadow-md tablet:group-hover:block tablet:group-focus-visible:block desktop:hidden"
@@ -158,12 +160,12 @@ export function TopNav() {
           <div className="mb-2 px-1 tablet:hidden desktop:block">
             <LanguageSelector className="w-full justify-between" />
           </div>
-          <div className="mb-3 px-2 text-base font-black text-ink tablet:hidden desktop:block">
+          <div className="mb-3 px-2 text-sm font-semibold text-ink tablet:hidden desktop:block">
             <div className="truncate">{session?.name}</div>
-            <div className="text-xs sm:text-sm font-bold text-secondary">{t(`roles.${role}`)}</div>
+            <div className="font-semibold text-ink-muted">{t(`roles.${role}`)}</div>
           </div>
           <a
-            className="group relative flex min-h-11 items-center rounded-control px-2 text-sm text-slate-800 hover:text-slate-950 hover:bg-slate-100 font-bold tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
+            className="group relative flex min-h-11 items-center rounded-control px-2 text-sm text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
             title={
               session?.lmsReturnUrl?.includes("localhost:8085")
                 ? t("nav.backToMoodle")
@@ -197,7 +199,7 @@ export function TopNav() {
           </a>
           <button
             type="button"
-            className="group relative flex min-h-11 w-full items-center rounded-control px-2 text-left text-sm text-slate-800 hover:text-slate-950 hover:bg-slate-100 font-bold tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
+            className="group relative flex min-h-11 w-full items-center rounded-control px-2 text-left text-sm text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
             title={t("nav.signOut")}
             onClick={() => {
               signOut();

@@ -46,7 +46,7 @@ export function PageHeading({
           {desc}
         </p>
       )}
-      <div aria-hidden className="title-rule mt-3" />
+      <div aria-hidden className="title-rule mt-3.5" />
     </div>
   );
 
