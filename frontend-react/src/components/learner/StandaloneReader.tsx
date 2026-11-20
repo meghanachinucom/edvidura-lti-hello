@@ -281,7 +281,7 @@ export function StandaloneReader({
                   : "hover:bg-black/5 dark:hover:bg-white/5 opacity-85"
               }`}
             >
-              <span className="font-mono text-[11px] opacity-60 shrink-0 mt-0.5">0{i + 1}</span>
+              <span className="font-mono text-xs opacity-60 shrink-0 mt-0.5">0{i + 1}</span>
               <span className="line-clamp-2 leading-tight">{c.title}</span>
             </button>
           </li>
@@ -611,7 +611,7 @@ export function StandaloneReader({
 
                 {transformedText && (
                   <div className="my-3 rounded bg-highlight p-3 border border-border text-xs text-ink space-y-1">
-                    <div className="flex justify-between font-semibold text-brand text-[11px]">
+                    <div className="flex justify-between font-semibold text-brand text-xs">
                       <span className="capitalize">{transformedText.command} Result:</span>
                       <button
                         type="button"
@@ -655,7 +655,7 @@ export function StandaloneReader({
                         <HelpCircle size={15} />
                         <span>Interactive Concept Quick-Check</span>
                       </div>
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-mono font-bold text-primary">
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-mono font-bold text-primary">
                         Tag: {chapter.conceptCheck.skillTag}
                       </span>
                     </div>

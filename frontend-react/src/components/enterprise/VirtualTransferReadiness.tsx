@@ -67,7 +67,7 @@ export function VirtualTransferReadiness({ studentId = "p-rajesh" }: { studentId
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 font-sans">
             Virtual Simulation to Real-World Transfer
           </h3>
-          <p className="text-xs text-slate-600 dark:text-slate-400">
+          <p className="text-xs text-slate-600 dark:text-ink-muted">
             Validated correlation between 3D Spatial Lab mastery and physical equipment performance.
           </p>
         </div>
@@ -88,19 +88,19 @@ export function VirtualTransferReadiness({ studentId = "p-rajesh" }: { studentId
                     {rep.simulation_id} &rarr; {rep.physical_task_id}
                   </span>
                   {rep.signed_off && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
                       Instructor Verified
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-xs text-slate-500">
                   Evaluated by: <span className="font-mono">{rep.evaluator_id}</span>
                 </p>
               </div>
 
               <div className="flex items-center gap-4 text-right">
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">
+                  <span className="text-xs uppercase font-semibold text-ink-muted block">
                     Sim Score
                   </span>
                   <span className="text-sm font-bold text-primary-600 dark:text-primary-400 font-mono">
@@ -108,7 +108,7 @@ export function VirtualTransferReadiness({ studentId = "p-rajesh" }: { studentId
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">
+                  <span className="text-xs uppercase font-semibold text-ink-muted block">
                     Physical Score
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono">
@@ -116,7 +116,7 @@ export function VirtualTransferReadiness({ studentId = "p-rajesh" }: { studentId
                   </span>
                 </div>
                 <div className="border-l border-slate-200 dark:border-slate-700 pl-3">
-                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">
+                  <span className="text-xs uppercase font-semibold text-ink-muted block">
                     Transfer Rate
                   </span>
                   <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">

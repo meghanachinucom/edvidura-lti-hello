@@ -148,7 +148,7 @@ export function AlgorithmicPracticeCard({
         >
           <div className="flex items-center justify-between text-xs font-bold text-secondary">
             <span>{minted.title}</span>
-            <span className="font-mono text-ink-muted text-[11px]">{minted.variant_id}</span>
+            <span className="font-mono text-ink-muted text-xs">{minted.variant_id}</span>
           </div>
 
           <p className="text-sm sm:text-base font-semibold text-ink leading-relaxed">

@@ -228,43 +228,43 @@ export function AcademicCreditCard({ userId = "6" }: { userId?: string }) {
           {/* Top 4 KPI Summary Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Total Earned Credits
               </span>
               <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-secondary">
                 {ledger.total_credits_awarded}
               </p>
-              <span className="text-[10px] text-ink-muted font-medium">105.0 Audited Hours</span>
+              <span className="text-xs text-ink-muted font-medium">105.0 Audited Hours</span>
             </div>
 
             <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Classroom Seat Time
               </span>
               <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">
                 {ledger.instructional_hours}h
               </p>
-              <span className="text-[10px] text-ink-muted font-medium">Direct Instruction</span>
+              <span className="text-xs text-ink-muted font-medium">Direct Instruction</span>
             </div>
 
             <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Lab & Practicum
               </span>
               <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">
                 {ledger.lab_hours}h
               </p>
-              <span className="text-[10px] text-ink-muted font-medium">Simulations & Spatial</span>
+              <span className="text-xs text-ink-muted font-medium">Simulations & Spatial</span>
             </div>
 
             <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Curriculum Progress
               </span>
               <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-emerald-700">
                 {ledger.graduation_progress_pct ?? 82}%
               </p>
-              <span className="text-[10px] text-emerald-800 font-medium">
+              <span className="text-xs text-emerald-800 font-medium">
                 On Track for Honor Roll
               </span>
             </div>
@@ -299,7 +299,7 @@ export function AcademicCreditCard({ userId = "6" }: { userId?: string }) {
                           +{row.credits} cr
                         </td>
                         <td className="px-3.5 py-2.5 text-right">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-bold">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-xs font-bold">
                             <CheckCircle2 className="size-2.5" />
                             Verified
                           </span>

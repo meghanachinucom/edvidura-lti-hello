@@ -130,7 +130,7 @@ export function VerifiableCredentialCard({
           {/* Certificate Header Banner */}
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-emerald-200/60 pb-3">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-emerald-800 text-[11px] font-bold uppercase tracking-wider">
+              <div className="inline-flex items-center gap-1.5 text-emerald-800 text-xs font-bold uppercase tracking-wider">
                 <Award className="size-4" />
                 <span>EdVidura Verified Competency Certificate</span>
               </div>
@@ -147,7 +147,7 @@ export function VerifiableCredentialCard({
               <span className="rounded-full bg-emerald-700 text-white px-3 py-0.5 text-xs font-bold shadow-2xs">
                 Level {credential.mastery_level} Mastered
               </span>
-              <span className="text-[10px] text-ink-muted font-mono">{credential.issued_at}</span>
+              <span className="text-xs text-ink-muted font-mono">{credential.issued_at}</span>
             </div>
           </div>
 
@@ -167,10 +167,10 @@ export function VerifiableCredentialCard({
                 ))}
               </div>
               <div className="pt-1">
-                <span className="text-[11px] font-mono text-ink-muted block truncate">
+                <span className="text-xs font-mono text-ink-muted block truncate">
                   SHA-256 Seal: {credential.cryptographic_hash}
                 </span>
-                <span className="text-[11px] font-mono text-ink-muted block">
+                <span className="text-xs font-mono text-ink-muted block">
                   Credential ID: {credential.credential_id}
                 </span>
               </div>
@@ -211,7 +211,7 @@ export function VerifiableCredentialCard({
                 <rect x="58" y="58" width="6" height="6" fill="#065f46" />
                 <rect x="70" y="66" width="6" height="6" fill="#065f46" />
               </svg>
-              <span className="text-[10px] font-bold text-emerald-800 mt-1">Scan to Verify</span>
+              <span className="text-xs font-bold text-emerald-800 mt-1">Scan to Verify</span>
             </div>
           </div>
 

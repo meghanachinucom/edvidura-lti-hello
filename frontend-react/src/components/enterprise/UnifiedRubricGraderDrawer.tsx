@@ -310,7 +310,7 @@ export function UnifiedRubricGraderDrawer({
               <div className="flex items-center gap-2 px-2.5 py-1 rounded-control border border-border bg-surface">
                 <User className="size-3.5 text-secondary" />
                 <span className="text-xs font-bold text-ink">{activeStudent.studentName}</span>
-                <span className="text-[10px] text-ink-muted">
+                <span className="text-xs text-ink-muted">
                   ({selectedStudentIdx + 1} of {ROSTER.length})
                 </span>
               </div>
@@ -421,12 +421,12 @@ export function UnifiedRubricGraderDrawer({
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-[11px] font-bold text-ink">{tier.label}</span>
-                            <span className="text-[10px] font-mono font-bold text-secondary">
+                            <span className="text-xs font-bold text-ink">{tier.label}</span>
+                            <span className="text-xs font-mono font-bold text-secondary">
                               {tier.points} pt
                             </span>
                           </div>
-                          <p className="text-[10px] text-ink-muted line-clamp-2 leading-tight">
+                          <p className="text-xs text-ink-muted line-clamp-2 leading-tight">
                             {tier.description}
                           </p>
                         </button>
@@ -436,7 +436,7 @@ export function UnifiedRubricGraderDrawer({
 
                   {/* Feedback annotation input */}
                   <div>
-                    <label className="text-[11px] font-semibold text-ink-muted block mb-1">
+                    <label className="text-xs font-semibold text-ink-muted block mb-1">
                       Criterion Feedback & Coaching Notes:
                     </label>
                     <input
@@ -475,7 +475,7 @@ export function UnifiedRubricGraderDrawer({
                   <span className="text-xs font-bold text-ink block">
                     Session Verification Status
                   </span>
-                  <span className="text-[11px] text-ink-muted">
+                  <span className="text-xs text-ink-muted">
                     100% verified authentic learner session
                   </span>
                 </div>
@@ -498,10 +498,10 @@ export function UnifiedRubricGraderDrawer({
                           <p className="font-semibold text-ink">
                             {ev.incident_type.replace(/_/g, " ")}
                           </p>
-                          <p className="text-ink-muted text-[11px]">{ev.details}</p>
+                          <p className="text-ink-muted text-xs">{ev.details}</p>
                         </div>
                       </div>
-                      <span className="font-mono text-ink-muted text-[11px] shrink-0">
+                      <span className="font-mono text-ink-muted text-xs shrink-0">
                         {ev.timestamp}
                       </span>
                     </div>
@@ -515,7 +515,7 @@ export function UnifiedRubricGraderDrawer({
         {/* Drawer Bottom Bar with Total & Action Buttons */}
         <div className="p-4 sm:p-5 border-t border-border bg-surface-elevated flex flex-wrap items-center justify-between gap-3">
           <div>
-            <span className="text-[11px] text-ink-muted block uppercase tracking-wider font-bold">
+            <span className="text-xs text-ink-muted block uppercase tracking-wider font-bold">
               Total Evaluated Score
             </span>
             <div className="flex items-baseline gap-1.5">

@@ -360,7 +360,7 @@ function Page() {
               }`}
             >
               <div className="font-semibold text-xs text-brand">Guided Mode</div>
-              <div className="text-[11px] text-ink-muted mt-0.5">
+              <div className="text-xs text-ink-muted mt-0.5">
                 Probing questions, one step at a time, targeted hint ladder.
               </div>
             </button>
@@ -374,7 +374,7 @@ function Page() {
               }`}
             >
               <div className="font-semibold text-xs">Direct Reference Mode</div>
-              <div className="text-[11px] text-ink-muted mt-0.5">
+              <div className="text-xs text-ink-muted mt-0.5">
                 Immediate factual explanations and direct textbook excerpts.
               </div>
             </button>
@@ -404,10 +404,10 @@ function Page() {
                     key={sk.id}
                     className="text-xs rounded-xl border border-slate-200 p-3 bg-slate-50/60 shadow-2xs"
                   >
-                    <div className="flex justify-between items-center text-[11px] mb-1.5">
+                    <div className="flex justify-between items-center text-xs mb-1.5">
                       <span className="font-bold text-slate-900 flex items-center gap-1.5">
                         {isLocked ? (
-                          <Lock size={13} className="text-slate-400" />
+                          <Lock size={13} className="text-ink-muted" />
                         ) : isMastered ? (
                           <CheckCircle2 size={13} className="text-emerald-600" />
                         ) : (
@@ -416,7 +416,7 @@ function Page() {
                         <span>{sk.name}</span>
                       </span>
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        className={`rounded-full px-2 py-0.5 text-xs font-bold ${
                           sk.mastery_level >= 3
                             ? "bg-emerald-100 text-emerald-800"
                             : sk.status === "Review Due"
@@ -460,7 +460,7 @@ function Page() {
 
             {!diagComplete && diagnosticQuestions[diagStep] ? (
               <div className="space-y-2.5">
-                <div className="flex justify-between text-[11px] text-ink-muted">
+                <div className="flex justify-between text-xs text-ink-muted">
                   <span>
                     Question {diagStep + 1} of {diagnosticQuestions.length}
                   </span>
@@ -485,7 +485,7 @@ function Page() {
               <div className="text-center py-2 space-y-1.5">
                 <CheckCircle2 className="size-6 text-emerald-600 mx-auto" />
                 <p className="text-xs font-bold text-ink">Starting Level Calibrated!</p>
-                <p className="text-[11px] text-ink-muted">
+                <p className="text-xs text-ink-muted">
                   Your skill ladder has been updated with verified starting masteries.
                 </p>
                 <button
@@ -551,7 +551,7 @@ function Page() {
                 {turns.map((x) => (
                   <li key={x.id} className="space-y-3">
                     <div className="ml-auto max-w-[85%] rounded-2xl bg-amber-50 border border-amber-200/80 p-3.5 text-slate-900 shadow-2xs">
-                      <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1">
+                      <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-1">
                         {s("yourQuestion")}
                       </p>
                       <p className="text-sm font-medium leading-relaxed">{x.question}</p>
@@ -579,13 +579,13 @@ function Page() {
                     <Lightbulb size={13} className="text-amber-500" />
                     3-Step Hint Ladder:
                   </span>
-                  <span className="text-[11px] text-ink-muted">Need a step forward?</span>
+                  <span className="text-xs text-ink-muted">Need a step forward?</span>
                 </div>
                 <div className="grid grid-cols-3 gap-1.5">
                   <button
                     type="button"
                     onClick={() => requestHint(1)}
-                    className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
+                    className={`rounded border px-2 py-1 text-center text-xs font-medium transition-colors ${
                       activeHintLevel === 1
                         ? "border-brand bg-brand/10 text-brand font-bold"
                         : "border-border bg-surface text-ink hover:border-brand"
@@ -596,7 +596,7 @@ function Page() {
                   <button
                     type="button"
                     onClick={() => requestHint(2)}
-                    className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
+                    className={`rounded border px-2 py-1 text-center text-xs font-medium transition-colors ${
                       activeHintLevel === 2
                         ? "border-brand bg-brand/10 text-brand font-bold"
                         : "border-border bg-surface text-ink hover:border-brand"
@@ -607,7 +607,7 @@ function Page() {
                   <button
                     type="button"
                     onClick={() => requestHint(3)}
-                    className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
+                    className={`rounded border px-2 py-1 text-center text-xs font-medium transition-colors ${
                       activeHintLevel === 3
                         ? "border-brand bg-brand/10 text-brand font-bold"
                         : "border-border bg-surface text-ink hover:border-brand"
@@ -639,7 +639,7 @@ function Page() {
                     <select
                       value={voiceCleanupMode}
                       onChange={(e) => setVoiceCleanupMode(e.target.value as "smart" | "exact")}
-                      className="text-[11px] rounded border border-border bg-page-bg px-2 py-1 text-ink-muted hover:text-ink focus:outline-none"
+                      className="text-xs rounded border border-border bg-page-bg px-2 py-1 text-ink-muted hover:text-ink focus:outline-none"
                       title="Voice cleanup mode"
                     >
                       <option value="smart">Smart Math Cleanup</option>
@@ -683,7 +683,7 @@ function Page() {
                       </button>
                     )}
                   </div>
-                  <span className="text-[11px] text-ink-muted font-medium">
+                  <span className="text-xs text-ink-muted font-medium">
                     {tutorMode === "guided" ? "Guided Mastery Mode" : "Direct Mode"}
                   </span>
                 </div>
@@ -741,13 +741,13 @@ function Reply({
               </div>
               <p className="text-xs text-ink">{ex.checkYourself}</p>
               {tutor?.hint && (
-                <p className="text-[11px] text-ink-muted italic mt-1.5">💡 Hint: {tutor.hint}</p>
+                <p className="text-xs text-ink-muted italic mt-1.5">💡 Hint: {tutor.hint}</p>
               )}
               {onAskFollowUp && (
                 <button
                   type="button"
                   onClick={() => onAskFollowUp(`How do I answer: "${ex.checkYourself}"?`)}
-                  className="mt-2 text-[11px] font-semibold text-brand hover:underline inline-flex items-center gap-1"
+                  className="mt-2 text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
                 >
                   Work through this step →
                 </button>

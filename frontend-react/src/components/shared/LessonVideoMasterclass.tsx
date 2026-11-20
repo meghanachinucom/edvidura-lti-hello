@@ -138,7 +138,7 @@ export function LessonVideoMasterclass({
                 style={{ width: `${(currentTime / Math.max(lecture.durationSec, 1)) * 100}%` }}
               />
             </div>
-            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-mono text-white/90">
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs font-mono text-white/90">
               <span className="rounded bg-black/60 px-2 py-0.5 backdrop-blur-xs font-sans">
                 {lecture.speaker}
               </span>
@@ -150,7 +150,7 @@ export function LessonVideoMasterclass({
 
           {/* Chapter Markers */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
               Jump to:
             </span>
             {lecture.chapters.map((ch, idx) => (
@@ -180,7 +180,7 @@ export function LessonVideoMasterclass({
           <div>
             <div className="flex items-center justify-between pb-2 border-b border-border">
               <span className="text-xs font-bold text-ink">Synchronous Notes</span>
-              <span className="text-[10px] font-mono text-amber-600 font-bold">
+              <span className="text-xs font-mono text-amber-600 font-bold">
                 Pinned at {formatClock(currentTime)}
               </span>
             </div>
@@ -193,7 +193,7 @@ export function LessonVideoMasterclass({
                     key={n.id}
                     className="p-2 rounded-xl bg-surface border border-border text-xs space-y-0.5"
                   >
-                    <span className="text-[10px] font-mono text-amber-600 font-bold">
+                    <span className="text-xs font-mono text-amber-600 font-bold">
                       {formatClock(n.time)}
                     </span>
                     <p className="text-ink">{n.text}</p>

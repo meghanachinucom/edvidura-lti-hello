@@ -222,39 +222,39 @@ export function LiveEventStreamViewer() {
       {/* KPI Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-          <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+          <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Stream Events
           </span>
           <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">
             {events.length}
           </p>
-          <span className="text-[10px] text-ink-muted">Live Ingestion Active</span>
+          <span className="text-xs text-ink-muted">Live Ingestion Active</span>
         </div>
 
         <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-          <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+          <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Active Learners
           </span>
           <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-secondary">
             4 Students
           </p>
-          <span className="text-[10px] text-secondary font-medium">Class 8 Section A</span>
+          <span className="text-xs text-secondary font-medium">Class 8 Section A</span>
         </div>
 
         <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-          <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+          <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Mastery Ratio
           </span>
           <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-emerald-700">92.5%</p>
-          <span className="text-[10px] text-emerald-800 font-medium">First-Attempt Success</span>
+          <span className="text-xs text-emerald-800 font-medium">First-Attempt Success</span>
         </div>
 
         <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-          <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+          <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Event Velocity
           </span>
           <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">18 / hr</p>
-          <span className="text-[10px] text-ink-muted">Peak Study Window</span>
+          <span className="text-xs text-ink-muted">Peak Study Window</span>
         </div>
       </div>
 
@@ -277,7 +277,7 @@ export function LiveEventStreamViewer() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="text-[11px] font-bold text-ink block mb-1">Student Actor</label>
+              <label className="text-xs font-bold text-ink block mb-1">Student Actor</label>
               <select
                 value={newEventActor}
                 onChange={(e) => setNewEventActor(e.target.value)}
@@ -290,7 +290,7 @@ export function LiveEventStreamViewer() {
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-bold text-ink block mb-1">Event Type</label>
+              <label className="text-xs font-bold text-ink block mb-1">Event Type</label>
               <select
                 value={newEventType}
                 onChange={(e) => setNewEventType(e.target.value)}
@@ -303,7 +303,7 @@ export function LiveEventStreamViewer() {
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-bold text-ink block mb-1">
+              <label className="text-xs font-bold text-ink block mb-1">
                 Target Object / Lesson
               </label>
               <input
@@ -392,13 +392,13 @@ export function LiveEventStreamViewer() {
                     <span className="text-ink-muted font-normal">{ev.object_id}</span>
                   </p>
                   {ev.payload && (
-                    <p className="text-[11px] font-mono text-ink-muted truncate">
+                    <p className="text-xs font-mono text-ink-muted truncate">
                       {JSON.stringify(ev.payload)}
                     </p>
                   )}
                 </div>
               </div>
-              <span className="text-[11px] text-ink-muted font-mono whitespace-nowrap shrink-0">
+              <span className="text-xs text-ink-muted font-mono whitespace-nowrap shrink-0">
                 {ev.timestamp || "Live"}
               </span>
             </div>

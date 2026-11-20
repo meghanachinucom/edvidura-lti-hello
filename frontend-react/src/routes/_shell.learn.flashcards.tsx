@@ -369,15 +369,15 @@ function Page() {
 
             <p className="text-center text-xs text-slate-500 font-medium pt-1">
               Keyboard:{" "}
-              <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700 font-mono text-[11px]">
+              <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700 font-mono text-xs">
                 Space
               </kbd>{" "}
               Flip ·{" "}
-              <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700 font-mono text-[11px]">
+              <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700 font-mono text-xs">
                 ←
               </kbd>{" "}
               Prev ·{" "}
-              <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700 font-mono text-[11px]">
+              <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-700 font-mono text-xs">
                 →
               </kbd>{" "}
               Next

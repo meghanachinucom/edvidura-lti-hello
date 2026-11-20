@@ -842,7 +842,7 @@ function Page() {
                           </td>
                           <td className="p-3.5">
                             <span className="inline-flex items-center gap-1 text-slate-600 font-mono text-xs">
-                              <FileText size={13} className="text-slate-400" />
+                              <FileText size={13} className="text-ink-muted" />
                               <span>STD-MATH-08</span>
                             </span>
                           </td>

@@ -215,7 +215,7 @@ export function InterventionRulesPanel() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-bold text-ink block mb-1">Rule Name</label>
+              <label className="text-xs font-bold text-ink block mb-1">Rule Name</label>
               <input
                 type="text"
                 placeholder="e.g. Flashcard Retention Refresher"
@@ -226,7 +226,7 @@ export function InterventionRulesPanel() {
               />
             </div>
             <div>
-              <label className="text-[11px] font-bold text-ink block mb-1">
+              <label className="text-xs font-bold text-ink block mb-1">
                 Plain-English Condition
               </label>
               <input
@@ -238,7 +238,7 @@ export function InterventionRulesPanel() {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-[11px] font-bold text-ink block mb-1">
+              <label className="text-xs font-bold text-ink block mb-1">
                 Pedagogical Action
               </label>
               <input
@@ -269,7 +269,7 @@ export function InterventionRulesPanel() {
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <h5 className="text-xs font-bold text-ink">{rule.name}</h5>
-                  <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5">
+                  <span className="rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5">
                     Active
                   </span>
                 </div>
@@ -279,7 +279,7 @@ export function InterventionRulesPanel() {
                 </p>
               </div>
               <div className="pt-2 border-t border-border/60">
-                <span className="text-[11px] font-semibold text-secondary block">
+                <span className="text-xs font-semibold text-secondary block">
                   Action: {rule.action}
                 </span>
               </div>
@@ -303,7 +303,7 @@ export function InterventionRulesPanel() {
                   <strong className="text-ink font-bold">{st.name}</strong>
                   <span className="text-ink-muted">· {st.issue}</span>
                 </div>
-                <p className="text-[11px] text-amber-900 ml-6">
+                <p className="text-xs text-amber-900 ml-6">
                   Recommended Action: {st.recommendedNudge}
                 </p>
               </div>

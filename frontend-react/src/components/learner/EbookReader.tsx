@@ -773,7 +773,7 @@ export function EbookReader({
 
                 {transformedText && (
                   <div className="rounded bg-highlight p-3 border border-border text-xs text-ink space-y-1">
-                    <div className="flex justify-between font-semibold text-brand text-[11px]">
+                    <div className="flex justify-between font-semibold text-brand text-xs">
                       <span className="capitalize">{transformedText.command} Result:</span>
                       <button
                         type="button"

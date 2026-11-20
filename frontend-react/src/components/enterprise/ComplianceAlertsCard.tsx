@@ -145,29 +145,29 @@ export function ComplianceAlertsCard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-          <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+          <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Monitored Students
           </span>
           <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">48 Enrolled</p>
-          <span className="text-[10px] text-ink-muted">Active in Industrial Labs</span>
+          <span className="text-xs text-ink-muted">Active in Industrial Labs</span>
         </div>
 
         <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-          <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+          <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Action Required
           </span>
           <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-rose-700">
             {certs.filter((c) => c.status === "Action Required").length} Student
           </p>
-          <span className="text-[10px] text-rose-800 font-medium">Expires in &lt;7 days</span>
+          <span className="text-xs text-rose-800 font-medium">Expires in &lt;7 days</span>
         </div>
 
         <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-          <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+          <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Overall Compliance
           </span>
           <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-emerald-700">97.8%</p>
-          <span className="text-[10px] text-emerald-800 font-medium">Audit-Ready State</span>
+          <span className="text-xs text-emerald-800 font-medium">Audit-Ready State</span>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ export function ComplianceAlertsCard() {
               <div className="flex items-center gap-2">
                 <span className="font-bold text-ink text-xs">{c.name}</span>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                  className={`rounded-full px-2 py-0.5 text-xs font-bold ${
                     c.status === "Action Required"
                       ? "bg-rose-100 text-rose-800"
                       : c.status === "Expiring Soon"
@@ -199,7 +199,7 @@ export function ComplianceAlertsCard() {
                   {c.status} · {c.expires_in_days} days left
                 </span>
               </div>
-              <p className="text-[11px] text-ink-muted">
+              <p className="text-xs text-ink-muted">
                 Student: <strong className="text-ink">{c.student_name}</strong> (ID #{c.student_id})
               </p>
             </div>

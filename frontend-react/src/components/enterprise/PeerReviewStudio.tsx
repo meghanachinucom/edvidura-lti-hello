@@ -194,7 +194,7 @@ export function PeerReviewStudio({
                 <span className="w-2 h-2 rounded-full bg-secondary" />
                 {submission.peer_alias} · Solution Submission
               </span>
-              <span className="text-[11px] font-mono text-ink-muted">Double-Blind Verified</span>
+              <span className="text-xs font-mono text-ink-muted">Double-Blind Verified</span>
             </div>
 
             <p className="text-xs font-semibold text-ink">
@@ -221,7 +221,7 @@ export function PeerReviewStudio({
                     {scores.accuracy} / 10 pts
                   </span>
                 </div>
-                <p className="text-[11px] text-ink-muted">
+                <p className="text-xs text-ink-muted">
                   Correct algebraic manipulation and balance properties.
                 </p>
                 <input
@@ -242,7 +242,7 @@ export function PeerReviewStudio({
                     {scores.clarity} / 10 pts
                   </span>
                 </div>
-                <p className="text-[11px] text-ink-muted">
+                <p className="text-xs text-ink-muted">
                   Logical progression of steps without omitted operations.
                 </p>
                 <input
@@ -263,7 +263,7 @@ export function PeerReviewStudio({
                     {scores.final_answer} / 10 pts
                   </span>
                 </div>
-                <p className="text-[11px] text-ink-muted">
+                <p className="text-xs text-ink-muted">
                   Correct numerical root and explicit verification check.
                 </p>
                 <input

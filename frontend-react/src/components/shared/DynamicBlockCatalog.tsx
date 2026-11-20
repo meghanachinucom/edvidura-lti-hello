@@ -111,7 +111,7 @@ export function DynamicBlockCatalog({
           </h3>
           <p className="text-xs text-ink-muted">{subtitle}</p>
         </div>
-        <span className="inline-flex items-center gap-1 self-start rounded-full bg-surface-raised px-2.5 py-1 text-[11px] font-semibold text-secondary">
+        <span className="inline-flex items-center gap-1 self-start rounded-full bg-surface-raised px-2.5 py-1 text-xs font-semibold text-secondary">
           <Sparkles size={12} />
           <span>Auto-Rendered from Backend</span>
         </span>
@@ -130,8 +130,8 @@ export function DynamicBlockCatalog({
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-[11px] font-bold text-secondary">{block.id}</span>
-                  <span className="rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold text-secondary">
+                  <span className="font-mono text-xs font-bold text-secondary">{block.id}</span>
+                  <span className="rounded-full bg-secondary-container px-2 py-0.5 text-xs font-bold text-secondary">
                     {waveBadge}
                   </span>
                 </div>
@@ -144,7 +144,7 @@ export function DynamicBlockCatalog({
               </div>
 
               <div className="mt-3.5 flex items-center justify-between border-t border-border pt-3">
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
                   <CheckCircle2 size={12} />
                   <span>{isTested ? "Active & Verified" : "Live API"}</span>
                 </span>

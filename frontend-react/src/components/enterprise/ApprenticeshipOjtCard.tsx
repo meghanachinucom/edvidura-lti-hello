@@ -173,37 +173,37 @@ export function ApprenticeshipOjtCard({ apprenticeId = "p-rajesh" }: { apprentic
           {/* Top 3 KPI Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Current Wage Tier
               </span>
               <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-secondary">
                 Tier {status.wage_tier}
               </p>
-              <span className="text-[10px] text-emerald-800 font-bold">
+              <span className="text-xs text-emerald-800 font-bold">
                 ₹14,500 / month Stipend
               </span>
             </div>
 
             <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Logged OJT Hours
               </span>
               <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">
                 {status.total_ojt_hours}h
               </p>
-              <span className="text-[10px] text-ink-muted">
+              <span className="text-xs text-ink-muted">
                 {status.next_tier_hours_remaining}h to Tier 3 Step-Up
               </span>
             </div>
 
             <div className="rounded-control bg-surface-elevated p-3 border border-border text-center">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Classroom Practicum
               </span>
               <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">
                 {status.total_classroom_hours}h
               </p>
-              <span className="text-[10px] text-ink-muted">Sponsor: {status.sponsor_id}</span>
+              <span className="text-xs text-ink-muted">Sponsor: {status.sponsor_id}</span>
             </div>
           </div>
 
@@ -221,7 +221,7 @@ export function ApprenticeshipOjtCard({ apprenticeId = "p-rajesh" }: { apprentic
                 style={{ width: `${ojtPct}%` }}
               />
             </div>
-            <div className="flex justify-between text-[11px] text-ink-muted pt-0.5">
+            <div className="flex justify-between text-xs text-ink-muted pt-0.5">
               <span>Tier 2 (Current)</span>
               <span className="font-semibold text-ink">Tier 3 (₹18,000 / mo after 600h)</span>
             </div>

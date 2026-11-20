@@ -288,18 +288,18 @@ function Page() {
                     const badge = (status: string) => {
                       if (status === "mastered")
                         return (
-                          <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-bold text-[10px]">
+                          <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-bold text-xs">
                             Mastered
                           </span>
                         );
                       if (status === "progress")
                         return (
-                          <span className="inline-block px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 font-semibold text-[10px]">
+                          <span className="inline-block px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 font-semibold text-xs">
                             In Progress
                           </span>
                         );
                       return (
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 font-bold text-[10px]">
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 font-bold text-xs">
                           Deficient
                         </span>
                       );
@@ -342,7 +342,7 @@ function Page() {
                   7-Day Formative Activity Heatmap
                 </h3>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-ink-muted">
+              <div className="flex items-center gap-1.5 text-xs text-ink-muted">
                 <span>Low</span>
                 <span className="w-3 h-3 rounded bg-slate-100 border border-slate-200" />
                 <span className="w-3 h-3 rounded bg-amber-200" />
@@ -384,7 +384,7 @@ function Page() {
                                 ? "bg-amber-200 text-slate-950"
                                 : cnt > 0
                                   ? "bg-amber-100 text-slate-700"
-                                  : "bg-slate-100 text-slate-400";
+                                  : "bg-slate-100 text-ink-muted";
                         return (
                           <td key={idx} className="py-2 px-1 text-center">
                             <span
@@ -442,11 +442,11 @@ function Page() {
                   className="p-4 rounded-surface border border-border bg-page-bg space-y-2"
                 >
                   <div className="text-xs font-bold text-ink">{item.q}</div>
-                  <div className="text-[11px] text-ink-muted">
+                  <div className="text-xs text-ink-muted">
                     Difficulty:{" "}
                     <span className={`font-mono font-bold ${item.color}`}>{item.diff}</span>
                   </div>
-                  <div className="text-[11px] text-ink-muted">
+                  <div className="text-xs text-ink-muted">
                     Discrimination (<span className="font-serif italic">r</span>):{" "}
                     <span className="font-mono font-bold text-ink">{item.disc}</span>
                   </div>

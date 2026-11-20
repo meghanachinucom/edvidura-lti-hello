@@ -559,7 +559,7 @@ function WysiwygEditorForm({
               "\n:::concept-check\nQuestion: What is the main inverse operation?\n- Option A\n* Option B (Correct)\n- Option C\nExplanation: Active recall explanation here.\n:::\n",
             )
           }
-          className="inline-flex items-center gap-1 rounded bg-secondary/15 px-2 py-1 text-[11px] font-bold text-secondary hover:bg-secondary/25"
+          className="inline-flex items-center gap-1 rounded bg-secondary/15 px-2 py-1 text-xs font-bold text-secondary hover:bg-secondary/25"
         >
           <HelpCircle size={13} />
           <span>+ Concept Check</span>
@@ -844,7 +844,7 @@ function DeepLinkPickerModal({ onCancel }: { onCancel: () => void }) {
               />
               <div>
                 <p className="text-xs font-bold text-ink">{item.title}</p>
-                <p className="text-[11px] text-ink-muted">{item.desc}</p>
+                <p className="text-xs text-ink-muted">{item.desc}</p>
               </div>
             </label>
           ))}
@@ -871,16 +871,16 @@ function DeepLinkPickerModal({ onCancel }: { onCancel: () => void }) {
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
               }}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-secondary"
             >
               <Copy size={12} />
               <span>{copied ? "Copied!" : "Copy JWT Claims"}</span>
             </button>
           </div>
-          <pre className="max-h-48 overflow-y-auto rounded bg-surface p-3 font-mono text-[11px] text-ink border border-border">
+          <pre className="max-h-48 overflow-y-auto rounded bg-surface p-3 font-mono text-xs text-ink border border-border">
             {JSON.stringify(preview.jwtClaims, null, 2)}
           </pre>
-          <p className="text-[11px] text-ink-muted">
+          <p className="text-xs text-ink-muted">
             Platform JWKS Verification Endpoint:{" "}
             <code className="font-mono text-secondary">{preview.jwksUrl}</code>
           </p>

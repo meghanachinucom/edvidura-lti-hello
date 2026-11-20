@@ -226,15 +226,15 @@ export function AdaptivePathwayBanner({ studentId = "6" }: { studentId?: string 
                 <span className={isActive ? trackStyles[tr.track as "Support" | "Core" | "Enrichment"].accent : "text-ink"}>
                   {tr.track} Track
                 </span>
-                <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-page-bg border border-border/60">
+                <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-page-bg border border-border/60">
                   {tr.threshold}
                 </span>
               </div>
-              <p className="text-[11px] leading-relaxed text-ink-muted line-clamp-2">
+              <p className="text-xs leading-relaxed text-ink-muted line-clamp-2">
                 {tr.description}
               </p>
               {isActive && (
-                <div className="mt-2 flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 className="size-3" />
                   <span>Active Assessment Match</span>
                 </div>
@@ -251,7 +251,7 @@ export function AdaptivePathwayBanner({ studentId = "6" }: { studentId?: string 
             <Sparkles className="size-3.5 text-secondary" />
             Recommended Modules for Your Active Track:
           </span>
-          <span className="text-[11px] text-ink-muted">Click any module to jump in</span>
+          <span className="text-xs text-ink-muted">Click any module to jump in</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -263,7 +263,7 @@ export function AdaptivePathwayBanner({ studentId = "6" }: { studentId?: string 
             >
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-secondary/10 text-secondary">
+                  <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-secondary/10 text-secondary">
                     {res.label || res.type}
                   </span>
                   <ChevronRight className="size-3.5 text-ink-muted group-hover:text-secondary group-hover:translate-x-0.5 transition-transform" />
@@ -275,7 +275,7 @@ export function AdaptivePathwayBanner({ studentId = "6" }: { studentId?: string 
 
               {/* Progress bar */}
               <div className="space-y-1 pt-1">
-                <div className="flex justify-between text-[10px] text-ink-muted">
+                <div className="flex justify-between text-xs text-ink-muted">
                   <span>Progress</span>
                   <span className="font-mono font-bold text-ink">{res.progress ?? 75}%</span>
                 </div>

@@ -284,7 +284,7 @@ export function QuizSession({ practice: propPractice }: QuizSessionProps = {}) {
                         {s("questionOf", { n: i + 1, total: questions.length })}
                       </p>
                       {q.topic && (
-                        <span className="inline-block text-[11px] font-bold text-secondary">
+                        <span className="inline-block text-xs font-bold text-secondary">
                           {q.topic}
                         </span>
                       )}
@@ -294,7 +294,7 @@ export function QuizSession({ practice: propPractice }: QuizSessionProps = {}) {
                   <div className="flex items-center gap-2">
                     {q.difficulty && (
                       <span
-                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wide uppercase ${
                           q.difficulty === "Advanced"
                             ? "bg-purple-100 text-purple-800"
                             : q.difficulty === "Foundational"

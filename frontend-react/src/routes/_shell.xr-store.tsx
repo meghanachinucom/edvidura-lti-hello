@@ -223,7 +223,7 @@ export function XrStorePage() {
             </svg>
 
             {/* Legend overlay */}
-            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-mono text-slate-300 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-xs">
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs font-mono text-slate-300 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-xs">
               <span className="text-amber-400 font-bold">
                 Line: y = {slope}x {intercept >= 0 ? `+ ${intercept}` : `- ${Math.abs(intercept)}`}
               </span>
@@ -251,7 +251,7 @@ export function XrStorePage() {
                 onChange={(e) => setSlope(parseFloat(e.target.value))}
                 className="w-full accent-amber-500 cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-ink-muted font-mono">
+              <div className="flex justify-between text-xs text-ink-muted font-mono">
                 <span>-4.0 (steep neg)</span>
                 <span>0.0 (horizontal)</span>
                 <span>+4.0 (steep pos)</span>
@@ -275,7 +275,7 @@ export function XrStorePage() {
                 onChange={(e) => setIntercept(parseFloat(e.target.value))}
                 className="w-full accent-sky-500 cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-ink-muted font-mono">
+              <div className="flex justify-between text-xs text-ink-muted font-mono">
                 <span>-8.0</span>
                 <span>0.0</span>
                 <span>+8.0</span>
@@ -347,7 +347,7 @@ export function XrStorePage() {
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
               <div className="absolute top-3 right-3">
                 {lab.headsetReady && (
-                  <span className="rounded-full bg-amber-500/90 px-2.5 py-1 text-[11px] font-bold text-slate-950 backdrop-blur-xs flex items-center gap-1">
+                  <span className="rounded-full bg-amber-500/90 px-2.5 py-1 text-xs font-bold text-slate-950 backdrop-blur-xs flex items-center gap-1">
                     <Glasses size={12} /> Headset Ready
                   </span>
                 )}
@@ -368,7 +368,7 @@ export function XrStorePage() {
               </div>
 
               <div className="border-t border-border pt-4 flex items-center justify-between">
-                <span className="text-[11px] font-mono text-ink-muted">Interactive Module</span>
+                <span className="text-xs font-mono text-ink-muted">Interactive Module</span>
                 <button
                   type="button"
                   onClick={() => setSelectedLab(lab)}
@@ -467,7 +467,7 @@ export function XrStorePage() {
                       </svg>
 
                       {/* Legend overlay */}
-                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-mono text-slate-300 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-xs">
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs font-mono text-slate-300 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 backdrop-blur-xs">
                         <span className="text-amber-400 font-bold">
                           Line: y = {slope}x{" "}
                           {intercept >= 0 ? `+ ${intercept}` : `- ${Math.abs(intercept)}`}
@@ -497,7 +497,7 @@ export function XrStorePage() {
                           onChange={(e) => setSlope(parseFloat(e.target.value))}
                           className="w-full accent-amber-500 cursor-pointer"
                         />
-                        <div className="flex justify-between text-[10px] text-ink-muted font-mono">
+                        <div className="flex justify-between text-xs text-ink-muted font-mono">
                           <span>-4.0 (steep neg)</span>
                           <span>0.0 (horizontal)</span>
                           <span>+4.0 (steep pos)</span>
@@ -521,7 +521,7 @@ export function XrStorePage() {
                           onChange={(e) => setIntercept(parseFloat(e.target.value))}
                           className="w-full accent-sky-500 cursor-pointer"
                         />
-                        <div className="flex justify-between text-[10px] text-ink-muted font-mono">
+                        <div className="flex justify-between text-xs text-ink-muted font-mono">
                           <span>-8.0</span>
                           <span>0.0</span>
                           <span>+8.0</span>
@@ -586,7 +586,7 @@ export function XrStorePage() {
                           </div>
                           <span className="text-xs font-semibold">{step.label}</span>
                         </div>
-                        <span className="text-[11px] font-mono text-ink-muted">
+                        <span className="text-xs font-mono text-ink-muted">
                           {step.done ? "VERIFIED" : "PENDING"}
                         </span>
                       </button>

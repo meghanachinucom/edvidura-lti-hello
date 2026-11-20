@@ -169,14 +169,14 @@ export function MasterBlueprintSyncPanel({
           <div className="rounded-control border border-border bg-surface-elevated p-4 flex flex-wrap items-center justify-between gap-4">
             <div>
               <h4 className="text-xs sm:text-sm font-bold text-ink">{blueprint.name}</h4>
-              <p className="text-[11px] text-ink-muted font-mono">
+              <p className="text-xs text-ink-muted font-mono">
                 Blueprint ID: {blueprint.blueprint_id} · Last Synced: {blueprint.last_synced_at}
               </p>
             </div>
 
             <div className="flex items-center gap-4 text-xs">
               <div className="text-center">
-                <span className="text-ink-muted block text-[10px] font-bold uppercase">
+                <span className="text-ink-muted block text-xs font-bold uppercase">
                   Sections
                 </span>
                 <span className="font-bold text-ink">
@@ -184,13 +184,13 @@ export function MasterBlueprintSyncPanel({
                 </span>
               </div>
               <div className="text-center">
-                <span className="text-ink-muted block text-[10px] font-bold uppercase">
+                <span className="text-ink-muted block text-xs font-bold uppercase">
                   Locked Items
                 </span>
                 <span className="font-bold text-ink">{blueprint.locked_items_count} Units</span>
               </div>
               <div className="text-center">
-                <span className="text-ink-muted block text-[10px] font-bold uppercase">Status</span>
+                <span className="text-ink-muted block text-xs font-bold uppercase">Status</span>
                 <span className="font-bold text-emerald-700">100% Synced</span>
               </div>
             </div>
@@ -239,7 +239,7 @@ export function MasterBlueprintSyncPanel({
                       <td className="px-3.5 py-2 text-ink-muted">{sec.teacher}</td>
                       <td className="px-3.5 py-2 font-mono text-ink-muted">{sec.lastAudit}</td>
                       <td className="px-3.5 py-2 text-right">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-bold">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-xs font-bold">
                           <CheckCircle2 className="size-2.5" />
                           {sec.status}
                         </span>

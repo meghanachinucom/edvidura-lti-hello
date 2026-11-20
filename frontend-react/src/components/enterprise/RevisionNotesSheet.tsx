@@ -65,7 +65,7 @@ export function RevisionNotesSheet({
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 font-sans">
             Personalized Revision Sheet
           </h3>
-          <p className="text-xs text-slate-600 dark:text-slate-400">
+          <p className="text-xs text-slate-600 dark:text-ink-muted">
             Synthesize concise high-yield revision summaries, formulas, and common traps.
           </p>
         </div>

@@ -197,7 +197,7 @@ export function WorkspaceFeatureScreen() {
             </h3>
           </div>
           {feature.data_endpoint && (
-            <span className="rounded font-mono text-[11px] bg-page-bg px-2.5 py-1 text-ink-muted border border-border">
+            <span className="rounded font-mono text-xs bg-page-bg px-2.5 py-1 text-ink-muted border border-border">
               GET {feature.data_endpoint}
             </span>
           )}

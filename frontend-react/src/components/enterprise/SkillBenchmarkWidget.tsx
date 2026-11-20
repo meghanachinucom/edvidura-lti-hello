@@ -221,7 +221,7 @@ export function SkillBenchmarkWidget({ userId = "6" }: { userId?: string }) {
           {/* Standing & Percentile Overview */}
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-control bg-surface-elevated p-3 border border-border">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Proficiency Tier
               </span>
               <div className="mt-1 flex items-center gap-2">
@@ -233,7 +233,7 @@ export function SkillBenchmarkWidget({ userId = "6" }: { userId?: string }) {
             </div>
 
             <div className="rounded-control bg-surface-elevated p-3 border border-border">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Cohort Benchmark
               </span>
               <div className="mt-1 flex items-center gap-2">
@@ -273,7 +273,7 @@ export function SkillBenchmarkWidget({ userId = "6" }: { userId?: string }) {
           {profile.recommended_action && (
             <div className="rounded-control bg-primary-fixed/50 border border-secondary/20 p-3 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <span className="text-[11px] font-bold text-secondary uppercase tracking-wider block">
+                <span className="text-xs font-bold text-secondary uppercase tracking-wider block">
                   Next Recommended Action
                 </span>
                 <p className="text-xs font-semibold text-ink">{profile.recommended_action}</p>

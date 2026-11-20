@@ -42,7 +42,7 @@ export function PageHeading({
         {label}
       </h1>
       {desc && (
-        <p className="mt-1 max-w-reading text-xs sm:text-sm leading-relaxed font-normal text-ink-muted">
+        <p className="mt-1.5 max-w-reading text-sm sm:text-[15px] leading-relaxed font-normal text-ink-muted">
           {desc}
         </p>
       )}

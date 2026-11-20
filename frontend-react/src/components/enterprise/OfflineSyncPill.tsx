@@ -76,7 +76,7 @@ export function OfflineSyncPill() {
         )}
 
         <span className="text-border">|</span>
-        <span className="text-ink-muted text-[11px] hidden md:inline">Synced: {lastSync}</span>
+        <span className="text-ink-muted text-xs hidden md:inline">Synced: {lastSync}</span>
 
         {/* Sync / Simulate Controls */}
         <div className="flex items-center gap-1.5 ml-1">
@@ -95,7 +95,7 @@ export function OfflineSyncPill() {
             type="button"
             onClick={handleToggleOfflineSim}
             title="Toggle simulated offline low-bandwidth queue"
-            className="text-[10px] text-ink-muted hover:text-ink border border-border/80 px-2 py-0.5 rounded-md hover:bg-surface-raised transition"
+            className="text-xs text-ink-muted hover:text-ink border border-border/80 px-2 py-0.5 rounded-md hover:bg-surface-raised transition"
           >
             {status === "synced" ? "Simulate Offline" : "Flush Queue"}
           </button>
@@ -117,7 +117,7 @@ export function OfflineSyncPill() {
       {showTooltip && (
         <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-xl border border-border bg-surface p-3 text-xs text-ink shadow-lg leading-relaxed">
           <p className="font-bold text-secondary mb-1">Low-Bandwidth Local-First Architecture</p>
-          <p className="text-ink-muted text-[11px]">
+          <p className="text-ink-muted text-xs">
             Your quiz answers, chapter annotations, and progress journal save locally first to
             IndexedDB and sync seamlessly when network reconnects.
           </p>

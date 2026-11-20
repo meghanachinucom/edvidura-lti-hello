@@ -93,7 +93,7 @@ export function ChatQuizMinter({
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 font-sans">
             Instant Topic Practice Check
           </h3>
-          <p className="text-xs text-slate-600 dark:text-slate-400">
+          <p className="text-xs text-slate-600 dark:text-ink-muted">
             Synthesize real-time practice questions tailored to your current study topic.
           </p>
         </div>

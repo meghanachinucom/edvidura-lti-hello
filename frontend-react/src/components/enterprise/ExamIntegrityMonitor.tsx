@@ -105,12 +105,12 @@ export function ExamIntegrityMonitor({ sessionId = "sess-alice-slice-a" }: { ses
 
         <div className="flex items-center gap-2">
           {incidentsCount > 0 ? (
-            <span className="inline-flex items-center gap-1 text-amber-900 bg-amber-100 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 px-2 py-0.5 rounded-full font-bold text-[11px]">
+            <span className="inline-flex items-center gap-1 text-amber-900 bg-amber-100 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 px-2 py-0.5 rounded-full font-bold text-xs">
               <AlertTriangle className="size-3" />
               <span>{incidentsCount} Tab Switches</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 px-2 py-0.5 rounded-full font-semibold text-[11px]">
+            <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 px-2 py-0.5 rounded-full font-semibold text-xs">
               <span>100% Unbroken Focus</span>
             </span>
           )}
@@ -119,7 +119,7 @@ export function ExamIntegrityMonitor({ sessionId = "sess-alice-slice-a" }: { ses
             <button
               type="button"
               onClick={() => setShowLog(!showLog)}
-              className="text-[11px] font-bold text-secondary hover:underline inline-flex items-center gap-0.5"
+              className="text-xs font-bold text-secondary hover:underline inline-flex items-center gap-0.5"
             >
               <span>{showLog ? "Hide Log" : "View Log"}</span>
               {showLog ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
@@ -130,14 +130,14 @@ export function ExamIntegrityMonitor({ sessionId = "sess-alice-slice-a" }: { ses
 
       {showLog && incidents.length > 0 && (
         <div className="pt-2 border-t border-border/60 space-y-1">
-          <p className="text-[10px] uppercase font-bold text-ink-muted">
+          <p className="text-xs uppercase font-bold text-ink-muted">
             Recorded Focus Telemetry:
           </p>
-          <div className="max-h-24 overflow-y-auto space-y-1 font-mono text-[11px]">
+          <div className="max-h-24 overflow-y-auto space-y-1 font-mono text-xs">
             {incidents.map((inc, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between text-slate-600 dark:text-slate-400 bg-surface px-2 py-1 rounded border border-border/40"
+                className="flex items-center justify-between text-slate-600 dark:text-ink-muted bg-surface px-2 py-1 rounded border border-border/40"
               >
                 <span>⚠ {inc.detail}</span>
                 <span className="text-ink-muted ml-2 shrink-0">{inc.timestamp}</span>

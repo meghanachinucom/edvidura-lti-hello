@@ -186,7 +186,7 @@ export function VideoCheckpointCard({ videoId = "les-transformer" }: { videoId?:
         {/* Progress tracker */}
         <div className="flex items-center gap-3 shrink-0 bg-page-bg px-4 py-2.5 rounded-2xl border border-border">
           <div className="text-right">
-            <span className="text-[10px] uppercase font-bold text-ink-muted block">
+            <span className="text-xs uppercase font-bold text-ink-muted block">
               Checkpoints
             </span>
             <span className="text-sm font-extrabold text-secondary font-mono">
@@ -212,7 +212,7 @@ export function VideoCheckpointCard({ videoId = "les-transformer" }: { videoId?:
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
             </svg>
-            <span className="absolute text-[11px] font-extrabold text-ink">
+            <span className="absolute text-xs font-extrabold text-ink">
               {Math.round((completedCount / cues.length) * 100)}%
             </span>
           </div>
@@ -223,11 +223,11 @@ export function VideoCheckpointCard({ videoId = "les-transformer" }: { videoId?:
       <div className="relative rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
         {/* Mock Video Canvas */}
         <div className="aspect-video w-full flex flex-col justify-between p-6 sm:p-8 bg-gradient-to-b from-slate-900/60 via-slate-950 to-slate-950 text-white">
-          <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="flex items-center justify-between text-xs text-ink-muted">
             <span className="font-mono bg-slate-800/80 px-2.5 py-1 rounded-md border border-slate-700">
               Module: PHY-08-TRANS
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800 text-[11px] font-semibold">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800 text-xs font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               1080p Masterclass Stream
             </span>
@@ -280,7 +280,7 @@ export function VideoCheckpointCard({ videoId = "les-transformer" }: { videoId?:
                     {isCleared ? (
                       <CheckCircle2 className="size-2.5 text-white" />
                     ) : (
-                      <span className="text-[9px] font-bold text-white">
+                      <span className="text-xs font-bold text-white">
                         {c.time_display.split(":")[1]}
                       </span>
                     )}
@@ -310,7 +310,7 @@ export function VideoCheckpointCard({ videoId = "les-transformer" }: { videoId?:
                     key={c.id}
                     type="button"
                     onClick={() => jumpToCue(c)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${
                       activeCue?.id === c.id
                         ? "bg-secondary text-white border-secondary"
                         : answeredMap[c.id]

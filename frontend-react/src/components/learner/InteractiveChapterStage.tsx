@@ -301,7 +301,7 @@ export function InteractiveChapterStage({
 
         {currentBeat.visual_diagram?.type === "step_transformation" && (
           <div className="space-y-4 w-full max-w-md mx-auto">
-            <div className="text-sm font-mono text-slate-400 line-through">
+            <div className="text-sm font-mono text-ink-muted line-through">
               {currentBeat.visual_diagram["initial"]}
             </div>
             <div className="inline-block rounded-xl bg-amber-100 border border-amber-300 px-4 py-1.5 text-xs font-bold text-amber-900 shadow-2xs">
