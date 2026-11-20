@@ -37,12 +37,12 @@ export function PageHeading({
       <h1
         ref={ref}
         tabIndex={-1}
-        className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-ink leading-tight"
+        className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-ink leading-tight"
       >
         {label}
       </h1>
       {desc && (
-        <p className="mt-1.5 max-w-reading text-sm sm:text-[15px] leading-relaxed font-normal text-ink-muted">
+        <p className="mt-1.5 max-w-reading text-[15px] sm:text-base leading-relaxed font-normal text-slate-600">
           {desc}
         </p>
       )}

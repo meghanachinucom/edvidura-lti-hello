@@ -97,20 +97,35 @@ export function TopNav() {
       <aside
         className={`${mobileOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-surface text-ink shadow-sm transition-transform duration-200 tablet:translate-x-0 tablet:w-[72px] desktop:w-60`}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-4 tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-5">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-gradient-to-r from-teal-50/60 via-surface to-surface px-4 tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-4">
           <Link
             to="/"
             onClick={() => setMobileOpen(false)}
-            className="font-heading text-xl font-bold text-secondary tablet:hidden desktop:block"
+            className="group flex items-center gap-2.5 tablet:hidden desktop:flex"
+            title="EdVidura"
           >
-            EdVidura
+            <div className="flex size-9.5 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 via-secondary to-teal-800 text-white font-heading font-extrabold text-[15px] shadow-sm ring-2 ring-secondary/25 transition-all duration-200 group-hover:scale-105 group-hover:ring-secondary/40">
+              EV
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="font-heading text-[18px] font-extrabold tracking-tight text-slate-900 group-hover:text-secondary transition-colors leading-none">
+                EdVidura
+              </span>
+              <span className="text-[11px] font-bold tracking-wider uppercase text-secondary/90 mt-1">
+                Learning Platform
+              </span>
+            </div>
           </Link>
-          <span
-            aria-hidden
-            className="hidden font-heading text-xl font-bold text-secondary tablet:block desktop:hidden"
+          <Link
+            to="/"
+            onClick={() => setMobileOpen(false)}
+            className="hidden tablet:flex desktop:hidden items-center justify-center"
+            title="EdVidura"
           >
-            E
-          </span>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 via-secondary to-teal-800 text-white font-heading font-extrabold text-base shadow-sm ring-2 ring-secondary/25">
+              EV
+            </div>
+          </Link>
           <button
             type="button"
             className="inline-flex size-11 items-center justify-center rounded-control text-ink tablet:hidden"
@@ -123,9 +138,9 @@ export function TopNav() {
         <nav
           id="role-navigation"
           aria-label={t("nav.primary")}
-          className="min-h-0 flex-1 overflow-y-auto px-3 py-4 tablet:px-2 desktop:px-3"
+          className="min-h-0 flex-1 overflow-y-auto px-2.5 py-2.5 tablet:px-1.5 desktop:px-2.5"
         >
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             {navItems.map((item) => {
               const Icon = routeIcons[item.to] ?? FileText;
               const selected = active?.to === item.to;
@@ -136,12 +151,12 @@ export function TopNav() {
                     aria-current={selected ? "page" : undefined}
                     title={t(item.labelKey)}
                     onClick={() => setMobileOpen(false)}
-                    className={`group relative flex min-h-12 items-center gap-3 rounded-xl border-l-4 px-3.5 text-[15px] sm:text-base transition-all duration-150 tablet:justify-center tablet:gap-0 tablet:px-0 desktop:justify-start desktop:gap-3 desktop:px-3.5 ${selected ? "border-l-secondary bg-secondary/10 font-bold text-secondary shadow-xs" : "border-l-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium"}`}
+                    className={`group relative flex min-h-[40px] items-center gap-2.5 rounded-lg border-l-[3.5px] px-3 py-1.5 text-[14.5px] leading-snug transition-all duration-150 tablet:justify-center tablet:gap-0 tablet:px-0 desktop:justify-start desktop:gap-2.5 desktop:px-3 ${selected ? "border-l-secondary bg-teal-500/12 font-bold text-teal-900 shadow-xs" : "border-l-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 font-medium"}`}
                   >
                     <Icon
                       aria-hidden
-                      size={20}
-                      className={`shrink-0 ${selected ? "stroke-[2.25]" : "stroke-2"}`}
+                      size={19}
+                      className={`shrink-0 transition-colors ${selected ? "text-teal-700 stroke-[2.25]" : "text-slate-500 stroke-2 group-hover:text-slate-700"}`}
                     />
                     <span className="tablet:hidden desktop:inline">{t(item.labelKey)}</span>
                     <span
@@ -156,16 +171,16 @@ export function TopNav() {
             })}
           </ul>
         </nav>
-        <div className="shrink-0 border-t border-border bg-surface p-3 tablet:px-2 desktop:p-4">
+        <div className="shrink-0 border-t border-border bg-surface p-2.5 tablet:px-1.5 desktop:p-3">
           <div className="mb-2 px-1 tablet:hidden desktop:block">
             <LanguageSelector className="w-full justify-between" />
           </div>
-          <div className="mb-3 px-2 text-sm font-semibold text-ink tablet:hidden desktop:block">
+          <div className="mb-2.5 px-2 text-[14px] font-bold text-slate-800 tablet:hidden desktop:block">
             <div className="truncate">{session?.name}</div>
-            <div className="font-semibold text-ink-muted">{t(`roles.${role}`)}</div>
+            <div className="text-xs font-semibold text-slate-500">{t(`roles.${role}`)}</div>
           </div>
           <a
-            className="group relative flex min-h-11 items-center rounded-control px-2 text-sm text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
+            className="group relative flex min-h-9 items-center rounded-lg px-2 text-[13.5px] text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
             title={
               session?.lmsReturnUrl?.includes("localhost:8085")
                 ? t("nav.backToMoodle")
@@ -182,7 +197,7 @@ export function TopNav() {
               window.location.href = dest;
             }}
           >
-            <ArrowLeft aria-hidden size={18} className="hidden tablet:block desktop:hidden" />
+            <ArrowLeft aria-hidden size={17} className="hidden tablet:block desktop:hidden" />
             <span className="tablet:hidden desktop:inline">
               {session?.lmsReturnUrl?.includes("localhost:8085")
                 ? t("nav.backToMoodle")
@@ -199,13 +214,13 @@ export function TopNav() {
           </a>
           <button
             type="button"
-            className="group relative flex min-h-11 w-full items-center rounded-control px-2 text-left text-sm text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
+            className="group relative flex min-h-9 w-full items-center rounded-lg px-2 text-left text-[13.5px] text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium tablet:justify-center tablet:px-0 desktop:justify-start desktop:px-2"
             title={t("nav.signOut")}
             onClick={() => {
               signOut();
             }}
           >
-            <LogOut aria-hidden size={18} className="hidden tablet:block desktop:hidden" />
+            <LogOut aria-hidden size={17} className="hidden tablet:block desktop:hidden" />
             <span className="tablet:hidden desktop:inline">{t("nav.signOut")}</span>
             <span
               role="tooltip"

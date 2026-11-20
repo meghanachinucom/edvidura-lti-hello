@@ -100,8 +100,14 @@
   h6,
   .font-heading {
     font-family: var(--font-heading);
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-weight: 750;
+    letter-spacing: -0.015em;
+  }
+
+  /* Improve small text readability across all badges, captions, and pills */
+  .text-xs {
+    font-size: 0.8125rem !important; /* 13px instead of 12px for crisp ABeeZee readability */
+    line-height: 1.15rem;
   }
 
   :focus-visible {
