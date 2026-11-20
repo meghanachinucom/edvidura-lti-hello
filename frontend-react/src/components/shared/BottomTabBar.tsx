@@ -27,9 +27,9 @@ export function BottomTabBar({ items, fixed = true }: { items: TabItem[]; fixed?
               <Link
                 to={to}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-center text-sm ${active ? "font-semibold text-accent" : "text-ink-muted"}`}
+                className={`flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-center text-xs sm:text-sm ${active ? "font-black text-accent" : "font-bold text-ink"}`}
               >
-                <Icon aria-hidden size={20} />
+                <Icon aria-hidden size={22} />
                 <span className="w-full truncate">{label}</span>
               </Link>
             </li>

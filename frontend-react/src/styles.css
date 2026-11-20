@@ -290,9 +290,9 @@ main dl.flex dd {
 }
 
 @utility title-rule {
-  height: 2px;
-  width: 48px;
-  margin-top: 8px;
+  height: 3.5px;
+  width: 56px;
+  margin-top: 10px;
   border-radius: 9999px;
   background: linear-gradient(90deg, var(--button-main), var(--accent));
 }

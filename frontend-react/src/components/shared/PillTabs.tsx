@@ -21,7 +21,7 @@ export function PillTabs({
     <div role="group" aria-label={label} className="flex flex-wrap gap-2">
       {items.map((item) => {
         const selected = item.id === active;
-        const className = `inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-semibold ${selected ? "border-secondary bg-secondary text-white" : "border-border-control bg-surface text-ink hover:bg-highlight"}`;
+        const className = `inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-[15px] font-bold transition-all ${selected ? "border-secondary bg-secondary text-white font-black shadow-xs" : "border-border-control bg-surface text-ink hover:bg-highlight hover:border-secondary font-bold"}`;
         return item.to && !selected ? (
           <Link key={item.id} to={item.to} className={className}>
             {item.label}
