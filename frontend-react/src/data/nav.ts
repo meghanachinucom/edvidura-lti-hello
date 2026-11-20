@@ -141,14 +141,13 @@ export function allowedFor(role: Role, path: string): boolean {
     path.startsWith("/lti/register")
   )
     return role === "trainingOfficer";
-  if (path.startsWith("/teacher/coach/shortcuts")) return false;
   if (path.startsWith("/teacher") || path.startsWith("/student-directory"))
     return role === "instructor";
   if (
     path.startsWith("/learn/") ||
     path.startsWith("/lessons") ||
     path.startsWith("/active-quizzes") ||
-    path.startsWith("/quiz/") ||
+    path.startsWith("/quiz") ||
     path.startsWith("/manuals") ||
     path.startsWith("/read/manuals")
   )

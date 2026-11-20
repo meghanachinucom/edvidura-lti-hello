@@ -794,50 +794,59 @@ function Page() {
                           <td className="p-3.5 font-bold text-slate-900">{row.name}</td>
                           <td className="p-3.5">
                             {row.has_lesson ? (
-                              <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700">
+                              <Link
+                                to="/teacher/content"
+                                className="inline-flex items-center gap-1.5 font-medium text-emerald-700 hover:underline"
+                              >
                                 <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
                                 <span>{row.lesson_title}</span>
-                              </span>
+                              </Link>
                             ) : (
-                              <button
-                                type="button"
+                              <Link
+                                to="/teacher/content"
                                 className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
                               >
                                 <PlusCircle size={12} />
                                 <span>+ Link Lesson</span>
-                              </button>
+                              </Link>
                             )}
                           </td>
                           <td className="p-3.5">
                             {row.has_ebook ? (
-                              <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700">
+                              <Link
+                                to="/teacher/manuals"
+                                className="inline-flex items-center gap-1.5 font-medium text-emerald-700 hover:underline"
+                              >
                                 <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
                                 <span>{row.ebook_title}</span>
-                              </span>
+                              </Link>
                             ) : (
-                              <button
-                                type="button"
+                              <Link
+                                to="/teacher/manuals"
                                 className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
                               >
                                 <PlusCircle size={12} />
                                 <span>+ Link Chapter</span>
-                              </button>
+                              </Link>
                             )}
                           </td>
                           <td className="p-3.5">
                             {row.has_quiz ? (
-                              <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700">
+                              <Link
+                                to="/teacher/content"
+                                className="inline-flex items-center gap-1.5 font-medium text-emerald-700 hover:underline"
+                              >
                                 <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
                                 <span>{row.quiz_title}</span>
-                              </span>
+                              </Link>
                             ) : (
-                              <button
-                                type="button"
+                              <Link
+                                to="/teacher/ai/generate"
                                 className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
                               >
                                 <PlusCircle size={12} />
                                 <span>+ Link Quiz</span>
-                              </button>
+                              </Link>
                             )}
                           </td>
                           <td className="p-3.5">

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { StatusGem } from "@/components/shared/StatusGem";
 
@@ -80,7 +81,13 @@ function Page() {
               <button className="btn-secondary" onClick={() => setTested([...tested, g.client])}>
                 {tested.includes(g.client) ? "Handshake successful" : "Test handshake"}
               </button>
-              <button className="btn-primary">Launch</button>
+              <Link
+                to="/review"
+                className="btn-primary inline-flex items-center gap-1.5 text-xs font-semibold"
+              >
+                <span>Launch Session</span>
+                <ArrowRight size={13} aria-hidden />
+              </Link>
             </div>
           </article>
         ))}

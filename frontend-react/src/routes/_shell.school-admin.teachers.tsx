@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { ExternalLink, Mail, Search, PlusCircle, XCircle } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  ExternalLink,
+  Mail,
+  Search,
+  PlusCircle,
+  XCircle,
+  UserCheck,
+  ArrowRight,
+  X,
+} from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -43,6 +52,7 @@ function Page() {
   const [query, setQuery] = useState("");
   const [confirm, setConfirm] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedFaculty, setSelectedFaculty] = useState<any | null>(null);
   const [newCode, setNewCode] = useState("");
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -117,10 +127,10 @@ function Page() {
           text="Faculty"
           context="Appointing faculty registers their instructional profile and trade assignments on the institutional roster. Faculty credentials and authenticated identities are federated through the institution LMS / SSO provider."
         />
-        <a href={instUrl} rel="noreferrer" className="btn-primary inline-flex items-center gap-2">
+        <Link to="/institution-detail" className="btn-primary inline-flex items-center gap-2">
           <ExternalLink size={16} />
           Open Institution Faculty Roster
-        </a>
+        </Link>
       </div>
 
       {appointSuccess && <StatusBanner variant="success">{appointSuccess}</StatusBanner>}
@@ -226,18 +236,18 @@ function Page() {
             key={f.personId}
             className="space-y-4 rounded-surface border border-border bg-surface p-5 shadow-sm"
           >
-            <header className="flex items-start gap-3 bg-topbar text-white p-3.5 rounded-xl border border-slate-700/50">
-              <div className="grid size-12 shrink-0 place-items-center rounded-full bg-teal-500/20 border border-teal-500/30 font-heading text-teal-300 font-bold">
+            <header className="flex items-start gap-3 border-b border-border pb-3 bg-transparent">
+              <div className="grid size-12 shrink-0 place-items-center rounded-full bg-secondary-container text-secondary font-heading font-bold text-base">
                 {f.name
                   .split(" ")
                   .map((x: string) => x[0])
                   .join("")}
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="font-heading text-lg font-bold text-white">{f.name}</h2>
-                <p className="text-teal-300 text-sm font-semibold">{f.subject}</p>
+                <h2 className="font-heading text-lg font-bold text-ink">{f.name}</h2>
+                <p className="text-secondary text-sm font-semibold">{f.subject}</p>
               </div>
-              <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-1 text-xs text-emerald-300 font-bold">
+              <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs text-emerald-700 font-bold">
                 SSO linked
               </span>
             </header>
@@ -265,11 +275,95 @@ function Page() {
             </div>
             <footer className="flex items-center justify-between border-t border-border pt-3 text-sm">
               <span className="text-ink-muted">{f.learners} learners</span>
-              <button className="text-secondary underline">Manage profile</button>
+              <button
+                type="button"
+                onClick={() => setSelectedFaculty(f)}
+                className="text-secondary hover:text-secondary/80 font-medium underline inline-flex items-center gap-1"
+              >
+                Manage profile
+              </button>
             </footer>
           </article>
         ))}
       </div>
+
+      {selectedFaculty && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4">
+          <div className="w-full max-w-md rounded-surface border border-border bg-surface p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-3">
+                <div className="grid size-10 place-items-center rounded-full bg-secondary-container text-secondary font-bold">
+                  {selectedFaculty.name
+                    .split(" ")
+                    .map((x: string) => x[0])
+                    .join("")}
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-bold text-ink">
+                    {selectedFaculty.name}
+                  </h3>
+                  <p className="text-xs text-secondary font-medium">{selectedFaculty.subject}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedFaculty(null)}
+                className="rounded-control p-1 text-ink-muted hover:bg-page-bg hover:text-ink"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-sm text-ink">
+              <p>
+                <span className="font-semibold text-ink-muted">Email:</span> {selectedFaculty.email}
+              </p>
+              <p>
+                <span className="font-semibold text-ink-muted">Phone:</span> {selectedFaculty.phone}
+              </p>
+              <p>
+                <span className="font-semibold text-ink-muted">Assigned Learners:</span>{" "}
+                {selectedFaculty.learners} students
+              </p>
+              <div className="pt-2">
+                <span className="text-xs uppercase tracking-wider text-ink-muted font-bold block mb-1">
+                  Active Courses & Trades
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedFaculty.curricula.map((c: string) => (
+                    <span
+                      key={c}
+                      className="rounded bg-surface-contrast px-2 py-0.5 text-xs text-ink border border-border"
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-4 flex flex-col gap-2">
+              <Link
+                to="/school-admin/classes"
+                onClick={() => setSelectedFaculty(null)}
+                className="btn-primary inline-flex items-center justify-center gap-1.5 text-xs font-semibold"
+              >
+                <span>View & Assign Classes</span>
+                <ArrowRight size={13} />
+              </Link>
+              <Link
+                to="/institution-detail"
+                onClick={() => setSelectedFaculty(null)}
+                className="btn-secondary inline-flex items-center justify-center gap-1.5 text-xs font-semibold"
+              >
+                <span>Manage SSO Federation Settings</span>
+                <ExternalLink size={13} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
       <ConfirmDialog
         open={confirm}
         title="Sync SSO Faculty Identities"

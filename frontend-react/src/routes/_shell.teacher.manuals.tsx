@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ExternalLink,
   XCircle,
@@ -20,6 +20,7 @@ import {
   Copy,
   PlusCircle,
   Eye,
+  Library,
 } from "lucide-react";
 import { t } from "@/i18n";
 import { api } from "@/lib/api";
@@ -184,14 +185,24 @@ function Page() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <PageHeading text={s("title")} context={s("subtitle")} />
         <div className="flex flex-wrap gap-2">
-          <a
-            href={manualsAdminUrl}
-            rel="noreferrer"
-            className="btn-secondary inline-flex items-center gap-2 text-xs"
+          <button
+            type="button"
+            onClick={() => {
+              setMsg(null);
+              setMode("create");
+            }}
+            className="btn-primary inline-flex items-center gap-1.5 text-xs font-semibold"
           >
-            <ExternalLink size={14} />
-            Open Teacher Manuals Manager
-          </a>
+            <PlusCircle size={14} />
+            <span>Create New Manual</span>
+          </button>
+          <Link
+            to="/manuals"
+            className="btn-secondary inline-flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <Library size={14} />
+            <span>Browse Student Manuals</span>
+          </Link>
         </div>
       </div>
 

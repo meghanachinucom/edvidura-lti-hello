@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ExternalLink, XCircle } from "lucide-react";
+import { ExternalLink, XCircle, Plus, Sparkles } from "lucide-react";
 import { t } from "@/i18n";
 import { api } from "@/lib/api";
 import { useRole } from "@/components/shell/RoleContext";
@@ -184,24 +184,21 @@ function Page() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <a
-              href={editorUrl}
-              rel="noreferrer"
-              className="btn-primary inline-flex items-center gap-2"
-            >
-              <ExternalLink size={16} />
-              Open Teacher Content Studio
-            </a>
             <button
               type="button"
-              className="btn-secondary"
+              className="btn-primary inline-flex items-center gap-1.5"
               onClick={() => {
                 lessonSave.setSaved(false);
                 setLessonForm({});
               }}
             >
-              {s("addLesson")} (Preview)
+              <Plus size={16} />
+              <span>Create New Lesson</span>
             </button>
+            <Link to="/teacher/ai" className="btn-secondary inline-flex items-center gap-1.5">
+              <Sparkles size={16} />
+              <span>AI Content Assistant</span>
+            </Link>
           </div>
         </div>
         {lessonSave.saved && !lessonForm && (

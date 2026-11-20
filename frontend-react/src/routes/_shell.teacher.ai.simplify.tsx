@@ -91,9 +91,9 @@ function Page() {
     <div className="mx-auto w-full max-w-content space-y-6 px-4 pb-28 pt-8 tablet:pb-8">
       <div className="flex items-center justify-between">
         <PageHeading text={s("title")} />
-        <a href="/teacher/ai/simplify" className="text-xs text-ink-muted underline">
-          Open Server Simplify (Jinja)
-        </a>
+        <Link to="/teacher/ai" className="text-xs font-semibold text-secondary hover:underline">
+          &larr; Back to Teacher AI Tools
+        </Link>
       </div>
       <div className="studio-grid">
         <div className="space-y-4">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Sparkles, CheckCircle2, Layers, Cpu, ArrowUpRight } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -148,15 +149,15 @@ export function DynamicBlockCatalog({
                   <CheckCircle2 size={12} />
                   <span>{isTested ? "Active & Verified" : "Live API"}</span>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setTestedBlock(block.id)}
+                <Link
+                  to="/workspace/$featureId"
+                  params={{ featureId: block.id }}
                   className="inline-flex items-center gap-1 rounded-control bg-page-bg px-2.5 py-1 text-xs font-semibold text-ink hover:bg-muted transition-colors"
                 >
                   <Cpu size={12} className="text-secondary" />
-                  <span>{isTested ? "Verified" : "Inspect"}</span>
+                  <span>Inspect</span>
                   <ArrowUpRight size={11} className="text-ink-muted" />
-                </button>
+                </Link>
               </div>
             </article>
           );

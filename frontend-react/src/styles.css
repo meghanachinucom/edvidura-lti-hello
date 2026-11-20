@@ -8,6 +8,7 @@
 
 @theme inline {
   --color-page-bg: var(--page-bg);
+  --color-topbar: var(--topbar);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-ink: var(--ink);
@@ -620,18 +621,18 @@ main dl.flex dd {
 }
 
 /* Use the dark teal/navy navigation band and guarantee accessible, high-contrast text. */
-header:not(.bg-transparent),
+header.bg-topbar,
 [data-topbar],
 .top-bar {
   background-color: var(--topbar);
   color: #ffffff;
 }
 
-header:not(.bg-transparent) h1,
-header:not(.bg-transparent) h2,
-header:not(.bg-transparent) h3,
-header:not(.bg-transparent) p,
-header:not(.bg-transparent) span,
+header.bg-topbar h1,
+header.bg-topbar h2,
+header.bg-topbar h3,
+header.bg-topbar p,
+header.bg-topbar span,
 [data-topbar] h1,
 [data-topbar] h2,
 [data-topbar] h3,
@@ -645,29 +646,29 @@ header:not(.bg-transparent) span,
   color: #ffffff;
 }
 
-header:not(.bg-transparent) .text-ink,
-header:not(.bg-transparent) p.text-ink,
-header:not(.bg-transparent) .font-heading.text-ink,
+header.bg-topbar .text-ink,
+header.bg-topbar p.text-ink,
+header.bg-topbar .font-heading.text-ink,
 [data-topbar] .text-ink,
 .top-bar .text-ink {
   color: #ffffff !important;
 }
 
-header:not(.bg-transparent) .text-ink-muted,
-header:not(.bg-transparent) p.text-ink-muted,
+header.bg-topbar .text-ink-muted,
+header.bg-topbar p.text-ink-muted,
 [data-topbar] .text-ink-muted,
 .top-bar .text-ink-muted {
   color: #cbd5e1 !important; /* Slate 300 - clear high contrast */
 }
 
-header:not(.bg-transparent) .text-secondary,
-header:not(.bg-transparent) p.text-secondary,
+header.bg-topbar .text-secondary,
+header.bg-topbar p.text-secondary,
 [data-topbar] .text-secondary,
 .top-bar .text-secondary {
   color: #5eead4 !important; /* Teal 300 - bright cyan/teal contrast */
 }
 
-header:not(.bg-transparent) .text-emerald-600,
+header.bg-topbar .text-emerald-600,
 [data-topbar] .text-emerald-600,
 .top-bar .text-emerald-600 {
   color: #6ee7b7 !important; /* Emerald 300 */

@@ -18,7 +18,13 @@ export function SessionExpired({ embedded = false }: { embedded?: boolean }) {
         {t("shared.session.title")}
       </H>
       <p className="mt-3 max-w-reading text-ink">{t("shared.session.body")}</p>
-      <button type="button" className="btn-primary mt-6">
+      <button
+        type="button"
+        onClick={() => {
+          window.location.href = "/review";
+        }}
+        className="btn-primary mt-6"
+      >
         {t("shared.session.back")}
       </button>
     </div>

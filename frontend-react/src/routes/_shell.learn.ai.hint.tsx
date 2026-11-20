@@ -64,9 +64,9 @@ function Page() {
         >
           {s("back")}
         </Link>
-        <a href="/learn/ai/hint" className="text-xs text-ink-muted underline">
-          Open Server AI Hint (Jinja)
-        </a>
+        <Link to="/learn/coach" className="text-xs font-semibold text-secondary hover:underline">
+          Open Ask Vidura Tutor &rarr;
+        </Link>
       </div>
       <PageHeading titleKey="pages.hint" />
       <section

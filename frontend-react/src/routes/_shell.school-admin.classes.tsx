@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ExternalLink, PlusCircle, Users, XCircle, RefreshCw } from "lucide-react";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { StatusBanner } from "@/components/shared/StatusBanner";
@@ -263,14 +263,13 @@ function Page() {
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
           </button>
-          <a
-            href={instUrl}
-            rel="noreferrer"
+          <Link
+            to="/institution-detail"
             className="btn-primary inline-flex items-center gap-2 text-xs"
           >
             <ExternalLink size={16} />
             Open Institution Classes Console
-          </a>
+          </Link>
         </div>
       </div>
 

@@ -127,14 +127,10 @@ function Page() {
           text={title}
           context="Institutional governance, class section enrollments, and statutory compliance oversight."
         />
-        <a
-          href={institutionDetailUrl}
-          rel="noreferrer"
-          className="btn-primary inline-flex items-center gap-2"
-        >
+        <Link to="/institution-detail" className="btn-primary inline-flex items-center gap-2">
           <ExternalLink size={16} />
           Open Institution Workspace
-        </a>
+        </Link>
       </div>
       {loading ? (
         <LoadingSkeleton count={4} />
