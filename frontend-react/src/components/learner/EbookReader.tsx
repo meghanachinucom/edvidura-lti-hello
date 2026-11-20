@@ -31,6 +31,7 @@ import { api } from "@/lib/api";
 import { useRole } from "@/components/shell/RoleContext";
 import type { BackendProgressItem, BackendBookmarkItem } from "@/lib/adapters";
 import { InteractiveChapterStage } from "@/components/learner/InteractiveChapterStage";
+import { ChapterDoubtTutorDrawer } from "@/components/enterprise/ChapterDoubtTutorDrawer";
 
 const s = (k: string, v?: Record<string, string | number>) => t(`LR-15.${k}`, v);
 
@@ -471,14 +472,21 @@ export function EbookReader({
             <PageHeading text={book.title} />
             <p className="text-sm text-ink-muted">{s("edition")}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setTocOpen(true)}
-            className="btn-secondary shrink-0 gap-2 desktop:hidden"
-          >
-            <List aria-hidden size={18} />
-            {s("chapters")}
-          </button>
+          <div className="flex items-center gap-2">
+            <ChapterDoubtTutorDrawer
+              chapterId={chapter?.id || book.id}
+              chapterTitle={chapter?.title || book.title}
+              userId="6"
+            />
+            <button
+              type="button"
+              onClick={() => setTocOpen(true)}
+              className="btn-secondary shrink-0 gap-2 desktop:hidden"
+            >
+              <List aria-hidden size={18} />
+              {s("chapters")}
+            </button>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <button

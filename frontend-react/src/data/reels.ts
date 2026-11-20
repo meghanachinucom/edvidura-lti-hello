@@ -13,7 +13,7 @@ export interface Reel {
   };
 }
 
-/** 4 rich reels with PaperMorph interactive concept checks and diagram callouts. */
+/** 4 rich reels with interactive concept checks and diagram callouts. */
 export const reels: Reel[] = [
   {
     id: "r-1",

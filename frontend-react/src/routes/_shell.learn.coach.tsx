@@ -329,8 +329,8 @@ function Page() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-content px-4 py-8 tablet:grid tablet:grid-cols-[minmax(0,1fr)_460px] tablet:gap-8">
-      {/* Left Column: Skill Tree, Mode, & Quick Check */}
+    <div className="mx-auto w-full max-w-content px-4 py-8 grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-8">
+      {/* Left Column: Skill Tree, Mode, & Benchmark (32%) */}
       <div className="space-y-6">
         <div>
           <PageHeading titleKey="pages.coach" />
@@ -525,179 +525,185 @@ function Page() {
           </Link>
         </nav>
 
-        {/* Enterprise Suite: Benchmark Diagnostic, Chat Quiz Minter, & Revision Sheet */}
-        <div className="space-y-6 pt-2">
+        {/* Enterprise Suite: Benchmark Diagnostic */}
+        <div className="pt-2">
           <SkillBenchmarkWidget userId="6" />
+        </div>
+      </div>
+
+      {/* Right Column: Chat Conversation (68%) & Action Drawers */}
+      <div className="space-y-6">
+        <section
+          aria-label={s("conversation")}
+          className="flex min-h-[62vh] flex-col rounded-surface border border-border bg-surface shadow-xs"
+        >
+          {!m.lessonsLinked ? (
+            <div className="p-4">
+              <EmptyState title={s("empty")} help={s("emptyHelp")} />
+            </div>
+          ) : (
+            <>
+              <ol className="flex-1 space-y-4 overflow-y-auto p-4 max-h-[60vh]">
+                {turns.length === 0 && (
+                  <div className="rounded-card border border-dashed border-border p-6 text-center text-ink-muted text-sm">
+                    <Brain className="mx-auto size-8 text-brand/60 mb-2" />
+                    <p className="font-semibold text-ink">Ask Vidura — Guided Mastery Tutor</p>
+                    <p className="text-xs mt-1">
+                      Ask questions about your Class 8 lessons or speak with math dictation in your
+                      preferred Indian language.
+                    </p>
+                  </div>
+                )}
+                {turns.map((x) => (
+                  <li key={x.id} className="space-y-3">
+                    <div className="ml-auto max-w-[85%] rounded-2xl bg-amber-50 border border-amber-200/80 p-3.5 text-slate-900 shadow-2xs">
+                      <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1">
+                        {s("yourQuestion")}
+                      </p>
+                      <p className="text-sm font-medium leading-relaxed">{x.question}</p>
+                    </div>
+                    {x.failed && <ErrorAlert message={s("error")} />}
+                    {x.reply && (
+                      <Reply
+                        ex={x.reply}
+                        tutor={x.tutor}
+                        noSources={m.reply === "noSources"}
+                        onAskFollowUp={(followUp) => send(undefined, followUp)}
+                      />
+                    )}
+                  </li>
+                ))}
+              </ol>
+              <p role="status" className="px-4 text-xs text-ink-muted">
+                {busy ? s("thinking") : ""}
+              </p>
+
+              {/* 3-Step Hint Ladder Bar */}
+              <div className="border-t border-border/70 bg-page-bg/80 px-4 py-2.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold text-ink inline-flex items-center gap-1">
+                    <Lightbulb size={13} className="text-amber-500" />
+                    3-Step Hint Ladder:
+                  </span>
+                  <span className="text-[11px] text-ink-muted">Need a step forward?</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => requestHint(1)}
+                    className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
+                      activeHintLevel === 1
+                        ? "border-brand bg-brand/10 text-brand font-bold"
+                        : "border-border bg-surface text-ink hover:border-brand"
+                    }`}
+                  >
+                    Hint 1 (Nudge)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => requestHint(2)}
+                    className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
+                      activeHintLevel === 2
+                        ? "border-brand bg-brand/10 text-brand font-bold"
+                        : "border-border bg-surface text-ink hover:border-brand"
+                    }`}
+                  >
+                    Hint 2 (Step-by-Step)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => requestHint(3)}
+                    className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
+                      activeHintLevel === 3
+                        ? "border-brand bg-brand/10 text-brand font-bold"
+                        : "border-border bg-surface text-ink hover:border-brand"
+                    }`}
+                  >
+                    Hint 3 (Worked Example)
+                  </button>
+                </div>
+                {hintText && (
+                  <div className="mt-2 rounded bg-amber-50 border border-amber-200 p-2 text-xs text-amber-900 animate-fadeIn">
+                    💡 {hintText}
+                  </div>
+                )}
+              </div>
+
+              {/* Input Form with Voice Mode Selector */}
+              <form
+                onSubmit={(e) => send(e)}
+                className="sticky bottom-0 space-y-2 border-t border-border bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <CoachStarterChips
+                    onSelect={(prompt) => {
+                      setText(prompt);
+                      input.current?.focus();
+                    }}
+                  />
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={voiceCleanupMode}
+                      onChange={(e) => setVoiceCleanupMode(e.target.value as "smart" | "exact")}
+                      className="text-[11px] rounded border border-border bg-page-bg px-2 py-1 text-ink-muted hover:text-ink focus:outline-none"
+                      title="Voice cleanup mode"
+                    >
+                      <option value="smart">Smart Math Cleanup</option>
+                      <option value="exact">Exact Words</option>
+                    </select>
+                    <VoiceInputButton
+                      onTranscript={(transcript) => {
+                        setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
+                        input.current?.focus();
+                      }}
+                      lang={bcp47}
+                      cleanupMode={voiceCleanupMode}
+                    />
+                  </div>
+                </div>
+
+                <label htmlFor="coach-q" className="sr-only">
+                  {s("yourQuestion")}
+                </label>
+                <textarea
+                  ref={input}
+                  id="coach-q"
+                  rows={2}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Ask Vidura a concept question, or click Voice..."
+                  className="w-full rounded-surface border border-border bg-surface p-2.5 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
+                />
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={busy || !text.trim()}
+                      className="btn-primary text-xs py-1.5"
+                    >
+                      {s("send")}
+                    </button>
+                    {busy && (
+                      <button type="button" onClick={stop} className="btn-secondary text-xs py-1.5">
+                        {s("stop")}
+                      </button>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-ink-muted font-medium">
+                    {tutorMode === "guided" ? "Guided Mastery Mode" : "Direct Mode"}
+                  </span>
+                </div>
+              </form>
+            </>
+          )}
+        </section>
+
+        {/* Prominent Action Cards: Chat Quiz Minter & Revision Notes Sheet */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <ChatQuizMinter userId="6" defaultTopic="Linear Equations & Industrial Balance" />
           <RevisionNotesSheet userId="6" defaultTopic="Linear Equations & Industrial Balance" />
         </div>
       </div>
-
-      {/* Right Column: Chat Conversation, 3-Step Hint Ladder & Voice Input */}
-      <section
-        aria-label={s("conversation")}
-        className="mt-6 flex min-h-[65vh] flex-col rounded-surface border border-border bg-surface tablet:mt-0 shadow-sm"
-      >
-        {!m.lessonsLinked ? (
-          <div className="p-4">
-            <EmptyState title={s("empty")} help={s("emptyHelp")} />
-          </div>
-        ) : (
-          <>
-            <ol className="flex-1 space-y-4 overflow-y-auto p-4 max-h-[60vh]">
-              {turns.length === 0 && (
-                <div className="rounded-card border border-dashed border-border p-6 text-center text-ink-muted text-sm">
-                  <Brain className="mx-auto size-8 text-brand/60 mb-2" />
-                  <p className="font-semibold text-ink">Ask Vidura — Guided Mastery Tutor</p>
-                  <p className="text-xs mt-1">
-                    Ask questions about your Class 8 lessons or speak with math dictation in your
-                    preferred Indian language.
-                  </p>
-                </div>
-              )}
-              {turns.map((x) => (
-                <li key={x.id} className="space-y-3">
-                  <div className="ml-auto max-w-[85%] rounded-2xl bg-amber-50 border border-amber-200/80 p-3.5 text-slate-900 shadow-2xs">
-                    <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1">
-                      {s("yourQuestion")}
-                    </p>
-                    <p className="text-sm font-medium leading-relaxed">{x.question}</p>
-                  </div>
-                  {x.failed && <ErrorAlert message={s("error")} />}
-                  {x.reply && (
-                    <Reply
-                      ex={x.reply}
-                      tutor={x.tutor}
-                      noSources={m.reply === "noSources"}
-                      onAskFollowUp={(followUp) => send(undefined, followUp)}
-                    />
-                  )}
-                </li>
-              ))}
-            </ol>
-            <p role="status" className="px-4 text-xs text-ink-muted">
-              {busy ? s("thinking") : ""}
-            </p>
-
-            {/* 3-Step Hint Ladder Bar */}
-            <div className="border-t border-border/70 bg-page-bg/80 px-4 py-2.5">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold text-ink inline-flex items-center gap-1">
-                  <Lightbulb size={13} className="text-amber-500" />
-                  3-Step Hint Ladder:
-                </span>
-                <span className="text-[11px] text-ink-muted">Need a step forward?</span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => requestHint(1)}
-                  className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
-                    activeHintLevel === 1
-                      ? "border-brand bg-brand/10 text-brand font-bold"
-                      : "border-border bg-surface text-ink hover:border-brand"
-                  }`}
-                >
-                  Hint 1 (Nudge)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => requestHint(2)}
-                  className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
-                    activeHintLevel === 2
-                      ? "border-brand bg-brand/10 text-brand font-bold"
-                      : "border-border bg-surface text-ink hover:border-brand"
-                  }`}
-                >
-                  Hint 2 (Step-by-Step)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => requestHint(3)}
-                  className={`rounded border px-2 py-1 text-center text-[11px] font-medium transition-colors ${
-                    activeHintLevel === 3
-                      ? "border-brand bg-brand/10 text-brand font-bold"
-                      : "border-border bg-surface text-ink hover:border-brand"
-                  }`}
-                >
-                  Hint 3 (Worked Example)
-                </button>
-              </div>
-              {hintText && (
-                <div className="mt-2 rounded bg-amber-50 border border-amber-200 p-2 text-xs text-amber-900 animate-fadeIn">
-                  💡 {hintText}
-                </div>
-              )}
-            </div>
-
-            {/* Input Form with Voice Mode Selector */}
-            <form
-              onSubmit={(e) => send(e)}
-              className="sticky bottom-0 space-y-2 border-t border-border bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <CoachStarterChips
-                  onSelect={(prompt) => {
-                    setText(prompt);
-                    input.current?.focus();
-                  }}
-                />
-                <div className="flex items-center gap-2">
-                  <select
-                    value={voiceCleanupMode}
-                    onChange={(e) => setVoiceCleanupMode(e.target.value as "smart" | "exact")}
-                    className="text-[11px] rounded border border-border bg-page-bg px-2 py-1 text-ink-muted hover:text-ink focus:outline-none"
-                    title="Voice cleanup mode"
-                  >
-                    <option value="smart">Smart Math Cleanup</option>
-                    <option value="exact">Exact Words</option>
-                  </select>
-                  <VoiceInputButton
-                    onTranscript={(transcript) => {
-                      setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
-                      input.current?.focus();
-                    }}
-                    lang={bcp47}
-                    cleanupMode={voiceCleanupMode}
-                  />
-                </div>
-              </div>
-
-              <label htmlFor="coach-q" className="sr-only">
-                {s("yourQuestion")}
-              </label>
-              <textarea
-                ref={input}
-                id="coach-q"
-                rows={2}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Ask Vidura a concept question, or click Voice..."
-                className="w-full rounded-surface border border-border bg-surface p-2.5 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
-              />
-              <div className="flex items-center justify-between">
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={busy || !text.trim()}
-                    className="btn-primary text-xs py-1.5"
-                  >
-                    {s("send")}
-                  </button>
-                  {busy && (
-                    <button type="button" onClick={stop} className="btn-secondary text-xs py-1.5">
-                      {s("stop")}
-                    </button>
-                  )}
-                </div>
-                <span className="text-[11px] text-ink-muted font-medium">
-                  {tutorMode === "guided" ? "Guided Mastery Mode" : "Direct Mode"}
-                </span>
-              </div>
-            </form>
-          </>
-        )}
-      </section>
     </div>
   );
 }

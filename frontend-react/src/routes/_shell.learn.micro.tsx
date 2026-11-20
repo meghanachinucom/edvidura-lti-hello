@@ -18,7 +18,6 @@ import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { PillTabs, type PillTab } from "@/components/shared/PillTabs";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { CircuitWorkbench } from "@/components/learner/CircuitWorkbench";
 import { StatusBanner } from "@/components/shared/StatusBanner";
 import { VoiceListenButton } from "@/components/shared/VoiceControls";
 import { useRole } from "@/components/shell/RoleContext";
@@ -397,7 +396,6 @@ function Page() {
                   </div>
                 </div>
               </article>
-              <CircuitWorkbench />
             </div>
           )}
         </>

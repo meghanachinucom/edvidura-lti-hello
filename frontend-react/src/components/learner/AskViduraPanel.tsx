@@ -14,7 +14,7 @@ import {
 } from "@/data/askVidura";
 import { api } from "@/lib/api";
 
-// M2 Ask Vidura side panel. Learner role only with Jane Street Socratic scaffolding.
+// M2 Ask Vidura side panel. Learner role only with guided Socratic scaffolding.
 const s = (k: string) => t(`M2.${k}`);
 
 interface Turn {

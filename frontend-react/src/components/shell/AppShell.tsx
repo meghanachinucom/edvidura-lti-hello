@@ -4,10 +4,69 @@ import { TopNav } from "@/components/shared/TopNav";
 import { SessionExpired } from "@/components/shared/SessionExpired";
 import { isSessionExpired, screenState } from "@/data/mockState";
 import { AccessUnavailable } from "@/components/shared/AccessUnavailable";
-import { t } from "@/i18n";
+import { t, useLocale, phrases } from "@/i18n";
 import { accessPage, allowedFor, roleHome } from "@/data/nav";
 import { AskViduraPanel } from "@/components/learner/AskViduraPanel";
 import { useRole } from "./RoleContext";
+
+function DOMTranslationBridge() {
+  const { locale } = useLocale();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mainEl = document.getElementById("main");
+    if (!mainEl) return;
+
+    const dict = phrases[locale] || {};
+    const hasTranslations = Object.keys(dict).length > 0;
+
+    const translateNode = (node: Node) => {
+      if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
+        const text = node.nodeValue.trim();
+        if (!text) return;
+        const parent = node.parentElement;
+        if (!parent) return;
+
+        const tag = parent.tagName.toLowerCase();
+        if (tag === "script" || tag === "style" || tag === "textarea" || tag === "input") return;
+
+        if (locale === "en") {
+          const orig = parent.getAttribute("data-orig-text");
+          if (orig) {
+            node.nodeValue = orig;
+            parent.removeAttribute("data-orig-text");
+          }
+        } else if (hasTranslations) {
+          const translation = dict[text];
+          if (translation) {
+            if (!parent.hasAttribute("data-orig-text")) {
+              parent.setAttribute("data-orig-text", text);
+            }
+            node.nodeValue = translation;
+          }
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        node.childNodes.forEach(translateNode);
+      }
+    };
+
+    translateNode(mainEl);
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach(translateNode);
+      });
+    });
+
+    observer.observe(mainEl, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [locale]);
+
+  return null;
+}
 
 export function AppShell() {
   const { session, role, isLoading } = useRole();
@@ -78,6 +137,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-page-bg">
+      <DOMTranslationBridge />
       <a href="#main" className="skip-link">
         {t("app.skip")}
       </a>

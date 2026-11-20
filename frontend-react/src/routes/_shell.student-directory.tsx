@@ -249,7 +249,7 @@ function Page() {
             onClick={syncNrps}
             disabled={nrpsSyncing}
             className="btn-secondary inline-flex items-center gap-1.5 text-xs font-semibold text-secondary border-secondary/40 bg-secondary/5 hover:bg-secondary/10"
-            title="Synchronize LMS roster from Moodle/Canvas via LTI 1.3 NRPS (REQ-08)"
+            title="Synchronize LMS roster via LTI 1.3 NRPS"
           >
             <RefreshCw size={14} className={nrpsSyncing ? "animate-spin" : ""} />
             <span>{nrpsSyncing ? "Syncing LMS..." : "Sync LMS Roster (NRPS)"}</span>

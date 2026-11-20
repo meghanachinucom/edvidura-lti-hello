@@ -38,7 +38,7 @@ describe("Phase 2, 3 & 4 Architectural & Open-Source AI Capabilities", () => {
     expect(ebookChapters[b5!.id]?.length).toBe(4);
   });
 
-  it("embeds PaperMorph interactive concept checks and diagrams in textbook chapters", () => {
+  it("embeds interactive concept checks and diagrams in textbook chapters", () => {
     const algChapters = ebookChapters["de7900fd-488b-4740-bf7e-7a11b3475cd6"];
     expect(algChapters).toBeDefined();
     for (const ch of algChapters!) {

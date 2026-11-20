@@ -1,4 +1,4 @@
-/** Multi-Chapter Interactive Textbook Content with PaperMorph Concept Checks */
+/** Multi-Chapter Interactive Textbook Content with Interactive Concept Checks */
 export interface ConceptCheck {
   question: string;
   options: string[];

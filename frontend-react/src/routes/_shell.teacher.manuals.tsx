@@ -810,8 +810,8 @@ function DeepLinkPickerModal({ onCancel }: { onCancel: () => void }) {
             LTI 1.3 Deep Linking Content Picker (F-08 / REQ-07)
           </h3>
           <p className="text-xs text-ink-muted">
-            Configure learning resources directly for embedding into Moodle or Canvas courses via
-            signed LTI 1.3 Deep Linking response.
+            Configure learning resources directly for embedding into standard LMS courses via signed
+            LTI 1.3 Deep Linking response.
           </p>
         </div>
       </div>

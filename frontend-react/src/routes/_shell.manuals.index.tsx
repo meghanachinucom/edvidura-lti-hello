@@ -40,11 +40,11 @@ export const Route = createFileRoute("/_shell/manuals/")({
 const s = (k: string, v?: Record<string, string | number>) => t(`LR-14.${k}`, v);
 
 const COVER_GRADIENTS: Record<CoverTone, string> = {
-  accent: "bg-gradient-to-br from-amber-600 via-orange-600 to-rose-700",
-  focus: "bg-gradient-to-br from-teal-700 via-emerald-700 to-cyan-800",
-  amber: "bg-gradient-to-br from-amber-600 via-yellow-600 to-amber-700",
-  emerald: "bg-gradient-to-br from-emerald-700 via-teal-700 to-slate-800",
-  ink: "bg-gradient-to-br from-slate-800 via-indigo-900 to-slate-950",
+  accent: "bg-gradient-to-br from-[#0d5c63] via-[#0f172a] to-[#1e3a8a]",
+  focus: "bg-gradient-to-br from-[#065f46] via-[#0d5c63] to-[#0f172a]",
+  amber: "bg-gradient-to-br from-[#b45309] via-[#854d0e] to-[#0f172a]",
+  emerald: "bg-gradient-to-br from-[#065f46] via-[#047857] to-[#0f172a]",
+  ink: "bg-gradient-to-br from-[#0f172a] via-[#1e3a8a] to-[#0f172a]",
 };
 
 const CATEGORY_LABELS: Record<EbookCategory, string> = {

@@ -34,6 +34,7 @@ import { mockState } from "@/data/mockState";
 import { useRole } from "@/components/shell/RoleContext";
 import { api } from "@/lib/api";
 import { InteractiveChapterStage } from "@/components/learner/InteractiveChapterStage";
+import { ChapterDoubtTutorDrawer } from "@/components/enterprise/ChapterDoubtTutorDrawer";
 
 const s = (k: string) => t(`LR-16.${k}`);
 const r = (k: string) => t(`LR-15.${k}`);
@@ -315,14 +316,21 @@ export function StandaloneReader({
               <span>{book.author}</span>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setTocOpen(true)}
-            className="btn-secondary shrink-0 gap-2 desktop:hidden"
-          >
-            <List aria-hidden size={18} />
-            {r("chapters")}
-          </button>
+          <div className="flex items-center gap-2">
+            <ChapterDoubtTutorDrawer
+              chapterId={chapter?.id || book.id}
+              chapterTitle={chapter?.title || book.title}
+              userId="6"
+            />
+            <button
+              type="button"
+              onClick={() => setTocOpen(true)}
+              className="btn-secondary shrink-0 gap-2 desktop:hidden"
+            >
+              <List aria-hidden size={18} />
+              {r("chapters")}
+            </button>
+          </div>
         </header>
 
         {/* F-03 & REQ-03: Integrated Accessibility & Audiobook Toolbar */}

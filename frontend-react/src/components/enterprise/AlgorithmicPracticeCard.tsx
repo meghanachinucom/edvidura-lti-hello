@@ -20,9 +20,15 @@ interface EvaluateResponse {
   tolerance_pct: number;
 }
 
-export function AlgorithmicPracticeCard() {
+export function AlgorithmicPracticeCard({
+  studentId = "6",
+  templateKey = "linear-balance",
+}: {
+  studentId?: string;
+  templateKey?: "linear-balance" | "circuit-ohms-law" | "kinetic-energy" | string;
+} = {}) {
   const [topic, setTopic] = useState<"linear-balance" | "circuit-ohms-law" | "kinetic-energy">(
-    "linear-balance",
+    (templateKey as any) || "linear-balance",
   );
   const [loading, setLoading] = useState(false);
   const [minted, setMinted] = useState<MintResponse | null>(null);
@@ -105,7 +111,7 @@ export function AlgorithmicPracticeCard() {
           </span>
           <div>
             <h3 className="text-sm sm:text-base font-heading font-bold text-ink">
-              Practice Fresh Randomized Problem · BF-06
+              Practice Fresh Randomized Problem
             </h3>
             <p className="text-xs text-ink-muted">
               Pure AST math generation with unique randomized coefficients per student attempt.

@@ -47,6 +47,8 @@ export function getLocaleBcp47(loc?: Locale): string {
   return localeBcp47[loc ?? currentLocale] || "en-IN";
 }
 
+export { phrases };
+
 /** Hook to subscribe to locale changes in React components */
 export function useLocale(): { locale: Locale; setLocale: (loc: Locale) => void; bcp47: string } {
   const [locale, setLocState] = useState<Locale>(currentLocale);

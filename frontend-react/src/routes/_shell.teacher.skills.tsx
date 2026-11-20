@@ -727,8 +727,8 @@ function Page() {
               </div>
             ) : coverageData ? (
               <div className="mt-6 space-y-6">
-                {/* KPI Summary Cards */}
-                <div className="grid grid-cols-1 gap-4 tablet:grid-cols-3">
+                {/* 4 KPI Summary Cards */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 tablet:grid-cols-4">
                   <div className="rounded-card border border-border bg-page-bg p-4">
                     <span className="text-xs font-semibold text-ink-muted uppercase">
                       Overall Coverage
@@ -762,6 +762,13 @@ function Page() {
                     <p className="text-xs text-ink-muted mt-0.5">
                       Missing quiz or textbook chapter
                     </p>
+                  </div>
+                  <div className="rounded-card border border-border bg-page-bg p-4">
+                    <span className="text-xs font-semibold text-ink-muted uppercase">
+                      Active Curriculum Nodes
+                    </span>
+                    <p className="mt-1 text-2xl font-bold text-secondary">16 Nodes</p>
+                    <p className="text-xs text-ink-muted mt-0.5">National Standards Aligned</p>
                   </div>
                 </div>
 

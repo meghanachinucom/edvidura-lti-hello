@@ -1,4 +1,4 @@
-import { Bookmark, Check, X } from "lucide-react";
+import { Bookmark, Check, X, Clock, HelpCircle, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { t } from "@/i18n";
@@ -15,6 +15,7 @@ import { recordAttemptAnswers, type AnswerRow } from "@/data/attemptAnswers";
 import { mockState } from "@/data/mockState";
 import { api, ApiError } from "@/lib/api";
 import { adaptQuiz, type BackendQuizSummary } from "@/lib/adapters";
+import { ExamIntegrityMonitor } from "@/components/enterprise/ExamIntegrityMonitor";
 
 const s = (k: string, v?: Record<string, string | number>) => t(`LR-05.${k}`, v);
 
@@ -68,7 +69,22 @@ export function QuizSession({ practice: propPractice }: QuizSessionProps = {}) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [hintsOpen, setHintsOpen] = useState<Record<string, boolean>>({});
   const groups = useRef<Record<string, HTMLFieldSetElement | null>>({});
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecondsElapsed((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (secs: number) => {
+    const mins = Math.floor(secs / 60);
+    const rem = secs % 60;
+    return `${String(mins).padStart(2, "0")}:${String(rem).padStart(2, "0")}`;
+  };
 
   useEffect(() => {
     let active = true;
@@ -178,8 +194,12 @@ export function QuizSession({ practice: propPractice }: QuizSessionProps = {}) {
     >
       <div className="sticky top-24 z-10 -mx-4 border-b border-border bg-page-bg px-4 py-3 tablet:top-14">
         <div className="grid grid-cols-1 items-center gap-2 tablet:grid-cols-[minmax(0,1fr)_auto] tablet:gap-3">
-          <div className="min-w-0">
+          <div className="min-w-0 flex flex-wrap items-center gap-3">
             <PageHeading text={quiz.title} />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-ink">
+              <Clock className="size-3.5 text-secondary" />
+              <span>Session Timer: {formatTime(secondsElapsed)}</span>
+            </div>
           </div>
           <div className="min-w-0 text-left tablet:shrink-0 tablet:text-right">
             <p aria-live="polite" className="font-semibold text-ink">
@@ -215,6 +235,11 @@ export function QuizSession({ practice: propPractice }: QuizSessionProps = {}) {
           />
         </div>
       </div>
+
+      <div className="mt-4">
+        <ExamIntegrityMonitor />
+      </div>
+
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-reading text-ink">
           <QuizModeBadge kind={m.sessionType} />
@@ -247,87 +272,178 @@ export function QuizSession({ practice: propPractice }: QuizSessionProps = {}) {
                 }}
                 tabIndex={-1}
                 disabled={submitting}
-                className="scroll-mt-32 rounded-surface border border-border bg-surface p-4"
+                className="scroll-mt-32 rounded-surface border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-3"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="inline-flex size-10 items-center justify-center rounded-full bg-secondary text-white font-bold">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <p className="flex-1 text-sm text-ink-muted">
-                    {s("questionOf", { n: i + 1, total: questions.length })}
-                  </p>
-                  <span className="text-sm font-semibold text-ink">{s("oneMark")}</span>
-                  <button
-                    type="button"
-                    aria-pressed={bookmarked.includes(q.id)}
-                    aria-label={s("bookmarkQuestion", { n: i + 1 })}
-                    onClick={() =>
-                      setBookmarked((items) =>
-                        items.includes(q.id) ? items.filter((id) => id !== q.id) : [...items, q.id],
-                      )
-                    }
-                    className={`inline-flex size-11 items-center justify-center rounded-full border ${bookmarked.includes(q.id) ? "border-secondary bg-primary-fixed text-secondary" : "border-border-control"}`}
-                  >
-                    <Bookmark
-                      aria-hidden
-                      size={18}
-                      fill={bookmarked.includes(q.id) ? "currentColor" : "none"}
-                    />
-                  </button>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="inline-flex size-9 items-center justify-center rounded-full bg-secondary text-white font-bold text-sm">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <div>
+                      <p className="text-xs font-semibold text-ink-muted">
+                        {s("questionOf", { n: i + 1, total: questions.length })}
+                      </p>
+                      {q.topic && (
+                        <span className="inline-block text-[11px] font-bold text-secondary">
+                          {q.topic}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {q.difficulty && (
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
+                          q.difficulty === "Advanced"
+                            ? "bg-purple-100 text-purple-800"
+                            : q.difficulty === "Foundational"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {q.difficulty}
+                      </span>
+                    )}
+                    <span className="rounded-control bg-surface-elevated px-2 py-1 text-xs font-bold text-ink border border-border">
+                      {q.points ? `${q.points} pt` : s("oneMark")}
+                    </span>
+                    <button
+                      type="button"
+                      aria-pressed={bookmarked.includes(q.id)}
+                      aria-label={s("bookmarkQuestion", { n: i + 1 })}
+                      onClick={() =>
+                        setBookmarked((items) =>
+                          items.includes(q.id)
+                            ? items.filter((id) => id !== q.id)
+                            : [...items, q.id],
+                        )
+                      }
+                      className={`inline-flex size-9 items-center justify-center rounded-control border ${
+                        bookmarked.includes(q.id)
+                          ? "border-secondary bg-primary-fixed text-secondary"
+                          : "border-border-control text-ink-muted hover:text-ink"
+                      }`}
+                    >
+                      <Bookmark
+                        aria-hidden
+                        size={16}
+                        fill={bookmarked.includes(q.id) ? "currentColor" : "none"}
+                      />
+                    </button>
+                  </div>
                 </div>
+
                 <legend className="sr-only">{q.text}</legend>
-                <p aria-hidden className="mt-2 font-semibold text-ink">
+                <p
+                  aria-hidden
+                  className="text-base font-heading font-bold text-ink leading-relaxed"
+                >
                   {q.text}
                 </p>
-                <div role="radiogroup" aria-label={q.text} className="mt-3 space-y-2">
+
+                {q.hint && (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setHintsOpen((prev) => ({ ...prev, [q.id]: !prev[q.id] }))}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:underline"
+                    >
+                      <Sparkles className="size-3.5" />
+                      <span>{hintsOpen[q.id] ? "Hide Hint" : "Need a Hint?"}</span>
+                    </button>
+                    {hintsOpen[q.id] && (
+                      <div className="mt-2 rounded-control border border-secondary/20 bg-primary-fixed/40 p-3 text-xs text-ink leading-relaxed">
+                        <strong className="text-secondary font-bold">Hint: </strong>
+                        {q.hint}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div role="radiogroup" aria-label={q.text} className="mt-3 space-y-2.5">
                   {q.options.map((o) => {
                     const on = answers[q.id] === o.key;
                     const crossed = struck[q.id]?.includes(o.key) ?? false;
+                    const inputId = `opt-${q.id}-${o.key}`;
                     return (
                       <div
                         key={o.key}
-                        className={`flex min-h-14 flex-wrap items-center gap-2 rounded-surface border-2 px-3 py-2 text-ink transition-colors duration-150 ${on ? "border-secondary bg-primary-fixed" : "border-border-control bg-surface"}`}
+                        onClick={() => {
+                          if (!submitting) {
+                            setAnswers((a) => ({ ...a, [q.id]: o.key }));
+                            setSaved(false);
+                          }
+                        }}
+                        className={`group flex min-h-13 cursor-pointer items-center justify-between gap-3 rounded-surface border-2 px-3.5 py-2.5 text-ink transition-all duration-150 ${
+                          on
+                            ? "border-secondary bg-primary-fixed ring-2 ring-secondary/30 shadow-xs"
+                            : "border-border-control bg-surface hover:border-secondary/40 hover:bg-surface-elevated"
+                        }`}
                       >
-                        <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3">
+                        <label
+                          htmlFor={inputId}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex min-h-10 min-w-0 flex-1 cursor-pointer items-center gap-3 select-none"
+                        >
                           <input
+                            id={inputId}
                             type="radio"
                             name={q.id}
                             value={o.key}
                             checked={on}
-                            className="size-5 shrink-0 accent-secondary"
+                            className="size-5 shrink-0 accent-secondary cursor-pointer"
                             onChange={() => {
                               setAnswers((a) => ({ ...a, [q.id]: o.key }));
                               setSaved(false);
                             }}
                           />
-                          <span className="font-semibold" aria-hidden>
-                            {o.key}.
+                          <span
+                            className={`inline-flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-bold ${
+                              on
+                                ? "bg-secondary text-white"
+                                : "bg-surface-elevated text-ink border border-border"
+                            }`}
+                            aria-hidden
+                          >
+                            {o.key}
                           </span>
                           <span
-                            className={`min-w-0 flex-1 ${crossed ? "line-through opacity-60" : ""}`}
+                            className={`min-w-0 flex-1 text-sm font-medium leading-normal ${
+                              crossed ? "line-through opacity-50 text-ink-muted" : "text-ink"
+                            }`}
                           >
                             {o.text}
                           </span>
                           {on && (
-                            <Check aria-hidden size={20} className="shrink-0 text-secondary" />
+                            <Check
+                              aria-hidden
+                              size={18}
+                              className="shrink-0 text-secondary stroke-[2.5]"
+                            />
                           )}
                         </label>
                         <button
                           type="button"
                           aria-pressed={crossed}
                           aria-label={s("strikeOut", { key: o.key })}
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setStruck((all) => ({
                               ...all,
                               [q.id]: crossed
                                 ? (all[q.id] ?? []).filter((key) => key !== o.key)
                                 : [...(all[q.id] ?? []), o.key],
-                            }))
-                          }
-                          className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-border-control"
+                            }));
+                          }}
+                          className={`inline-flex size-9 shrink-0 items-center justify-center rounded-full border transition ${
+                            crossed
+                              ? "border-border bg-surface-elevated text-ink-muted"
+                              : "border-border-control text-ink-muted hover:border-secondary/50 hover:text-ink"
+                          }`}
                           title={s("strikeOut", { key: o.key })}
                         >
-                          <X aria-hidden size={18} />
+                          <X aria-hidden size={15} />
                         </button>
                       </div>
                     );
