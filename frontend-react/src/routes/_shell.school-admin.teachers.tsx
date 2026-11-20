@@ -113,17 +113,15 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 pb-24 pt-8 tablet:pb-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <PageHeading text="Faculty" />
+        <PageHeading
+          text="Faculty"
+          context="Appointing faculty registers their instructional profile and trade assignments on the institutional roster. Faculty credentials and authenticated identities are federated through the institution LMS / SSO provider."
+        />
         <a href={instUrl} rel="noreferrer" className="btn-primary inline-flex items-center gap-2">
           <ExternalLink size={16} />
           Open Institution Faculty Roster
         </a>
       </div>
-      <p className="max-w-reading text-sm text-ink-muted">
-        Appointing faculty registers their instructional profile and trade assignments on the
-        institutional roster. Faculty credentials and authenticated identities are federated through
-        the institution LMS / SSO provider.
-      </p>
 
       {appointSuccess && <StatusBanner variant="success">{appointSuccess}</StatusBanner>}
 

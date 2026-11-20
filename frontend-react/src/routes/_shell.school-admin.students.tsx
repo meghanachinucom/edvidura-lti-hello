@@ -109,7 +109,10 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 pb-24 pt-8 tablet:pb-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <PageHeading text={s("title")} />
+        <PageHeading
+          text={s("title")}
+          context="Enrolled learners, course access credentials, and LMS roster synchronization."
+        />
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"

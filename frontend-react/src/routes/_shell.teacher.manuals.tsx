@@ -181,11 +181,12 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-      <div>
-        <PageHeading text={s("title")} />
-        <p className="mt-1 text-ink">{s("subtitle")}</p>
-        <p className="mt-2 max-w-reading text-ink-muted">{s("lead")}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageHeading
+          text={s("title")}
+          context={s("subtitle")}
+        />
+        <div className="flex flex-wrap gap-2">
           <a
             href={manualsAdminUrl}
             rel="noreferrer"

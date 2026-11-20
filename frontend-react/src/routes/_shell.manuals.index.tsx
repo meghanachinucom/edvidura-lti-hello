@@ -114,13 +114,10 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-      <div className="flex flex-col gap-1">
-        <PageHeading text="Living Interactive Textbooks" />
-        <p className="text-sm font-medium text-slate-600 mt-1 max-w-reading">
-          Explore interactive curriculum textbooks with synchronized multi-lingual audiobooks,
-          dynamic concept check stages, and assistive reading tools.
-        </p>
-      </div>
+      <PageHeading
+        text="Living Interactive Textbooks"
+        context="Explore interactive curriculum textbooks with synchronized multi-lingual audiobooks, dynamic concept check stages, and assistive reading tools."
+      />
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col gap-4 tablet:flex-row tablet:items-center tablet:justify-between">

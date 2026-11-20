@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
-import { HeroBand } from "@/components/shared/HeroBand";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
@@ -113,10 +112,11 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-      <div className="flex items-center justify-between">
-        <HeroBand>
-          <PageHeading titleKey="pages.lessons" />
-        </HeroBand>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageHeading
+          titleKey="pages.lessons"
+          context="Structured curriculum units, interactive checkpoints, and self-paced mastery lessons."
+        />
         <OfflineSyncPill />
       </div>
 

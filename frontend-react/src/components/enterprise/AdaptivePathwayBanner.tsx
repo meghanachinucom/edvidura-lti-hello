@@ -33,19 +33,13 @@ interface PathwayData {
     name: string;
     resources: RecommendedResource[];
   };
-  all_tracks: Array<{
-    track: "Support" | "Core" | "Enrichment";
-    threshold: string;
-    description: string;
-  }>;
+  all_tracks: Array<{ track: "Support" | "Core" | "Enrichment"; threshold: string; description: string }>;
 }
 
 export function AdaptivePathwayBanner({ studentId = "6" }: { studentId?: string }) {
   const [data, setData] = useState<PathwayData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedTrackOverride, setSelectedTrackOverride] = useState<
-    "Support" | "Core" | "Enrichment" | null
-  >(null);
+  const [selectedTrackOverride, setSelectedTrackOverride] = useState<"Support" | "Core" | "Enrichment" | null>(null);
 
   const fetchPathway = async () => {
     setLoading(true);
@@ -95,20 +89,17 @@ export function AdaptivePathwayBanner({ studentId = "6" }: { studentId?: string 
           {
             track: "Support",
             threshold: "< 60%",
-            description:
-              "Guided foundational review, step-by-step Socratic hints & remedial micro-lessons",
+            description: "Guided foundational review, step-by-step Socratic hints & remedial micro-lessons",
           },
           {
             track: "Core",
             threshold: "60% – 85%",
-            description:
-              "Standard curriculum pace, practice problems, workbook exercises & formative quizzes",
+            description: "Standard curriculum pace, practice problems, workbook exercises & formative quizzes",
           },
           {
             track: "Enrichment",
             threshold: "> 85%",
-            description:
-              "Advanced spatial 3D labs, multi-variable challenge modeling & peer tutoring",
+            description: "Advanced spatial 3D labs, multi-variable challenge modeling & peer tutoring",
           },
         ],
       });
@@ -162,8 +153,7 @@ export function AdaptivePathwayBanner({ studentId = "6" }: { studentId?: string 
     Enrichment: {
       cardBorder: "border-emerald-200 dark:border-emerald-800/60",
       bgGradient: "from-emerald-500/5 via-surface to-surface",
-      badge:
-        "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200",
+      badge: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200",
       accent: "text-emerald-700 dark:text-emerald-400",
       ring: "ring-emerald-500",
     },
@@ -216,37 +206,24 @@ export function AdaptivePathwayBanner({ studentId = "6" }: { studentId?: string 
 
       {/* 3 Tracks Comparative Selector */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-        {(
-          data?.all_tracks || [
-            { track: "Support", threshold: "< 60%", description: "Foundational review & hints" },
-            { track: "Core", threshold: "60% – 85%", description: "Standard curriculum pace" },
-            {
-              track: "Enrichment",
-              threshold: "> 85%",
-              description: "Advanced spatial 3D & modeling",
-            },
-          ]
-        ).map((tr) => {
+        {(data?.all_tracks || [
+          { track: "Support", threshold: "< 60%", description: "Foundational review & hints" },
+          { track: "Core", threshold: "60% – 85%", description: "Standard curriculum pace" },
+          { track: "Enrichment", threshold: "> 85%", description: "Advanced spatial 3D & modeling" },
+        ]).map((tr) => {
           const isActive = tr.track === activeTrack;
           return (
             <button
               key={tr.track}
               type="button"
               onClick={() => setSelectedTrackOverride(tr.track as any)}
-              className={`text-left p-3.5 rounded-xl border transition-all ${
-                isActive
-                  ? `${trackStyles[tr.track as "Support" | "Core" | "Enrichment"].cardBorder} bg-surface shadow-xs ring-2 ring-primary/60`
-                  : "border-border/60 bg-surface/40 hover:bg-surface text-ink-muted hover:text-ink"
-              }`}
+              className={`text-left p-3.5 rounded-xl border transition-all ${isActive
+                ? `${trackStyles[tr.track as "Support" | "Core" | "Enrichment"].cardBorder} bg-surface shadow-xs ring-2 ring-primary/60`
+                : "border-border/60 bg-surface/40 hover:bg-surface text-ink-muted hover:text-ink"
+                }`}
             >
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span
-                  className={
-                    isActive
-                      ? trackStyles[tr.track as "Support" | "Core" | "Enrichment"].accent
-                      : "text-ink"
-                  }
-                >
+                <span className={isActive ? trackStyles[tr.track as "Support" | "Core" | "Enrichment"].accent : "text-ink"}>
                   {tr.track} Track
                 </span>
                 <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-page-bg border border-border/60">

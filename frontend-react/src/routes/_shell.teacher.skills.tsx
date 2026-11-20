@@ -244,7 +244,10 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <PageHeading text={s("title")} />
+        <PageHeading
+          text={s("title")}
+          context="Map student learning trajectories, curriculum benchmarks, and targeted skill remediation."
+        />
         <div className="flex items-center gap-2">
           <PillTabs items={tabItems} active={activeTab} label="Skills Hub Navigation" />
         </div>

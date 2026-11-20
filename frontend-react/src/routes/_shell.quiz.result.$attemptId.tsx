@@ -167,8 +167,7 @@ function Result({ attempt }: { attempt: Attempt }) {
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
       <div>
-        <PageHeading text={s("title")} />
-        <p className="mt-1 text-ink-muted">{quizTitle(attempt.quizId)}</p>
+        <PageHeading text={s("title")} context={quizTitle(attempt.quizId)} />
         <p className="mt-4 font-heading text-[28px] font-extrabold leading-tight text-metric">
           <CountUp value={score} />
           {scoreTail}

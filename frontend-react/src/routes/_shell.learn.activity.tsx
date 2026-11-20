@@ -54,13 +54,12 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-      <div className="flex items-center justify-between">
-        <PageHeading titleKey="pages.learnActivity" />
-        <a href="/learn/activity" className="text-xs text-ink-muted underline">
-          Open Server Activity (Jinja)
-        </a>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageHeading
+          titleKey="pages.learnActivity"
+          context={s("lead")}
+        />
       </div>
-      <p className="max-w-reading text-ink">{s("lead")}</p>
       <div className="flex flex-col gap-1">
         <label htmlFor="act-show" className="font-semibold text-ink">
           {s("show")}

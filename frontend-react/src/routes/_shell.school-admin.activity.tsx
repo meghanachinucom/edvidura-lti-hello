@@ -76,11 +76,11 @@ function Page() {
         <ChevronLeft aria-hidden size={18} />
         {s("back")}
       </Link>
-      <div className="flex items-center justify-between">
-        <PageHeading text={s("title")} />
-        <a href="/school-admin/activity" className="text-xs text-ink-muted underline">
-          Open Server Activity (Jinja)
-        </a>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageHeading
+          text={s("title")}
+          context="Audited institutional activity log, learner launches, and assessment events."
+        />
       </div>
       <div className="grid gap-4 tablet:grid-cols-2 desktop:max-w-2xl">
         <div>

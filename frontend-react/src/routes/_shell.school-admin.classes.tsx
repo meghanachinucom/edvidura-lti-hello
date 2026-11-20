@@ -250,7 +250,10 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 pb-24 pt-8 tablet:pb-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <PageHeading text="Classes & Sections" />
+        <PageHeading
+          text="Classes & Sections"
+          context="Institutional cohorts, curriculum pathways, and section management."
+        />
         <div className="flex items-center gap-2">
           <button
             type="button"

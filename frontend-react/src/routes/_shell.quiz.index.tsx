@@ -138,11 +138,12 @@ function Gate({ onStart, onStartPractice }: { onStart: () => void; onStartPracti
 
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
-      <div>
-        <PageHeading text={checkpointQuiz.title} />
-        <p className="mt-2 max-w-reading text-ink">
-          <QuizModeBadge kind={q.gateType} />
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageHeading
+          text={checkpointQuiz.title}
+          context="Linear equations and Cartesian coordinate system mastery checkpoint."
+        />
+        <QuizModeBadge kind={q.gateType} />
       </div>
 
       <section aria-labelledby="gate-progress">

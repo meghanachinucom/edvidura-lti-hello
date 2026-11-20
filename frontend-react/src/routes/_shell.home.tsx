@@ -97,6 +97,31 @@ export function StudentHomePage() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
+      {/* Unified Standard Page Heading */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageHeading
+          text="Student Campus Hub"
+          context="Welcome back, Alice. Riverside High School · Class 8 Algebra I"
+        />
+        <div className="flex items-center gap-2">
+          <Link
+            to="/lessons/$lessonId"
+            params={{ lessonId: nextLesson?.id || "lesson-1" }}
+            className="btn-primary text-xs font-bold px-4 py-2 inline-flex items-center gap-1.5"
+          >
+            <PlayCircle size={15} />
+            <span>Continue Lesson {nextLesson?.order || 1}</span>
+          </Link>
+          <Link
+            to="/active-quizzes"
+            className="btn-secondary text-xs font-bold px-4 py-2 inline-flex items-center gap-1.5"
+          >
+            <Trophy size={15} />
+            <span>Active Quizzes</span>
+          </Link>
+        </div>
+      </div>
+
       {/* 2-Minute Daily Review Strip */}
       {reviewsDue.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-amber-500/30 bg-amber-500/10 p-4 shadow-sm">
@@ -129,51 +154,37 @@ export function StudentHomePage() {
         </div>
       )}
 
-      {/* Top Banner / Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f2942] via-[#163e63] to-[#0a1e30] p-6 tablet:p-10 text-white shadow-xl">
-        <div className="relative z-10 max-w-2xl space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur-md text-amber-300">
+      {/* Course Continuity Overview Card */}
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="space-y-2 max-w-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3 py-1 text-xs font-semibold text-secondary">
             <Sparkles size={14} />
-            <span>Riverside High School · Class 8 Algebra I</span>
+            <span>Slope-Intercept Equations · 3D Coordinates</span>
           </div>
-          <h1 className="font-heading text-3xl tablet:text-5xl font-black tracking-tight text-white leading-tight">
-            {greeting}, Alice. <br />
-            <span className="text-amber-400">Make Today Count.</span>
-          </h1>
-          <p className="text-slate-200 text-sm tablet:text-base leading-relaxed">
+          <h2 className="font-heading text-xl font-bold text-ink">
+            {greeting}, Alice. Ready to make today count?
+          </h2>
+          <p className="text-xs sm:text-sm text-ink-muted leading-relaxed">
             Slope-intercept equations, 3D Cartesian coordinates, interactive labs, and concept video
             masterclasses all in one unified learning hub.
           </p>
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Link
-              to="/lessons/$lessonId"
-              params={{ lessonId: nextLesson?.id || "lesson-1" }}
-              className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3 font-bold text-slate-950 transition hover:bg-amber-400 shadow-md"
-            >
-              <PlayCircle size={18} />
-              Continue Lesson {nextLesson?.order || 1}
-            </Link>
-            <Link
-              to="/xr-store"
-              className="inline-flex items-center gap-2 rounded-2xl bg-white/15 px-5 py-3 font-semibold text-white backdrop-blur-md transition hover:bg-white/25"
-            >
-              <Box size={18} />
-              3D Spatial Labs
-            </Link>
-            <Link
-              to="/active-quizzes"
-              className="inline-flex items-center gap-2 rounded-2xl bg-white/15 px-5 py-3 font-semibold text-white backdrop-blur-md transition hover:bg-white/25"
-            >
-              <Trophy size={18} />
-              Active Quizzes
-            </Link>
-          </div>
         </div>
-
-        {/* Ambient decorative gradient badge */}
-        <div className="absolute -right-12 -bottom-12 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden desktop:block opacity-25">
-          <Trophy size={180} />
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <Link
+            to="/lessons/$lessonId"
+            params={{ lessonId: nextLesson?.id || "lesson-1" }}
+            className="btn-primary text-xs font-bold px-4 py-2.5 inline-flex items-center gap-2"
+          >
+            <PlayCircle size={16} />
+            <span>Resume Lesson</span>
+          </Link>
+          <Link
+            to="/xr-store"
+            className="btn-secondary text-xs font-bold px-4 py-2.5 inline-flex items-center gap-2"
+          >
+            <Box size={16} />
+            <span>3D Labs</span>
+          </Link>
         </div>
       </div>
 

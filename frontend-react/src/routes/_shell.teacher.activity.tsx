@@ -60,11 +60,7 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-      <div>
-        <PageHeading text={s("title")} />
-        <p className="mt-2 max-w-reading text-ink">{s("lead")}</p>
-        <p className="mt-1 max-w-reading text-ink-muted">{s("note")}</p>
-      </div>
+      <PageHeading text={s("title")} context={s("lead")} />
       <div className="grid gap-4 tablet:grid-cols-2 desktop:max-w-2xl">
         <div>
           <label htmlFor="ta-name" className="block font-semibold text-ink">

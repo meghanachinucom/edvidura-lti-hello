@@ -152,13 +152,10 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
       {/* Page Title & Intro */}
-      <div className="flex flex-col gap-1">
-        <PageHeading text="Your Path to Mastery" />
-        <p className="text-sm font-medium text-slate-600 mt-1 max-w-reading">
-          Your personalized study roadmap dynamically targets knowledge gaps by connecting
-          textbooks, short concept reels, guided AI tutor practice, and certified mastery quizzes.
-        </p>
-      </div>
+      <PageHeading
+        text="Your Path to Mastery"
+        context="Your personalized study roadmap dynamically targets knowledge gaps by connecting textbooks, short concept reels, guided AI tutor practice, and certified mastery quizzes."
+      />
 
       {/* Top Summary KPI Strip */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

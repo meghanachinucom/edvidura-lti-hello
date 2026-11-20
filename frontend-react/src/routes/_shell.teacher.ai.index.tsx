@@ -29,14 +29,8 @@ const tools = [
 function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <PageHeading text={s("title")} />
-          <p className="mt-2 max-w-reading text-ink">{s("lead")}</p>
-        </div>
-        <a href="/teacher/ai" className="text-xs text-ink-muted underline shrink-0">
-          Open Server AI Hub (Jinja)
-        </a>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageHeading text={s("title")} context={s("lead")} />
       </div>
       <ul className="divide-y divide-border rounded-surface border border-border bg-surface">
         {tools.map((x) => (

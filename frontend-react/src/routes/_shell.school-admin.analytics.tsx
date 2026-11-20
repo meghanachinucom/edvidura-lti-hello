@@ -124,12 +124,10 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 pb-24 pt-8 tablet:pb-8">
       <div className="flex flex-col gap-4 tablet:flex-row tablet:items-start tablet:justify-between">
-        <div>
-          <PageHeading text={s("title")} />
-          <a href="/school-admin/analytics" className="mt-1 block text-xs text-ink-muted underline">
-            Open Server Analytics (Jinja)
-          </a>
-        </div>
+        <PageHeading
+          text={s("title")}
+          context="Institution-wide completion rates, assessment averages, and learning performance."
+        />
         {!loading && all.length > 0 && (
           <div className="flex shrink-0 flex-wrap gap-2">
             <button type="button" className="btn-secondary" onClick={exportJson}>

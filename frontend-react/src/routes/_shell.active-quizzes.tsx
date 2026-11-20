@@ -147,7 +147,10 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
-      <PageHeading titleKey="pages.activeQuizzes" />
+      <PageHeading
+        titleKey="pages.activeQuizzes"
+        context="Assigned formative checkpoints, practice assessments, and certified mastery quizzes."
+      />
       {loading ? (
         <LoadingSkeleton variant="table" count={4} />
       ) : (

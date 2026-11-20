@@ -170,10 +170,7 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
-      <div>
-        <PageHeading text={s("title")} />
-        <p className="mt-2 max-w-reading text-ink-muted">{s("lead")}</p>
-      </div>
+      <PageHeading text={s("title")} context={s("lead")} />
 
       <section aria-labelledby="sec-lessons" className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -11,7 +11,6 @@ import {
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { CountUp } from "@/components/shared/CountUp";
-import { HeroBand } from "@/components/shared/HeroBand";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { institute } from "@/data/institute";
 import { instituteFigures } from "@/data/schoolAdmin";
@@ -123,19 +122,20 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 pb-24 pt-8 tablet:pb-8">
-      <HeroBand>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <PageHeading text={title} />
-          <a
-            href={institutionDetailUrl}
-            rel="noreferrer"
-            className="btn-primary inline-flex items-center gap-2"
-          >
-            <ExternalLink size={16} />
-            Open Institution Workspace
-          </a>
-        </div>
-      </HeroBand>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageHeading
+          text={title}
+          context="Institutional governance, class section enrollments, and statutory compliance oversight."
+        />
+        <a
+          href={institutionDetailUrl}
+          rel="noreferrer"
+          className="btn-primary inline-flex items-center gap-2"
+        >
+          <ExternalLink size={16} />
+          Open Institution Workspace
+        </a>
+      </div>
       {loading ? (
         <LoadingSkeleton count={4} />
       ) : (

@@ -628,16 +628,14 @@ mark {
 
 .learner-home-hero {
   position: relative;
-  overflow: hidden;
-  border-radius: 12px;
-  background: #17313a;
-  padding: 28px;
-  color: #ffffff;
+  background: transparent;
+  padding: 0;
+  color: inherit;
 }
 
 .learner-home-hero h1,
 .learner-home-hero p {
-  color: #ffffff;
+  color: inherit;
 }
 
 .learner-home-hero .blueprint-grid {
@@ -743,7 +741,26 @@ mark {
   backdrop-filter: blur(14px);
 }
 
-.hero-band,
+.hero-band {
+  position: relative;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.hero-band h1,
+.hero-band p {
+  color: inherit;
+}
+
+.max-w-content > .hero-band {
+  width: 100%;
+  margin-left: 0;
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .landing-hero {
   position: relative;
   overflow: hidden;
@@ -756,19 +773,6 @@ mark {
     linear-gradient(135deg, #17313a, #10272e);
   color: white;
   padding: 28px;
-}
-
-.hero-band h1,
-.hero-band p {
-  color: white;
-}
-
-.max-w-content > .hero-band {
-  width: 100vw;
-  margin-left: calc((100% - 100vw) / 2);
-  border-radius: 0;
-  padding-left: max(1rem, calc((100vw - 960px) / 2));
-  padding-right: max(1rem, calc((100vw - 960px) / 2));
 }
 
 .hero-band .blueprint-grid {

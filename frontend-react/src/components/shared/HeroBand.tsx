@@ -7,5 +7,5 @@ export function HeroBand({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={`hero-band ${className}`}>{children}</div>;
+  return <div className={`w-full ${className}`}>{children}</div>;
 }

@@ -15,7 +15,6 @@ import { api } from "@/lib/api";
 import { adaptAttempts, type BackendAttemptCard } from "@/lib/adapters";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { CountUp } from "@/components/shared/CountUp";
-import { HeroBand } from "@/components/shared/HeroBand";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
@@ -369,12 +368,7 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
       <div className="flex flex-col gap-4 tablet:flex-row tablet:items-start tablet:justify-between">
-        <div className="min-w-0">
-          <HeroBand>
-            <PageHeading text={s("title")} />
-          </HeroBand>
-          <p className="mt-1 text-ink">{s("subtitle")}</p>
-        </div>
+        <PageHeading text={s("title")} context={s("subtitle")} />
         <div className="flex shrink-0 gap-2">
           <button
             type="button"

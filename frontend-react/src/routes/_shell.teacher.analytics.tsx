@@ -122,10 +122,7 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
       <div className="flex flex-col gap-4 tablet:flex-row tablet:items-start tablet:justify-between">
-        <div className="min-w-0">
-          <PageHeading text={s("title")} />
-          <p className="mt-1 text-ink">{s("scope")}</p>
-        </div>
+        <PageHeading text={s("title")} context={s("scope")} />
         <div className="flex shrink-0 flex-wrap gap-2">
           <button type="button" className="btn-secondary" onClick={exportJson}>
             <Download aria-hidden size={18} />

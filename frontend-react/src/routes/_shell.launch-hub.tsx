@@ -5,7 +5,6 @@ import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { CountUp } from "@/components/shared/CountUp";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
-import { HeroBand } from "@/components/shared/HeroBand";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
 import { targetRoles } from "@/data/skills";
 import { DataTable, type Column } from "@/components/shared/DataTable";
@@ -131,12 +130,9 @@ function LaunchHub() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
-      <HeroBand className={role === "learner" ? "learner-home-hero" : ""}>
-        <div className="relative">
-          <PageHeading text={s("hi", { name: firstName(name) })} />
-          <p className="mt-2 text-ink-muted">{subline}</p>
-        </div>
-      </HeroBand>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageHeading text={s("hi", { name: firstName(name) })} context={subline} />
+      </div>
       {error && <ErrorAlert message={error} />}
       {loading ? (
         <LoadingSkeleton variant="text" count={4} />

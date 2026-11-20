@@ -225,12 +225,12 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-4 px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <PageHeading titleKey="pages.micro" />
+        <PageHeading
+          titleKey="pages.micro"
+          context="Bite-sized 60-second video concepts, interactive audio reels, and rapid audio-visual refreshers."
+        />
         <div className="flex items-center gap-2">
           <PillTabs items={tabItems} active={activeTab} label="Micro Learning Navigation" />
-          <a href="/learn/micro" className="text-xs text-ink-muted underline hidden tablet:inline">
-            Open Server View
-          </a>
         </div>
       </div>
 

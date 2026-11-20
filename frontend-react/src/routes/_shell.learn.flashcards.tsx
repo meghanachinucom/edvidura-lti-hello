@@ -107,20 +107,16 @@ function Page() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-      <PageHeading titleKey="pages.flashcards" />
-      <p className="max-w-reading text-ink">{s("instruction")}</p>
-      <PillTabs
-        label={s("modes")}
-        active="study"
-        items={[
-          { id: "study", label: s("study") },
-          { id: "practice", label: s("practice"), to: "/active-quizzes" },
-        ]}
-      />
-      <div className="flex justify-end">
-        <a href="/learn/flashcards" className="text-xs text-ink-muted underline">
-          Open Server Flashcards (Jinja)
-        </a>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <PageHeading titleKey="pages.flashcards" context={s("instruction")} />
+        <PillTabs
+          label={s("modes")}
+          active="study"
+          items={[
+            { id: "study", label: s("study") },
+            { id: "practice", label: s("practice"), to: "/active-quizzes" },
+          ]}
+        />
       </div>
 
       {deck.length > 0 && (

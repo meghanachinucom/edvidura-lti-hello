@@ -118,21 +118,13 @@ export function XrStorePage() {
 
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
-      {/* Top Banner */}
+      {/* Unified Standard Page Heading */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-600">
-            <Sparkles size={14} /> WebXR & 3D Spatial Learning
-          </div>
-          <h1 className="font-heading text-2xl tablet:text-3xl font-extrabold text-ink mt-1">
-            XR Store & Interactive 3D Spatial Labs
-          </h1>
-          <p className="text-xs tablet:text-sm text-ink-muted mt-1 max-w-2xl">
-            Hands-on WebGL and WebXR simulations designed for Chrome, Meta Quest, and spatial
-            touchscreens.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 rounded-2xl bg-surface border border-border px-4 py-2 text-xs font-semibold text-ink shadow-sm">
+        <PageHeading
+          text="3D Spatial Labs & XR Store"
+          context="Hands-on WebGL and WebXR simulations designed for Chrome, Meta Quest, and spatial touchscreens."
+        />
+        <div className="flex items-center gap-2 rounded-2xl bg-surface border border-border px-4 py-2 text-xs font-semibold text-ink shadow-xs">
           <Glasses size={18} className="text-amber-600" />
           <span>Meta Quest & WebXR Ready</span>
         </div>

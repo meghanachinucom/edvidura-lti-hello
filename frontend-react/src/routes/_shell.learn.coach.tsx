@@ -332,16 +332,10 @@ function Page() {
     <div className="mx-auto w-full max-w-content px-4 py-8 grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-8">
       {/* Left Column: Skill Tree, Mode, & Benchmark (32%) */}
       <div className="space-y-6">
-        <div>
-          <PageHeading titleKey="pages.coach" />
-          <div className="max-w-reading space-y-1 text-ink mt-1">
-            <p>{s("line1")}</p>
-            <p className="text-sm text-ink-muted">
-              Learn concepts step-by-step with guided hints, spoken math voice, and verified chapter
-              citations.
-            </p>
-          </div>
-        </div>
+        <PageHeading
+          titleKey="pages.coach"
+          context="Learn concepts step-by-step with guided hints, spoken math voice, and verified chapter citations."
+        />
 
         {/* Guided Mastery Tutor Mode Selector */}
         <div className="rounded-surface border border-border bg-surface p-4 shadow-sm">
