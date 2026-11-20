@@ -20,17 +20,9 @@ interface EvaluateResponse {
   tolerance_pct: number;
 }
 
-interface AlgorithmicPracticeCardProps {
-  studentId?: string;
-  templateKey?: "linear-balance" | "circuit-ohms-law" | "kinetic-energy" | string;
-}
-
-export function AlgorithmicPracticeCard({
-  studentId: _studentId = "6",
-  templateKey = "linear-balance",
-}: AlgorithmicPracticeCardProps = {}) {
+export function AlgorithmicPracticeCard() {
   const [topic, setTopic] = useState<"linear-balance" | "circuit-ohms-law" | "kinetic-energy">(
-    (templateKey as any) || "linear-balance",
+    "linear-balance",
   );
   const [loading, setLoading] = useState(false);
   const [minted, setMinted] = useState<MintResponse | null>(null);

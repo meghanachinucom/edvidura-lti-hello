@@ -18,13 +18,7 @@ interface AssignmentData {
   };
 }
 
-export function PeerReviewStudio({
-  assignmentId = "assign-slice-a",
-  reviewerId: _reviewerId = "6",
-}: {
-  assignmentId?: string;
-  reviewerId?: string;
-}) {
+export function PeerReviewStudio({ assignmentId = "assign-slice-a" }: { assignmentId?: string }) {
   const [data, setData] = useState<AssignmentData | null>(null);
   const [activePairId, setActivePairId] = useState<string>("pair-1");
   const [scores, setScores] = useState<Record<string, number>>({

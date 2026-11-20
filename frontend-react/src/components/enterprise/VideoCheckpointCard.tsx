@@ -27,7 +27,7 @@ export function VideoCheckpointCard({ videoId = "les-transformer" }: { videoId?:
       .then((res) => {
         if (active && res && res.cues) {
           setCues(res.cues);
-          if (res.cues.length > 0) setActiveCue(res.cues[0] ?? null);
+          if (res.cues.length > 0) setActiveCue(res.cues[0]);
         }
       })
       .catch(() => {
@@ -67,7 +67,7 @@ export function VideoCheckpointCard({ videoId = "les-transformer" }: { videoId?:
         ];
         if (active) {
           setCues(demoCues);
-          setActiveCue(demoCues[0] ?? null);
+          setActiveCue(demoCues[0]);
         }
       });
     return () => {
