@@ -519,7 +519,7 @@ export function UnifiedRubricGraderDrawer({
               Total Evaluated Score
             </span>
             <div className="flex items-baseline gap-1.5">
-              <span className="font-heading text-2xl font-black text-secondary">{totalScore}</span>
+              <span className="font-heading text-2xl font-bold text-secondary">{totalScore}</span>
               <span className="text-xs font-bold text-ink-muted">
                 / {maxScore} pts ({scorePct}%)
               </span>

@@ -126,7 +126,7 @@ export function StudentHomePage() {
       {reviewsDue.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-amber-500/30 bg-amber-500/10 p-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-slate-950 font-black">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-slate-950 font-bold">
               <Clock size={20} />
             </div>
             <div>
@@ -161,7 +161,7 @@ export function StudentHomePage() {
             <Sparkles size={14} />
             <span>Slope-Intercept Equations · 3D Coordinates</span>
           </div>
-          <h2 className="font-heading text-xl sm:text-2xl font-black text-ink">
+          <h2 className="font-heading text-xl sm:text-2xl font-bold text-ink">
             {greeting}, Alice. Ready to make today count?
           </h2>
           <p className="text-xs sm:text-sm text-ink-muted leading-relaxed">

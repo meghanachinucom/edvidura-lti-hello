@@ -225,7 +225,7 @@ export function LiveEventStreamViewer() {
           <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Stream Events
           </span>
-          <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">
+          <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-ink">
             {events.length}
           </p>
           <span className="text-xs text-ink-muted">Live Ingestion Active</span>
@@ -235,7 +235,7 @@ export function LiveEventStreamViewer() {
           <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Active Learners
           </span>
-          <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-secondary">
+          <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-secondary">
             4 Students
           </p>
           <span className="text-xs text-secondary font-medium">Class 8 Section A</span>
@@ -245,7 +245,7 @@ export function LiveEventStreamViewer() {
           <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Mastery Ratio
           </span>
-          <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-emerald-700">92.5%</p>
+          <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-emerald-700">92.5%</p>
           <span className="text-xs text-emerald-800 font-medium">First-Attempt Success</span>
         </div>
 
@@ -253,7 +253,7 @@ export function LiveEventStreamViewer() {
           <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Event Velocity
           </span>
-          <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">18 / hr</p>
+          <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-ink">18 / hr</p>
           <span className="text-xs text-ink-muted">Peak Study Window</span>
         </div>
       </div>

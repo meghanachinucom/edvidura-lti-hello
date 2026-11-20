@@ -144,7 +144,7 @@ export function XrStorePage() {
           <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-bold text-amber-300">
             Featured Interactive Lab
           </span>
-          <h2 className="font-heading text-2xl tablet:text-4xl font-black text-white">
+          <h2 className="font-heading text-2xl tablet:text-3xl font-bold text-white">
             {XR_LABS[0]!.name}
           </h2>
           <p className="text-xs tablet:text-sm text-slate-300">{XR_LABS[0]!.tagline}</p>

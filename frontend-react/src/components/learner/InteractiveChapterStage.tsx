@@ -279,7 +279,7 @@ export function InteractiveChapterStage({
               <div className="bg-white border-2 border-secondary text-secondary font-mono font-bold text-lg rounded-2xl px-6 py-3 shadow-md">
                 {currentBeat.visual_diagram["left"]}
               </div>
-              <div className="size-10 flex items-center justify-center rounded-full bg-amber-400 text-slate-950 font-black text-xl shadow-xs">
+              <div className="size-10 flex items-center justify-center rounded-full bg-amber-400 text-slate-950 font-bold text-xl shadow-xs">
                 =
               </div>
               <div className="bg-white border-2 border-secondary text-secondary font-mono font-bold text-lg rounded-2xl px-6 py-3 shadow-md">

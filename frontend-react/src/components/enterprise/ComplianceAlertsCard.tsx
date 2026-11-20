@@ -148,7 +148,7 @@ export function ComplianceAlertsCard() {
           <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Monitored Students
           </span>
-          <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">48 Enrolled</p>
+          <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-ink">48 Enrolled</p>
           <span className="text-xs text-ink-muted">Active in Industrial Labs</span>
         </div>
 
@@ -156,7 +156,7 @@ export function ComplianceAlertsCard() {
           <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Action Required
           </span>
-          <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-rose-700">
+          <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-rose-700">
             {certs.filter((c) => c.status === "Action Required").length} Student
           </p>
           <span className="text-xs text-rose-800 font-medium">Expires in &lt;7 days</span>
@@ -166,7 +166,7 @@ export function ComplianceAlertsCard() {
           <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
             Overall Compliance
           </span>
-          <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-emerald-700">97.8%</p>
+          <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-emerald-700">97.8%</p>
           <span className="text-xs text-emerald-800 font-medium">Audit-Ready State</span>
         </div>
       </div>

@@ -49,7 +49,7 @@ function ReviewGateway() {
       <main className="flex-1 px-4 py-10">
         <div className="mx-auto max-w-5xl space-y-10">
           <div className="text-center space-y-2">
-            <h1 className="font-heading text-3xl sm:text-4xl font-black tracking-tight text-ink">
+            <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-ink">
               EdVidura Management Review Portal
             </h1>
             <p className="text-base font-medium text-slate-800 max-w-2xl mx-auto leading-relaxed">

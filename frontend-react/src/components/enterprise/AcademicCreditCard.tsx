@@ -231,7 +231,7 @@ export function AcademicCreditCard({ userId = "6" }: { userId?: string }) {
               <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Total Earned Credits
               </span>
-              <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-secondary">
+              <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-secondary">
                 {ledger.total_credits_awarded}
               </p>
               <span className="text-xs text-ink-muted font-medium">105.0 Audited Hours</span>
@@ -241,7 +241,7 @@ export function AcademicCreditCard({ userId = "6" }: { userId?: string }) {
               <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Classroom Seat Time
               </span>
-              <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">
+              <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-ink">
                 {ledger.instructional_hours}h
               </p>
               <span className="text-xs text-ink-muted font-medium">Direct Instruction</span>
@@ -251,7 +251,7 @@ export function AcademicCreditCard({ userId = "6" }: { userId?: string }) {
               <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Lab & Practicum
               </span>
-              <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">
+              <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-ink">
                 {ledger.lab_hours}h
               </p>
               <span className="text-xs text-ink-muted font-medium">Simulations & Spatial</span>
@@ -261,7 +261,7 @@ export function AcademicCreditCard({ userId = "6" }: { userId?: string }) {
               <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Curriculum Progress
               </span>
-              <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-emerald-700">
+              <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-emerald-700">
                 {ledger.graduation_progress_pct ?? 82}%
               </p>
               <span className="text-xs text-emerald-800 font-medium">On Track for Honor Roll</span>

@@ -176,7 +176,7 @@ export function ApprenticeshipOjtCard({ apprenticeId = "p-rajesh" }: { apprentic
               <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Current Wage Tier
               </span>
-              <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-secondary">
+              <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-secondary">
                 Tier {status.wage_tier}
               </p>
               <span className="text-xs text-emerald-800 font-bold">₹14,500 / month Stipend</span>
@@ -186,7 +186,7 @@ export function ApprenticeshipOjtCard({ apprenticeId = "p-rajesh" }: { apprentic
               <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Logged OJT Hours
               </span>
-              <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">
+              <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-ink">
                 {status.total_ojt_hours}h
               </p>
               <span className="text-xs text-ink-muted">
@@ -198,7 +198,7 @@ export function ApprenticeshipOjtCard({ apprenticeId = "p-rajesh" }: { apprentic
               <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider block">
                 Classroom Practicum
               </span>
-              <p className="mt-1 font-heading text-xl sm:text-2xl font-black text-ink">
+              <p className="mt-1 font-heading text-xl sm:text-2xl font-bold text-ink">
                 {status.total_classroom_hours}h
               </p>
               <span className="text-xs text-ink-muted">Sponsor: {status.sponsor_id}</span>

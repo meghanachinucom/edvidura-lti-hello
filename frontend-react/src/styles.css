@@ -100,20 +100,8 @@
   h6,
   .font-heading {
     font-family: var(--font-heading);
-    font-weight: 800;
-    -webkit-text-stroke: 0.35px currentColor;
-    letter-spacing: -0.015em;
-  }
-
-  .font-bold {
     font-weight: 700;
-    -webkit-text-stroke: 0.25px currentColor;
-  }
-
-  .font-extrabold,
-  .font-black {
-    font-weight: 800;
-    -webkit-text-stroke: 0.4px currentColor;
+    letter-spacing: -0.01em;
   }
 
   :focus-visible {

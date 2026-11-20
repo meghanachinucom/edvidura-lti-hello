@@ -101,13 +101,13 @@ export function TopNav() {
           <Link
             to="/"
             onClick={() => setMobileOpen(false)}
-            className="font-heading text-xl font-extrabold text-secondary tablet:hidden desktop:block"
+            className="font-heading text-xl font-bold text-secondary tablet:hidden desktop:block"
           >
             EdVidura
           </Link>
           <span
             aria-hidden
-            className="hidden font-heading text-xl font-extrabold text-secondary tablet:block desktop:hidden"
+            className="hidden font-heading text-xl font-bold text-secondary tablet:block desktop:hidden"
           >
             E
           </span>
@@ -136,12 +136,12 @@ export function TopNav() {
                     aria-current={selected ? "page" : undefined}
                     title={t(item.labelKey)}
                     onClick={() => setMobileOpen(false)}
-                    className={`group relative flex min-h-12 items-center gap-3 rounded-xl border-l-4 px-3.5 text-[15px] sm:text-base transition-all duration-150 tablet:justify-center tablet:gap-0 tablet:px-0 desktop:justify-start desktop:gap-3 desktop:px-3.5 ${selected ? "border-l-secondary bg-secondary/15 font-black text-secondary shadow-xs" : "border-l-transparent text-slate-800 hover:text-slate-950 hover:bg-slate-100 font-bold"}`}
+                    className={`group relative flex min-h-12 items-center gap-3 rounded-xl border-l-4 px-3.5 text-[15px] sm:text-base transition-all duration-150 tablet:justify-center tablet:gap-0 tablet:px-0 desktop:justify-start desktop:gap-3 desktop:px-3.5 ${selected ? "border-l-secondary bg-secondary/10 font-bold text-secondary shadow-xs" : "border-l-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium"}`}
                   >
                     <Icon
                       aria-hidden
-                      size={22}
-                      className={`shrink-0 ${selected ? "stroke-[2.5]" : "stroke-2"}`}
+                      size={20}
+                      className={`shrink-0 ${selected ? "stroke-[2.25]" : "stroke-2"}`}
                     />
                     <span className="tablet:hidden desktop:inline">{t(item.labelKey)}</span>
                     <span

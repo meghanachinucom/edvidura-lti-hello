@@ -27,11 +27,11 @@ export function BottomTabBar({ items, fixed = true }: { items: TabItem[]; fixed?
               <Link
                 to={to}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-16 flex-col items-center justify-center gap-1 px-1.5 text-center transition-all ${active ? "font-black text-secondary bg-secondary/10 rounded-xl py-1 shadow-xs" : "font-bold text-ink-muted hover:text-ink"}`}
+                className={`flex min-h-16 flex-col items-center justify-center gap-1 px-1.5 text-center transition-all ${active ? "font-bold text-secondary bg-secondary/10 rounded-xl py-1 shadow-xs" : "font-medium text-ink-muted hover:text-ink"}`}
               >
-                <Icon aria-hidden size={22} className={active ? "stroke-[2.5]" : "stroke-2"} />
+                <Icon aria-hidden size={20} className={active ? "stroke-[2.25]" : "stroke-2"} />
                 <span
-                  className={`w-full truncate text-xs sm:text-sm ${active ? "font-black" : "font-bold"}`}
+                  className={`w-full truncate text-xs sm:text-sm ${active ? "font-bold" : "font-medium"}`}
                 >
                   {label}
                 </span>
