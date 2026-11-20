@@ -296,7 +296,7 @@ export function StandaloneReader({
     >
       <div className="mx-auto w-full max-w-content px-4 py-6 desktop:max-w-[1240px]">
         {/* Navigation & Title Header */}
-        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border pb-4">
+        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border pb-4 bg-transparent">
           <div className="min-w-0">
             <Link
               to="/manuals"

@@ -10,8 +10,8 @@ function OpsLayout() {
       <a href="#main" className="skip-link">
         {t("app.skip")}
       </a>
-      <header className="border-b border-border bg-surface px-6 py-3">
-        <p className="font-heading text-[16px] text-ink">{t("OP.console")}</p>
+      <header className="border-b border-slate-700/80 bg-topbar px-6 py-3 text-white">
+        <p className="font-heading text-[16px] font-bold text-white">{t("OP.console")}</p>
       </header>
       <main id="main">
         <Outlet />

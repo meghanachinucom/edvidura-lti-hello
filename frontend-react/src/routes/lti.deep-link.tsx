@@ -49,8 +49,8 @@ function DeepLink() {
       <a href="#main" className="skip-link">
         {t("app.skip")}
       </a>
-      <header className="border-b border-border bg-surface px-4 py-3">
-        <p className="mx-auto max-w-content font-heading text-[22px] font-bold text-ink">
+      <header className="border-b border-slate-700/80 bg-topbar px-4 py-3 text-white">
+        <p className="mx-auto max-w-content font-heading text-[22px] font-bold text-white">
           {t("app.name")}
         </p>
       </header>

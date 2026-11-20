@@ -60,24 +60,17 @@ function Landing() {
       <a href="#main" className="skip-link">
         {t("app.skip")}
       </a>
-      <header className="border-b border-border bg-surface px-6 py-4 shadow-2xs">
+      <header className="border-b border-slate-700/80 bg-topbar px-6 py-4 text-white">
         <div className="mx-auto flex max-w-content items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-9.5 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 via-secondary to-teal-800 text-white font-heading font-extrabold text-[15px] shadow-sm ring-2 ring-secondary/25">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-8.5 items-center justify-center rounded-lg bg-teal-600 text-white font-heading font-bold text-sm">
               EV
             </div>
-            <div>
-              <p className="font-heading text-lg font-extrabold text-slate-900 leading-none">
-                {t("app.name")}
-              </p>
-              <p className="text-[12.5px] font-semibold text-slate-500 mt-1">
-                LTI 1.3 Advantage Learning Platform
-              </p>
-            </div>
+            <p className="font-heading text-[20px] font-bold text-white">{t("app.name")}</p>
           </div>
           <a
             href={returnUrl}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-300 hover:text-white hover:underline"
           >
             <span>Senior Review Gateway</span>
             <ExternalLink size={14} aria-hidden />

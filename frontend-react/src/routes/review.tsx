@@ -27,23 +27,23 @@ export const Route = createFileRoute("/review")({
 function ReviewGateway() {
   return (
     <div className="flex min-h-screen flex-col bg-page-bg">
-      <header className="border-b border-border bg-surface px-6 py-4 shadow-2xs">
+      <header className="border-b border-slate-700/80 bg-topbar px-6 py-4 text-white">
         <div className="mx-auto flex max-w-content items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-9.5 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 via-secondary to-teal-800 text-white font-heading font-extrabold text-[15px] shadow-sm ring-2 ring-secondary/25">
+            <div className="flex size-9.5 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-secondary text-white font-heading font-extrabold text-[15px] shadow-sm ring-2 ring-teal-500/30">
               EV
             </div>
             <div>
-              <p className="font-heading text-lg font-extrabold text-slate-900 leading-none">
+              <p className="font-heading text-[18px] font-extrabold tracking-tight text-white leading-tight">
                 {t("app.name")}
               </p>
-              <p className="text-[12.5px] font-semibold text-slate-500 mt-1">
+              <p className="text-xs font-semibold text-slate-300 mt-0.5">
                 Senior Review Gateway · Riverside High
               </p>
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-3 py-1 rounded-full shadow-xs">
+            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>Production Deployment Ready</span>
           </span>
         </div>

@@ -51,8 +51,8 @@ function Page() {
             key={g.client}
             className="space-y-4 rounded-surface border border-border bg-surface p-5"
           >
-            <header className="flex items-center justify-between gap-2">
-              <h2 className="font-heading text-lg text-ink">{g.name}</h2>
+            <header className="flex items-center justify-between gap-2 border-b border-border pb-2.5 bg-transparent">
+              <h2 className="font-heading text-lg font-bold text-ink">{g.name}</h2>
               <StatusGem tone="synced">Connected</StatusGem>
             </header>
             <span className="inline-flex rounded-full bg-surface-raised px-3 py-1 text-xs text-ink">
@@ -89,8 +89,8 @@ function Page() {
         className="space-y-4 rounded-surface border border-border bg-surface p-5"
         aria-labelledby="groups"
       >
-        <header>
-          <h2 id="groups" className="font-heading text-xl text-ink">
+        <header className="border-b border-border pb-2.5 bg-transparent">
+          <h2 id="groups" className="font-heading text-xl font-bold text-ink">
             Group services
           </h2>
           <p className="mt-1 text-sm text-ink-muted">Study circles · Synchronized with SIS</p>

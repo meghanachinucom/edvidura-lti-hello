@@ -466,7 +466,7 @@ export function EbookReader({
     <div
       className={`mx-auto w-full max-w-content px-4 py-6 desktop:max-w-[1400px] ${darkMode ? "reader-dark rounded-surface" : ""}`}
     >
-      <header className="space-y-3 border-b border-border pb-3">
+      <header className="space-y-3 border-b border-border pb-3 bg-transparent">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
           <div className="min-w-0">
             <PageHeading text={book.title} />

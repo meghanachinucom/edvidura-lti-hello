@@ -226,18 +226,18 @@ function Page() {
             key={f.personId}
             className="space-y-4 rounded-surface border border-border bg-surface p-5 shadow-sm"
           >
-            <header className="flex items-start gap-3 bg-transparent">
-              <div className="grid size-12 shrink-0 place-items-center rounded-full bg-secondary/10 font-heading text-secondary font-bold text-base">
+            <header className="flex items-start gap-3 bg-topbar text-white p-3.5 rounded-xl border border-slate-700/50">
+              <div className="grid size-12 shrink-0 place-items-center rounded-full bg-teal-500/20 border border-teal-500/30 font-heading text-teal-300 font-bold">
                 {f.name
                   .split(" ")
                   .map((x: string) => x[0])
                   .join("")}
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="font-heading text-lg font-extrabold text-slate-900">{f.name}</h2>
-                <p className="text-secondary text-sm font-semibold mt-0.5">{f.subject}</p>
+                <h2 className="font-heading text-lg font-bold text-white">{f.name}</h2>
+                <p className="text-teal-300 text-sm font-semibold">{f.subject}</p>
               </div>
-              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-xs text-emerald-700 font-semibold">
+              <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-1 text-xs text-emerald-300 font-bold">
                 SSO linked
               </span>
             </header>
@@ -256,7 +256,7 @@ function Page() {
                 {f.curricula.map((c) => (
                   <span
                     key={c}
-                    className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 border border-slate-200"
+                    className="rounded bg-surface-contrast px-2 py-1 text-xs text-ink border border-border"
                   >
                     {c}
                   </span>
