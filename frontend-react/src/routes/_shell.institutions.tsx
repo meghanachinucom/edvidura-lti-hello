@@ -254,7 +254,7 @@ export function MultiCampusDirectoryPage() {
                   {campus.code}
                 </span>
                 <span
-                  className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                  className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                     campus.status === "Active"
                       ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                       : "bg-amber-50 text-amber-800 border-amber-200"
@@ -274,21 +274,15 @@ export function MultiCampusDirectoryPage() {
 
               <div className="grid grid-cols-3 gap-2 py-2 border-y border-border text-center text-xs">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-ink-muted block">
-                    Classes
-                  </span>
+                  <span className="text-xs uppercase font-bold text-ink-muted block">Classes</span>
                   <span className="font-bold text-ink">{campus.classesCount}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-ink-muted block">
-                    Faculty
-                  </span>
+                  <span className="text-xs uppercase font-bold text-ink-muted block">Faculty</span>
                   <span className="font-bold text-ink">{campus.teachersCount}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-ink-muted block">
-                    Learners
-                  </span>
+                  <span className="text-xs uppercase font-bold text-ink-muted block">Learners</span>
                   <span className="font-bold text-secondary">{campus.studentsCount}</span>
                 </div>
               </div>
@@ -302,7 +296,7 @@ export function MultiCampusDirectoryPage() {
                 </div>
                 <div className="flex items-center justify-between truncate">
                   <span>LMS Binding:</span>
-                  <span className="font-mono text-[11px] truncate max-w-[140px] text-slate-700">
+                  <span className="font-mono text-xs truncate max-w-[140px] text-slate-700">
                     {campus.moodleSite.replace(/^https?:\/\//, "")}
                   </span>
                 </div>

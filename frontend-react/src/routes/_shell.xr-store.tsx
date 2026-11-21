@@ -221,7 +221,7 @@ export function XrStorePage() {
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-mono font-bold uppercase text-secondary">
+                      <span className="text-xs font-mono font-bold uppercase text-secondary">
                         {lab.category}
                       </span>
                       <button
@@ -371,11 +371,11 @@ export function XrStorePage() {
                     </td>
                     <td className="p-3">
                       {st.transfer >= passThreshold ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[11px] font-bold">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-xs font-bold">
                           <Check size={12} /> Certified Ready
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 text-[11px] font-bold">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 text-xs font-bold">
                           Needs Practice
                         </span>
                       )}

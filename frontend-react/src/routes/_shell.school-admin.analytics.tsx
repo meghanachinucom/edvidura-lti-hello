@@ -474,16 +474,14 @@ export function AdminAnalyticsDashboardPage() {
               className="rounded-control border border-border bg-page-bg p-3.5 space-y-1.5 hover:border-secondary/40 transition-all"
             >
               <div className="flex items-center justify-between">
-                <span className="font-mono text-[11px] font-bold text-ink-muted">{f.id}</span>
-                <span className="text-[11px] font-bold text-emerald-700">
-                  {f.activeRate} Active
-                </span>
+                <span className="font-mono text-xs font-bold text-ink-muted">{f.id}</span>
+                <span className="text-xs font-bold text-emerald-700">{f.activeRate} Active</span>
               </div>
               <h4 className="font-heading font-bold text-xs sm:text-sm text-ink truncate">
                 {f.name}
               </h4>
               <p className="text-xs text-secondary font-medium">{f.grade}</p>
-              <div className="pt-1.5 border-t border-border flex items-center justify-between text-[11px] text-ink-muted">
+              <div className="pt-1.5 border-t border-border flex items-center justify-between text-xs text-ink-muted">
                 <span>Avg Turnaround:</span>
                 <span className="font-bold text-ink">{f.turnaroundHours}</span>
               </div>

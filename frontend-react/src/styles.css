@@ -2,6 +2,12 @@
 @source "../src";
 @import "tw-animate-css";
 @import "./styles/fonts.css";
+@import "@fontsource/maven-pro/400.css";
+@import "@fontsource/maven-pro/500.css";
+@import "@fontsource/maven-pro/600.css";
+@import "@fontsource/maven-pro/700.css";
+@import "@fontsource/maven-pro/800.css";
+@import "@fontsource/maven-pro/900.css";
 @import "./styles/tokens.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -62,10 +68,10 @@
   --max-width-content: 960px;
   --max-width-reading: 68ch;
   --font-sans:
-    "ABeeZee", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada",
+    "Maven Pro", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada",
     "Noto Sans", Arial, sans-serif;
   --font-heading:
-    "ABeeZee", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada",
+    "Maven Pro", "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada",
     "Noto Sans", Arial, sans-serif;
   --font-mono: ui-monospace, monospace;
 }
@@ -101,14 +107,27 @@
   h6,
   .font-heading {
     font-family: var(--font-heading);
-    font-weight: 750;
+    font-weight: 700;
     letter-spacing: -0.015em;
+  }
+
+  h1 {
+    font-weight: 800;
   }
 
   /* Improve small text readability across all badges, captions, and pills */
   .text-xs {
-    font-size: 0.8125rem !important; /* 13px instead of 12px for crisp ABeeZee readability */
-    line-height: 1.15rem;
+    font-size: 0.8125rem !important; /* 13px instead of 12px for crisp Maven Pro readability */
+    line-height: 1.25rem;
+  }
+
+  /* Prevent any text from being rendered too small to read */
+  [class*="text-[10px]"],
+  [class*="text-[11px]"],
+  [class*="text-[9px]"],
+  [class*="text-[8px]"] {
+    font-size: 0.8125rem !important; /* 13px minimum for effortless readability */
+    line-height: 1.25rem !important;
   }
 
   :focus-visible {

@@ -153,7 +153,7 @@ export function InstitutionProfilePage() {
                 <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-ink">
                   {instName}
                 </h2>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
                   <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span>Active Campus</span>
                 </span>
@@ -181,7 +181,7 @@ export function InstitutionProfilePage() {
         {/* Capacity Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-border">
           <div className="rounded-control bg-page-bg p-3 border border-border">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted block">
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
               Class Cohorts
             </span>
             <p className="font-heading font-bold text-xl text-ink mt-0.5">10 Sections</p>
@@ -189,7 +189,7 @@ export function InstitutionProfilePage() {
           </div>
 
           <div className="rounded-control bg-page-bg p-3 border border-border">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted block">
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
               Teaching Faculty
             </span>
             <p className="font-heading font-bold text-xl text-ink mt-0.5">10 Lead Teachers</p>
@@ -197,7 +197,7 @@ export function InstitutionProfilePage() {
           </div>
 
           <div className="rounded-control bg-page-bg p-3 border border-border">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted block">
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
               Enrolled Learners
             </span>
             <p className="font-heading font-bold text-xl text-teal-800 mt-0.5">220 Students</p>
@@ -205,7 +205,7 @@ export function InstitutionProfilePage() {
           </div>
 
           <div className="rounded-control bg-page-bg p-3 border border-border">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted block">
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
               Passing Threshold
             </span>
             <p className="font-heading font-bold text-xl text-secondary mt-0.5">{passThreshold}%</p>

@@ -274,7 +274,7 @@ function Page() {
                   }`}
                 >
                   <span>{cat}</span>
-                  <span className="ml-1 opacity-75 text-[11px]">({count})</span>
+                  <span className="ml-1 opacity-75 text-xs">({count})</span>
                 </button>
               );
             })}

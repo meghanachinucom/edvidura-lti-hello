@@ -478,7 +478,7 @@ function Page() {
               <div key={x.id} className="space-y-3">
                 {/* Student message bubble on right */}
                 <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-xs bg-secondary/10 border border-secondary/20 p-3.5 text-ink shadow-2xs">
-                  <div className="text-[11px] font-bold text-secondary uppercase tracking-wider mb-1">
+                  <div className="text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                     You
                   </div>
                   <p className="text-sm font-medium leading-relaxed">{x.question}</p>
@@ -522,7 +522,7 @@ function Page() {
                   <Lightbulb size={13} className="text-amber-600" />
                   <span>Need a Hint?</span>
                   {activeHintLevel > 0 && (
-                    <span className="bg-amber-600 text-white text-[10px] px-1.5 py-0.2 rounded-full">
+                    <span className="bg-amber-600 text-white text-xs px-2 py-0.5 rounded-full">
                       {activeHintLevel === 1
                         ? "1: Nudge"
                         : activeHintLevel === 2
@@ -558,7 +558,7 @@ function Page() {
             {/* Friendly Starter Chips above input when turns exist */}
             {turns.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[11px] font-bold text-ink-muted mr-1">Suggested:</span>
+                <span className="text-xs font-bold text-ink-muted mr-1">Suggested:</span>
                 {STUDENT_STARTER_CHIPS.map((chip, idx) => (
                   <button
                     key={idx}
@@ -567,7 +567,7 @@ function Page() {
                       setText(chip);
                       input.current?.focus();
                     }}
-                    className="text-[11px] rounded-full border border-border bg-page-bg px-2.5 py-0.5 text-ink-muted hover:text-secondary hover:border-secondary hover:bg-secondary/5 transition-colors text-left"
+                    className="text-xs rounded-full border border-border bg-page-bg px-2.5 py-0.5 text-ink-muted hover:text-secondary hover:border-secondary hover:bg-secondary/5 transition-colors text-left"
                   >
                     {chip}
                   </button>
@@ -644,7 +644,7 @@ function Page() {
                 <Target size={16} className="text-secondary" />
                 <span>Study Tools</span>
               </h2>
-              <span className="text-[11px] font-semibold text-secondary bg-secondary/10 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-semibold text-secondary bg-secondary/10 px-2.5 py-0.5 rounded-full">
                 Class 8 Algebra I
               </span>
             </div>
@@ -697,7 +697,7 @@ function Page() {
                     <Award size={14} className="text-amber-500" />
                     My Skill Levels (0–5)
                   </span>
-                  <span className="text-[11px] text-ink-muted font-normal">Active Curriculum</span>
+                  <span className="text-xs text-ink-muted font-normal">Active Curriculum</span>
                 </div>
 
                 <div className="space-y-2.5">
@@ -720,7 +720,7 @@ function Page() {
                             )}
                             <span className="truncate">{sk.name}</span>
                           </span>
-                          <span className="text-[11px] font-bold text-secondary shrink-0">
+                          <span className="text-xs font-bold text-secondary shrink-0">
                             Level {sk.mastery_level}/5
                           </span>
                         </div>
@@ -733,7 +733,7 @@ function Page() {
                           />
                         </div>
 
-                        <div className="flex justify-between items-center text-[10px] text-ink-muted">
+                        <div className="flex justify-between items-center text-xs text-ink-muted">
                           <span>{sk.status}</span>
                           <span>
                             {sk.mastery_level >= 3
@@ -763,14 +763,14 @@ function Page() {
                     {/* Benchmark standing badge */}
                     <div className="rounded-control border border-border bg-page-bg p-3 text-center space-y-1">
                       <div className="flex items-center justify-center gap-2">
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-secondary/15 text-secondary">
+                        <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary/15 text-secondary">
                           {diagTier} Tier
                         </span>
                         <span className="text-xs font-bold text-ink">
                           {diagPercentile}th Percentile
                         </span>
                       </div>
-                      <p className="text-[11px] text-ink-muted">
+                      <p className="text-xs text-ink-muted">
                         Verified via standardized Class 8 Algebra curriculum checks.
                       </p>
                     </div>
@@ -824,11 +824,11 @@ function Page() {
                       <p className="text-xs font-bold text-emerald-950">
                         Level Calibrated · {diagTier} Tier
                       </p>
-                      <p className="text-[11px] text-emerald-700 font-medium">
+                      <p className="text-xs text-emerald-700 font-medium">
                         {diagPercentile}th Percentile Standing in Class 8 Algebra
                       </p>
                     </div>
-                    <p className="text-[11px] text-emerald-800">
+                    <p className="text-xs text-emerald-800">
                       Your skill ladder has been updated with calibrated masteries.
                     </p>
                     <button
@@ -907,7 +907,7 @@ function Reply({
           <Sparkles size={14} />
           <span>Vidura Tutor</span>
           {tutorMode === "guided" && (
-            <span className="text-[10px] font-bold text-secondary/90 bg-secondary/10 px-2 py-0.5 rounded-full ml-1">
+            <span className="text-xs font-bold text-secondary/90 bg-secondary/10 px-2 py-0.5 rounded-full ml-1">
               Step Guide
             </span>
           )}
@@ -962,7 +962,7 @@ function Reply({
             {ex.sources.map((source) => (
               <li
                 key={source}
-                className="rounded-full border border-secondary/30 bg-primary-fixed px-2.5 py-0.5 text-[11px] text-secondary font-semibold"
+                className="rounded-full border border-secondary/30 bg-primary-fixed px-2.5 py-0.5 text-xs text-secondary font-semibold"
               >
                 {source}
               </li>

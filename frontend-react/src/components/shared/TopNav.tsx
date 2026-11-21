@@ -111,7 +111,7 @@ export function TopNav() {
               <span className="font-heading text-[18px] font-extrabold tracking-tight text-slate-900 group-hover:text-secondary transition-colors leading-none">
                 EdVidura
               </span>
-              <span className="text-[11px] font-bold tracking-wider uppercase text-secondary/90 mt-1">
+              <span className="text-xs font-bold tracking-wider uppercase text-secondary/90 mt-0.5">
                 Learning Platform
               </span>
             </div>

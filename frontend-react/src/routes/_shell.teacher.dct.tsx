@@ -400,10 +400,10 @@ export function MicroLearningStudioPage() {
 
             <div className="mx-auto max-w-sm rounded-2xl border-2 border-slate-800 bg-slate-900 text-white p-4 shadow-md space-y-3">
               <div className="flex items-center justify-between text-xs">
-                <span className="px-2 py-0.5 rounded-full bg-secondary text-white font-bold uppercase tracking-wider text-[10px]">
+                <span className="px-2 py-0.5 rounded-full bg-secondary text-white font-bold uppercase tracking-wider text-xs">
                   {category}
                 </span>
-                <span className="text-slate-400 font-mono text-[11px]">45s bite</span>
+                <span className="text-slate-300 font-mono text-xs">45s bite</span>
               </div>
 
               <div>
@@ -416,7 +416,7 @@ export function MicroLearningStudioPage() {
               </div>
 
               <div className="rounded-xl bg-slate-800/80 border border-slate-700/60 p-3 text-xs leading-relaxed text-slate-200">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block mb-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-300 block mb-1">
                   Key Takeaway
                 </span>
                 <p>{takeaway || "Enter key takeaway to preview how it reads..."}</p>
@@ -472,13 +472,13 @@ export function MicroLearningStudioPage() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <h4 className="text-xs sm:text-sm font-bold text-ink">{reel.title}</h4>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                         <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         <span>Live in Learner Reels</span>
                       </span>
                     </div>
                     <p className="text-xs text-ink-muted line-clamp-1">{reel.takeaway}</p>
-                    <div className="flex items-center gap-3 text-[11px] text-ink-muted">
+                    <div className="flex items-center gap-3 text-xs text-ink-muted">
                       <span className="capitalize">{reel.category}</span>
                       <span>·</span>
                       <span>Target: {reel.target_skill || "Core Algebra"}</span>

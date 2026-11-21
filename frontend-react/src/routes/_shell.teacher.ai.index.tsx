@@ -323,7 +323,7 @@ export function TeacherAIWorkspacePage() {
                     })}
                   </div>
                   {q.rationale && (
-                    <p className="text-[11px] text-ink-muted italic pt-1 border-t border-border">
+                    <p className="text-xs text-ink-muted italic pt-1 border-t border-border">
                       <strong>Rationale:</strong> {q.rationale}
                     </p>
                   )}

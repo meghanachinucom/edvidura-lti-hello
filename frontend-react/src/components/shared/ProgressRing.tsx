@@ -73,7 +73,7 @@ export function ProgressRing({
         x="60"
         y={line2 ? 54 : 61}
         textAnchor="middle"
-        style={{ fontFamily: "'ABeeZee', sans-serif" }}
+        style={{ fontFamily: "'Maven Pro', sans-serif" }}
         className="fill-ink font-heading text-[15px] font-extrabold tracking-tight"
       >
         {line1}
@@ -83,7 +83,7 @@ export function ProgressRing({
           x="60"
           y="72"
           textAnchor="middle"
-          style={{ fontFamily: "'ABeeZee', sans-serif" }}
+          style={{ fontFamily: "'Maven Pro', sans-serif" }}
           className="fill-ink-muted text-[12px] font-semibold"
         >
           {line2}

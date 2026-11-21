@@ -272,7 +272,7 @@ export function SchoolCommandCenterPage() {
               >
                 <div className="flex items-center justify-between">
                   <b.Icon size={20} className={b.color} />
-                  <span className="text-[11px] font-mono font-bold text-ink-muted">{b.count}</span>
+                  <span className="text-xs font-mono font-bold text-ink-muted">{b.count}</span>
                 </div>
                 <div className="mt-3">
                   <h3 className="font-heading font-bold text-xs sm:text-sm text-ink group-hover:text-secondary transition-colors">

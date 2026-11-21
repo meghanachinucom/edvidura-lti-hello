@@ -177,7 +177,7 @@ export function Page() {
               }`}
             >
               <span>{tab.label}</span>
-              <span className="ml-1 opacity-75 text-[11px]">({tab.count})</span>
+              <span className="ml-1 opacity-75 text-xs">({tab.count})</span>
             </button>
           ))}
         </div>
@@ -230,7 +230,7 @@ export function Page() {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span
-                      className={`text-[11px] font-bold uppercase tracking-wider ${
+                      className={`text-xs font-bold uppercase tracking-wider ${
                         isQuiz
                           ? "text-amber-700"
                           : isEbook
@@ -269,7 +269,7 @@ export function Page() {
                         <Clock size={12} /> {item.durationMins} minutes study
                       </span>
                     )}
-                    <span className="text-ink-muted font-mono text-[11px]">
+                    <span className="text-ink-muted font-mono text-xs">
                       Student ID: {item.personId}
                     </span>
                   </div>
