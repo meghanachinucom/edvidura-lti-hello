@@ -1,16 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 
 interface RevisionNotesSheetProps {
   userId?: string;
   defaultTopic?: string;
+  embedded?: boolean;
 }
 
 export function RevisionNotesSheet({
   userId = "6",
   defaultTopic = "Linear Equations & Industrial Balance",
+  embedded = false,
 }: RevisionNotesSheetProps) {
   const [topic, setTopic] = useState(defaultTopic);
+
+  useEffect(() => {
+    if (defaultTopic) {
+      setTopic(defaultTopic);
+    }
+  }, [defaultTopic]);
   const [loading, setLoading] = useState(false);
   const [notesId, setNotesId] = useState<string | null>(null);
   const [notesContent, setNotesContent] = useState<string | null>(null);
@@ -56,36 +64,46 @@ export function RevisionNotesSheet({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div
+      className={
+        embedded
+          ? "space-y-4"
+          : "rounded-2xl border border-border bg-surface p-5 shadow-sm space-y-4"
+      }
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
         <div>
           <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 mb-1">
             Study Revision Engine
           </span>
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 font-sans">
-            Personalized Revision Sheet
+          <h3 className="text-sm sm:text-base font-bold text-ink font-heading">
+            {embedded ? "2-Page Study Sheet" : "Personalized Revision Sheet"}
           </h3>
-          <p className="text-xs text-slate-600 dark:text-ink-muted">
-            Synthesize concise high-yield revision summaries, formulas, and common traps.
+          <p className="text-xs text-ink-muted">
+            {embedded
+              ? `Synthesize concise high-yield revision formulas and notes for ${topic}.`
+              : "Synthesize concise high-yield revision summaries, formulas, and common traps."}
           </p>
         </div>
       </div>
 
-      <div className="flex flex-wrap sm:flex-nowrap gap-2">
-        <input
-          type="text"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          placeholder="Topic for revision handout..."
-          className="flex-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        />
-        <button
-          onClick={handleSynthesize}
-          disabled={loading || !topic.trim()}
-          className="rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 text-sm font-semibold transition"
-        >
-          {loading ? "Synthesizing..." : "Generate Notes"}
-        </button>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="Topic for revision handout..."
+            className="flex-1 rounded-control border border-border bg-page-bg px-3 py-2 text-xs text-ink focus:outline-none focus:ring-1 focus:ring-secondary"
+          />
+          <button
+            onClick={handleSynthesize}
+            disabled={loading || !topic.trim()}
+            className="btn-primary inline-flex items-center justify-center rounded-control disabled:opacity-50 text-white px-3.5 py-2 text-xs font-semibold transition shrink-0"
+          >
+            {loading ? "Generating..." : "Generate Notes"}
+          </button>
+        </div>
       </div>
 
       {error && (

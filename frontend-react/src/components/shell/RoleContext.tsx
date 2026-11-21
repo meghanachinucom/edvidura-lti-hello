@@ -41,6 +41,7 @@ export interface Session {
   className?: string;
   isInstructor?: boolean;
   isSchoolAdmin?: boolean;
+  isTrainingOfficer?: boolean;
   lmsReturnUrl?: string;
 }
 

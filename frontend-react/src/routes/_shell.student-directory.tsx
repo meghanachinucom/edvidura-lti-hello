@@ -194,7 +194,12 @@ function Page() {
   };
 
   // Role check: Instructor or Training Officer (School Admin) required
-  if (session && !session.isInstructor && !session.isTrainingOfficer) {
+  if (
+    session &&
+    !session.isInstructor &&
+    !session.isSchoolAdmin &&
+    session.role !== "trainingOfficer"
+  ) {
     return <AccessUnavailable back={{ to: "/school-admin", label: t("TC-18.title") }} />;
   }
 
