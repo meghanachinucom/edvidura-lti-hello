@@ -98,9 +98,6 @@ function Page() {
   const [tutorMode, setTutorMode] = useState<"guided" | "direct">("guided");
   const [voiceCleanupMode, setVoiceCleanupMode] = useState<"smart" | "exact">("smart");
 
-  // Study Tools Right Column Tab
-  const [studyTab, setStudyTab] = useState<"progress" | "quiz" | "notes">("progress");
-
   // Skill Tree Data
   const [skillTree, setSkillTree] = useState<SkillTreeItem[]>([
     {
@@ -432,10 +429,10 @@ function Page() {
 
       {/* 2. BALANCED 2-COLUMN WORKSPACE (CHAT IS THE HERO — ZERO STACKED CLUTTER) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left / Main Column (~68% width on desktop, full width on mobile) — Focused Chat Card */}
+        {/* Left / Main Column (~58% on desktop) — Focused Chat Card (sticky so chat remains in view) */}
         <section
           aria-label={s("conversation")}
-          className="lg:col-span-8 flex flex-col rounded-surface border border-border bg-surface shadow-xs min-h-[560px] h-[640px] overflow-hidden"
+          className="lg:col-span-7 xl:col-span-7 lg:sticky lg:top-4 flex flex-col rounded-surface border border-border bg-surface shadow-xs min-h-[580px] h-[780px] overflow-hidden"
         >
           {/* Scrollable Chat Area */}
           <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
@@ -632,252 +629,194 @@ function Page() {
           </form>
         </section>
 
-        {/* Right Side Column (~32% width on desktop) — ONE Clean "Study Tools" Card With 3 Simple Tabs */}
-        <aside
-          aria-label="Study Tools"
-          className="lg:col-span-4 flex flex-col rounded-surface border border-border bg-surface shadow-xs min-h-[560px] h-[640px] overflow-hidden"
-        >
-          {/* Card Top Header & Tab Navigation */}
-          <div className="border-b border-border bg-surface px-4 pt-3.5 pb-0">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="font-heading text-sm font-bold text-ink flex items-center gap-1.5">
-                <Target size={16} className="text-secondary" />
-                <span>Study Tools</span>
-              </h2>
-              <span className="text-[11px] font-semibold text-secondary bg-secondary/10 px-2 py-0.5 rounded-full">
-                Class 8 Algebra I
+        {/* Right Side Column (~42% width on desktop) — 3 Individual, Clearly Visible Study Tools Boxes */}
+        <aside aria-label="Study Tools" className="lg:col-span-5 xl:col-span-5 space-y-6">
+          {/* Box 1: My Skill Levels (0–5) */}
+          <div className="rounded-surface border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <span className="text-[11px] font-bold text-secondary uppercase tracking-wider block">
+                  Class 8 Algebra I · Active Curriculum
+                </span>
+                <h3 className="text-sm sm:text-base font-bold text-ink font-heading flex items-center gap-1.5 mt-0.5">
+                  <Award size={16} className="text-amber-500" />
+                  <span>My Skill Levels (0–5)</span>
+                </h3>
+              </div>
+              <span className="text-[11px] font-bold text-secondary bg-secondary/10 px-2.5 py-1 rounded-full shrink-0">
+                {diagTier} Tier
               </span>
             </div>
 
-            {/* 3 Simple Tabs: Progress | Quick Quiz | Study Sheet */}
-            <div className="flex border-b border-border -mb-px gap-1">
-              <button
-                type="button"
-                onClick={() => setStudyTab("progress")}
-                className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${
-                  studyTab === "progress"
-                    ? "border-secondary text-secondary"
-                    : "border-transparent text-ink-muted hover:text-ink"
-                }`}
-              >
-                Progress
-              </button>
-              <button
-                type="button"
-                onClick={() => setStudyTab("quiz")}
-                className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${
-                  studyTab === "quiz"
-                    ? "border-secondary text-secondary"
-                    : "border-transparent text-ink-muted hover:text-ink"
-                }`}
-              >
-                Quick Quiz
-              </button>
-              <button
-                type="button"
-                onClick={() => setStudyTab("notes")}
-                className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${
-                  studyTab === "notes"
-                    ? "border-secondary text-secondary"
-                    : "border-transparent text-ink-muted hover:text-ink"
-                }`}
-              >
-                Study Sheet
-              </button>
-            </div>
-          </div>
-
-          {/* Tab Body Content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* TAB 1: PROGRESS */}
-            {studyTab === "progress" && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs font-bold text-ink">
-                  <span className="flex items-center gap-1">
-                    <Award size={14} className="text-amber-500" />
-                    My Skill Levels (0–5)
-                  </span>
-                  <span className="text-[11px] text-ink-muted font-normal">Active Curriculum</span>
-                </div>
-
-                <div className="space-y-2.5">
-                  {skillTree.map((sk) => {
-                    const isLocked = sk.status === "Locked";
-                    const isMastered = sk.mastery_level >= 4;
-                    return (
-                      <div
-                        key={sk.id}
-                        className="rounded-control border border-border bg-page-bg p-2.5 space-y-1.5 shadow-2xs"
-                      >
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-bold text-ink flex items-center gap-1.5 truncate max-w-[190px]">
-                            {isLocked ? (
-                              <Lock size={12} className="text-ink-muted shrink-0" />
-                            ) : isMastered ? (
-                              <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
-                            ) : (
-                              <Unlock size={12} className="text-secondary shrink-0" />
-                            )}
-                            <span className="truncate">{sk.name}</span>
-                          </span>
-                          <span className="text-[11px] font-bold text-secondary shrink-0">
-                            Level {sk.mastery_level}/5
-                          </span>
-                        </div>
-
-                        {/* Clean horizontal progress bar */}
-                        <div className="h-1.5 w-full bg-border/60 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-secondary transition-all duration-300 rounded-full"
-                            style={{ width: `${(sk.mastery_level / 5) * 100}%` }}
-                          />
-                        </div>
-
-                        <div className="flex justify-between items-center text-[10px] text-ink-muted">
-                          <span>{sk.status}</span>
-                          <span>
-                            {sk.mastery_level >= 3
-                              ? "Proficient"
-                              : sk.mastery_level >= 2
-                                ? "Building Confidence"
-                                : "Foundational"}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Check My Level Button & Diagnostic View */}
-                {!showDiagnostic && !diagComplete && (
-                  <div className="pt-2 border-t border-border space-y-3">
-                    <button
-                      type="button"
-                      onClick={startDiagnostic}
-                      className="btn-primary w-full inline-flex items-center justify-center gap-1.5 py-2 text-xs font-bold"
-                    >
-                      <Award size={14} />
-                      <span>Check My Level (3-Q Check)</span>
-                    </button>
-
-                    {/* Benchmark standing badge */}
-                    <div className="rounded-control border border-border bg-page-bg p-3 text-center space-y-1">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-secondary/15 text-secondary">
-                          {diagTier} Tier
-                        </span>
-                        <span className="text-xs font-bold text-ink">
-                          {diagPercentile}th Percentile
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-ink-muted">
-                        Verified via standardized Class 8 Algebra curriculum checks.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Interactive Diagnostic running right inside tab */}
-                {showDiagnostic && !diagComplete && diagnosticQuestions[diagStep] && (
-                  <div className="rounded-control border border-secondary/40 bg-secondary/5 p-3.5 space-y-3">
-                    <div className="flex items-center justify-between text-xs border-b border-secondary/20 pb-2">
-                      <span className="font-bold text-secondary">
-                        Question {diagStep + 1} of {diagnosticQuestions.length}
+            <div className="space-y-2.5">
+              {skillTree.map((sk) => {
+                const isLocked = sk.status === "Locked";
+                const isMastered = sk.mastery_level >= 4;
+                return (
+                  <div
+                    key={sk.id}
+                    className="rounded-control border border-border bg-page-bg p-3 space-y-1.5 shadow-2xs"
+                  >
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-ink flex items-center gap-1.5 truncate max-w-[200px]">
+                        {isLocked ? (
+                          <Lock size={12} className="text-ink-muted shrink-0" />
+                        ) : isMastered ? (
+                          <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                        ) : (
+                          <Unlock size={12} className="text-secondary shrink-0" />
+                        )}
+                        <span className="truncate">{sk.name}</span>
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowDiagnostic(false)}
-                        className="text-ink-muted hover:text-ink text-xs inline-flex items-center gap-1"
-                      >
-                        <X size={12} />
-                        <span>Cancel</span>
-                      </button>
+                      <span className="text-[11px] font-bold text-secondary shrink-0">
+                        Level {sk.mastery_level}/5
+                      </span>
                     </div>
 
-                    <p className="text-xs font-semibold text-ink leading-relaxed">
-                      {diagnosticQuestions[diagStep].question}
-                    </p>
+                    {/* Clean horizontal progress bar */}
+                    <div className="h-2 w-full bg-border/60 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-secondary transition-all duration-300 rounded-full"
+                        style={{ width: `${(sk.mastery_level / 5) * 100}%` }}
+                      />
+                    </div>
 
-                    <div className="space-y-1.5">
-                      {diagnosticQuestions[diagStep].options.map((opt: string, idx: number) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => answerDiagnostic(idx)}
-                          className="w-full text-left rounded-control border border-border bg-surface px-3 py-2 text-xs text-ink hover:border-secondary hover:bg-secondary/5 transition-colors"
-                        >
-                          <span className="font-bold text-secondary mr-1.5">
-                            {String.fromCharCode(65 + idx)}.
-                          </span>
-                          <span>{opt}</span>
-                        </button>
-                      ))}
+                    <div className="flex justify-between items-center text-[11px] text-ink-muted">
+                      <span>{sk.status}</span>
+                      <span className="font-medium text-ink">
+                        {sk.mastery_level >= 3
+                          ? "Proficient"
+                          : sk.mastery_level >= 2
+                            ? "Building Confidence"
+                            : "Foundational"}
+                      </span>
                     </div>
                   </div>
-                )}
+                );
+              })}
+            </div>
 
-                {/* Diagnostic Completed Result */}
-                {diagComplete && (
-                  <div className="rounded-control border border-emerald-300 bg-emerald-50/70 p-4 text-center space-y-2">
-                    <CheckCircle2 className="size-7 text-emerald-600 mx-auto" />
-                    <div>
-                      <p className="text-xs font-bold text-emerald-950">
-                        Level Calibrated · {diagTier} Tier
-                      </p>
-                      <p className="text-[11px] text-emerald-700 font-medium">
-                        {diagPercentile}th Percentile Standing in Class 8 Algebra
-                      </p>
-                    </div>
-                    <p className="text-[11px] text-emerald-800">
-                      Your skill ladder has been updated with calibrated masteries.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDiagComplete(false);
-                        setShowDiagnostic(false);
-                      }}
-                      className="btn-secondary text-xs py-1.5 px-4 font-bold"
-                    >
-                      Done
-                    </button>
+            {/* Check My Level Button & Diagnostic View */}
+            {!showDiagnostic && !diagComplete && (
+              <div className="pt-2 border-t border-border space-y-3">
+                <button
+                  type="button"
+                  onClick={startDiagnostic}
+                  className="btn-primary w-full inline-flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold"
+                >
+                  <Award size={14} />
+                  <span>Check My Level (3-Q Check)</span>
+                </button>
+
+                {/* Benchmark standing badge */}
+                <div className="rounded-control border border-border bg-page-bg p-3 text-center space-y-1">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary/15 text-secondary">
+                      {diagTier} Tier
+                    </span>
+                    <span className="text-xs font-bold text-ink">
+                      {diagPercentile}th Percentile
+                    </span>
                   </div>
-                )}
-
-                {/* Quick Academic Navigation Links */}
-                <div className="pt-2 border-t border-border flex flex-wrap gap-2 text-xs">
-                  <Link
-                    to="/manuals"
-                    className="text-ink-muted hover:text-secondary underline inline-flex items-center gap-1"
-                  >
-                    <BookOpen size={12} />
-                    <span>Class 8 Manuals</span>
-                  </Link>
-                  <span className="text-border">·</span>
-                  <Link
-                    to="/active-quizzes"
-                    className="text-ink-muted hover:text-secondary underline"
-                  >
-                    All Quizzes
-                  </Link>
-                  <span className="text-border">·</span>
-                  <Link to="/learn/gap" className="text-ink-muted hover:text-secondary underline">
-                    Study Plan
-                  </Link>
+                  <p className="text-[11px] text-ink-muted">
+                    Standardized Class 8 Algebra curriculum diagnostic check.
+                  </p>
                 </div>
               </div>
             )}
 
-            {/* TAB 2: QUICK QUIZ */}
-            {studyTab === "quiz" && (
-              <ChatQuizMinter userId="6" defaultTopic={selectedTopic} embedded={true} />
+            {/* Interactive Diagnostic running right inside Box 1 */}
+            {showDiagnostic && !diagComplete && diagnosticQuestions[diagStep] && (
+              <div className="rounded-control border border-secondary/40 bg-secondary/5 p-3.5 space-y-3">
+                <div className="flex items-center justify-between text-xs border-b border-secondary/20 pb-2">
+                  <span className="font-bold text-secondary">
+                    Question {diagStep + 1} of {diagnosticQuestions.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowDiagnostic(false)}
+                    className="text-ink-muted hover:text-ink text-xs inline-flex items-center gap-1"
+                  >
+                    <X size={12} />
+                    <span>Cancel</span>
+                  </button>
+                </div>
+
+                <p className="text-xs font-semibold text-ink leading-relaxed">
+                  {diagnosticQuestions[diagStep].question}
+                </p>
+
+                <div className="space-y-1.5">
+                  {diagnosticQuestions[diagStep].options.map((opt: string, idx: number) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => answerDiagnostic(idx)}
+                      className="w-full text-left rounded-control border border-border bg-surface px-3 py-2 text-xs text-ink hover:border-secondary hover:bg-secondary/5 transition-colors"
+                    >
+                      <span className="font-bold text-secondary mr-1.5">
+                        {String.fromCharCode(65 + idx)}.
+                      </span>
+                      <span>{opt}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
-            {/* TAB 3: STUDY SHEET */}
-            {studyTab === "notes" && (
-              <RevisionNotesSheet userId="6" defaultTopic={selectedTopic} embedded={true} />
+            {/* Diagnostic Completed Result */}
+            {diagComplete && (
+              <div className="rounded-control border border-emerald-300 bg-emerald-50/70 p-4 text-center space-y-2">
+                <CheckCircle2 className="size-7 text-emerald-600 mx-auto" />
+                <div>
+                  <p className="text-xs font-bold text-emerald-950">
+                    Level Calibrated · {diagTier} Tier
+                  </p>
+                  <p className="text-[11px] text-emerald-700 font-medium">
+                    {diagPercentile}th Percentile Standing in Class 8 Algebra
+                  </p>
+                </div>
+                <p className="text-[11px] text-emerald-800">
+                  Your skill ladder has been updated with calibrated masteries.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDiagComplete(false);
+                    setShowDiagnostic(false);
+                  }}
+                  className="btn-secondary text-xs py-1.5 px-4 font-bold"
+                >
+                  Done
+                </button>
+              </div>
             )}
+
+            {/* Quick Academic Navigation Links */}
+            <div className="pt-2 border-t border-border flex flex-wrap items-center justify-between gap-2 text-xs">
+              <Link
+                to="/manuals"
+                className="text-ink-muted hover:text-secondary underline inline-flex items-center gap-1"
+              >
+                <BookOpen size={12} />
+                <span>Class 8 Manuals</span>
+              </Link>
+              <span className="text-border">·</span>
+              <Link to="/active-quizzes" className="text-ink-muted hover:text-secondary underline">
+                All Quizzes
+              </Link>
+              <span className="text-border">·</span>
+              <Link to="/learn/gap" className="text-ink-muted hover:text-secondary underline">
+                Study Plan
+              </Link>
+            </div>
           </div>
+
+          {/* Box 2: Instant 3-Question Practice Quiz */}
+          <ChatQuizMinter userId="6" defaultTopic={selectedTopic} />
+
+          {/* Box 3: Personalized 2-Page Study Sheet */}
+          <RevisionNotesSheet userId="6" defaultTopic={selectedTopic} />
         </aside>
       </div>
     </div>

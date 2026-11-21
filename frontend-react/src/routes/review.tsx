@@ -34,10 +34,16 @@ function ReviewGateway() {
               EV
             </div>
             <div>
-              <p className="font-heading text-[18px] font-extrabold tracking-tight text-white leading-tight">
+              <p
+                style={{ color: "#ffffff" }}
+                className="font-heading text-[18px] font-extrabold tracking-tight !text-white leading-tight"
+              >
                 {t("app.name")}
               </p>
-              <p className="text-xs font-semibold text-slate-300 mt-0.5">
+              <p
+                style={{ color: "#e2e8f0" }}
+                className="text-xs font-semibold !text-slate-200 mt-0.5"
+              >
                 Senior Review Gateway · Riverside High
               </p>
             </div>

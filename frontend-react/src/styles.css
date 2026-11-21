@@ -622,6 +622,7 @@ main dl.flex dd {
 
 /* Use the dark teal/navy navigation band and guarantee accessible, high-contrast text. */
 header.bg-topbar,
+.bg-topbar,
 [data-topbar],
 .top-bar {
   background-color: var(--topbar);
@@ -633,6 +634,11 @@ header.bg-topbar h2,
 header.bg-topbar h3,
 header.bg-topbar p,
 header.bg-topbar span,
+.bg-topbar h1,
+.bg-topbar h2,
+.bg-topbar h3,
+.bg-topbar p,
+.bg-topbar span,
 [data-topbar] h1,
 [data-topbar] h2,
 [data-topbar] h3,
@@ -649,6 +655,9 @@ header.bg-topbar span,
 header.bg-topbar .text-ink,
 header.bg-topbar p.text-ink,
 header.bg-topbar .font-heading.text-ink,
+.bg-topbar .text-ink,
+.bg-topbar p.text-ink,
+.bg-topbar .font-heading.text-ink,
 [data-topbar] .text-ink,
 .top-bar .text-ink {
   color: #ffffff !important;
@@ -656,6 +665,8 @@ header.bg-topbar .font-heading.text-ink,
 
 header.bg-topbar .text-ink-muted,
 header.bg-topbar p.text-ink-muted,
+.bg-topbar .text-ink-muted,
+.bg-topbar p.text-ink-muted,
 [data-topbar] .text-ink-muted,
 .top-bar .text-ink-muted {
   color: #cbd5e1 !important; /* Slate 300 - clear high contrast */
@@ -663,12 +674,15 @@ header.bg-topbar p.text-ink-muted,
 
 header.bg-topbar .text-secondary,
 header.bg-topbar p.text-secondary,
+.bg-topbar .text-secondary,
+.bg-topbar p.text-secondary,
 [data-topbar] .text-secondary,
 .top-bar .text-secondary {
   color: #5eead4 !important; /* Teal 300 - bright cyan/teal contrast */
 }
 
 header.bg-topbar .text-emerald-600,
+.bg-topbar .text-emerald-600,
 [data-topbar] .text-emerald-600,
 .top-bar .text-emerald-600 {
   color: #6ee7b7 !important; /* Emerald 300 */

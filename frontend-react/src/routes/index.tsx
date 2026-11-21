@@ -66,7 +66,12 @@ function Landing() {
             <div className="flex size-8.5 items-center justify-center rounded-lg bg-teal-600 text-white font-heading font-bold text-sm">
               EV
             </div>
-            <p className="font-heading text-[20px] font-bold text-white">{t("app.name")}</p>
+            <p
+              style={{ color: "#ffffff" }}
+              className="font-heading text-[20px] font-bold !text-white"
+            >
+              {t("app.name")}
+            </p>
           </div>
           <a
             href={returnUrl}

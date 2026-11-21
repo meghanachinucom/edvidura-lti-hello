@@ -68,7 +68,7 @@ export function RevisionNotesSheet({
       className={
         embedded
           ? "space-y-4"
-          : "rounded-2xl border border-border bg-surface p-5 shadow-sm space-y-4"
+          : "rounded-surface border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-4"
       }
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
@@ -77,12 +77,10 @@ export function RevisionNotesSheet({
             Study Revision Engine
           </span>
           <h3 className="text-sm sm:text-base font-bold text-ink font-heading">
-            {embedded ? "2-Page Study Sheet" : "Personalized Revision Sheet"}
+            Personalized 2-Page Study Sheet
           </h3>
           <p className="text-xs text-ink-muted">
-            {embedded
-              ? `Synthesize concise high-yield revision formulas and notes for ${topic}.`
-              : "Synthesize concise high-yield revision summaries, formulas, and common traps."}
+            Synthesize concise high-yield revision formulas and notes for {topic}.
           </p>
         </div>
       </div>

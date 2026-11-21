@@ -96,7 +96,7 @@ export function ChatQuizMinter({
       className={
         embedded
           ? "space-y-4"
-          : "rounded-2xl border border-border bg-surface p-5 shadow-sm space-y-4"
+          : "rounded-surface border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-4"
       }
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
@@ -105,12 +105,10 @@ export function ChatQuizMinter({
             Adaptive Knowledge Verification
           </span>
           <h3 className="text-sm sm:text-base font-bold text-ink font-heading">
-            {embedded ? "Test My Understanding (3-Q Quiz)" : "Instant Topic Practice Check"}
+            Instant 3-Question Practice Quiz
           </h3>
           <p className="text-xs text-ink-muted">
-            {embedded
-              ? `Generate a fast 3-question mini-quiz to verify what you learned about ${topic}.`
-              : "Synthesize real-time practice questions tailored to your current study topic."}
+            Synthesize interactive practice questions tailored to {topic}.
           </p>
         </div>
       </div>
