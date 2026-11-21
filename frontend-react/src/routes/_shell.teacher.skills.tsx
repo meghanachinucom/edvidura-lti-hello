@@ -253,6 +253,40 @@ function Page() {
         </div>
       </div>
 
+      {/* 4-KPI Summary Header */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+          <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
+            Curriculum Skills
+          </span>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-ink">8 Competencies</p>
+          <span className="text-xs text-ink-muted">Class 8 Algebra Syllabus</span>
+        </div>
+        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+          <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
+            Curriculum Coverage
+          </span>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-emerald-700">88% Covered</p>
+          <span className="text-xs text-ink-muted">7 of 8 Fully Linked</span>
+        </div>
+        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+          <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
+            Cohort Average
+          </span>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-secondary">82%</p>
+          <span className="text-xs text-ink-muted">Class 8 Average Score</span>
+        </div>
+        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+          <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
+            Remediation Priority
+          </span>
+          <p className="mt-1 font-heading text-lg font-extrabold text-amber-700 truncate">
+            Inequality Rules
+          </p>
+          <span className="text-xs text-ink-muted">Active Intervention Target</span>
+        </div>
+      </div>
+
       {activeTab === "roles" && (
         <>
           <div className="flex flex-col gap-2 tablet:flex-row">

@@ -205,6 +205,42 @@ function Page() {
         <PillTabs items={tabItems} active={activeTab} label="SME Navigation" />
       </div>
 
+      {/* 4-KPI Summary Header */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+          <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
+            Reference Sources
+          </span>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-ink">6 Active Documents</p>
+          <span className="text-xs text-ink-muted">CBSE & State Guidelines</span>
+        </div>
+        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+          <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
+            Indexed Chunks
+          </span>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-secondary">48 Chunks</p>
+          <span className="text-xs text-ink-muted">Available for AI Grounding</span>
+        </div>
+        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+          <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
+            Curriculum Alignment
+          </span>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-emerald-700">
+            100% Verified
+          </p>
+          <span className="text-xs text-ink-muted">Mapped to Class 8 Units</span>
+        </div>
+        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+          <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
+            Audit Trail
+          </span>
+          <p className="mt-1 font-heading text-lg font-extrabold text-teal-700 truncate">
+            SHA-256 Sealed
+          </p>
+          <span className="text-xs text-ink-muted">Tamper-Proof Audit</span>
+        </div>
+      </div>
+
       {activeTab === "sources" && (
         <>
           <div>

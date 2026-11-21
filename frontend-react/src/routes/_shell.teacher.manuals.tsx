@@ -87,7 +87,10 @@ function Page() {
               },
             ],
           }));
-          setRecords(remoteRecords);
+          setRecords((prev) => [
+            ...remoteRecords,
+            ...prev.filter((p) => !remoteRecords.some((r) => r.ebookId === p.ebookId)),
+          ]);
         }
       })
       .catch(() => {});
@@ -218,7 +221,7 @@ function Page() {
           }}
         >
           <Bold size={15} className="mr-1 inline" />
-          <span>Rich-Text Editor (F-01)</span>
+          <span>WYSIWYG eBook Editor</span>
         </button>
 
         <button
@@ -231,7 +234,7 @@ function Page() {
           }}
         >
           <Sparkles size={15} className="mr-1 inline text-secondary" />
-          <span>AI File Upload & Convert (F-02/F-03)</span>
+          <span>PDF / File AI Converter</span>
         </button>
 
         <button

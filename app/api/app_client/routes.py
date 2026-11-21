@@ -848,7 +848,72 @@ def app_discuss_post(
     )
 
 
-# —— Micro-learning ——
+# —— Micro-learning & Teacher DCT Planner Sync ——
+
+class DctPlanCreateIn(BaseModel):
+    title: str = Field(..., min_length=1)
+    topic: str = "Algebra I · Linear Equations"
+    category: str = "algebra"
+    target_skill: str = "Variables & Expressions"
+    takeaway: str = Field(..., min_length=1)
+    question: str = ""
+    answer: str = ""
+    options: list[str] = []
+    duration: str = "60s"
+
+
+_TEACHER_PUBLISHED_REELS: list[dict[str, Any]] = [
+    {
+        "id": "reel-dct-1",
+        "title": "Mastering Distributive Property",
+        "topic": "Algebra I · Equations",
+        "category": "algebra",
+        "target_skill": "Variables & Expressions",
+        "duration": "45s",
+        "takeaway": "Multiply the outside term by every term inside parentheses before combining terms.",
+        "question": "What is 3(x + 4)?",
+        "options": ["3x + 4", "3x + 12", "7x", "x + 12"],
+        "answer": "B",
+        "status": "published",
+        "created_at": "2026-11-20T10:00:00Z",
+    }
+]
+
+
+@router.get("/dct/plans")
+def app_dct_plans_list(session: LearnerSession) -> Any:
+    return ok({"plans": _TEACHER_PUBLISHED_REELS, "count": len(_TEACHER_PUBLISHED_REELS)})
+
+
+@router.post("/dct/plans")
+def app_dct_plan_create(payload: DctPlanCreateIn, session: LearnerSession) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    new_reel = {
+        "id": f"reel-dct-{len(_TEACHER_PUBLISHED_REELS) + 1}",
+        "title": payload.title.strip(),
+        "topic": payload.topic.strip(),
+        "category": payload.category.strip(),
+        "target_skill": payload.target_skill.strip(),
+        "duration": payload.duration.strip(),
+        "takeaway": payload.takeaway.strip(),
+        "question": payload.question.strip() or f"Key concept check: {payload.title.strip()}",
+        "options": payload.options or ["Concept understood", "Need more practice", "Review lesson notes", "Ask Vidura"],
+        "answer": payload.answer.strip() or "A",
+        "status": "published",
+        "created_at": "2026-11-21T11:00:00Z",
+    }
+    _TEACHER_PUBLISHED_REELS.insert(0, new_reel)
+    return ok({"plan": new_reel, "message": "Published to Class 8 Reels"}, status_code=201)
+
+
+@router.delete("/dct/plans/{plan_id}")
+def app_dct_plan_delete(plan_id: str, session: LearnerSession) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    global _TEACHER_PUBLISHED_REELS
+    _TEACHER_PUBLISHED_REELS = [r for r in _TEACHER_PUBLISHED_REELS if r["id"] != plan_id]
+    return ok({"deleted": True})
 
 
 @router.get("/micro")
@@ -860,6 +925,23 @@ def app_micro(session: LearnerSession) -> Any:
         subject=str(session.get("subject") or ""),
         quiz_token=str(session.get("quiz_token") or ""),
     )
+    items = list(catalog.get("items") or [])
+    for tr in _TEACHER_PUBLISHED_REELS:
+        items.insert(0, {
+            "skill_id": tr["id"],
+            "skill_code": tr.get("target_skill", "SKILL-CORE"),
+            "label": tr["title"],
+            "description": tr["takeaway"],
+            "category": tr["category"],
+            "reel_title": tr["title"],
+            "reel_beats": [tr["takeaway"], f"Check: {tr['question']}"],
+            "reel_caption": tr["topic"],
+            "reel_video_url": "",
+            "href": "/learn/micro",
+            "is_weak": True,
+            "status": "published",
+        })
+    catalog["items"] = items
     return ok(json_safe(catalog))
 
 
@@ -3120,3 +3202,48 @@ def app_roster_nrps_sync(session: LearnerSession) -> Any:
         "synced_at": "2026-11-18T12:00:00Z",
         "members": members,
     })
+
+
+# —— Institution Profile Settings ——
+
+
+class InstitutionUpdateIn(BaseModel):
+    name: str = Field(..., min_length=1)
+    location: str = "Riverside Campus, Sector 4"
+    board: str = "CBSE / State Secondary Board"
+    default_language: str = "en-IN"
+    passing_threshold: int = 70
+
+
+_INSTITUTION_SETTINGS: dict[str, Any] = {
+    "name": "Riverside High School",
+    "location": "Riverside Campus, Sector 4",
+    "board": "CBSE / State Secondary Board",
+    "default_language": "en-IN",
+    "passing_threshold": 70,
+    "accreditation_code": "RHS-ACCRED-2026",
+    "academic_year": "2026–27",
+    "status": "active",
+}
+
+
+@router.get("/institution")
+def app_institution_get(session: LearnerSession) -> Any:
+    return ok({"institution": _INSTITUTION_SETTINGS})
+
+
+@router.put("/institution")
+def app_institution_update(payload: InstitutionUpdateIn, session: LearnerSession) -> Any:
+    if not _is_staff(session):
+        raise AppApiError("Staff access required", code="forbidden", status_code=403)
+    _INSTITUTION_SETTINGS["name"] = payload.name.strip()
+    _INSTITUTION_SETTINGS["location"] = payload.location.strip()
+    _INSTITUTION_SETTINGS["board"] = payload.board.strip()
+    _INSTITUTION_SETTINGS["default_language"] = payload.default_language.strip()
+    _INSTITUTION_SETTINGS["passing_threshold"] = payload.passing_threshold
+    return ok({
+        "ok": True,
+        "institution": _INSTITUTION_SETTINGS,
+        "message": "Institution settings saved successfully",
+    })
+
