@@ -106,7 +106,7 @@ function Page() {
           setLiveAssignments(list);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   };
 
   const loadDirectory = () => {
@@ -130,7 +130,7 @@ function Page() {
           }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   };
 
   const loadGroups = () => {
@@ -143,7 +143,7 @@ function Page() {
           if (Array.isArray(res.assignments)) setGroupAssignments(res.assignments);
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setGroupsLoading(false));
   };
 
@@ -220,11 +220,11 @@ function Page() {
   const base =
     remoteRows && remoteRows.length > 0
       ? [
-          ...remoteRows,
-          ...allRows.filter(
-            (a) => !remoteRows.some((r) => r.name.toLowerCase() === a.name.toLowerCase()),
-          ),
-        ]
+        ...remoteRows,
+        ...allRows.filter(
+          (a) => !remoteRows.some((r) => r.name.toLowerCase() === a.name.toLowerCase()),
+        ),
+      ]
       : mockState.teacher.directory === "empty"
         ? []
         : allRows;
@@ -314,11 +314,10 @@ function Page() {
                     setStatusFilter(st);
                     setPage(1);
                   }}
-                  className={`px-3 py-1.5 rounded-full font-bold transition-all ${
-                    statusFilter === st
-                      ? "bg-secondary text-white shadow-xs"
-                      : "bg-surface border border-border text-ink-muted hover:border-secondary hover:text-ink"
-                  }`}
+                  className={`px-3 py-1.5 rounded-full font-bold transition-all ${statusFilter === st
+                    ? "bg-secondary text-white shadow-xs"
+                    : "bg-surface border border-border text-ink-muted hover:border-secondary hover:text-ink"
+                    }`}
                 >
                   {st === "all" ? "All Students" : st}
                 </button>
@@ -379,31 +378,28 @@ function Page() {
                           </td>
                           <td className="p-3.5">
                             <span
-                              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
-                                st.masteryTier === "Advanced"
-                                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                  : st.masteryTier === "Proficient"
-                                    ? "bg-teal-100 text-teal-800 border-teal-300"
-                                    : "bg-amber-100 text-amber-800 border-amber-300"
-                              }`}
+                              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${st.masteryTier === "Advanced"
+                                ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                : st.masteryTier === "Proficient"
+                                  ? "bg-teal-100 text-teal-800 border-teal-300"
+                                  : "bg-amber-100 text-amber-800 border-amber-300"
+                                }`}
                             >
                               {st.masteryTier}
                             </span>
                           </td>
                           <td className="p-3.5">
                             <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
-                                st.status === "Excelling"
-                                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                                  : st.status === "Active"
-                                    ? "bg-secondary/10 text-secondary border-secondary/20"
-                                    : "bg-rose-50 text-rose-800 border-rose-200"
-                              }`}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${st.status === "Excelling"
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                : st.status === "Active"
+                                  ? "bg-secondary/10 text-secondary border-secondary/20"
+                                  : "bg-rose-50 text-rose-800 border-rose-200"
+                                }`}
                             >
                               <span
-                                className={`size-1.5 rounded-full ${
-                                  st.status === "Needs Focus" ? "bg-rose-500" : "bg-emerald-500"
-                                }`}
+                                className={`size-1.5 rounded-full ${st.status === "Needs Focus" ? "bg-rose-500" : "bg-emerald-500"
+                                  }`}
                               />
                               <span>{st.status}</span>
                             </span>

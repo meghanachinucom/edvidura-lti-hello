@@ -102,7 +102,7 @@ function Page() {
         "/api/v1/app/curriculum/coverage",
       )
       .then((data) => setCoverageData(data))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLdLoading(false));
   };
 
@@ -130,7 +130,7 @@ function Page() {
           setProposals(res.proposals);
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setCatLoading(false));
   };
 
@@ -140,7 +140,7 @@ function Page() {
     api
       .get("/api/v1/app/skills-passport")
       .then((res: any) => setPassportData(res))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setPassportLoading(false));
   };
 
@@ -892,11 +892,10 @@ function Page() {
                           </td>
                           <td className="p-3.5">
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                                row.coverage_pct === 100
-                                  ? "bg-emerald-100 text-emerald-800"
-                                  : "bg-amber-100 text-amber-800"
-                              }`}
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${row.coverage_pct === 100
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-amber-100 text-amber-800"
+                                }`}
                             >
                               {row.coverage_pct === 100 ? "✓ Covered" : "Needs Resource"}
                             </span>
@@ -996,13 +995,12 @@ function Page() {
                       </h4>
                     </div>
                     <span
-                      className={`self-start sm:self-auto px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                        stage.mastery >= 85
-                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                          : stage.mastery >= 75
-                            ? "bg-teal-100 text-teal-800 border-teal-300"
-                            : "bg-amber-100 text-amber-800 border-amber-300"
-                      }`}
+                      className={`self-start sm:self-auto px-2.5 py-0.5 rounded-full text-xs font-bold border ${stage.mastery >= 85
+                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                        : stage.mastery >= 75
+                          ? "bg-teal-100 text-teal-800 border-teal-300"
+                          : "bg-amber-100 text-amber-800 border-amber-300"
+                        }`}
                     >
                       {stage.status} · {stage.mastery}% Cohort Mastery
                     </span>
@@ -1030,13 +1028,12 @@ function Page() {
                     </div>
                     <div className="h-2 w-full bg-border rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${
-                          stage.mastery >= 85
-                            ? "bg-emerald-600"
-                            : stage.mastery >= 75
-                              ? "bg-secondary"
-                              : "bg-amber-500"
-                        }`}
+                        className={`h-full rounded-full transition-all duration-300 ${stage.mastery >= 85
+                          ? "bg-emerald-600"
+                          : stage.mastery >= 75
+                            ? "bg-secondary"
+                            : "bg-amber-500"
+                          }`}
                         style={{ width: `${stage.mastery}%` }}
                       />
                     </div>

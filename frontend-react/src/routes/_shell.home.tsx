@@ -20,6 +20,7 @@ import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { ProgressRing } from "@/components/shared/ProgressRing";
 import { lessons } from "@/data/lessons";
+import { getLessonImage } from "@/components/shared/LessonList";
 import { checkpointQuiz } from "@/data/quiz";
 import { api } from "@/lib/api";
 
@@ -278,18 +279,50 @@ export function StudentHomePage() {
               Formative
             </span>
           </div>
-          <div className="my-4 space-y-2">
-            <div className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
-              Lesson {nextLesson?.order || 1}
+
+          <div className="my-4 space-y-3">
+            {/* Visual Thumbnail for Up Next Lesson */}
+            <Link
+              to="/lessons/$lessonId"
+              params={{ lessonId: nextLesson?.id || "lesson-1" }}
+              className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-slate-900 shadow-2xs group/thumb block"
+              aria-label={`Open Lesson: ${nextLesson?.title || "Lesson"}`}
+            >
+              <img
+                src={getLessonImage(nextLesson || { id: "1", order: 1 })}
+                alt={nextLesson?.title || "Lesson Thumbnail"}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover/thumb:scale-105"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/images/lessons/lesson-default.svg";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
+
+              <span className="absolute bottom-2 left-2 rounded-md bg-slate-900/85 px-2 py-0.5 text-[10px] font-bold text-white uppercase backdrop-blur-xs">
+                {nextLesson?.kind || "lesson"}
+              </span>
+
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity bg-slate-950/20">
+                <div className="size-10 rounded-full bg-secondary text-white flex items-center justify-center shadow-lg">
+                  <PlayCircle size={22} />
+                </div>
+              </div>
+            </Link>
+
+            <div className="space-y-1">
+              <div className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                Lesson {nextLesson?.order || 1}
+              </div>
+              <h3 className="font-heading text-lg font-bold text-ink leading-snug">
+                {nextLesson?.title || "Cartesian Graphs and Intercepts"}
+              </h3>
+              <p className="text-xs text-ink-muted line-clamp-2">
+                Explore how varying slope and intercept shifts the coordinate trajectory in 2D and 3D
+                space.
+              </p>
             </div>
-            <h3 className="font-heading text-lg font-bold text-ink leading-snug">
-              {nextLesson?.title || "Cartesian Graphs and Intercepts"}
-            </h3>
-            <p className="text-xs text-ink-muted line-clamp-2">
-              Explore how varying slope and intercept shifts the coordinate trajectory in 2D and 3D
-              space.
-            </p>
           </div>
+
           <div className="space-y-3 border-t border-border pt-3">
             <div className="flex items-center gap-2 text-xs text-ink-muted">
               <Clock size={14} /> 6 mins estimated · Interactive lab included
@@ -297,9 +330,9 @@ export function StudentHomePage() {
             <Link
               to="/lessons/$lessonId"
               params={{ lessonId: nextLesson?.id || "lesson-1" }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition hover:bg-slate-800"
+              className="btn-primary flex w-full items-center justify-center gap-2 text-xs font-bold"
             >
-              Start Lesson Now <ChevronRight size={14} />
+              <span>Start Lesson Now</span> <ChevronRight size={14} />
             </Link>
           </div>
         </div>

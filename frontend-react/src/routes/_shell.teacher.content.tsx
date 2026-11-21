@@ -28,6 +28,7 @@ import { PageHeading } from "@/components/shared/PageHeading";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { StatusBanner } from "@/components/shared/StatusBanner";
 import { lessons as seedLessons, type LessonKind } from "@/data/lessons";
+import { getLessonImage } from "@/components/shared/LessonList";
 import { checkpointQuiz, type OptionKey } from "@/data/quiz";
 import { mockState } from "@/data/mockState";
 import {
@@ -488,17 +489,36 @@ export function ContentStudioPage() {
                 filteredLessons.map((l) => (
                   <tr key={l.id} className="hover:bg-page-bg/40 transition-colors">
                     <td className="py-3.5 px-4 font-semibold text-ink">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span>{l.title}</span>
-                          <span className="font-mono text-xs px-1.5 py-0.2 rounded border border-border text-ink-muted">
-                            {l.courseCode}
-                          </span>
+                      <div className="flex items-center gap-3">
+                        {/* Lesson Thumbnail Image */}
+                        <div className="relative w-16 h-11 sm:w-20 sm:h-12 shrink-0 rounded-lg overflow-hidden border border-border bg-slate-900 group/thumb shadow-2xs">
+                          <img
+                            src={getLessonImage(l)}
+                            alt={l.title}
+                            className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src =
+                                "/images/lessons/lesson-default.svg";
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-slate-950/30 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">
+                            <Eye size={14} className="text-white" />
+                          </div>
                         </div>
-                        <div className="text-xs font-normal text-ink-muted flex items-center gap-2">
-                          <span>Est. 15 mins</span>
-                          <span>·</span>
-                          <span>{l.completionRate}% completion</span>
+
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-heading font-bold">{l.title}</span>
+                            <span className="font-mono text-xs px-1.5 py-0.2 rounded border border-border text-ink-muted">
+                              {l.courseCode}
+                            </span>
+                          </div>
+                          <div className="text-xs font-normal text-ink-muted flex items-center gap-2">
+                            <span>Est. 15 mins</span>
+                            <span>·</span>
+                            <span>{l.completionRate}% completion</span>
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -783,15 +803,37 @@ export function ContentStudioPage() {
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
-            {previewLesson?.videoUrl && (
-              <div className="rounded-xl overflow-hidden border border-border bg-black aspect-video flex items-center justify-center text-white relative">
+            {/* Visual Thumbnail / Video Player */}
+            <div className="rounded-xl overflow-hidden border border-border bg-slate-900 aspect-video relative flex items-center justify-center">
+              {previewLesson?.videoUrl ? (
                 <video
                   src={previewLesson.videoUrl}
+                  poster={getLessonImage(previewLesson || { id: "1" })}
                   controls
                   className="w-full h-full object-cover"
                 />
-              </div>
-            )}
+              ) : (
+                <>
+                  <img
+                    src={getLessonImage(previewLesson || { id: "1" })}
+                    alt={previewLesson?.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        "/images/lessons/lesson-default.svg";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex flex-col justify-end p-4 text-white">
+                    <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+                      {previewLesson?.courseCode} · Chapter Preview
+                    </span>
+                    <h3 className="font-heading text-lg font-bold text-white">
+                      {previewLesson?.title}
+                    </h3>
+                  </div>
+                </>
+              )}
+            </div>
 
             <div className="rounded-control bg-page-bg p-4 border border-border prose prose-sm max-w-none text-ink text-xs sm:text-sm">
               <div className="font-heading font-bold text-base text-ink mb-2">

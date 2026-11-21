@@ -12,9 +12,20 @@ const LOCAL_LESSON_IMAGES = [
   "/images/lessons/lesson-5.svg",
 ];
 
-export function getLessonImage(lesson: Lesson): string {
+export function getLessonImage(
+  lesson: Lesson | { order?: number; order_index?: number; id?: string },
+): string {
   if (typeof lesson.order === "number" && lesson.order > 0) {
     const idx = (lesson.order - 1) % LOCAL_LESSON_IMAGES.length;
+    return LOCAL_LESSON_IMAGES[idx] || "/images/lessons/lesson-default.svg";
+  }
+  if (typeof (lesson as any).order_index === "number" && (lesson as any).order_index > 0) {
+    const idx = ((lesson as any).order_index - 1) % LOCAL_LESSON_IMAGES.length;
+    return LOCAL_LESSON_IMAGES[idx] || "/images/lessons/lesson-default.svg";
+  }
+  const parsed = parseInt(String(lesson.id || "").replace(/\D/g, ""), 10);
+  if (!isNaN(parsed) && parsed > 0) {
+    const idx = (parsed - 1) % LOCAL_LESSON_IMAGES.length;
     return LOCAL_LESSON_IMAGES[idx] || "/images/lessons/lesson-default.svg";
   }
   return "/images/lessons/lesson-default.svg";

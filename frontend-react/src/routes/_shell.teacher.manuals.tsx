@@ -94,7 +94,7 @@ function Page() {
           ]);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       active = false;
     };
@@ -113,10 +113,10 @@ function Page() {
       rs.map((x) =>
         x.ebookId === id
           ? {
-              ...x,
-              status: "published",
-              versions: [...x.versions, { n, date: new Date().toISOString(), note }],
-            }
+            ...x,
+            status: "published",
+            versions: [...x.versions, { n, date: new Date().toISOString(), note }],
+          }
           : x,
       ),
     );
@@ -392,11 +392,10 @@ function Page() {
                       {book?.subjectCode || "Class 8"}
                     </span>
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                        isPub
-                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                          : "bg-amber-100 text-amber-800 border-amber-300"
-                      }`}
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${isPub
+                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                        : "bg-amber-100 text-amber-800 border-amber-300"
+                        }`}
                     >
                       {isPub ? `Published · v${v.n}` : "Draft"}
                     </span>
@@ -592,11 +591,10 @@ function WysiwygEditorForm({
             key={i}
             type="button"
             onClick={() => setCurrentChapter(i)}
-            className={`rounded-t px-3 py-1.5 text-xs font-semibold transition ${
-              currentChapter === i
-                ? "border-b-2 border-secondary bg-secondary/10 text-secondary"
-                : "text-ink-muted hover:text-ink"
-            }`}
+            className={`rounded-t px-3 py-1.5 text-xs font-semibold transition ${currentChapter === i
+              ? "border-b-2 border-secondary bg-secondary/10 text-secondary"
+              : "text-ink-muted hover:text-ink"
+              }`}
           >
             {i + 1}. {ch.title.split(":")[0]}
           </button>
@@ -981,11 +979,10 @@ function DeepLinkPickerModal({ onCancel }: { onCancel: () => void }) {
           {availableItems.map((item) => (
             <label
               key={item.id}
-              className={`flex items-start gap-3 rounded-control border p-3 cursor-pointer transition ${
-                selectedItem === item.id
-                  ? "border-secondary bg-secondary/10"
-                  : "border-border hover:bg-page-bg"
-              }`}
+              className={`flex items-start gap-3 rounded-control border p-3 cursor-pointer transition ${selectedItem === item.id
+                ? "border-secondary bg-secondary/10"
+                : "border-border hover:bg-page-bg"
+                }`}
             >
               <input
                 type="radio"

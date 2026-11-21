@@ -7,6 +7,7 @@ import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
 import { lessons as fallbackLessons, type Lesson } from "@/data/lessons";
+import { getLessonImage } from "@/components/shared/LessonList";
 import { myAttempts, type Attempt } from "@/data/attempts";
 import { PercentageBar } from "@/components/shared/PercentageBar";
 import { mockState } from "@/data/mockState";
@@ -187,42 +188,73 @@ function Page() {
             </span>
           </div>
 
-          {/* Spacious Chapter List */}
+          {/* Spacious Chapter List with Visual Thumbnails */}
           <div className="grid grid-cols-1 gap-5">
             {list.map((item, index) => {
               const chapterNum = index + 1;
               const isDone = item.markedDone;
               const isUpNext = item.id === next?.id;
               const progressPct = isDone ? 100 : isUpNext ? 45 : 0;
+              const thumbUrl = getLessonImage(item);
 
               return (
                 <div
                   key={item.id}
-                  className={`group rounded-2xl border transition-all duration-200 bg-surface p-6 shadow-xs hover:shadow-md ${
+                  className={`group rounded-2xl border transition-all duration-200 bg-surface p-5 sm:p-6 shadow-xs hover:shadow-md ${
                     isUpNext
                       ? "border-secondary/40 ring-1 ring-secondary/20 bg-gradient-to-r from-secondary/[0.02] to-transparent"
                       : "border-border hover:border-border-focus"
                   }`}
                 >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`flex size-12 shrink-0 items-center justify-center rounded-xl font-heading font-extrabold text-base ${
-                          isDone
-                            ? "bg-emerald-100 text-emerald-800"
-                            : isUpNext
-                              ? "bg-secondary text-white shadow-xs"
-                              : "bg-surface-sunken text-ink-muted border border-border"
-                        }`}
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex flex-col sm:flex-row items-start gap-5 flex-1 min-w-0">
+                      {/* Chapter Thumbnail Image */}
+                      <Link
+                        to="/lessons/$lessonId"
+                        params={{ lessonId: item.id }}
+                        className="relative w-full sm:w-48 md:w-56 aspect-[16/10] shrink-0 overflow-hidden rounded-xl border border-border bg-slate-900 group/thumb shadow-xs block"
+                        aria-label={`Open Chapter ${chapterNum}: ${item.title}`}
                       >
-                        {isDone ? (
-                          <CheckCircle2 size={24} className="text-emerald-700" />
-                        ) : (
-                          `Ch ${chapterNum}`
-                        )}
-                      </div>
+                        <img
+                          src={thumbUrl}
+                          alt={item.title}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover/thumb:scale-105"
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = "/images/lessons/lesson-default.svg";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
 
-                      <div className="space-y-1.5">
+                        {/* Badges on Thumbnail */}
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-slate-900/85 backdrop-blur-xs px-2 py-0.5 text-[11px] font-bold text-white shadow-xs">
+                            {isDone ? (
+                              <CheckCircle2 size={12} className="text-emerald-400" />
+                            ) : null}
+                            Ch {chapterNum}
+                          </span>
+                        </div>
+
+                        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[11px] font-semibold text-white/90">
+                          <span className="flex items-center gap-1">
+                            <Clock size={12} /> 15m
+                          </span>
+                          <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 bg-white/20 backdrop-blur-xs text-[10px] uppercase font-bold text-white">
+                            {item.kind}
+                          </span>
+                        </div>
+
+                        {/* Hover Play Overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity bg-slate-950/20">
+                          <div className="size-11 rounded-full bg-secondary text-white flex items-center justify-center shadow-lg transition-transform group-hover/thumb:scale-110">
+                            <PlayCircle size={24} />
+                          </div>
+                        </div>
+                      </Link>
+
+                      {/* Lesson Text Details */}
+                      <div className="space-y-1.5 flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
                             Chapter {chapterNum} · {item.kind === "video" ? "Interactive Video" : "Core Module"}
@@ -243,11 +275,17 @@ function Page() {
                           )}
                         </div>
 
-                        <h3 className="text-lg font-heading font-extrabold text-ink group-hover:text-secondary transition-colors">
-                          {item.title}
-                        </h3>
+                        <Link
+                          to="/lessons/$lessonId"
+                          params={{ lessonId: item.id }}
+                          className="block"
+                        >
+                          <h3 className="text-lg font-heading font-extrabold text-ink group-hover:text-secondary transition-colors">
+                            {item.title}
+                          </h3>
+                        </Link>
 
-                        <p className="text-sm text-ink-muted leading-relaxed max-w-3xl">
+                        <p className="text-sm text-ink-muted leading-relaxed max-w-2xl line-clamp-2">
                           {(item as { summary?: string }).summary ||
                             "Explore step-by-step mathematical reasoning, industrial balance models, and formative checkpoints."}
                         </p>
@@ -270,7 +308,8 @@ function Page() {
                       </div>
                     </div>
 
-                    <div className="shrink-0 pt-2 md:pt-0">
+                    {/* Action Button */}
+                    <div className="shrink-0 pt-2 lg:pt-0 self-start sm:self-end lg:self-center">
                       <Link
                         to="/lessons/$lessonId"
                         params={{ lessonId: item.id }}

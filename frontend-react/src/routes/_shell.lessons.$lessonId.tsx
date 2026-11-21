@@ -20,6 +20,7 @@ import { ErrorAlert } from "@/components/shared/ErrorAlert";
 import { SlowNetworkNote } from "@/components/shared/SlowNetworkNote";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { LessonVideoMasterclass } from "@/components/shared/LessonVideoMasterclass";
+import { getLessonImage } from "@/components/shared/LessonList";
 import { VideoCheckpointCard } from "@/components/enterprise/VideoCheckpointCard";
 import { lessonById, lessons, type Lesson } from "@/data/lessons";
 import { mockState } from "@/data/mockState";
@@ -203,7 +204,22 @@ function Player({
               </span>
             </div>
             <div className="p-4">
-              <LessonVideoMasterclass />
+              <LessonVideoMasterclass
+                lecture={{
+                  id: `lec-${lesson.id}`,
+                  title: lesson.title,
+                  description: `Visual intuition and step-by-step masterclass reasoning for Chapter ${lesson.order || 1}.`,
+                  durationSec: 840,
+                  coverUrl: getLessonImage(lesson),
+                  speaker: "Prof. Ramanujan · Mathematics Faculty",
+                  chapters: [
+                    { timeSec: 0, label: "Core Principles & Definitions" },
+                    { timeSec: 180, label: "Step-by-Step Worked Problems" },
+                    { timeSec: 420, label: "Interactive Checkpoint Demo" },
+                    { timeSec: 680, label: "Summary & Reflection" },
+                  ],
+                }}
+              />
             </div>
           </div>
 
