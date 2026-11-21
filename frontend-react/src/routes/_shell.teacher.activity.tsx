@@ -1,17 +1,9 @@
-import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
-import { DataTable, type Column } from "@/components/shared/DataTable";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
-import { classActivity, type ActivityKind, type ActivityRow } from "@/data/activity";
-import { personById } from "@/data/people";
-import { mockState } from "@/data/mockState";
-import { formatIST } from "@/lib/time";
 import { LiveEventStreamViewer } from "@/components/enterprise/LiveEventStreamViewer";
 
-// TC-04 Activity. For support, not surveillance — no time-spent, IDs or export.
+// TC-04 Activity: Pure Real-Time Learning Event Feed
 export const Route = createFileRoute("/_shell/teacher/activity")({
   head: () => ({
     meta: [
@@ -26,89 +18,16 @@ export const Route = createFileRoute("/_shell/teacher/activity")({
   component: Page,
 });
 
-const s = (k: string) => t(`TC-04.${k}`);
-const l = (k: string, v?: Record<string, string | number>) => t(`LR-13.${k}`, v);
-const field = "mt-2 min-h-11 w-full rounded-surface bg-surface px-3 text-ink border-control";
-
-function detail(r: ActivityRow): string {
-  return r.detail || "—";
-}
-
-const columns: Column<ActivityRow>[] = [
-  { key: "when", header: l("colWhen") + " (IST)", cell: (r) => formatIST(r.at) },
-  { key: "learner", header: s("colLearner"), cell: (r) => personById(r.personId)?.name ?? "" },
-  { key: "action", header: l("colAction"), cell: (r) => l(`actions.${r.action}`) },
-  { key: "item", header: l("colItem"), cell: (r) => r.item },
-  { key: "detail", header: l("colDetail"), cell: (r) => detail(r) },
-];
-
 function Page() {
-  const state = mockState.teacher.activity;
-  const [name, setName] = useState("");
-  const [kind, setKind] = useState<"all" | ActivityKind>("all");
-  const all = state === "empty" ? [] : [...classActivity].sort((a, b) => b.at.localeCompare(a.at));
-  const q = name.trim().toLowerCase();
-  const rows = all.filter(
-    (r) =>
-      (kind === "all" || r.kind === kind) &&
-      (!q || (personById(r.personId)?.name ?? "").toLowerCase().includes(q)),
-  );
-
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
-      <PageHeading text={s("title")} context={s("lead")} />
-      <div className="grid gap-4 tablet:grid-cols-2 desktop:max-w-2xl">
-        <div>
-          <label htmlFor="ta-name" className="block font-semibold text-ink">
-            {s("name")}
-          </label>
-          <input
-            id="ta-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className={field}
-          />
-        </div>
-        <div>
-          <label htmlFor="ta-kind" className="block font-semibold text-ink">
-            {s("action")}
-          </label>
-          <select
-            id="ta-kind"
-            value={kind}
-            onChange={(e) => setKind(e.target.value as typeof kind)}
-            className={field}
-          >
-            {(["all", "lessons", "quizzes", "ebooks"] as const).map((k) => (
-              <option key={k} value={k}>
-                {l(k)}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      {state === "loading" ? (
-        <LoadingSkeleton variant="table" count={5} />
-      ) : (
-        <DataTable
-          caption={s("caption")}
-          columns={columns}
-          rows={rows}
-          rowKey={(r) => r.id}
-          empty={
-            <EmptyState
-              headingLevel={2}
-              title={all.length === 0 ? s("empty") : s("noMatch")}
-              help=""
-            />
-          }
-        />
-      )}
+      <PageHeading
+        text="Real-Time Learning Event Feed"
+        context="Authoritative live telemetry, formative question masteries, checkpoint completions, and student engagement."
+      />
 
-      {/* Enterprise Suite: Live Real-Time Telemetry Event Stream */}
-      <div className="pt-6">
-        <LiveEventStreamViewer />
-      </div>
+      {/* Pure Hero: Real-Time Telemetry & Event Stream Viewer */}
+      <LiveEventStreamViewer />
     </div>
   );
 }

@@ -87,21 +87,27 @@ export function ChapterDoubtTutorDrawer({
 
       {/* Slide-over Drawer */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-sm transition">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800">
+        <>
+          <div
+            className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-xs transition"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-y-0 right-0 z-[100] w-full max-w-md bg-white text-slate-900 shadow-2xl flex flex-col border-l border-slate-200">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
               <div>
-                <span className="text-xs uppercase font-bold tracking-wider text-violet-600 dark:text-violet-400">
+                <span className="text-xs uppercase font-bold tracking-wider text-secondary">
                   Chapter Grounded Assistant
                 </span>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 line-clamp-1">
+                <h3 className="text-sm font-bold text-slate-900 line-clamp-1">
                   {chapterTitle}
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 text-lg leading-none"
+                className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 text-lg leading-none"
               >
                 &times;
               </button>
@@ -109,7 +115,7 @@ export function ChapterDoubtTutorDrawer({
 
             {/* Context snippet */}
             {activeContext && (
-              <div className="bg-violet-50 dark:bg-violet-950/40 px-4 py-2 border-b border-violet-100 dark:border-violet-900/40 text-xs text-violet-800 dark:text-violet-300">
+              <div className="bg-secondary/5 px-4 py-2 border-b border-secondary/15 text-xs text-secondary font-medium">
                 Grounding: {activeContext}
               </div>
             )}
@@ -176,7 +182,7 @@ export function ChapterDoubtTutorDrawer({
               </form>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );

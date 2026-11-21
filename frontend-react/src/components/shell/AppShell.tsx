@@ -7,6 +7,7 @@ import { AccessUnavailable } from "@/components/shared/AccessUnavailable";
 import { t, useLocale, phrases } from "@/i18n";
 import { accessPage, allowedFor, roleHome } from "@/data/nav";
 import { AskViduraPanel } from "@/components/learner/AskViduraPanel";
+import { FocusStreakPill } from "@/components/enterprise/FocusStreakPill";
 import { useRole } from "./RoleContext";
 
 function DOMTranslationBridge() {
@@ -143,6 +144,11 @@ export function AppShell() {
       </a>
       <TopNav />
       <div className="min-h-screen pt-0 tablet:pl-[72px] desktop:pl-60">
+        {role === "learner" && !blocked && (
+          <div className="sticky top-0 z-30 flex items-center justify-end px-4 py-2 bg-page-bg/85 backdrop-blur-xs border-b border-border/40">
+            <FocusStreakPill />
+          </div>
+        )}
         <main id="main" className="min-h-[calc(100vh-56px)]">
           {blocked ? (
             <AccessUnavailable back={{ to: roleHome[role], label: t("SH-03.back") }} />

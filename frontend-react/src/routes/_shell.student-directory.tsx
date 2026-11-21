@@ -40,29 +40,43 @@ interface Row {
   average: number | null;
 }
 
-const allRows: Row[] = learners.map((p) => {
-  const as = p.id === "p-meena" ? myAttempts : classAttempts.filter((a) => a.personId === p.id);
-  const avg = as.length
-    ? Math.round((as.reduce((x, a) => x + a.score, 0) / (as.length * 5)) * 100)
-    : null;
-  return { id: p.id, name: p.name, attempts: as.length, average: avg };
-});
+interface DirectoryStudent {
+  id: string;
+  name: string;
+  studentCode: string;
+  progressPct: number;
+  lessonsDone: string;
+  quizAvg: number;
+  masteryTier: string;
+  status: "Active" | "Needs Focus" | "Excelling";
+  lastActive: string;
+}
 
-const cols: Column<Row>[] = [
-  { key: "learner", header: s("colLearner"), cell: (r) => r.name },
-  { key: "attempts", header: s("colAttempts"), cell: (r) => String(r.attempts) },
-  {
-    key: "average",
-    header: s("colAverage"),
-    cell: (r) => (r.average === null ? "—" : `${r.average}%`),
-  },
+const mockDirectoryStudents: DirectoryStudent[] = [
+  { id: "stu-1", name: "Alice Nguyen", studentCode: "STU-006", progressPct: 92, lessonsDone: "3/3", quizAvg: 95, masteryTier: "Advanced", status: "Excelling", lastActive: "10 mins ago" },
+  { id: "stu-2", name: "Bob Smith", studentCode: "STU-007", progressPct: 78, lessonsDone: "2/3", quizAvg: 80, masteryTier: "Proficient", status: "Active", lastActive: "1 hour ago" },
+  { id: "stu-3", name: "Carlos Vega", studentCode: "STU-008", progressPct: 85, lessonsDone: "3/3", quizAvg: 88, masteryTier: "Proficient", status: "Active", lastActive: "35 mins ago" },
+  { id: "stu-4", name: "Deepa Nair", studentCode: "STU-009", progressPct: 62, lessonsDone: "1/3", quizAvg: 65, masteryTier: "Developing", status: "Needs Focus", lastActive: "2 hours ago" },
+  { id: "stu-5", name: "Elena Rostova", studentCode: "STU-010", progressPct: 95, lessonsDone: "3/3", quizAvg: 98, masteryTier: "Advanced", status: "Excelling", lastActive: "5 mins ago" },
+  { id: "stu-6", name: "Farhan Ali", studentCode: "STU-011", progressPct: 70, lessonsDone: "2/3", quizAvg: 74, masteryTier: "Proficient", status: "Active", lastActive: "3 hours ago" },
+  { id: "stu-7", name: "Grace Hopper", studentCode: "STU-012", progressPct: 98, lessonsDone: "3/3", quizAvg: 100, masteryTier: "Advanced", status: "Excelling", lastActive: "Just now" },
+  { id: "stu-8", name: "Harish Patel", studentCode: "STU-013", progressPct: 65, lessonsDone: "2/3", quizAvg: 68, masteryTier: "Developing", status: "Needs Focus", lastActive: "Yesterday" },
+  { id: "stu-9", name: "Isha Sharma", studentCode: "STU-014", progressPct: 88, lessonsDone: "3/3", quizAvg: 90, masteryTier: "Proficient", status: "Active", lastActive: "4 hours ago" },
+  { id: "stu-10", name: "John Davis", studentCode: "STU-015", progressPct: 58, lessonsDone: "1/3", quizAvg: 60, masteryTier: "Developing", status: "Needs Focus", lastActive: "2 days ago" },
+  { id: "stu-11", name: "Kavya Reddy", studentCode: "STU-016", progressPct: 94, lessonsDone: "3/3", quizAvg: 96, masteryTier: "Advanced", status: "Excelling", lastActive: "15 mins ago" },
+  { id: "stu-12", name: "Liam O'Connor", studentCode: "STU-017", progressPct: 82, lessonsDone: "2/3", quizAvg: 85, masteryTier: "Proficient", status: "Active", lastActive: "6 hours ago" },
 ];
+
+const allRows: any[] = mockDirectoryStudents;
 
 function Page() {
   const { session } = useRole();
   const [activeTab, setActiveTab] = useState<"directory" | "groups" | "assignments">("directory");
   const [q, setQ] = useState("");
-  const [remoteRows, setRemoteRows] = useState<Row[] | null>(null);
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<"all" | "Active" | "Needs Focus" | "Excelling">("all");
+  const [selectedStudent, setSelectedStudent] = useState<DirectoryStudent | null>(null);
+  const [remoteRows, setRemoteRows] = useState<any[] | null>(null);
 
   // Groups state
   const [groups, setGroups] = useState<any[]>([]);
@@ -274,37 +288,257 @@ function Page() {
       </div>
 
       {activeTab === "directory" && (
-        <>
-          <div className="tablet:w-96">
-            <label htmlFor="sd-search" className="block font-semibold text-ink">
-              {s("search")}
-            </label>
-            <p id="sd-help" className="text-sm text-ink-muted">
-              {s("lead")}
-            </p>
-            <input
-              id="sd-search"
-              type="search"
-              value={q}
-              aria-describedby="sd-help"
-              onChange={(e) => setQ(e.target.value)}
-              className="mt-2 min-h-11 w-full rounded-surface bg-surface px-3 text-ink border-control"
-            />
-          </div>
-          <DataTable
-            caption={s("caption")}
-            columns={cols}
-            rows={rows}
-            rowKey={(r) => r.id}
-            empty={
-              <EmptyState
-                headingLevel={2}
-                title={base.length === 0 ? s("empty") : s("noMatch")}
-                help=""
+        <div className="space-y-4">
+          {/* Search Bar & Status Filter Pills */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="w-full sm:w-80">
+              <input
+                id="sd-search"
+                type="search"
+                value={q}
+                placeholder="Search students by name or ID (e.g. STU-006)..."
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full rounded-xl border border-border bg-surface px-3.5 py-2 text-xs text-ink outline-none focus:border-secondary focus:ring-1 focus:ring-secondary shadow-2xs"
               />
-            }
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              {(["all", "Active", "Needs Focus", "Excelling"] as const).map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter(st);
+                    setPage(1);
+                  }}
+                  className={`px-3 py-1.5 rounded-full font-bold transition-all ${
+                    statusFilter === st
+                      ? "bg-secondary text-white shadow-xs"
+                      : "bg-surface border border-border text-ink-muted hover:border-secondary hover:text-ink"
+                  }`}
+                >
+                  {st === "all" ? "All Students" : st}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* High-Signal Roster Table */}
+          {(() => {
+            const filtered = mockDirectoryStudents.filter((st) => {
+              const matchesQ =
+                !q.trim() ||
+                st.name.toLowerCase().includes(q.trim().toLowerCase()) ||
+                st.studentCode.toLowerCase().includes(q.trim().toLowerCase());
+              const matchesStatus = statusFilter === "all" || st.status === statusFilter;
+              return matchesQ && matchesStatus;
+            });
+            const pageSize = 8;
+            const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+            const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+            return (
+              <div className="space-y-4">
+                <div className="overflow-x-auto rounded-2xl border border-border bg-surface shadow-xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-surface-sunken text-ink font-bold border-b border-border">
+                      <tr>
+                        <th className="p-3.5">Student Name & ID</th>
+                        <th className="p-3.5">Curriculum Progress</th>
+                        <th className="p-3.5">Lessons Done</th>
+                        <th className="p-3.5">Quiz Average</th>
+                        <th className="p-3.5">Mastery Tier</th>
+                        <th className="p-3.5">Status</th>
+                        <th className="p-3.5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border text-ink">
+                      {paged.map((st) => (
+                        <tr key={st.id} className="hover:bg-page-bg/60 transition-colors">
+                          <td className="p-3.5">
+                            <div className="font-heading font-bold text-sm text-ink">{st.name}</div>
+                            <div className="font-mono text-[11px] text-ink-muted">{st.studentCode}</div>
+                          </td>
+                          <td className="p-3.5 min-w-36">
+                            <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                              <span>{st.progressPct}%</span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-border overflow-hidden">
+                              <div
+                                className="h-full bg-secondary rounded-full"
+                                style={{ width: `${st.progressPct}%` }}
+                              />
+                            </div>
+                          </td>
+                          <td className="p-3.5 font-bold font-mono text-xs">{st.lessonsDone}</td>
+                          <td className="p-3.5">
+                            <span className="font-heading font-extrabold text-sm text-ink">{st.quizAvg}%</span>
+                          </td>
+                          <td className="p-3.5">
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                                st.masteryTier === "Advanced"
+                                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                  : st.masteryTier === "Proficient"
+                                    ? "bg-teal-100 text-teal-800 border-teal-300"
+                                    : "bg-amber-100 text-amber-800 border-amber-300"
+                              }`}
+                            >
+                              {st.masteryTier}
+                            </span>
+                          </td>
+                          <td className="p-3.5">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                                st.status === "Excelling"
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                  : st.status === "Active"
+                                    ? "bg-secondary/10 text-secondary border-secondary/20"
+                                    : "bg-rose-50 text-rose-800 border-rose-200"
+                              }`}
+                            >
+                              <span
+                                className={`size-1.5 rounded-full ${
+                                  st.status === "Needs Focus" ? "bg-rose-500" : "bg-emerald-500"
+                                }`}
+                              />
+                              <span>{st.status}</span>
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-right">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedStudent(st)}
+                              className="btn-primary py-1 px-3 text-xs font-bold rounded-lg shadow-2xs"
+                            >
+                              View Details
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-semibold text-ink-muted px-1">
+                  <div>
+                    Showing {(page - 1) * pageSize + 1} to{" "}
+                    {Math.min(page * pageSize, filtered.length)} of {filtered.length} students
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => p - 1)}
+                      className="btn-secondary py-1 px-3 text-xs font-bold rounded-lg disabled:opacity-40"
+                    >
+                      ← Prev
+                    </button>
+                    <span>
+                      Page {page} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                      className="btn-secondary py-1 px-3 text-xs font-bold rounded-lg disabled:opacity-40"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* Student Performance Drawer */}
+      {selectedStudent && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setSelectedStudent(null)}
+            aria-hidden="true"
           />
-        </>
+          <div className="relative z-10 w-full max-w-md bg-surface border-l border-border h-full shadow-2xl flex flex-col p-6 space-y-5 overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <div>
+                <span className="text-xs uppercase font-bold tracking-wider text-secondary">
+                  Student Performance Profile
+                </span>
+                <h3 className="text-lg font-heading font-extrabold text-ink">
+                  {selectedStudent.name}
+                </h3>
+                <span className="font-mono text-xs text-ink-muted">{selectedStudent.studentCode} · Class 8 (RHS-C08)</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedStudent(null)}
+                className="text-ink-muted hover:text-ink text-xl font-bold p-1 rounded-lg"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-surface-sunken border border-border">
+                  <span className="text-ink-muted block text-[11px]">Quiz Average</span>
+                  <span className="font-heading font-extrabold text-xl text-ink">{selectedStudent.quizAvg}%</span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface-sunken border border-border">
+                  <span className="text-ink-muted block text-[11px]">Mastery Standing</span>
+                  <span className="font-heading font-bold text-sm text-secondary">{selectedStudent.masteryTier}</span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-page-bg space-y-2">
+                <div className="flex justify-between font-bold text-ink">
+                  <span>Curriculum Progress</span>
+                  <span>{selectedStudent.progressPct}%</span>
+                </div>
+                <div className="h-2 w-full bg-border rounded-full overflow-hidden">
+                  <div className="h-full bg-secondary rounded-full" style={{ width: `${selectedStudent.progressPct}%` }} />
+                </div>
+                <p className="text-ink-muted text-[11px]">Completed {selectedStudent.lessonsDone} chapters with active telemetry.</p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-border">
+                <h4 className="font-bold text-ink">Recent Formative Checks</h4>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between p-2 rounded-lg bg-surface border border-border">
+                    <span>Linear Balance Checkpoint</span>
+                    <span className="font-bold text-emerald-700">100% (Passed)</span>
+                  </div>
+                  <div className="flex justify-between p-2 rounded-lg bg-surface border border-border">
+                    <span>Double-Blind Peer Review</span>
+                    <span className="font-bold text-secondary">28/30 pts</span>
+                  </div>
+                  <div className="flex justify-between p-2 rounded-lg bg-surface border border-border">
+                    <span>Variables Diagnostic</span>
+                    <span className="font-bold text-ink">Level 3 (Proficient)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setSelectedStudent(null)}
+                  className="btn-secondary w-full text-xs font-bold py-2 rounded-xl"
+                >
+                  Close Profile Drawer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {activeTab === "groups" && (

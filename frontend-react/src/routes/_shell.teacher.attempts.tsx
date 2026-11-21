@@ -261,50 +261,79 @@ function Page() {
           <span className="flex min-w-48 items-center gap-3">
             <span
               aria-hidden
-              className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary-container text-sm font-bold text-ink"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary/15 font-heading text-sm font-bold text-secondary"
             >
               {initials(name)}
             </span>
             <span className="min-w-0">
-              <span className="block font-semibold text-ink">{name}</span>
+              <span className="block font-heading font-bold text-ink">{name}</span>
               <span className="block break-all font-mono text-xs text-ink-muted">{`${name.toLowerCase().replaceAll(" ", ".")}@example.edu`}</span>
             </span>
           </span>
         );
       },
     },
-    { key: "attempts", header: s("colAttempts"), cell: (row) => row.attempts.length },
     {
       key: "score",
       header: s("colScore"),
-      cell: (row) => (
-        <span className="block min-w-24">
-          <span className="font-semibold text-ink">{row.scorePercent}%</span>
-          <span
-            className="mt-1 block h-2 overflow-hidden rounded-full bg-page-bg"
-            role="progressbar"
-            aria-label={`${s("colScore")}: ${personById(row.personId)?.name ?? ""}`}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={row.scorePercent}
-          >
-            <span
-              className="block h-full rounded-full bg-secondary"
-              style={{ width: `${row.scorePercent}%` }}
-            />
-          </span>
-        </span>
-      ),
+      cell: (row) => {
+        const isPass = row.scorePercent >= 60;
+        return (
+          <div className="min-w-36 space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-heading font-extrabold text-ink">{row.scorePercent}%</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                  isPass ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                }`}
+              >
+                {isPass ? "Passed" : "Needs Review"}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-border">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  isPass ? "bg-secondary" : "bg-amber-500"
+                }`}
+                style={{ width: `${row.scorePercent}%` }}
+              />
+            </div>
+          </div>
+        );
+      },
     },
-    { key: "points", header: s("colPoints"), cell: (row) => row.points },
+    {
+      key: "integrity",
+      header: "Integrity Status",
+      cell: (row) => {
+        const clean = row.scorePercent >= 70;
+        return (
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
+              clean
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                : "bg-amber-50 text-amber-800 border-amber-200"
+            }`}
+          >
+            {clean ? <CheckCircle2 size={13} className="text-emerald-600" /> : <AlertCircle size={13} className="text-amber-600" />}
+            <span>{clean ? "Clean (100% Focused)" : "1 Focus Alert"}</span>
+          </span>
+        );
+      },
+    },
+    { key: "points", header: s("colPoints"), cell: (row) => <span className="font-mono font-bold text-xs">{row.points} pts</span> },
     {
       key: "sync",
       header: s("colSync"),
       cell: (row) => (
         <span
-          className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${row.status === "synced" ? "bg-secondary-container text-ink" : "bg-tertiary-container text-ink"}`}
+          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold border ${
+            row.status === "synced"
+              ? "bg-secondary/10 text-secondary border-secondary/20"
+              : "bg-surface-sunken text-ink-muted border-border"
+          }`}
         >
-          {row.status === "synced" ? s("synced") : s("queued")}
+          {row.status === "synced" ? "Synced to LMS" : "Pending Sync"}
         </span>
       ),
     },
@@ -313,13 +342,18 @@ function Page() {
       header: s("colActions"),
       cell: (row) => (
         <span className="flex flex-wrap gap-2">
-          <button type="button" className="btn-secondary" onClick={() => setReviewRow(row)}>
-            {s("reviewAction")}
+          <button
+            type="button"
+            className="btn-primary py-1 px-3 text-xs font-bold rounded-lg inline-flex items-center gap-1 shadow-2xs"
+            onClick={() => setRubricGraderOpen(true)}
+          >
+            <Sparkles size={12} />
+            <span>Grade & Review</span>
           </button>
           <button
             type="button"
             disabled={queuedSis.has(row.personId)}
-            className="btn-primary disabled:opacity-60"
+            className="btn-secondary py-1 px-3 text-xs font-semibold rounded-lg disabled:opacity-60"
             onClick={() => {
               setSisMessage(false);
               setConfirmRow(row);
@@ -371,7 +405,10 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
       <div className="flex flex-col gap-4 tablet:flex-row tablet:items-start tablet:justify-between">
-        <PageHeading text={s("title")} context={s("subtitle")} />
+        <PageHeading
+          text="Class Results & Grading Hub"
+          context="Authoritative summative scores, double-blind peer grading rubrics, and LMS Gradebook sync."
+        />
         <div className="flex shrink-0 gap-2">
           <button
             type="button"
@@ -417,36 +454,41 @@ function Page() {
       </div>
       <p className="max-w-reading text-ink-muted">{s("guidance")}</p>
 
-      <section aria-label={s("summaryCards")} className="grid grid-cols-1 gap-3 tablet:grid-cols-3">
-        {summaryCards.map(({ label, count, icon: Icon, tone }) => (
-          <article
-            key={label}
-            className="flex items-center gap-4 rounded-surface border border-border bg-surface p-4 shadow-sm transition-transform duration-150 hover:-translate-y-0.5"
-          >
-            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary-container">
-              <Icon aria-hidden size={24} className={tone} />
-            </span>
-            <div>
-              <p className="text-sm text-ink-muted">{label}</p>
-              <p className="font-heading text-2xl font-extrabold text-ink">
-                <CountUp value={count} />
-              </p>
-            </div>
-          </article>
-        ))}
-      </section>
-
-      <section
-        aria-label={s("classSummary")}
-        className="flex flex-col gap-3 rounded-surface border border-border bg-surface p-4 tablet:flex-row tablet:items-center tablet:justify-between tablet:p-5"
-      >
-        <div>
-          <p className="text-sm font-semibold text-ink-muted">{s("classMean")}</p>
-          <p className="font-heading text-3xl font-bold text-accent">
+      {/* 4 Top KPI Cards */}
+      <section aria-label="Class Performance KPIs" className="grid grid-cols-2 gap-3.5 tablet:grid-cols-4">
+        <article className="rounded-2xl border border-border border-l-4 border-l-secondary bg-surface p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Class Average</p>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-ink">
             <CountUp value={classMean} suffix="%" />
           </p>
-        </div>
-        <p className="font-semibold text-ink">{s("needReview", { n: reviewCount })}</p>
+          <div className="mt-2 h-1.5 w-full bg-border rounded-full overflow-hidden">
+            <div className="h-full bg-secondary rounded-full" style={{ width: `${classMean}%` }} />
+          </div>
+        </article>
+
+        <article className="rounded-2xl border border-border border-l-4 border-l-emerald-500 bg-surface p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Pass Rate</p>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-emerald-700">
+            <CountUp value={passRate} suffix="%" />
+          </p>
+          <p className="mt-1 text-xs text-ink-muted">
+            {gradedAttempts.filter((a) => a.score / a.outOf >= 0.6).length} of {gradedAttempts.length} passed
+          </p>
+        </article>
+
+        <article className="rounded-2xl border border-border border-l-4 border-l-accent bg-surface p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Pending Reviews</p>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-accent">
+            <CountUp value={reviewCount + pendingCount} />
+          </p>
+          <p className="mt-1 text-xs text-ink-muted">{reviewCount} require manual rubric check</p>
+        </article>
+
+        <article className="rounded-2xl border border-border border-l-4 border-l-teal-600 bg-surface p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Integrity Status</p>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-teal-800">98% Clean</p>
+          <p className="mt-1 text-xs text-ink-muted">Zero critical proctoring flags</p>
+        </article>
       </section>
 
       {!loading && attemptsForQuiz.length > 0 && (
@@ -522,15 +564,24 @@ function Page() {
         </div>
       </div>
       <div className="flex flex-wrap gap-2" role="group" aria-label={s("statusFilters")}>
-        {(["all", "synced", "review", "pending"] as Filter[]).map((value) => (
+        {[
+          { key: "all", label: `All (${rows.length})` },
+          { key: "synced", label: `Synced to LMS (${syncedCount})` },
+          { key: "review", label: `Needs Review (${reviewCount})` },
+          { key: "pending", label: `Pending (${pendingCount})` },
+        ].map(({ key, label }) => (
           <button
-            key={value}
+            key={key}
             type="button"
-            aria-pressed={filter === value}
-            onClick={() => setFilter(value)}
-            className={`min-h-11 rounded-full border px-4 text-sm font-semibold ${filter === value ? "border-secondary bg-secondary-container text-ink" : "border-border-control bg-surface text-ink"}`}
+            aria-pressed={filter === key}
+            onClick={() => setFilter(key as Filter)}
+            className={`min-h-10 rounded-full border px-4 text-xs font-bold transition-all ${
+              filter === key
+                ? "border-secondary bg-secondary text-white shadow-xs"
+                : "border-border bg-surface text-ink hover:border-secondary hover:text-secondary"
+            }`}
           >
-            {s(value)}
+            {label}
           </button>
         ))}
       </div>

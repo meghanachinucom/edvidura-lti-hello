@@ -431,14 +431,14 @@ function Page() {
       </div>
 
       {/* 2. BALANCED 2-COLUMN WORKSPACE (CHAT IS THE HERO — ZERO STACKED CLUTTER) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left / Main Column (~68% on desktop) — Focused Chat Card (h-[520px] single-viewport) */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        {/* Left / Main Column (~60% on desktop) — Focused Chat Card */}
         <section
           aria-label={s("conversation")}
-          className="lg:col-span-8 flex flex-col rounded-surface border border-border bg-surface shadow-xs min-h-[520px] h-[520px] overflow-hidden"
+          className="xl:col-span-7 flex flex-col rounded-2xl border border-border bg-surface shadow-xs min-h-[560px]"
         >
           {/* Scrollable Chat Area */}
-          <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+          <div ref={chatScrollRef} className="flex-1 min-h-[460px] max-h-[600px] overflow-y-auto p-5 sm:p-6 space-y-4">
             {turns.length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 max-w-md mx-auto my-auto">
                 <div className="size-14 rounded-full bg-secondary/10 flex items-center justify-center text-secondary shadow-2xs">
@@ -477,7 +477,7 @@ function Page() {
             {turns.map((x) => (
               <div key={x.id} className="space-y-3">
                 {/* Student message bubble on right */}
-                <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-xs bg-secondary/10 border border-secondary/20 p-3.5 text-ink shadow-2xs">
+                <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-xs bg-secondary/10 border border-secondary/20 px-4 py-3 text-ink shadow-2xs break-words whitespace-pre-wrap leading-relaxed">
                   <div className="text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                     You
                   </div>
@@ -632,10 +632,10 @@ function Page() {
           </form>
         </section>
 
-        {/* Right Side Column (~32% width on desktop) — ONE Clean "Study Tools" Card With 3 Simple Tabs (h-[520px]) */}
+        {/* Right Side Column (~40% width on desktop) — ONE Clean "Study Tools" Card With 3 Simple Tabs */}
         <aside
           aria-label="Study Tools"
-          className="lg:col-span-4 flex flex-col rounded-surface border border-border bg-surface shadow-xs min-h-[520px] h-[520px] overflow-hidden"
+          className="xl:col-span-5 flex flex-col rounded-2xl border border-border bg-surface shadow-xs min-h-[560px]"
         >
           {/* Card Top Header & Tab Navigation */}
           <div className="border-b border-border bg-surface px-4 pt-3.5 pb-0">
@@ -901,7 +901,7 @@ function Reply({
   const { bcp47 } = useLocale();
 
   return (
-    <div className="mr-auto max-w-[92%] rounded-2xl rounded-tl-xs bg-page-bg border border-border p-4 text-ink space-y-3 shadow-2xs">
+    <div className="mr-auto max-w-[92%] rounded-2xl rounded-tl-xs bg-page-bg border border-border px-5 py-4 text-ink space-y-3 shadow-2xs break-words whitespace-pre-wrap leading-relaxed">
       <div className="flex items-center justify-between border-b border-border/50 pb-2">
         <div className="flex items-center gap-1.5 text-xs font-bold text-secondary">
           <Sparkles size={14} />

@@ -211,54 +211,77 @@ export function SchoolCommandCenterPage() {
         </div>
       )}
 
+      {/* Institutional Welcome Banner */}
+      <div className="rounded-2xl border border-secondary/30 bg-gradient-to-r from-secondary/10 via-secondary/5 to-transparent p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+              Academic Year 2026–27 · Statutory Governance Active
+            </span>
+            <h2 className="text-2xl font-heading font-extrabold text-slate-900">
+              Riverside High School Command Center
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
+              Institutional oversight across Grades 1–10, LTI 1.3 Advantage deep-linking integrations, and vocational compliance certification.
+            </p>
+          </div>
+          <div className="shrink-0 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+              <CheckCircle2 size={14} className="text-emerald-700" />
+              <span>LMS Sync Operational</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
       {loading ? (
         <LoadingSkeleton count={4} />
       ) : (
         <>
-          {/* Top 4 Executive KPI Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <div className="rounded-surface border border-border border-t-4 border-t-secondary bg-surface p-4 shadow-2xs">
+          {/* Top 4 Executive KPI Cards (p-6, text-3xl font-bold) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-2xl border border-border border-t-4 border-t-secondary bg-surface p-6 shadow-xs">
               <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
                 Active Classes
               </span>
-              <p className="mt-2 font-heading text-2xl sm:text-3xl font-extrabold text-ink">
+              <p className="mt-2 font-heading text-3xl font-extrabold text-ink">
                 <CountUp value={classCount} />
               </p>
-              <span className="text-xs text-ink-muted font-medium">
+              <span className="text-xs text-ink-muted font-medium block mt-1">
                 Grades 1–10 (RHS-C01 to RHS-C10)
               </span>
             </div>
 
-            <div className="rounded-surface border border-border border-t-4 border-t-emerald-600 bg-surface p-4 shadow-2xs">
+            <div className="rounded-2xl border border-border border-t-4 border-t-emerald-600 bg-surface p-6 shadow-xs">
               <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
                 Faculty Members
               </span>
-              <p className="mt-2 font-heading text-2xl sm:text-3xl font-extrabold text-emerald-800">
+              <p className="mt-2 font-heading text-3xl font-extrabold text-emerald-800">
                 <CountUp value={teacherCount} />
               </p>
-              <span className="text-xs text-ink-muted font-medium">
+              <span className="text-xs text-ink-muted font-medium block mt-1">
                 10 Certified Lead Instructors
               </span>
             </div>
 
-            <div className="rounded-surface border border-border border-t-4 border-t-teal-600 bg-surface p-4 shadow-2xs">
+            <div className="rounded-2xl border border-border border-t-4 border-t-teal-600 bg-surface p-6 shadow-xs">
               <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
                 Enrolled Learners
               </span>
-              <p className="mt-2 font-heading text-2xl sm:text-3xl font-extrabold text-teal-800">
+              <p className="mt-2 font-heading text-3xl font-extrabold text-teal-800">
                 <CountUp value={studentCount} />
               </p>
-              <span className="text-xs text-ink-muted font-medium">Active in LTI Coursework</span>
+              <span className="text-xs text-ink-muted font-medium block mt-1">Active in LTI Coursework</span>
             </div>
 
-            <div className="rounded-surface border border-border border-t-4 border-t-amber-500 bg-surface p-4 shadow-2xs">
+            <div className="rounded-2xl border border-border border-t-4 border-t-amber-500 bg-surface p-6 shadow-xs">
               <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
                 School Quiz Pass Rate
               </span>
-              <p className="mt-2 font-heading text-2xl sm:text-3xl font-extrabold text-ink">
+              <p className="mt-2 font-heading text-3xl font-extrabold text-ink">
                 {passRate}%
               </p>
-              <span className="text-xs text-ink-muted font-medium">Above CBSE State Benchmark</span>
+              <span className="text-xs text-ink-muted font-medium block mt-1">Above CBSE State Benchmark</span>
             </div>
           </div>
 

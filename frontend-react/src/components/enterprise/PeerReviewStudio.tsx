@@ -8,6 +8,7 @@ import {
   Sparkles,
   RefreshCw,
   UserCheck,
+  Award,
 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -26,11 +27,16 @@ export function PeerReviewStudio({
   assignmentId?: string;
   reviewerId?: string;
 }) {
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState<boolean>(false);
-  const [submission, setSubmission] = useState<PeerSubmission | null>(null);
+  const [submission, setSubmission] = useState<PeerSubmission>({
+    pair_id: "pair-1",
+    peer_alias: "Anonymous Peer #A42",
+    problem_prompt: "Solve for x: 3x + 12 = 45 and verify using inverse operations on both sides.",
+    student_solution:
+      "Given equation: 3x + 12 = 45\n\nStep 1: Subtract 12 from both sides to isolate the variable term.\n3x + 12 - 12 = 45 - 12\n3x = 33\n\nStep 2: Divide both sides by the coefficient 3.\n3x / 3 = 33 / 3\nx = 11\n\nStep 3: Verification check:\n3(11) + 12 = 33 + 12 = 45 (LHS = RHS. Verified balanced).",
+    assigned_at: "Just now",
+  });
 
-  // Step 2 rubric scores
   const [scores, setScores] = useState({
     accuracy: 9,
     clarity: 8,
@@ -42,10 +48,11 @@ export function PeerReviewStudio({
   );
 
   const [calibratedScore, setCalibratedScore] = useState<number | null>(null);
+  const [submitted, setSubmitted] = useState<boolean>(false);
 
-  // Step 1: Assign Peer Submission
   const handleAssignPeer = async () => {
     setLoading(true);
+    setSubmitted(false);
     try {
       const res = await api.post<{
         ok: boolean;
@@ -61,41 +68,37 @@ export function PeerReviewStudio({
 
       if (res && res.ok) {
         setSubmission({
-          pair_id: res.pair_id || "pair-1",
-          peer_alias: res.peer_alias || "Anonymous Peer #A42",
+          pair_id: res.pair_id || "pair-2",
+          peer_alias: res.peer_alias || "Anonymous Peer #B18",
           problem_prompt:
             res.problem_prompt ||
-            "Solve for x: 3x + 12 = 45 and verify using inverse operations on both sides.",
+            "Solve for x: 4(x - 3) = 28 and verify each step.",
           student_solution:
             res.student_solution ||
-            "Given equation: 3x + 12 = 45\n\nStep 1: Subtract 12 from both sides to isolate the variable term.\n3x + 12 - 12 = 45 - 12\n3x = 33\n\nStep 2: Divide both sides by the coefficient 3.\n3x / 3 = 33 / 3\nx = 11\n\nStep 3: Verification check:\n3(11) + 12 = 33 + 12 = 45 (LHS = RHS. Verified balanced).",
+            "4(x - 3) = 28\nDivide by 4: x - 3 = 7\nAdd 3: x = 10\nCheck: 4(10 - 3) = 4(7) = 28.",
           assigned_at: "Just now",
         });
-        setCurrentStep(2);
       }
     } catch {
-      // Fallback submission
       setSubmission({
         pair_id: "pair-1",
         peer_alias: "Anonymous Peer #A42",
-        problem_prompt: "Solve for x: 3x + 12 = 45 and verify using inverse operations.",
+        problem_prompt: "Solve for x: 3x + 12 = 45 and verify using inverse operations on both sides.",
         student_solution:
           "Given equation: 3x + 12 = 45\n\nStep 1: Subtract 12 from both sides to isolate the variable term.\n3x + 12 - 12 = 45 - 12\n3x = 33\n\nStep 2: Divide both sides by the coefficient 3.\n3x / 3 = 33 / 3\nx = 11\n\nStep 3: Verification check:\n3(11) + 12 = 33 + 12 = 45 (LHS = RHS. Verified balanced).",
         assigned_at: "Just now",
       });
-      setCurrentStep(2);
     } finally {
       setLoading(false);
     }
   };
 
-  // Step 3: Submit Peer Grade
   const handleSubmitGrade = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await api.post("/api/v1/peer-review/submit-grade", {
-        pair_id: submission?.pair_id || "pair-1",
+        pair_id: submission.pair_id,
         reviewer_id: "6",
         rubric_scores: scores,
         qualitative_feedback: feedback,
@@ -104,13 +107,13 @@ export function PeerReviewStudio({
         ((scores.accuracy + scores.clarity + scores.final_answer) / 30) * 100,
       );
       setCalibratedScore(total);
-      setCurrentStep(3);
+      setSubmitted(true);
     } catch {
       const total = Math.round(
         ((scores.accuracy + scores.clarity + scores.final_answer) / 30) * 100,
       );
       setCalibratedScore(total);
-      setCurrentStep(3);
+      setSubmitted(true);
     } finally {
       setLoading(false);
     }
@@ -119,239 +122,198 @@ export function PeerReviewStudio({
   return (
     <div
       aria-label="Anonymous Peer Review Workshop"
-      className="rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-sm space-y-5"
+      className="rounded-2xl border border-border bg-surface p-6 shadow-xs space-y-6"
     >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-xl bg-secondary/10 text-secondary border border-secondary/20 shadow-2xs">
               <Users className="size-4" />
             </span>
             <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-              Anonymous Peer Review Workshop
+              Peer Review Studio
             </span>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary/10 text-secondary border border-secondary/30">
-              Double-Blind Evaluation
+              Double-Blind Calibrated
             </span>
           </div>
-          <h3 className="text-base sm:text-lg font-heading font-extrabold text-ink">
+          <h3 className="text-lg font-heading font-extrabold text-ink">
             Calibrated Peer Review & Collaborative Critique
           </h3>
           <p className="text-xs text-ink-muted">
-            Evaluate anonymous classmate solutions using a structured 3-part rubric to sharpen
-            analytical reasoning.
+            Evaluate anonymous classmate solutions using a structured 3-part rubric to sharpen analytical reasoning.
           </p>
         </div>
 
-        {/* Stepper Pill */}
-        <div className="flex items-center gap-1.5 bg-page-bg px-3 py-1.5 rounded-full border border-border text-xs font-semibold">
-          <span
-            className={`px-2 py-0.5 rounded-full ${currentStep === 1 ? "bg-secondary text-white" : "text-ink-muted"}`}
-          >
-            1. Assign
-          </span>
-          <span className="text-border">→</span>
-          <span
-            className={`px-2 py-0.5 rounded-full ${currentStep === 2 ? "bg-secondary text-white" : "text-ink-muted"}`}
-          >
-            2. Rubric
-          </span>
-          <span className="text-border">→</span>
-          <span
-            className={`px-2 py-0.5 rounded-full ${currentStep === 3 ? "bg-emerald-600 text-white" : "text-ink-muted"}`}
-          >
-            3. Finalized
-          </span>
-        </div>
+        <button
+          type="button"
+          onClick={handleAssignPeer}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-bold text-ink hover:bg-page-bg transition shadow-2xs shrink-0 self-start sm:self-auto"
+        >
+          <RefreshCw size={13} className={loading ? "animate-spin text-secondary" : "text-ink-muted"} />
+          <span>Switch / New Peer Work</span>
+        </button>
       </div>
 
-      {/* Step 1: Assignment Intake */}
-      {currentStep === 1 && (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center space-y-4 bg-page-bg/40">
-          <div className="w-14 h-14 rounded-2xl bg-secondary/10 text-secondary mx-auto flex items-center justify-center border border-secondary/20 shadow-xs">
-            <UserCheck className="size-7" />
+      {submitted ? (
+        <div className="rounded-2xl border border-emerald-300 bg-emerald-50/80 p-8 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-800 mx-auto flex items-center justify-center border border-emerald-300 shadow-xs">
+            <CheckCircle2 className="size-8" />
           </div>
-          <div className="space-y-1 max-w-md mx-auto">
-            <h4 className="font-heading text-base font-bold text-ink">
-              Ready to Review a Peer Submission
+          <div className="space-y-1">
+            <h4 className="text-lg font-heading font-extrabold text-emerald-950">
+              Peer Review Successfully Submitted & Calibrated
             </h4>
-            <p className="text-xs text-ink-muted leading-relaxed">
-              You will be paired with an anonymized Class 8 algebra solution. Your identity is
-              masked as Reviewer #R12.
+            <p className="text-xs text-emerald-800 max-w-md mx-auto leading-relaxed">
+              Your evaluation of <strong>{submission.peer_alias}</strong> has been calibrated against teacher benchmarks and recorded to the consensus ledger.
             </p>
           </div>
-          <button
-            type="button"
-            disabled={loading}
-            onClick={handleAssignPeer}
-            className="btn-primary h-10 px-6 text-xs font-bold rounded-xl inline-flex items-center gap-2 shadow-sm transition hover:scale-[1.02]"
-          >
-            <Users className="size-4" />
-            <span>{loading ? "Matching Peer Work..." : "Assign Peer Submission"}</span>
-          </button>
+          <div className="inline-flex items-center gap-3 bg-white border border-emerald-200 px-5 py-2.5 rounded-xl text-xs font-bold text-ink shadow-xs">
+            <span>Calibrated Score Awarded:</span>
+            <span className="font-heading text-lg text-emerald-700 font-extrabold">
+              {calibratedScore}%
+            </span>
+          </div>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => setSubmitted(false)}
+              className="text-xs font-bold text-secondary hover:underline"
+            >
+              Modify Review / Critique Another Solution →
+            </button>
+          </div>
         </div>
-      )}
+      ) : (
+        /* Balanced 2-Column Grid (Left: Submission; Right: 3-Criterion Rubric) */
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* Left Column: Step 1: Assign & Read Anonymized Submission */}
+          <div className="rounded-2xl border border-border bg-page-bg/50 p-6 space-y-4 min-h-[460px] flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b border-border/80 pb-3">
+                <span className="text-xs font-extrabold text-secondary flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-secondary" />
+                  {submission.peer_alias} (Anonymized)
+                </span>
+                <span className="text-xs font-mono text-ink-muted">Assigned: {submission.assigned_at}</span>
+              </div>
 
-      {/* Step 2: Student Solution + 3-Criterion Rubric */}
-      {currentStep === 2 && submission && (
-        <form onSubmit={handleSubmitGrade} className="space-y-5">
-          {/* Anonymized student work card */}
-          <div className="rounded-xl border border-border bg-page-bg p-4 sm:p-5 space-y-2.5">
-            <div className="flex items-center justify-between border-b border-border/60 pb-2">
-              <span className="text-xs font-extrabold text-secondary flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-secondary" />
-                {submission.peer_alias} · Solution Submission
-              </span>
-              <span className="text-xs font-mono text-ink-muted">Double-Blind Verified</span>
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block mb-1">
+                  Assigned Math Problem
+                </span>
+                <p className="text-xs font-semibold text-ink bg-surface p-3 rounded-xl border border-border">
+                  {submission.problem_prompt}
+                </p>
+              </div>
+
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block mb-1">
+                  Classmate's Submitted Steps & Verification
+                </span>
+                <pre className="text-xs font-mono bg-surface p-4 rounded-xl border border-border whitespace-pre-wrap text-ink leading-relaxed font-medium overflow-x-auto">
+                  {submission.student_solution}
+                </pre>
+              </div>
             </div>
 
-            <p className="text-xs font-semibold text-ink">
-              <strong>Prompt:</strong> {submission.problem_prompt}
-            </p>
-
-            <pre className="text-xs font-mono bg-surface p-3.5 rounded-lg border border-border whitespace-pre-wrap text-ink leading-relaxed font-medium">
-              {submission.student_solution}
-            </pre>
+            <div className="pt-3 border-t border-border/80 text-[11px] text-ink-muted flex items-center justify-between">
+              <span>Double-blind review protocol active</span>
+              <span className="font-semibold text-secondary">Reviewer ID: #R12</span>
+            </div>
           </div>
 
-          {/* 3-Criterion Interactive Rubric */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-ink-muted">
-              Step 2: 3-Criterion Evaluation Rubric
-            </h4>
+          {/* Right Column: Step 2: 3-Criterion Rubric & Submit Grade */}
+          <form
+            onSubmit={handleSubmitGrade}
+            className="rounded-2xl border border-border bg-surface p-6 space-y-5 min-h-[460px] flex flex-col justify-between shadow-xs"
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border/80 pb-2">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-ink">
+                  Step 2: 3-Criterion Evaluation Rubric
+                </h4>
+                <span className="text-xs font-mono font-bold text-secondary">
+                  Total: {Math.round(((scores.accuracy + scores.clarity + scores.final_answer) / 30) * 100)}%
+                </span>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Criterion 1 */}
-              <div className="p-4 rounded-xl border border-border bg-surface space-y-2">
+              <div className="p-3.5 rounded-xl border border-border bg-page-bg/40 space-y-1.5">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-ink">Concept Accuracy</span>
-                  <span className="font-mono font-extrabold text-secondary">
-                    {scores.accuracy} / 10 pts
-                  </span>
+                  <span className="font-bold text-ink">1. Concept Accuracy (Balance Model)</span>
+                  <span className="font-mono font-extrabold text-secondary">{scores.accuracy} / 10</span>
                 </div>
-                <p className="text-xs text-ink-muted">
-                  Correct algebraic manipulation and balance properties.
-                </p>
                 <input
                   type="range"
                   min="1"
                   max="10"
                   value={scores.accuracy}
                   onChange={(e) => setScores({ ...scores, accuracy: parseInt(e.target.value) })}
-                  className="w-full accent-secondary cursor-pointer"
+                  className="w-full accent-secondary cursor-pointer h-2 bg-border rounded-lg"
                 />
               </div>
 
               {/* Criterion 2 */}
-              <div className="p-4 rounded-xl border border-border bg-surface space-y-2">
+              <div className="p-3.5 rounded-xl border border-border bg-page-bg/40 space-y-1.5">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-ink">Step-by-Step Clarity</span>
-                  <span className="font-mono font-extrabold text-secondary">
-                    {scores.clarity} / 10 pts
-                  </span>
+                  <span className="font-bold text-ink">2. Step-by-Step Clarity</span>
+                  <span className="font-mono font-extrabold text-secondary">{scores.clarity} / 10</span>
                 </div>
-                <p className="text-xs text-ink-muted">
-                  Logical progression of steps without omitted operations.
-                </p>
                 <input
                   type="range"
                   min="1"
                   max="10"
                   value={scores.clarity}
                   onChange={(e) => setScores({ ...scores, clarity: parseInt(e.target.value) })}
-                  className="w-full accent-secondary cursor-pointer"
+                  className="w-full accent-secondary cursor-pointer h-2 bg-border rounded-lg"
                 />
               </div>
 
               {/* Criterion 3 */}
-              <div className="p-4 rounded-xl border border-border bg-surface space-y-2">
+              <div className="p-3.5 rounded-xl border border-border bg-page-bg/40 space-y-1.5">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-ink">Final Verification</span>
-                  <span className="font-mono font-extrabold text-secondary">
-                    {scores.final_answer} / 10 pts
-                  </span>
+                  <span className="font-bold text-ink">3. Final Answer & Verification</span>
+                  <span className="font-mono font-extrabold text-secondary">{scores.final_answer} / 10</span>
                 </div>
-                <p className="text-xs text-ink-muted">
-                  Correct numerical root and explicit verification check.
-                </p>
                 <input
                   type="range"
                   min="1"
                   max="10"
                   value={scores.final_answer}
                   onChange={(e) => setScores({ ...scores, final_answer: parseInt(e.target.value) })}
-                  className="w-full accent-secondary cursor-pointer"
+                  className="w-full accent-secondary cursor-pointer h-2 bg-border rounded-lg"
+                />
+              </div>
+
+              {/* Qualitative Feedback */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-ink block">
+                  Constructive Peer Feedback (Anonymous)
+                </label>
+                <textarea
+                  rows={3}
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-page-bg p-3 text-xs text-ink outline-none focus:border-secondary focus:ring-1 focus:ring-secondary leading-relaxed"
+                  placeholder="Provide constructive feedback for your peer..."
                 />
               </div>
             </div>
-          </div>
 
-          {/* Qualitative constructive feedback box */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-ink">
-              Constructive Peer Feedback (Shown anonymously to the student)
-            </label>
-            <textarea
-              rows={3}
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              className="w-full rounded-xl border border-border bg-page-bg p-3 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-secondary leading-relaxed"
-            />
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <button
-              type="button"
-              onClick={() => setCurrentStep(1)}
-              className="btn-secondary h-9 px-4 text-xs font-semibold"
-            >
-              Back to Assignment
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !feedback.trim()}
-              className="btn-primary h-9 px-6 text-xs font-bold rounded-xl disabled:opacity-50 inline-flex items-center gap-2"
-            >
-              <span>{loading ? "Submitting Grade..." : "Submit Peer Grade"}</span>
-              <ArrowRight className="size-3.5" />
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Step 3: Confirmation Badge & Calibrated Score */}
-      {currentStep === 3 && (
-        <div className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 p-6 text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 mx-auto flex items-center justify-center">
-            <CheckCircle2 className="size-7" />
-          </div>
-          <div className="space-y-1">
-            <h4 className="text-base font-heading font-extrabold text-emerald-950 dark:text-emerald-100">
-              Peer Review Submitted & Calibrated
-            </h4>
-            <p className="text-xs text-emerald-800 dark:text-emerald-300 max-w-md mx-auto leading-relaxed">
-              Your evaluation of <strong>{submission?.peer_alias}</strong> has been logged to the
-              calibrated peer consensus ledger.
-            </p>
-          </div>
-
-          <div className="inline-flex items-center gap-3 bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 px-4 py-2 rounded-xl text-xs font-bold text-ink shadow-2xs">
-            <span>Calibrated Score Awarded:</span>
-            <span className="font-mono text-base text-emerald-600 font-extrabold">
-              {calibratedScore}%
-            </span>
-          </div>
-
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => setCurrentStep(1)}
-              className="text-xs font-bold text-secondary hover:underline"
-            >
-              Review Another Submission →
-            </button>
-          </div>
+            <div className="pt-3 border-t border-border flex justify-end">
+              <button
+                type="submit"
+                disabled={loading || !feedback.trim()}
+                className="btn-primary h-10 px-6 text-xs font-bold rounded-xl inline-flex items-center gap-2 shadow-xs transition"
+              >
+                <span>{loading ? "Submitting Grade..." : "Submit Peer Grade"}</span>
+                <ArrowRight size={15} />
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

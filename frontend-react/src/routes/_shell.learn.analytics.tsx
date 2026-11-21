@@ -171,19 +171,6 @@ function Page() {
             />
           )}
 
-          <section aria-labelledby="recent">
-            <h2 id="recent" className="sr-only">
-              {s("recent")}
-            </h2>
-            <DataTable
-              caption={s("recent")}
-              columns={columns}
-              rows={rows}
-              rowKey={(r) => r.id}
-              empty={<EmptyState headingLevel={3} title={s("empty")} help="" />}
-            />
-          </section>
-
           <div className="flex flex-col gap-2 tablet:flex-row tablet:flex-wrap tablet:items-center tablet:gap-4">
             <Link to="/quiz" className="btn-primary">
               {s("takeQuiz")}

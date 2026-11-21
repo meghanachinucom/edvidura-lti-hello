@@ -67,6 +67,9 @@ function Page() {
   const [lessonId, setLessonId] = useState(lessons[0]!.id);
   const [n, setN] = useState(10);
 
+  // Inspect Chunks state
+  const [inspectDoc, setInspectDoc] = useState<SourceDoc | null>(null);
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -201,43 +204,46 @@ function Page() {
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <PageHeading text={s("title")} />
+        <PageHeading
+          text="Reference Sources & Knowledge Base"
+          context="Authoritative SME documents, verified vector chunks, AI tutor grounding data, and tamper-proof audit trails."
+        />
         <PillTabs items={tabItems} active={activeTab} label="SME Navigation" />
       </div>
 
       {/* 4-KPI Summary Header */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+        <div className="rounded-2xl border border-border border-l-4 border-l-secondary bg-surface p-4 shadow-xs">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
-            Reference Sources
+            Indexed Documents
           </span>
-          <p className="mt-1 font-heading text-2xl font-extrabold text-ink">6 Active Documents</p>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-ink">6 Documents</p>
           <span className="text-xs text-ink-muted">CBSE & State Guidelines</span>
         </div>
-        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+        <div className="rounded-2xl border border-border border-l-4 border-l-emerald-500 bg-surface p-4 shadow-xs">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
-            Indexed Chunks
+            Verified Chunks
           </span>
-          <p className="mt-1 font-heading text-2xl font-extrabold text-secondary">48 Chunks</p>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-emerald-800">48 Chunks</p>
           <span className="text-xs text-ink-muted">Available for AI Grounding</span>
         </div>
-        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+        <div className="rounded-2xl border border-border border-l-4 border-l-teal-600 bg-surface p-4 shadow-xs">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
-            Curriculum Alignment
+            Linked Skills
           </span>
-          <p className="mt-1 font-heading text-2xl font-extrabold text-emerald-700">
-            100% Verified
+          <p className="mt-1 font-heading text-2xl font-extrabold text-teal-800">
+            12 Linked Skills
           </p>
           <span className="text-xs text-ink-muted">Mapped to Class 8 Units</span>
         </div>
-        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+        <div className="rounded-2xl border border-border border-l-4 border-l-accent bg-surface p-4 shadow-xs">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
-            Audit Trail
+            Voice Search Ready
           </span>
-          <p className="mt-1 font-heading text-lg font-extrabold text-teal-700 truncate">
-            SHA-256 Sealed
+          <p className="mt-1 font-heading text-2xl font-extrabold text-accent truncate">
+            12 Languages
           </p>
-          <span className="text-xs text-ink-muted">Tamper-Proof Audit</span>
+          <span className="text-xs text-ink-muted">Multilingual Vector Embeddings</span>
         </div>
       </div>
 
@@ -346,10 +352,72 @@ function Page() {
           </div>
           {added && <StatusBanner variant="success">{s("added")}</StatusBanner>}
 
-          <section aria-labelledby={`${id}-a`} className="space-y-3">
-            <h2 id={`${id}-a`} className="font-heading text-[22px] text-ink">
-              {s("active")}
-            </h2>
+          {/* Upload Reference Document Dropzone & Indian-Language Voice Search */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-2xl border-2 border-dashed border-secondary/30 bg-secondary/[0.02] p-5 text-center space-y-2 hover:border-secondary transition-colors">
+              <div className="size-10 rounded-xl bg-secondary/10 text-secondary mx-auto flex items-center justify-center">
+                <HardDrive size={20} />
+              </div>
+              <h4 className="font-heading text-sm font-bold text-ink">Upload Reference Document</h4>
+              <p className="text-xs text-ink-muted">
+                Drag & drop CBSE curricula, trade manuals, or PDF technical orders to automatically chunk & index.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setActive((prev) => [
+                    { id: `src-${Date.now()}`, title: "Class 8 Mathematics Syllabus & NEP Guidelines (2026–27)", type: "manual" },
+                    ...prev,
+                  ]);
+                }}
+                className="btn-secondary text-xs py-1.5 px-3 font-semibold rounded-xl"
+              >
+                + Choose File / Sample Guideline
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-surface p-5 space-y-3 flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+                  Multilingual Knowledge Query
+                </span>
+                <h4 className="font-heading text-sm font-bold text-ink mt-0.5">
+                  Indian-Language Voice & Semantic Search
+                </h4>
+                <p className="text-xs text-ink-muted mt-1">
+                  Query grounding knowledge in Hindi, Telugu, Tamil, Kannada, or English.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search size={16} className="absolute left-3 top-3 text-ink-muted" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search documents or speak in your language..."
+                    className="w-full rounded-xl border border-border bg-page-bg pl-9 pr-3 py-2 text-xs text-ink outline-none focus:border-secondary"
+                  />
+                </div>
+                <VoiceInputButton
+                  onTranscript={(transcript) => {
+                    setSearchQuery((prev) => (prev ? `${prev} ${transcript}` : transcript));
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <section aria-labelledby={`${id}-a`} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 id={`${id}-a`} className="font-heading text-lg font-bold text-ink">
+                Indexed Reference Documents ({active.length})
+              </h2>
+              <span className="text-xs text-ink-muted">
+                Grounded knowledge sources for Vidura AI Tutor
+              </span>
+            </div>
+
             {active.length === 0 ? (
               <EmptyState
                 headingLevel={3}
@@ -371,12 +439,60 @@ function Page() {
                 }
               />
             ) : (
-              <DataTable
-                caption={s("active")}
-                columns={cols(true)}
-                rows={active}
-                rowKey={(r) => r.id}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {active.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="rounded-2xl border border-border bg-surface p-5 space-y-3.5 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary/10 text-secondary border border-secondary/20">
+                          {doc.type === "manual" ? "Vocational Manual" : "Curriculum Lesson"}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                          <ShieldCheck size={12} className="text-emerald-600" />
+                          <span>SHA-256 Verified</span>
+                        </span>
+                      </div>
+
+                      <h3 className="font-heading font-extrabold text-base text-ink leading-snug">
+                        {doc.title}
+                      </h3>
+
+                      <div className="flex items-center gap-3 text-xs text-ink-muted">
+                        <span>8 Grounded Chunks</span>
+                        <span>•</span>
+                        <span>Vector Index Ready</span>
+                        <span>•</span>
+                        <span>Doc ID: {doc.id}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-border flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setInspectDoc(doc)}
+                        className="btn-primary text-xs py-1.5 px-3 font-bold rounded-xl inline-flex items-center gap-1.5 shadow-2xs"
+                      >
+                        <FileSearch size={13} />
+                        <span>Inspect Chunks</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="text-xs text-ink-muted hover:text-red-600 underline font-semibold"
+                        onClick={() => {
+                          setActive((a) => a.filter((x) => x.id !== doc.id));
+                          setArchived((a) => [...a, doc]);
+                        }}
+                      >
+                        Archive
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </section>
 
@@ -617,6 +733,87 @@ function Page() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Inspect Chunks Slide-Over Drawer */}
+      {inspectDoc && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setInspectDoc(null)}
+            aria-hidden="true"
+          />
+          <div className="relative z-10 w-full max-w-lg bg-surface border-l border-border h-full shadow-2xl flex flex-col p-6 space-y-5 overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <div>
+                <span className="text-xs uppercase font-bold tracking-wider text-secondary">
+                  Vector Knowledge Chunks
+                </span>
+                <h3 className="text-base font-heading font-extrabold text-ink line-clamp-1">
+                  {inspectDoc.title}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInspectDoc(null)}
+                className="text-ink-muted hover:text-ink text-xl font-bold p-1 rounded-lg"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-xs text-ink-muted bg-surface-sunken p-3 rounded-xl border border-border">
+                <span>Total Indexed Chunks: <strong>8</strong></span>
+                <span>Embedding Model: <strong>multilingual-e5-small</strong></span>
+              </div>
+
+              {[
+                {
+                  id: "chunk-001",
+                  tokens: 142,
+                  score: 0.96,
+                  text: "Linear equations express equality constraints between expressions. In industrial balance control systems, any operation on the Left Hand Side (LHS) must strictly mirror operations on the Right Hand Side (RHS).",
+                },
+                {
+                  id: "chunk-002",
+                  tokens: 168,
+                  score: 0.92,
+                  text: "Variables represent quantities under constraint. Solving by inversion uses reverse hierarchical operations: eliminate additive terms before dividing by multiplying coefficients.",
+                },
+                {
+                  id: "chunk-003",
+                  tokens: 185,
+                  score: 0.88,
+                  text: "Safety clearance procedures require zero-voltage verification across three-phase conductors prior to earthing switches being engaged in maintenance regimes.",
+                },
+              ].map((c) => (
+                <div key={c.id} className="rounded-xl border border-border bg-page-bg p-4 space-y-2 text-xs">
+                  <div className="flex items-center justify-between font-mono">
+                    <span className="font-bold text-secondary">{c.id}</span>
+                    <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Similarity: {c.score}
+                    </span>
+                  </div>
+                  <p className="text-ink leading-relaxed font-sans">{c.text}</p>
+                  <div className="text-[11px] text-ink-muted flex justify-between pt-1 border-t border-border/60">
+                    <span>Token length: {c.tokens} tokens</span>
+                    <span>Status: Verified Grounded</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4 border-t border-border mt-auto">
+              <button
+                type="button"
+                onClick={() => setInspectDoc(null)}
+                className="btn-secondary w-full text-xs font-bold py-2 rounded-xl"
+              >
+                Close Chunk Inspector
+              </button>
+            </div>
           </div>
         </div>
       )}

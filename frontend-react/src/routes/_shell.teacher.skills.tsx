@@ -59,8 +59,8 @@ function Err({ id, text }: { id: string; text: string }) {
 function Page() {
   const id = useId();
   const [activeTab, setActiveTab] = useState<
-    "roles" | "cat" | "proposals" | "passport" | "workforce" | "linked_data"
-  >("roles");
+    "coverage" | "prerequisites" | "roles" | "cat" | "proposals" | "passport" | "workforce"
+  >("coverage");
   const [roles, setRoles] = useState<Role[]>(
     targetRoles.map((r) => ({ id: r.id, title: r.title, skills: [...r.skills] })),
   );
@@ -160,16 +160,20 @@ function Page() {
   };
 
   useEffect(() => {
-    if (activeTab === "cat" || activeTab === "proposals") {
+    if (activeTab === "coverage") {
+      loadCoverage();
+    } else if (activeTab === "cat" || activeTab === "proposals") {
       loadCat();
     } else if (activeTab === "passport") {
       loadPassport();
     } else if (activeTab === "workforce") {
       loadWorkforce();
-    } else if (activeTab === "linked_data") {
-      loadCoverage();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    loadCoverage();
+  }, []);
 
   const handleMapTo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,6 +225,8 @@ function Page() {
   };
 
   const tabItems: PillTab[] = [
+    { id: "coverage", label: "Coverage Matrix", onSelect: () => setActiveTab("coverage") },
+    { id: "prerequisites", label: "Prerequisite Flow", onSelect: () => setActiveTab("prerequisites") },
     { id: "roles", label: "Roles & Skills", onSelect: () => setActiveTab("roles") },
     { id: "cat", label: "CAT Competencies & TO Map", onSelect: () => setActiveTab("cat") },
     {
@@ -234,19 +240,14 @@ function Page() {
       label: "Workforce & Sim-to-Real",
       onSelect: () => setActiveTab("workforce"),
     },
-    {
-      id: "linked_data",
-      label: "Curriculum Coverage Map",
-      onSelect: () => setActiveTab("linked_data"),
-    },
   ];
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6 px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <PageHeading
-          text={s("title")}
-          context="Map student learning trajectories, curriculum benchmarks, and targeted skill remediation."
+          text="Skills & Curriculum Coverage Studio"
+          context="Audit cross-resource curriculum alignment, map prerequisite dependency flows, and address mastery gaps."
         />
         <div className="flex items-center gap-2">
           <PillTabs items={tabItems} active={activeTab} label="Skills Hub Navigation" />
@@ -255,35 +256,35 @@ function Page() {
 
       {/* 4-KPI Summary Header */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+        <div className="rounded-2xl border border-border border-l-4 border-l-secondary bg-surface p-4 shadow-xs">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
-            Curriculum Skills
+            Total Skills
           </span>
-          <p className="mt-1 font-heading text-2xl font-extrabold text-ink">8 Competencies</p>
-          <span className="text-xs text-ink-muted">Class 8 Algebra Syllabus</span>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-ink">12 Skills</p>
+          <span className="text-xs text-ink-muted">Class 8 Mathematics Standards</span>
         </div>
-        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+        <div className="rounded-2xl border border-border border-l-4 border-l-emerald-500 bg-surface p-4 shadow-xs">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
-            Curriculum Coverage
+            Curriculum Coverage %
           </span>
-          <p className="mt-1 font-heading text-2xl font-extrabold text-emerald-700">88% Covered</p>
-          <span className="text-xs text-ink-muted">7 of 8 Fully Linked</span>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-emerald-800">92% Covered</p>
+          <span className="text-xs text-ink-muted">11 of 12 Bound to Lessons</span>
         </div>
-        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+        <div className="rounded-2xl border border-border border-l-4 border-l-teal-600 bg-surface p-4 shadow-xs">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
-            Cohort Average
+            Avg Class Mastery
           </span>
-          <p className="mt-1 font-heading text-2xl font-extrabold text-secondary">82%</p>
-          <span className="text-xs text-ink-muted">Class 8 Average Score</span>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-teal-800">84% Mastery</p>
+          <span className="text-xs text-ink-muted">Demonstrated in Checkpoints</span>
         </div>
-        <div className="rounded-surface border border-border bg-surface p-4 shadow-2xs">
+        <div className="rounded-2xl border border-border border-l-4 border-l-amber-500 bg-surface p-4 shadow-xs">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted block">
-            Remediation Priority
+            Gaps to Fill
           </span>
-          <p className="mt-1 font-heading text-lg font-extrabold text-amber-700 truncate">
-            Inequality Rules
+          <p className="mt-1 font-heading text-2xl font-extrabold text-amber-700">
+            2 Priority Gaps
           </p>
-          <span className="text-xs text-ink-muted">Active Intervention Target</span>
+          <span className="text-xs text-ink-muted">Linear Inequalities & Word Problems</span>
         </div>
       </div>
 
@@ -734,15 +735,15 @@ function Page() {
         </div>
       )}
 
-      {activeTab === "linked_data" && (
+      {activeTab === "coverage" && (
         <div className="space-y-6">
-          <div className="rounded-surface border border-border bg-surface p-6 shadow-sm">
+          <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
               <div>
-                <h2 className="font-heading text-xl font-bold text-ink">Curriculum Coverage Map</h2>
-                <p className="mt-1 text-sm text-ink-muted">
+                <h2 className="font-heading text-xl font-bold text-ink">Curriculum Coverage Matrix</h2>
+                <p className="mt-1 text-xs text-ink-muted">
                   Comprehensive audit of learning coverage across Lessons, eBooks, Quizzes, and
-                  Curriculum Standards.
+                  Curriculum Standards with 1-click resource binding.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -750,10 +751,10 @@ function Page() {
                   type="button"
                   onClick={loadCoverage}
                   disabled={ldLoading}
-                  className="btn-primary text-xs flex items-center gap-1.5"
+                  className="btn-primary text-xs flex items-center gap-1.5 shadow-2xs"
                 >
                   <RefreshCw size={14} className={ldLoading ? "animate-spin" : ""} />
-                  Refresh Coverage
+                  <span>Refresh Coverage</span>
                 </button>
               </div>
             </div>
@@ -911,6 +912,138 @@ function Page() {
                 Click "Refresh Coverage" to inspect the live curriculum alignment matrix.
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Segmented View Tab 2: Prerequisite Flow Dependency Studio */}
+      {activeTab === "prerequisites" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+              <div>
+                <h2 className="font-heading text-xl font-bold text-ink">
+                  Curriculum Prerequisite & Dependency Flow
+                </h2>
+                <p className="mt-1 text-xs text-ink-muted">
+                  Visual mastery hierarchy mapping foundational concepts to advanced mathematical models and trade skills.
+                </p>
+              </div>
+              <span className="text-xs font-bold text-secondary bg-secondary/10 px-3 py-1 rounded-full border border-secondary/20">
+                5-Stage Progression Active
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                {
+                  tier: "Stage 1: Pre-Algebra Foundations",
+                  name: "Arithmetic Principles & Inverse Operations",
+                  prereq: "None (Elementary School Entry Benchmark)",
+                  mastery: 96,
+                  status: "Mastered",
+                  lesson: "Arithmetic Operations Refresher",
+                  book: "Algebra I: Foundations (Ch 1)",
+                },
+                {
+                  tier: "Stage 2: Symbolic Representation",
+                  name: "Variables, Coefficients & Expressions",
+                  prereq: "Stage 1 (Arithmetic Principles)",
+                  mastery: 88,
+                  status: "Mastered",
+                  lesson: "Lesson 1: Introduction to Variables",
+                  book: "Algebra I: Foundations (Ch 1)",
+                },
+                {
+                  tier: "Stage 3: Core Equation Solving",
+                  name: "One-Step & Two-Step Linear Equations",
+                  prereq: "Stage 2 (Variables & Expressions)",
+                  mastery: 84,
+                  status: "Proficient",
+                  lesson: "Lesson 2: Linear Equations & Balancing",
+                  book: "Algebra I: Foundations (Ch 2)",
+                },
+                {
+                  tier: "Stage 4: Intermediate Systems",
+                  name: "Multi-Step Equations & Inequalities",
+                  prereq: "Stage 3 (Two-Step Linear Equations)",
+                  mastery: 72,
+                  status: "In Progress",
+                  lesson: "Lesson 3: Multi-Step Equations",
+                  book: "Algebra I: Foundations (Ch 3)",
+                },
+                {
+                  tier: "Stage 5: Applied Mathematics",
+                  name: "Linear Word Problems & Cartesian Graphing",
+                  prereq: "Stage 4 (Multi-Step & Inequalities)",
+                  mastery: 65,
+                  status: "Needs Focus",
+                  lesson: "Lesson 4: Graphing Linear Systems",
+                  book: "Algebra I: Foundations (Ch 4)",
+                },
+              ].map((stage, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-xl border border-border bg-page-bg/50 p-5 space-y-3 hover:border-secondary/40 transition-colors"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/80 pb-2.5">
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+                        {stage.tier}
+                      </span>
+                      <h4 className="font-heading font-extrabold text-base text-ink">
+                        {stage.name}
+                      </h4>
+                    </div>
+                    <span
+                      className={`self-start sm:self-auto px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                        stage.mastery >= 85
+                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                          : stage.mastery >= 75
+                            ? "bg-teal-100 text-teal-800 border-teal-300"
+                            : "bg-amber-100 text-amber-800 border-amber-300"
+                      }`}
+                    >
+                      {stage.status} · {stage.mastery}% Cohort Mastery
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    <div className="p-2.5 rounded-lg bg-surface border border-border">
+                      <span className="text-ink-muted block text-[11px]">Prerequisite:</span>
+                      <span className="font-semibold text-ink">{stage.prereq}</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-surface border border-border">
+                      <span className="text-ink-muted block text-[11px]">Bound Lesson:</span>
+                      <span className="font-semibold text-secondary">{stage.lesson}</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-surface border border-border">
+                      <span className="text-ink-muted block text-[11px]">Bound Textbook:</span>
+                      <span className="font-semibold text-ink">{stage.book}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1">
+                    <div className="flex justify-between text-xs text-ink-muted mb-1 font-medium">
+                      <span>Cohort Progress</span>
+                      <span>{stage.mastery}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-border rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          stage.mastery >= 85
+                            ? "bg-emerald-600"
+                            : stage.mastery >= 75
+                              ? "bg-secondary"
+                              : "bg-amber-500"
+                        }`}
+                        style={{ width: `${stage.mastery}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
