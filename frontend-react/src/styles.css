@@ -655,9 +655,15 @@ header.bg-topbar span,
 header.bg-topbar .text-ink,
 header.bg-topbar p.text-ink,
 header.bg-topbar .font-heading.text-ink,
+header.bg-topbar .text-slate-900,
+header.bg-topbar .text-slate-800,
+header.bg-topbar .text-slate-700,
 .bg-topbar .text-ink,
 .bg-topbar p.text-ink,
 .bg-topbar .font-heading.text-ink,
+.bg-topbar .text-slate-900,
+.bg-topbar .text-slate-800,
+.bg-topbar .text-slate-700,
 [data-topbar] .text-ink,
 .top-bar .text-ink {
   color: #ffffff !important;
@@ -665,8 +671,12 @@ header.bg-topbar .font-heading.text-ink,
 
 header.bg-topbar .text-ink-muted,
 header.bg-topbar p.text-ink-muted,
+header.bg-topbar .text-slate-500,
+header.bg-topbar .text-slate-600,
 .bg-topbar .text-ink-muted,
 .bg-topbar p.text-ink-muted,
+.bg-topbar .text-slate-500,
+.bg-topbar .text-slate-600,
 [data-topbar] .text-ink-muted,
 .top-bar .text-ink-muted {
   color: #cbd5e1 !important; /* Slate 300 - clear high contrast */

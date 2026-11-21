@@ -69,9 +69,21 @@ def assign_peer_reviews(payload: AssignPeerRequest) -> Dict[str, Any]:
         "active_pairs": []
     })
     
-    # Generate anonymized pairings
+    # Generate anonymized pairings with step-by-step algebra work
     pairs_created = []
     n = len(payload.student_ids)
+    sample_prompt = "Solve for x: 3x + 12 = 45 and verify using inverse operations on both sides."
+    sample_work = (
+        "Given equation: 3x + 12 = 45\n\n"
+        "Step 1: Subtract 12 from both sides to isolate the variable term:\n"
+        "3x + 12 - 12 = 45 - 12\n"
+        "3x = 33\n\n"
+        "Step 2: Divide both sides by the coefficient 3:\n"
+        "3x / 3 = 33 / 3\n"
+        "x = 11\n\n"
+        "Step 3: Verification check:\n"
+        "3(11) + 12 = 33 + 12 = 45 (LHS = RHS. Verified balanced)."
+    )
     for i, sid in enumerate(payload.student_ids):
         for step in range(1, payload.reviews_per_student + 1):
             other_id = payload.student_ids[(i + step) % n]
@@ -79,19 +91,26 @@ def assign_peer_reviews(payload: AssignPeerRequest) -> Dict[str, Any]:
                 "pair_id": f"pair-{assign_id}-{i}-{step}",
                 "reviewer_alias": f"Peer Evaluator #{_hash_id(sid)[:4].upper()}",
                 "reviewee_alias": f"Student Work #{_hash_id(other_id)[:4].upper()}",
+                "problem_prompt": sample_prompt,
+                "student_solution": sample_work,
                 "rubric_submitted": False,
                 "scores": {},
                 "total_score": None,
-                "calibration_weight": 1.0
+                "calibration_weight": 1.0,
             }
             rec["active_pairs"].append(pair_entry)
             pairs_created.append(pair_entry)
 
+    first_pair = pairs_created[0] if pairs_created else {}
     return {
         "ok": True,
         "assignment_id": assign_id,
+        "pair_id": first_pair.get("pair_id", "pair-1"),
+        "peer_alias": first_pair.get("reviewee_alias", "Student Work #E4"),
+        "problem_prompt": sample_prompt,
+        "student_solution": sample_work,
         "total_pairings_assigned": len(pairs_created),
-        "anonymized_pairs": pairs_created
+        "anonymized_pairs": pairs_created,
     }
 
 @router.post("/submit-grade")

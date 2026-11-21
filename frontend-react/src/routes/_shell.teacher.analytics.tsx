@@ -63,7 +63,15 @@ function Page() {
     };
   }, []);
 
-  const rows = remoteAttempts ?? (state === "empty" ? [] : classAttempts);
+  const rows =
+    remoteAttempts && remoteAttempts.length > 0
+      ? [
+          ...remoteAttempts,
+          ...classAttempts.filter((c) => !remoteAttempts.some((r) => r.id === c.id)),
+        ]
+      : state === "empty"
+        ? []
+        : classAttempts;
   const avg = rows.length
     ? pct(
         rows.reduce((x, a) => x + a.score, 0),

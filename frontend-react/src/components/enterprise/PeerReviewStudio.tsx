@@ -47,7 +47,13 @@ export function PeerReviewStudio({
   const handleAssignPeer = async () => {
     setLoading(true);
     try {
-      const res = await api.post<{ ok: boolean; assignment?: any }>("/api/v1/peer-review/assign", {
+      const res = await api.post<{
+        ok: boolean;
+        pair_id?: string;
+        peer_alias?: string;
+        problem_prompt?: string;
+        student_solution?: string;
+      }>("/api/v1/peer-review/assign", {
         assignment_id: assignmentId,
         student_ids: ["6", "student-2", "student-3"],
         reviews_per_student: 1,
@@ -55,10 +61,13 @@ export function PeerReviewStudio({
 
       if (res && res.ok) {
         setSubmission({
-          pair_id: "pair-1",
-          peer_alias: "Anonymous Peer #A42",
-          problem_prompt: "Solve for x: 3x + 12 = 45 and verify using inverse operations.",
+          pair_id: res.pair_id || "pair-1",
+          peer_alias: res.peer_alias || "Anonymous Peer #A42",
+          problem_prompt:
+            res.problem_prompt ||
+            "Solve for x: 3x + 12 = 45 and verify using inverse operations on both sides.",
           student_solution:
+            res.student_solution ||
             "Given equation: 3x + 12 = 45\n\nStep 1: Subtract 12 from both sides to isolate the variable term.\n3x + 12 - 12 = 45 - 12\n3x = 33\n\nStep 2: Divide both sides by the coefficient 3.\n3x / 3 = 33 / 3\nx = 11\n\nStep 3: Verification check:\n3(11) + 12 = 33 + 12 = 45 (LHS = RHS. Verified balanced).",
           assigned_at: "Just now",
         });

@@ -203,7 +203,17 @@ function Page() {
     return <AccessUnavailable back={{ to: "/school-admin", label: t("TC-18.title") }} />;
   }
 
-  const base = remoteRows ?? (mockState.teacher.directory === "empty" ? [] : allRows);
+  const base =
+    remoteRows && remoteRows.length > 0
+      ? [
+          ...remoteRows,
+          ...allRows.filter(
+            (a) => !remoteRows.some((r) => r.name.toLowerCase() === a.name.toLowerCase()),
+          ),
+        ]
+      : mockState.teacher.directory === "empty"
+        ? []
+        : allRows;
 
   const syncNrps = async () => {
     setNrpsSyncing(true);

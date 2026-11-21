@@ -15,10 +15,15 @@ import {
   Layers,
   Wrench,
   X,
+  Users,
+  Award,
+  SlidersHorizontal,
+  Check,
 } from "lucide-react";
 import { t } from "@/i18n";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { VirtualTransferReadiness } from "@/components/enterprise/VirtualTransferReadiness";
+import { useRole } from "@/components/shell/RoleContext";
 
 export const Route = createFileRoute("/_shell/xr-store")({
   head: () => ({
@@ -92,8 +97,20 @@ const XR_LABS: XrLabItem[] = [
 ];
 
 export function XrStorePage() {
+  const { session } = useRole();
+  const isInstructor = Boolean(session?.isInstructor || session?.role === "instructor");
+
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selectedLab, setSelectedLab] = useState<XrLabItem | null>(null);
+
+  // Instructor Lab Assignment State
+  const [assignedLabs, setAssignedLabs] = useState<Record<string, boolean>>({
+    "cartesian-3d": true,
+    "substation-ar": true,
+    "circuit-vr": true,
+    "cnc-toolpath": false,
+  });
+  const [passThreshold, setPassThreshold] = useState<number>(75);
 
   // Cartesian lab interactive state
   const [slope, setSlope] = useState<number>(1.5);
@@ -116,6 +133,300 @@ export function XrStorePage() {
     return lab.category === activeCategory;
   });
 
+  // Dedicated Instructor Lab Management & Telemetry View
+  if (isInstructor) {
+    return (
+      <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <PageHeading
+            text="3D Spatial Labs Management & Class Telemetry"
+            context="Class-wide 3D simulation telemetry, virtual-to-practical workshop transfer, and curriculum assignment."
+          />
+          <div className="flex items-center gap-2 rounded-2xl bg-teal-50 border border-teal-200 px-4 py-2 text-xs font-semibold text-teal-800 shadow-xs">
+            <Users size={16} className="text-teal-700" />
+            <span>Class 8 Algebra I · 24 Active Students</span>
+          </div>
+        </div>
+
+        {/* Instructor KPI Summary Strip */}
+        <div className="grid grid-cols-2 tablet:grid-cols-4 gap-4">
+          <div className="rounded-2xl border border-border bg-surface p-5 shadow-xs">
+            <span className="text-xs font-bold text-ink-muted uppercase tracking-wider block">
+              Assigned 3D Labs
+            </span>
+            <p className="mt-1 font-heading text-2xl font-extrabold text-ink">
+              {Object.values(assignedLabs).filter(Boolean).length} / {XR_LABS.length}
+            </p>
+            <p className="text-xs text-secondary mt-1 font-medium">Class 8 active curriculum</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface p-5 shadow-xs">
+            <span className="text-xs font-bold text-ink-muted uppercase tracking-wider block">
+              Class Completion Rate
+            </span>
+            <p className="mt-1 font-heading text-2xl font-extrabold text-emerald-700">84%</p>
+            <p className="text-xs text-ink-muted mt-1 font-medium">20 of 24 students passed</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface p-5 shadow-xs">
+            <span className="text-xs font-bold text-ink-muted uppercase tracking-wider block">
+              Avg Simulation Score
+            </span>
+            <p className="mt-1 font-heading text-2xl font-extrabold text-ink">88.5%</p>
+            <p className="text-xs text-emerald-600 mt-1 font-medium">+6.2% above baseline</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface p-5 shadow-xs">
+            <span className="text-xs font-bold text-ink-muted uppercase tracking-wider block">
+              Pass Threshold
+            </span>
+            <p className="mt-1 font-heading text-2xl font-extrabold text-amber-600">
+              {passThreshold}%
+            </p>
+            <p className="text-xs text-ink-muted mt-1 font-medium">Configurable passing bar</p>
+          </div>
+        </div>
+
+        {/* Configure Pass Threshold & Assignment Card */}
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+            <div>
+              <h3 className="font-heading text-base font-bold text-ink flex items-center gap-2">
+                <SlidersHorizontal size={18} className="text-secondary" />
+                <span>Curriculum Lab Assignment & Certification Threshold</span>
+              </h3>
+              <p className="text-xs text-ink-muted mt-0.5">
+                Enable 3D Spatial Labs for Class 8 and adjust the certified workshop readiness
+                threshold.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-ink">Pass Bar: {passThreshold}%</span>
+              <input
+                type="range"
+                min={60}
+                max={90}
+                step={5}
+                value={passThreshold}
+                onChange={(e) => setPassThreshold(Number(e.target.value))}
+                className="w-32 accent-secondary"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+            {XR_LABS.map((lab) => {
+              const isAssigned = Boolean(assignedLabs[lab.id]);
+              return (
+                <div
+                  key={lab.id}
+                  className="rounded-xl border border-border bg-page-bg p-4 flex flex-col justify-between space-y-3"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-mono font-bold uppercase text-secondary">
+                        {lab.category}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAssignedLabs((prev) => ({ ...prev, [lab.id]: !prev[lab.id] }))
+                        }
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-bold transition ${
+                          isAssigned
+                            ? "bg-emerald-500/15 text-emerald-700 border border-emerald-300"
+                            : "bg-slate-200 text-slate-600 border border-slate-300"
+                        }`}
+                      >
+                        {isAssigned ? "Assigned" : "Unassigned"}
+                      </button>
+                    </div>
+                    <h4 className="font-heading text-sm font-bold text-ink mt-2 line-clamp-1">
+                      {lab.name}
+                    </h4>
+                    <p className="text-xs text-ink-muted mt-1 line-clamp-2">{lab.tagline}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLab(lab)}
+                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-surface py-1.5 text-xs font-bold text-ink hover:bg-slate-50 transition"
+                  >
+                    <Play size={12} fill="currentColor" /> Preview 3D Lab
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Student-by-Student Virtual vs. Practical Workshop Score Table */}
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+            <div>
+              <h3 className="font-heading text-base font-bold text-ink flex items-center gap-2">
+                <Award size={18} className="text-emerald-600" />
+                <span>Student Virtual Simulation vs. Practical Workshop Telemetry</span>
+              </h3>
+              <p className="text-xs text-ink-muted mt-0.5">
+                Validated sim-to-real transfer telemetry backed by Class 8 physical and virtual
+                exercises.
+              </p>
+            </div>
+            <span className="text-xs font-bold text-secondary bg-secondary/10 px-3 py-1 rounded-full">
+              Workforce Transfer Engine Active
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-border bg-page-bg text-ink-muted">
+                <tr>
+                  <th className="p-3 font-semibold">Student Name</th>
+                  <th className="p-3 font-semibold">3D Simulation Score</th>
+                  <th className="p-3 font-semibold">Practical Workshop Score</th>
+                  <th className="p-3 font-semibold">Sim-to-Real Transfer</th>
+                  <th className="p-3 font-semibold">Readiness Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {[
+                  {
+                    name: "Alice Nguyen",
+                    id: "6",
+                    sim: 95,
+                    practical: 90,
+                    transfer: 92.5,
+                    ready: true,
+                  },
+                  {
+                    name: "Arjun Das",
+                    id: "p-arjun",
+                    sim: 88,
+                    practical: 82,
+                    transfer: 85.0,
+                    ready: true,
+                  },
+                  {
+                    name: "Lakshmi Reddy",
+                    id: "p-lakshmi",
+                    sim: 92,
+                    practical: 85,
+                    transfer: 88.5,
+                    ready: true,
+                  },
+                  {
+                    name: "Pooja Yadav",
+                    id: "p-pooja",
+                    sim: 85,
+                    practical: 80,
+                    transfer: 82.5,
+                    ready: true,
+                  },
+                  {
+                    name: "Joseph Mathew",
+                    id: "p-joseph",
+                    sim: 78,
+                    practical: 74,
+                    transfer: 76.0,
+                    ready: true,
+                  },
+                  {
+                    name: "Sneha Patil",
+                    id: "p-sneha",
+                    sim: 96,
+                    practical: 94,
+                    transfer: 95.0,
+                    ready: true,
+                  },
+                  {
+                    name: "Imran Shaikh",
+                    id: "p-imran",
+                    sim: 72,
+                    practical: 66,
+                    transfer: 69.0,
+                    ready: false,
+                  },
+                  {
+                    name: "Bikash Gogoi",
+                    id: "p-bikash",
+                    sim: 64,
+                    practical: 60,
+                    transfer: 62.0,
+                    ready: false,
+                  },
+                ].map((st) => (
+                  <tr key={st.id} className="hover:bg-page-bg/50 transition">
+                    <td className="p-3 font-bold text-ink">{st.name}</td>
+                    <td className="p-3 font-mono text-ink font-semibold">{st.sim}%</td>
+                    <td className="p-3 font-mono text-ink font-semibold">{st.practical}%</td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 bg-border/60 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              st.transfer >= passThreshold ? "bg-emerald-600" : "bg-amber-500"
+                            }`}
+                            style={{ width: `${st.transfer}%` }}
+                          />
+                        </div>
+                        <span className="font-mono font-bold text-ink">{st.transfer}%</span>
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      {st.transfer >= passThreshold ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[11px] font-bold">
+                          <Check size={12} /> Certified Ready
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 text-[11px] font-bold">
+                          Needs Practice
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Modal preview when teacher clicks preview */}
+        {selectedLab && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="flex flex-col w-full max-w-4xl max-h-[92vh] overflow-hidden rounded-3xl bg-surface border border-border shadow-2xl">
+              <div className="flex items-center justify-between p-5 border-b border-border bg-page-bg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                    <Rotate3d size={22} />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-lg font-bold text-ink">{selectedLab.name}</h3>
+                    <p className="text-xs text-ink-muted">{selectedLab.tagline}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedLab(null)}
+                  className="p-1.5 rounded-xl text-ink-muted hover:bg-surface transition"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto space-y-4">
+                <p className="text-sm text-ink leading-relaxed">{selectedLab.description}</p>
+                <div className="rounded-2xl bg-slate-950 p-8 text-center text-white space-y-3">
+                  <Rotate3d size={40} className="mx-auto text-amber-400 animate-spin" />
+                  <p className="text-sm font-bold">Interactive 3D Simulation Session Active</p>
+                  <p className="text-xs text-slate-400">
+                    Headset & Touchscreen WebXR runtime initialized.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Learner View (Alice Nguyen)
   return (
     <div className="mx-auto w-full max-w-content space-y-8 px-4 py-8">
       {/* Unified Standard Page Heading */}
@@ -381,6 +692,9 @@ export function XrStorePage() {
           </div>
         ))}
       </div>
+
+      {/* Personal Virtual-to-Workshop Readiness Bar (Learner View) */}
+      <VirtualTransferReadiness />
 
       {/* Interactive Modal View */}
       {selectedLab && (

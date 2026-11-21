@@ -170,16 +170,25 @@ function Page() {
       ) : list.length === 0 ? (
         <EmptyState title={s("emptyTitle")} help={s("emptyHelp")} />
       ) : (
-        <>
-          <LessonVideoMasterclass />
-          <VideoCheckpointCard videoId="les-transformer" />
-          <LessonGrid items={list} upNextId={next?.id} />
-          <DynamicBlockCatalog
-            role="learner"
-            compact
-            title="Class 8 Modular Labs & Learning Blocks"
-          />
-        </>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="lg:col-span-7 space-y-6">
+              <LessonVideoMasterclass />
+              <VideoCheckpointCard videoId="les-transformer" />
+            </div>
+            <div className="lg:col-span-5 space-y-4">
+              <div className="rounded-surface border border-border bg-surface p-4 shadow-xs">
+                <h3 className="text-base font-bold text-ink font-heading mb-1">
+                  Class 8 Curriculum Modules
+                </h3>
+                <p className="text-xs text-ink-muted mb-4">
+                  Complete each interactive unit to unlock practice quizzes and skill mastery.
+                </p>
+                <LessonGrid items={list} upNextId={next?.id} />
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

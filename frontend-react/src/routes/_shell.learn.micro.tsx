@@ -45,9 +45,12 @@ const s = (k: string, v?: Record<string, string | number>) => t(`LR-11.${k}`, v)
 function Page() {
   const { session } = useRole();
   const [activeTab, setActiveTab] = useState<"reels" | "pravachana">("reels");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [remoteReels, setRemoteReels] = useState<Reel[]>([]);
-  const list =
+  const baseList =
     remoteReels.length > 0 ? remoteReels : mockState.micro.reels === "empty" ? [] : reels;
+  const list =
+    selectedCategory === "All" ? baseList : baseList.filter((r) => r.category === selectedCategory);
 
   // Pravachana state
   const [episodes, setEpisodes] = useState<any[]>([]);
@@ -64,27 +67,35 @@ function Page() {
     let active = true;
     api
       .get<{
-        items?: Array<{
-          id?: string;
-          title?: string;
-          summary?: string;
-          idea?: string;
-          lessonId?: string;
-        }>;
-        reels?: any[];
+        items?: Array<any>;
+        reels?: Array<any>;
       }>("/api/v1/app/micro")
       .then((data) => {
         if (active && data) {
           const items = data.items || data.reels;
           if (items && items.length > 0) {
-            setRemoteReels(
-              items.map((item, idx) => ({
-                id: item.id || `reel-${idx + 1}`,
-                title: item.title || `Micro Card ${idx + 1}`,
-                idea: item.summary || item.idea || "Technical micro-concept summary.",
-                lessonId: item.lessonId || "1",
-              })),
-            );
+            const combined: Reel[] = [...reels];
+            items.forEach((item: any, idx: number) => {
+              const id = item.id || item.skill_id || `remote-${idx}`;
+              if (!combined.some((r) => r.id === id)) {
+                combined.push({
+                  id,
+                  title: item.title || item.reel_title || item.label || `Concept Card ${idx + 1}`,
+                  idea:
+                    item.summary ||
+                    item.idea ||
+                    item.reel_caption ||
+                    item.description ||
+                    "Micro-concept key takeaway.",
+                  lessonId: item.lessonId || item.lesson_id || "1",
+                  category: item.category || "Class 8 Curriculum",
+                  diagramTitle: item.diagramTitle || item.reel_snippet || "Interactive Schematic",
+                  keyPoints: item.keyPoints ||
+                    item.reel_beats || ["Step-by-step verified beat", "Core formula check"],
+                });
+              }
+            });
+            setRemoteReels(combined);
           }
         }
       })
@@ -236,6 +247,39 @@ function Page() {
 
       {activeTab === "reels" && (
         <>
+          {/* Category Filter Pills */}
+          <div className="flex flex-wrap items-center gap-1.5 justify-center pb-2">
+            {[
+              "All",
+              "Class 8 Algebra",
+              "Physical Science",
+              "Railways Safety",
+              "Digital & AI",
+              "Life Values",
+            ].map((cat) => {
+              const count =
+                cat === "All" ? baseList.length : baseList.filter((r) => r.category === cat).length;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(cat);
+                    go(0);
+                  }}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                    selectedCategory === cat
+                      ? "bg-secondary text-white shadow-xs"
+                      : "bg-surface border border-slate-200 text-slate-600 hover:text-secondary hover:border-secondary"
+                  }`}
+                >
+                  <span>{cat}</span>
+                  <span className="ml-1 opacity-75 text-[11px]">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+
           {!reel ? (
             <EmptyState title={s("empty")} help={s("emptyHelp")} />
           ) : (

@@ -99,7 +99,20 @@ function Page() {
     loadStudents();
   }, []);
 
-  const base = remoteStudents ?? (mockState.schoolAdmin.students === "empty" ? [] : learners);
+  const base =
+    remoteStudents && remoteStudents.length > 0
+      ? [
+          ...remoteStudents,
+          ...learners.filter(
+            (l) =>
+              !remoteStudents.some(
+                (r) => r.name.toLowerCase() === l.name.toLowerCase() || r.id === l.id,
+              ),
+          ),
+        ]
+      : mockState.schoolAdmin.students === "empty"
+        ? []
+        : learners;
   const n = q.trim().toLowerCase();
   const rows = base.filter((p) => !n || p.name.toLowerCase().includes(n));
   const empty = (

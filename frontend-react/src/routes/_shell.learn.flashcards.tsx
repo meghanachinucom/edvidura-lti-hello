@@ -233,23 +233,9 @@ function Page() {
                       {card.term}
                     </span>
                     <span className="mt-3 text-xs sm:text-sm text-slate-500 font-medium">
-                      Tap card or click button below to reveal answer
+                      Click anywhere on card or use Flip button below
                     </span>
                   </Button>
-
-                  <div className="w-full pt-3 border-t border-slate-100 flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        flip(true);
-                      }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-secondary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-secondary/90 active:scale-95"
-                    >
-                      <RotateCw size={15} />
-                      <span>Flip to Reveal Answer</span>
-                    </button>
-                  </div>
                 </span>
 
                 {/* BACK FACE: Answer & Definition */}
@@ -312,20 +298,6 @@ function Page() {
                         ))}
                       </div>
                     </div>
-
-                    <div className="flex justify-center pt-1">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          flip(false);
-                        }}
-                        className="inline-flex items-center gap-2 rounded-xl border border-secondary/30 bg-surface px-4 py-2 text-xs sm:text-sm font-bold text-secondary shadow-2xs hover:bg-secondary/10 transition active:scale-95"
-                      >
-                        <RotateCw size={14} />
-                        <span>Flip Back to Question</span>
-                      </button>
-                    </div>
                   </div>
                 </span>
               </span>
@@ -350,10 +322,10 @@ function Page() {
               <button
                 type="button"
                 onClick={() => flip(!back)}
-                className="inline-flex items-center gap-2 rounded-xl border border-secondary/40 bg-secondary/10 px-5 py-2.5 text-sm font-bold text-secondary hover:bg-secondary/20 transition active:scale-95"
+                className="inline-flex items-center gap-2 rounded-xl bg-secondary px-6 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-secondary/90 transition active:scale-95"
               >
                 <RotateCw size={16} />
-                <span>{back ? "Show Term" : "Flip Card"}</span>
+                <span>{back ? "Flip to Question" : "Flip Card"}</span>
               </button>
 
               <button

@@ -190,7 +190,10 @@ function Page() {
 
   const allAttempts =
     remoteAttempts && remoteAttempts.length > 0
-      ? remoteAttempts
+      ? [
+          ...remoteAttempts,
+          ...classAttempts.filter((c) => !remoteAttempts.some((r) => r.id === c.id)),
+        ]
       : m.attempts === "empty"
         ? []
         : classAttempts;

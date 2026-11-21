@@ -33,11 +33,7 @@ const l = (k: string, v?: Record<string, string | number>) => t(`LR-13.${k}`, v)
 const field = "mt-2 min-h-11 w-full rounded-surface bg-surface px-3 text-ink border-control";
 
 function detail(r: ActivityRow): string {
-  const d = r.detail;
-  if (!d) return "—";
-  if ("quiz" in d) return l("quizDetail", { type: l(d.quiz), n: d.score });
-  if ("page" in d) return l("page", { n: d.page });
-  return l("chapter", { n: d.chapter });
+  return r.detail || "—";
 }
 
 const columns: Column<ActivityRow>[] = [

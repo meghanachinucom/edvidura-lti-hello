@@ -549,12 +549,13 @@ def main():
     print("SEEDING 5 COMPLETE MULTI-CHAPTER INTERACTIVE DEMO TEXTBOOKS")
     print("=" * 65)
 
-    # 1. Seed Cloud Supabase PostgreSQL
-    supabase_dsn = "postgres://postgres.hkxbdjshjzqlqllqwnmx:6XQ8wTwNTXfvKGdr@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
-    try:
-        seed_database(supabase_dsn, "Cloud Supabase PostgreSQL")
-    except Exception as e:
-        print(f"Warning: Could not seed Cloud Supabase PostgreSQL: {e}")
+    # 1. Seed Database via Environment Variable (or Cloud Supabase if set)
+    cloud_dsn = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DATABASE_URL")
+    if cloud_dsn:
+        try:
+            seed_database(cloud_dsn, "Cloud / Primary Database")
+        except Exception as e:
+            print(f"Warning: Could not seed Cloud / Primary Database: {e}")
 
     # 2. Seed Application Database (local port 5433 if running)
     app_dsn = "postgresql://edvidura_app:edvidura_app@127.0.0.1:5433/edvidura"

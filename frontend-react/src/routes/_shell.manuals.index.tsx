@@ -39,12 +39,45 @@ export const Route = createFileRoute("/_shell/manuals/")({
 
 const s = (k: string, v?: Record<string, string | number>) => t(`LR-14.${k}`, v);
 
-const COVER_GRADIENTS: Record<CoverTone, string> = {
-  accent: "bg-gradient-to-br from-[#0d5c63] via-[#0f172a] to-[#1e3a8a]",
-  focus: "bg-gradient-to-br from-[#065f46] via-[#0d5c63] to-[#0f172a]",
-  amber: "bg-gradient-to-br from-[#b45309] via-[#854d0e] to-[#0f172a]",
-  emerald: "bg-gradient-to-br from-[#065f46] via-[#047857] to-[#0f172a]",
-  ink: "bg-gradient-to-br from-[#0f172a] via-[#1e3a8a] to-[#0f172a]",
+const COVER_STYLES: Record<
+  CoverTone,
+  { bg: string; badge: string; text: string; subtext: string; iconColor: string }
+> = {
+  accent: {
+    bg: "bg-gradient-to-br from-sky-100 via-blue-50 to-sky-100 border-b border-sky-200/80",
+    badge: "bg-sky-200/80 text-sky-900 border border-sky-300/60",
+    text: "text-slate-900",
+    subtext: "text-slate-600",
+    iconColor: "text-sky-700",
+  },
+  focus: {
+    bg: "bg-gradient-to-br from-teal-100 via-emerald-50 to-teal-100 border-b border-teal-200/80",
+    badge: "bg-teal-200/80 text-teal-900 border border-teal-300/60",
+    text: "text-slate-900",
+    subtext: "text-slate-600",
+    iconColor: "text-teal-700",
+  },
+  amber: {
+    bg: "bg-gradient-to-br from-amber-100 via-orange-50 to-amber-100 border-b border-amber-200/80",
+    badge: "bg-amber-200/80 text-amber-900 border border-amber-300/60",
+    text: "text-slate-900",
+    subtext: "text-slate-600",
+    iconColor: "text-amber-800",
+  },
+  emerald: {
+    bg: "bg-gradient-to-br from-emerald-100 via-green-50 to-emerald-100 border-b border-emerald-200/80",
+    badge: "bg-emerald-200/80 text-emerald-900 border border-emerald-300/60",
+    text: "text-slate-900",
+    subtext: "text-slate-600",
+    iconColor: "text-emerald-800",
+  },
+  ink: {
+    bg: "bg-gradient-to-br from-indigo-100 via-violet-50 to-indigo-100 border-b border-indigo-200/80",
+    badge: "bg-indigo-200/80 text-indigo-900 border border-indigo-300/60",
+    text: "text-slate-900",
+    subtext: "text-slate-600",
+    iconColor: "text-indigo-800",
+  },
 };
 
 const CATEGORY_LABELS: Record<EbookCategory, string> = {
@@ -174,37 +207,46 @@ function Page() {
           {list.map((b) => {
             const pct = b.currentPage ? Math.round((b.currentPage / b.pages) * 100) : 0;
             const chapters = b.chaptersCount || 4;
-            const gradient = COVER_GRADIENTS[b.cover] || COVER_GRADIENTS.accent;
+            const style = COVER_STYLES[b.cover] || COVER_STYLES.accent;
             return (
               <div
                 key={b.id}
-                className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-surface shadow-xs transition hover:border-secondary/40 hover:shadow-md"
+                className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-surface shadow-xs transition hover:border-secondary/50 hover:shadow-md"
               >
-                {/* Book Cover Banner */}
-                <div className={`relative p-5 text-white ${gradient}`}>
+                {/* Book Cover Banner - Clean, High-Contrast Pastel Academic Palette */}
+                <div className={`relative p-5 ${style.bg}`}>
                   <div className="flex items-center justify-between gap-2 text-xs font-semibold">
-                    <span className="rounded-full bg-black/25 px-2.5 py-0.5 text-white backdrop-blur-xs font-mono">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-mono font-bold ${style.badge}`}
+                    >
                       {b.subjectCode || "EDV-LIB"}
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-white backdrop-blur-xs text-xs">
-                      <Headphones size={11} /> Audiobook
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${style.badge}`}
+                    >
+                      <Headphones size={12} className={style.iconColor} /> Audiobook
                     </span>
                   </div>
 
-                  <h3 className="mt-3 font-heading text-lg font-bold leading-snug text-white line-clamp-2">
+                  <h3
+                    className={`mt-3 font-heading text-lg font-extrabold leading-snug line-clamp-2 ${style.text}`}
+                  >
                     {b.title}
                   </h3>
 
-                  <p className="mt-1 text-xs text-white/80 line-clamp-1 font-medium">
+                  <p className={`mt-1 text-xs line-clamp-1 font-semibold ${style.subtext}`}>
                     {b.author || "EdVidura Academic Faculty"}
                   </p>
 
-                  <div className="mt-4 flex items-center justify-between text-xs text-white/90">
+                  <div
+                    className={`mt-4 flex items-center justify-between text-xs font-semibold ${style.subtext}`}
+                  >
                     <span className="flex items-center gap-1">
-                      <Layers size={13} /> {chapters} Chapters
+                      <Layers size={13} className={style.iconColor} /> {chapters} Chapters
                     </span>
                     <span className="flex items-center gap-1">
-                      <Clock size={13} /> ~{Math.round(b.pages * 0.75)} mins
+                      <Clock size={13} className={style.iconColor} /> ~{Math.round(b.pages * 0.75)}{" "}
+                      mins
                     </span>
                   </div>
                 </div>
